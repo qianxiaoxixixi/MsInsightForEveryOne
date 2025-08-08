@@ -558,7 +558,7 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
           " from COMPUTE_TASK_INFO info join TASK T on info.globalTaskId = T.globalTaskId "
           " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
           " UNION all "
-          " select info.ROWID as id, 'MsTx' as tid, message as name, globalTid AS pid,"
+          " select info.ROWID as id, domainId as tid, message as name, globalTid AS pid,"
           " depth from MSTX_EVENTS info"
           " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
           " UNION all "
@@ -1082,8 +1082,8 @@ void DbTraceDataBase::UpdateAllDepth()
         UpdateDepth(sql, updateCannApiDepthStmt);
     }
 
-    sql = "select format('%s-%s', globalTid, eventType) as key, startNs, endNs, ROWID as id from " + TABLE_MSTX_EVENTS +
-          " order by globalTid, eventType, startNs;";
+    sql = "select format('%s-%s-%s', globalTid, eventType, domainId) as key, startNs, endNs, ROWID as id from " + TABLE_MSTX_EVENTS +
+          " order by globalTid, eventType, domainId, startNs;";
     if (isExistMstx && NeedUpdateDepth(TABLE_MSTX_EVENTS)) {
         auto stmt = CreatPreparedStatement("UPDATE " + TABLE_MSTX_EVENTS + " set depth = ? where ROWID = ?");
         UpdateDepth(sql, stmt);
@@ -1300,29 +1300,32 @@ bool DbTraceDataBase::SetConfig()
             ExecSql(" create table if not exists OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT,"
                     " deviceId integer, startNs integer, endNs integer, type integer);");
         }
-        if (isExistPytorch && !CheckColumnExist(TABLE_API, "depth")) {
-            ExecSql("alter table " + TABLE_API + " add depth integer;");
+        if (isExistMstx) {
+            if (!CheckColumnExist(TABLE_MSTX_EVENTS, "depth")) {
+                ExecSql("alter table " + TABLE_MSTX_EVENTS + " add depth integer;");
+            } else {
+                ExecSql("update " + TABLE_MSTX_EVENTS + " set depth = null");
+            }
         }
-        if (isExistCann && !CheckColumnExist(TABLE_CANN_API, "depth")) {
-            ExecSql("alter table " + TABLE_CANN_API + " add depth integer;");
-        }
-        if (isExistMstx && !CheckColumnExist(TABLE_MSTX_EVENTS, "depth")) {
-            ExecSql("alter table " + TABLE_MSTX_EVENTS + " add depth integer;");
-        }
-        if (CheckTableExist(TABLE_COMPUTE_TASK_INFO) && !CheckColumnExist(TABLE_COMPUTE_TASK_INFO, "waitNs")) {
-            ExecSql("alter table " + TABLE_COMPUTE_TASK_INFO + " add column waitNs INTEGER;");
-        }
-        if (isExistCommOp && !CheckColumnExist(TABLE_COMMUNICATION_OP, "waitNs")) {
-            ExecSql("alter table " + TABLE_COMMUNICATION_OP + " add column waitNs INTEGER;");
-        }
-        if (isExistCommOp && !CheckColumnExist(TABLE_COMMUNICATION_OP, "opConnectionId")) {
-            ExecSql("alter table " + TABLE_COMMUNICATION_OP + " add column opConnectionId TEXT;");
-        }
+        AddColumns2Table(isExistPytorch, TABLE_API, "depth", "integer");
+        AddColumns2Table(isExistCann, TABLE_CANN_API, "depth", "integer");
+        AddColumns2Table(CheckTableExist(TABLE_COMPUTE_TASK_INFO), TABLE_COMPUTE_TASK_INFO, "waitNs",
+                         "INTEGER");
+        AddColumns2Table(isExistCommOp, TABLE_COMMUNICATION_OP, "waitNs", "integer");
+        AddColumns2Table(isExistCommOp, TABLE_COMMUNICATION_OP, "opConnectionId", "TEXT");
         for (const auto &status: DB_STATUS_LIST) {
             UpdateValueIntoStatusInfoTable(status, NOT_FINISH_STATUS);
         }
     }
     return ExecSql("PRAGMA case_sensitive_like=1;");
+}
+
+void DbTraceDataBase::AddColumns2Table(const bool isExist, const std::string &tableName, const std::string &columnName,
+                                       const std::string &columnType)
+{
+    if (isExist && !CheckColumnExist(tableName, columnName)) {
+        ExecSql("alter table " + tableName + " add column " + columnName + " " + columnType + ";");
+    }
 }
 
 bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
@@ -1395,12 +1398,17 @@ void DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::Uni
         threadUnit->metaData.threadId = std::to_string(tid);
         auto cannApiUnit =
             GenerateBaseUnitTrack("label", path, thread.first, "CANN", ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
+        auto mstxUnit =
+            GenerateBaseUnitTrack("process", path, thread.first, "MSTX", ENUM_TO_STR(PROCESS_TYPE::MS_TX).value());
+        mstxUnit->metaData.threadId = std::to_string(tid);
         for (const auto &item : thread.second) {
             auto level = GenerateBaseUnitTrack("thread", path, thread.first, "", item.metaType);
             level->metaData.threadId = item.threadId;
             level->metaData.threadName = item.threadName;
             level->metaData.maxDepth = item.maxDepth;
-            if (std::find(CANN_APIS.begin(), CANN_APIS.end(), item.threadName) != CANN_APIS.end()) {
+            if (item.metaType == ENUM_TO_STR(PROCESS_TYPE::MS_TX)) {
+                mstxUnit->children.emplace_back(std::move(level));
+            } else if (std::find(CANN_APIS.begin(), CANN_APIS.end(), item.threadName) != CANN_APIS.end()) {
                 cannApiUnit->children.emplace_back(std::move(level));
             } else {
                 threadUnit->children.emplace_back(std::move(level));
@@ -1408,6 +1416,9 @@ void DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::Uni
         }
         if (!cannApiUnit->children.empty()) {
             threadUnit->children.emplace_back(std::move(cannApiUnit));
+        }
+        if (!mstxUnit->children.empty()) {
+            threadUnit->children.emplace_back(std::move(mstxUnit));
         }
         if (process.operator bool()) {
             process->children.emplace_back(std::move(threadUnit));

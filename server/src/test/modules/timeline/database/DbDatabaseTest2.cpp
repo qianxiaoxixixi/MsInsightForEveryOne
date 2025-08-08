@@ -43,6 +43,20 @@ protected:
          "name INTEGER, globalTaskId INTEGER primary key, taskType INTEGER, opType INTEGER);";
     std::string AICoreFreq = "CREATE TABLE AICORE_FREQ (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId integer, "
         "startNs integer, endNs integer, type integer);";
+
+    const std::string pytorchDataSql = "INSERT INTO \"main\".\"PYTORCH_API\" (\"startNs\", \"endNs\", \"globalTid\", "
+        "\"connectionId\", \"name\", \"sequenceNumber\", \"fwdThreadId\", \"inputDtypes\", \"inputShapes\", "
+        "\"callchainId\", \"depth\") VALUES ('1718180918997274130', '1718180918997289000', 8785587534247538, 0, "
+        "268435456, NULL, NULL, NULL, NULL, NULL, 8);";
+    const std::string cannDataSql = "INSERT INTO \"main\".\"CANN_API\" (\"startNs\", \"endNs\", \"type\", "
+        "\"globalTid\", \"connectionId\", \"name\", \"depth\") VALUES (1729478236911261506, "
+        "1729478236911265550, 20000, 1237912654215057, 250011, 5413, 0);";
+    const std::string mstxDataSql = "INSERT INTO \"main\".\"MSTX_EVENTS\" (\"startNs\", \"endNs\", \"eventType\", "
+        "\"rangeId\", \"category\", \"message\", \"globalTid\", \"endGlobalTid\", \"domainId\", "
+        "\"connectionId\", \"depth\") VALUES (947741767895850870, 947741768895903230, 2, "
+        "4294967295, 4294967295, 8, 16884049020452276, 16884049020452276, 65535, 4000000001, 0);";
+    const std::string numeApiDataSql = "INSERT INTO \"main\".\"ENUM_API_TYPE\" (\"id\", \"name\") "
+        "VALUES (20000, 'acl');";
 };
 class MockDatabase : public Dic::Module::FullDb::DbTraceDataBase {
 public:
@@ -368,19 +382,7 @@ TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenAllHostExistThenhaveThreeTrack)
     DatabaseTestCaseMockUtil::CreateTable(db, canSql);
     DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
     DatabaseTestCaseMockUtil::CreateTable(db, enumApiType);
-    std::string pytorchDataSql =
-        "INSERT INTO \"main\".\"PYTORCH_API\" (\"startNs\", \"endNs\", \"globalTid\", \"connectionId\", \"name\", "
-        "\"sequenceNumber\", \"fwdThreadId\", \"inputDtypes\", \"inputShapes\", \"callchainId\", \"depth\") VALUES "
-        "('1718180918997274130', '1718180918997289000', 8785587534247538, 0, 268435456, NULL, NULL, NULL, NULL, NULL, "
-        "8);";
-    std::string cannDataSql = "INSERT INTO \"main\".\"CANN_API\" (\"startNs\", \"endNs\", \"type\", \"globalTid\", "
-        "\"connectionId\", \"name\", \"depth\") VALUES (1729478236911261506, "
-        "1729478236911265550, 20000, 1237912654215057, 250011, 5413, 0);";
-    std::string mstxDataSql = "INSERT INTO \"main\".\"MSTX_EVENTS\" (\"startNs\", \"endNs\", \"eventType\", "
-        "\"rangeId\", \"category\", \"message\", \"globalTid\", \"endGlobalTid\", \"domainId\", "
-        "\"connectionId\", \"depth\") VALUES (947741767895850870, 947741768895903230, 2, "
-        "4294967295, 4294967295, 8, 16884049020452276, 16884049020452276, 65535, 4000000001, 0);";
-    std::string numeApiDataSql = "INSERT INTO \"main\".\"ENUM_API_TYPE\" (\"id\", \"name\") VALUES (20000, 'acl');";
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     DatabaseTestCaseMockUtil::InsertData(db, pytorchDataSql);
     DatabaseTestCaseMockUtil::InsertData(db, cannDataSql);
     DatabaseTestCaseMockUtil::InsertData(db, mstxDataSql);
@@ -400,8 +402,11 @@ TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenAllHostExistThenhaveThreeTrack)
     EXPECT_EQ(metaData[second]->metaData.processName, "process 3931124");
     EXPECT_EQ(metaData[second]->children[first]->metaData.metaType, "CANN_API");
     EXPECT_EQ(metaData[second]->children[first]->metaData.threadId, "3931572");
-    EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.threadId, "MsTx");
+    EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.threadId, "3931572");
     EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.processId, "16884049020452276");
+    EXPECT_EQ(metaData[second]->children[first]->children[first]->children[first]->metaData.metaType, "MSTX_EVENTS");
+    EXPECT_EQ(metaData[second]->children[first]->children[first]->children[first]->metaData.threadId, "65535");
+    EXPECT_EQ(metaData[second]->children[first]->children[first]->children[first]->metaData.processId, "16884049020452276");
     EXPECT_EQ(metaData[third]->metaData.processName, "process 2045554");
     EXPECT_EQ(metaData[third]->children[first]->metaData.metaType, "CANN_API");
     EXPECT_EQ(metaData[third]->children[first]->metaData.threadId, "2045554");
@@ -422,14 +427,7 @@ TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenPytorchNotExistThenhaveTwoTrack
     DatabaseTestCaseMockUtil::CreateTable(db, canSql);
     DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
     DatabaseTestCaseMockUtil::CreateTable(db, enumApiType);
-    std::string cannDataSql = "INSERT INTO \"main\".\"CANN_API\" (\"startNs\", \"endNs\", \"type\", \"globalTid\", "
-        "\"connectionId\", \"name\", \"depth\") VALUES (1729478236911261506, "
-        "1729478236911265550, 20000, 1237912654215057, 250011, 5413, 0);";
-    std::string mstxDataSql = "INSERT INTO \"main\".\"MSTX_EVENTS\" (\"startNs\", \"endNs\", \"eventType\", "
-        "\"rangeId\", \"category\", \"message\", \"globalTid\", \"endGlobalTid\", \"domainId\", "
-        "\"connectionId\", \"depth\") VALUES (947741767895850870, 947741768895903230, 2, "
-        "4294967295, 4294967295, 8, 16884049020452276, 16884049020452276, 65535, 4000000001, 0);";
-    std::string numeApiDataSql = "INSERT INTO \"main\".\"ENUM_API_TYPE\" (\"id\", \"name\") VALUES (20000, 'acl');";
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
     DatabaseTestCaseMockUtil::InsertData(db, cannDataSql);
     DatabaseTestCaseMockUtil::InsertData(db, mstxDataSql);
     DatabaseTestCaseMockUtil::InsertData(db, numeApiDataSql);
@@ -447,8 +445,11 @@ TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenPytorchNotExistThenhaveTwoTrack
     EXPECT_EQ(metaData[second]->metaData.processName, "process 3931124");
     EXPECT_EQ(metaData[second]->children[first]->metaData.metaType, "CANN_API");
     EXPECT_EQ(metaData[second]->children[first]->metaData.threadId, "3931572");
-    EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.threadId, "MsTx");
+    EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.threadId, "3931572");
     EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.processId, "16884049020452276");
+    EXPECT_EQ(metaData[second]->children[first]->children[first]->children[first]->metaData.metaType, "MSTX_EVENTS");
+    EXPECT_EQ(metaData[second]->children[first]->children[first]->children[first]->metaData.threadId, "65535");
+    EXPECT_EQ(metaData[second]->children[first]->children[first]->children[first]->metaData.processId, "16884049020452276");
 }
 
 

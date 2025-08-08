@@ -44,6 +44,9 @@ interface FilterItemProps {
     checkedCategories: string[];
     setCheckedCategories: React.Dispatch<React.SetStateAction<string[]>>;
 }
+
+const categoryMap: { [key: string]: string } = { MsTx: 'MSTX' };
+
 const FilterItem: React.FC<FilterItemProps> = observer(({ category, checkedCategories, setCheckedCategories }) => {
     const isChecked = checkedCategories.includes(category);
     return (
@@ -53,7 +56,7 @@ const FilterItem: React.FC<FilterItemProps> = observer(({ category, checkedCateg
                 onChange={(): void => {
                     setCheckedCategories(prev => isChecked ? prev.filter(cat => cat !== category) : prev.concat(category));
                 }}>
-                {category}
+                {categoryMap[category] ?? category}
             </Checkbox>
         </p>
     );

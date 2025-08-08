@@ -19,13 +19,14 @@ void MstxRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery
         return;
     }
     std::string sql =
-        "SELECT ROWID as id, startNs, endNs from " + TABLE_MSTX_EVENTS + " where globalTid = ? order by startNs , id";
+        "SELECT ROWID as id, startNs, endNs from " + TABLE_MSTX_EVENTS + " where globalTid = ? and domainId = ? order by startNs , id";
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Warn("Failed to parpare mstx query all slice");
         return;
     }
     stmt->BindParams(trackInfo.processId);
+    stmt->BindParams(trackInfo.threadId);
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Warn("Failed to execute query mstx query all slice");
