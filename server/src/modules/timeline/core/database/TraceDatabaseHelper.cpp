@@ -302,7 +302,7 @@ std::string TraceDatabaseHelper::GetQueryThreadSameOperatorsDetailsHeadSql(const
         case PROCESS_TYPE::CANN_API:
             return GetCannSameNameDetailSql(pidListStr, tidListStr);
         case PROCESS_TYPE::MS_TX:
-            return GetMstxSameNameDetailSql(pidListStr);
+            return GetMstxSameNameDetailSql(pidListStr, tidListStr);
         case PROCESS_TYPE::API:
             return GetPythonSameNameDetailSql(pidListStr);
         case PROCESS_TYPE::OVERLAP_ANALYSIS:
@@ -360,6 +360,11 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
                   " WHERE globalTid = pid AND start_time >= startTime AND start_time <= endTime ORDER BY start_time;";
             return ExecuteQuery(stmt, sql, minTimestamp, requestParams.processId,
                                 requestParams.startTime, requestParams.endTime);
+        case PROCESS_TYPE::MS_TX:
+            sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time"
+                  " from " + TABLE_MSTX_EVENTS + " WHERE globalTid = ? AND start_time >= ? AND start_time <= ? ORDER BY startNs;";
+            return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.processId,
+                                requestParams.startTime, requestParams.endTime);
         default:
             throw DatabaseException("unsupported type!");
     }
@@ -390,7 +395,7 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadsByPid(std::uni
             return ExecuteQuery(stmt, OVERLAP_ANALYSIS_THREAD_BY_PID, rankId, metaData.tid,
                                 startTime, endTime);
         case PROCESS_TYPE::MS_TX:
-            return ExecuteQuery(stmt, MS_TX_THREAD_BY_PID, metaData.pid, startTime,
+            return ExecuteQuery(stmt, MS_TX_THREAD_BY_PID, metaData.pid, metaData.tid, startTime,
                                 endTime);
         default:
             throw DatabaseException("unsupported type!");
@@ -412,7 +417,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Process(std::unique_ptr <Sqlit
         "WHERE pid||'' = ? UNION "
         "SELECT me.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, depth, "
-        "globalTid as processId, 'MsTx' as threadId "
+        "globalTid as processId, domainId as threadId "
         "FROM MSTX_EVENTS AS me LEFT JOIN STRING_IDS AS si ON me.message = si.id "
         "WHERE pid||'' = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid, params.pid);
@@ -432,7 +437,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Thread(std::unique_ptr <Sqlite
         "WHERE globalTid = ? UNION "
         "SELECT me.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, "
-        "depth, globalTid as processId, 'MsTx' as threadId "
+        "depth, globalTid as processId, domainId as threadId "
         "FROM MSTX_EVENTS AS me LEFT JOIN STRING_IDS AS si ON me.message = si.id "
         "WHERE globalTid = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid, params.pid);
@@ -442,7 +447,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4MSTX(std::unique_ptr <SqlitePr
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {   // pid, tid 实际用于展示，processId, threadId 才是跳转用的 pid, tid
     std::string sql = "SELECT me.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
-        "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, 'MsTx' as threadId, "
+        "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, domainId as threadId, "
         "(globalTid / 4294967296) AS pid FROM MSTX_EVENTS AS me LEFT JOIN STRING_IDS AS si ON me.message = si.id "
         "WHERE globalTid = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid);
@@ -1445,7 +1450,7 @@ std::string TraceDatabaseHelper::GetSingleLockRangeSql(const TrackQuery &item)
             "  cann join ids on ids.id = cann.name WHERE globalTid = ? AND type = ? AND startNs >= ? AND endNs <= "
             "? ";
     } else if (type == PROCESS_TYPE::MS_TX) {
-        tempSql = " SELECT mstx.ROWID as id, mstx.globalTid as pid, 'MsTx' as tid, mstx.startNs as timestamp, "
+        tempSql = " SELECT mstx.ROWID as id, mstx.globalTid as pid, mstx.domainId as tid, mstx.startNs as timestamp, "
             "mstx.endNs as endTime, mstx.depth, '' as deviceId, ids.value from " +
             TABLE_MSTX_EVENTS +
             "  mstx join ids on ids.id = mstx.message WHERE globalTid = ? AND startNs >= ? AND endNs <= ? ";
@@ -1563,7 +1568,7 @@ std::string TraceDatabaseHelper::GetSingleSearchNameWithLockRangeSql(const std::
             "  cann join ids on ids.id = cann.name WHERE globalTid = ? AND type = ? AND startNs >= ? AND endNs <= "
             "? ";
     } else if (type == PROCESS_TYPE::MS_TX && singleQuery.rankId == path) {
-        tempSql = " SELECT mstx.ROWID as id, mstx.globalTid as pid, 'MsTx' as tid, mstx.startNs as timestamp, "
+        tempSql = " SELECT mstx.ROWID as id, mstx.globalTid as pid, mstx.domainId as tid, mstx.startNs as timestamp, "
             "mstx.endNs as endTime, mstx.depth from " +
             TABLE_MSTX_EVENTS +
             "  mstx join ids on ids.id = mstx.message WHERE globalTid = ? AND startNs >= ? AND endNs <= ? ";
@@ -1811,7 +1816,7 @@ std::string TraceDatabaseHelper::GetComOpSliceDetailsSql(const std::string &rank
 std::string TraceDatabaseHelper::GetMsTxEventsSliceDetailSql()
 {
     return " SELECT '' AS deviceId, message as name, globalTid AS pid, 'HOST' AS metaType,"
-        "'MsTx' AS tid, startNs - minTime.value AS startTime, endNs - startNs AS duration,"
+        "domainId AS tid, startNs - minTime.value AS startTime, endNs - startNs AS duration,"
         "depth, MSTX_EVENTS.ROWID AS id "
         "FROM MSTX_EVENTS JOIN minTime ";
 }
@@ -1885,7 +1890,7 @@ std::string TraceDatabaseHelper::GetSearchSliceNameSql(bool isMatchExact, bool i
             " depth, api.id, 'HOST' as metaType ,? as rankId"
             " FROM (select globalTid, type, startNs, endNs, depth, ROWID as id, name "
             " from " + TABLE_CANN_API + " api join ids on ids.id = api.name "
-            " Union all select globalTid, 'MsTx' as type, startNs, endNs, depth, ROWID as id, message as name "
+            " Union all select globalTid, domainId as type, startNs, endNs, depth, ROWID as id, message as name "
             " from " + TABLE_MSTX_EVENTS + " api join ids on ids.id = api.message "
             " UNION all select globalTid, 'pytorch' as type, startNs, endNs, depth, ROWID as id, name "
             " from " + TABLE_API + " api join ids on ids.id = api.name) api " + orderBy + " LIMIT 1 OFFSET ?";

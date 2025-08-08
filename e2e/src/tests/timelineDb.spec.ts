@@ -127,7 +127,7 @@ test.describe('Timeline(DB)', () => {
         await timelineFrame.locator('div:nth-child(13) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold').click();
         const LinkLineType = [
             'HostToDevice',
-            'MsTx',
+            'MSTX',
             'async_npu',
         ];
         for (const item of LinkLineType) {

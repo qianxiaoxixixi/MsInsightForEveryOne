@@ -48,6 +48,7 @@ describe('Function handleTimestampOffsetReassignment Check', () => {
             threadId: '',
             startTime: 0,
             endTime: 1,
+            metaType: '',
         }, 0)).toBe(false);
     });
 
@@ -61,6 +62,7 @@ describe('Function handleTimestampOffsetReassignment Check', () => {
             threadId: '',
             startTime: 0,
             endTime: 1,
+            metaType: '',
         }, 0)).toBe(true);
     });
 
@@ -74,6 +76,7 @@ describe('Function handleTimestampOffsetReassignment Check', () => {
             threadId: '',
             startTime: 0,
             endTime: 1,
+            metaType: '',
         }, 0)).toBe(true);
     });
 
@@ -87,6 +90,7 @@ describe('Function handleTimestampOffsetReassignment Check', () => {
             threadId: '',
             startTime: 0,
             endTime: 1,
+            metaType: '',
         }, 0)).toBe(true);
     });
 });

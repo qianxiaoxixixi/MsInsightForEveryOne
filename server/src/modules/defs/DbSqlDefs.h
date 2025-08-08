@@ -85,11 +85,11 @@ inline std::string GetCannSameNameDetailSql(const std::string &pidListStr, const
     " from CANN_API main join nameIds n on name = n.id join params p where globalTid in (" + pidListStr +
     " ) and type in (" + tidListStr + " ) and timestamp + duration >= p.startTime AND timestamp <= p.endTime) ";
 }
-inline std::string GetMstxSameNameDetailSql(const std::string &pidListStr)
+inline std::string GetMstxSameNameDetailSql(const std::string &pidListStr, const std::string &tidListStr)
 {
     return " mstx as (select startNs - p.minTime as timestamp, endNs - startNs as duration, depth, main.ROWID as id, "
-    "   'MsTx' as tid, globalTid as pid from MSTX_EVENTS main join nameIds n on message = n.id join params p"
-    "   where globalTid in (" + pidListStr + ") "
+    "   domainId as tid, globalTid as pid from MSTX_EVENTS main join nameIds n on message = n.id join params p"
+    "   where globalTid in (" + pidListStr + ") and domainId in (" + tidListStr + " ) "
     "   and timestamp + duration >= p.startTime AND timestamp <= p.endTime) ";
 }
 inline std::string GetPythonSameNameDetailSql(const std::string &pidListStr)
@@ -117,7 +117,7 @@ const static std::string CANN_UNIT_FLOW_SQL =
       "     '' as deviceId from CANN_API api join constValue "
       "     where api.connectionId = constValue.connectionId ";
 const static std::string MSTX_UNIT_FLOW_SQL =
-        " select api.ROWID as id, 'MsTx' as tid, depth, startNs - constValue.minTime as startTime, "
+        " select api.ROWID as id, domainId as tid, depth, startNs - constValue.minTime as startTime, "
         "     endNs - startNs as duration, globalTid as pid, 'MSTX_EVENTS' as metaType, message as name, "
         "     '' as deviceId from MSTX_EVENTS api join constValue "
         "     where api.connectionId = constValue.connectionId and api.connectionId != 4294967295";
@@ -190,7 +190,7 @@ const static std::string OVERLAP_ANALYSIS_THREAD_BY_PID =
 const static std::string MS_TX_THREAD_BY_PID =
         "select startNs, endNs - startNs as duration,endNs,message as name,depth from " +
         TABLE_MSTX_EVENTS +
-        " where globalTid = ? and endNs >= ? AND startNs <= ? ORDER BY startNs";
+        " where globalTid = ? and domainId = ? and endNs >= ? AND startNs <= ? ORDER BY startNs";
 
 class DbSqlDefs {
 public:
@@ -247,7 +247,7 @@ static std::string GetQueryMstxApiLocationSql()
 {
     std::string sql = "with constValue as (select ? as minTime), "
                       "     rankIds as (select deviceId, globalPid from TASK group by globalPid) ";
-    sql.append(" select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, 'MsTx' as tid, "
+    sql.append(" select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, domainId as tid, "
                "  depth, startNs - constValue.minTime as startTime, endNs - startNs as duration, globalTid as pid, "
                "       'MSTX_EVENTS' as metaType, message as name, deviceId from MSTX_EVENTS api join constValue "
                "        join connectionCats on api.connectionId = connectionCats.connectionId "

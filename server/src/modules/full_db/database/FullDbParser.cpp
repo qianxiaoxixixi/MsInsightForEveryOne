@@ -196,6 +196,12 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
     }
     for (auto rankId: rankIds) {
         Timeline::ParserStatusManager::Instance().SetParserStatus(rankId, Timeline::ParserStatus::FINISH_ALL);
+        auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(rankId);
+        if (db == nullptr) {
+            ServerLog::Error("Failed to get connection. fileId:Host");
+            break;
+        }
+        db->SetDataBaseVersion();
     }
 }
 

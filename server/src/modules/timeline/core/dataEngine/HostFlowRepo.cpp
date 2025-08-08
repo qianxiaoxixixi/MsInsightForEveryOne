@@ -208,7 +208,7 @@ std::vector<uint64_t> HostFlowRepo::AddMstxFlowPoint(const FlowQuery &flowQuery,
 {
     std::vector<MstxEventsPO> mstxPOs;
     mstxEventsTable->Select(MstxEventsColumn::ID, MstxEventsColumn::CONNECTION_ID)
-        .Select(MstxEventsColumn::GLOBAL_TID, MstxEventsColumn::TIMESTAMP)
+        .Select(MstxEventsColumn::GLOBAL_TID, MstxEventsColumn::TIMESTAMP, MstxEventsColumn::DOMAIN_ID)
         .NotEq(MstxEventsColumn::CONNECTION_ID, WRONG_DATA)
         .ExcuteQuery(flowQuery.fileId, mstxPOs);
     std::vector<uint64_t> connectionIds;
@@ -221,7 +221,7 @@ std::vector<uint64_t> HostFlowRepo::AddMstxFlowPoint(const FlowQuery &flowQuery,
         startPoint.flowId = std::to_string(item.connectionId);
         startPoint.timestamp = item.timestamp - flowQuery.minTimestamp;
         startPoint.rankId = dbPath;
-        startPoint.trackId = instance.GetTrackId(dbPath, std::to_string(item.globalTid), mstxTid);
+        startPoint.trackId = instance.GetTrackId(dbPath, std::to_string(item.globalTid), std::to_string(item.domainId));
         flowPointVec.emplace_back(startPoint);
         connectionIds.emplace_back(item.connectionId);
     }

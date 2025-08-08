@@ -137,6 +137,27 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesSummary)
     EXPECT_EQ(database->QueryThreadTracesSummary(params, body, minTimestamp), false);
 }
 
+TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesSummary_MSTX)
+{
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
+    Dic::Protocol::UnitThreadTracesSummaryBody body;
+
+    Dic::Protocol::UnitThreadTracesSummaryParams params;
+    params.startTime = 0;
+    params.cardId = "2";
+    params.processId = "4398785246508220";
+    params.metaType = "MSTX_EVENTS";
+    params.endTime = 400000000; // endTime = 400000000
+
+    database->QueryThreadTracesSummary(params, body, minTimestamp);
+    const uint64_t expectSize = 1;
+    EXPECT_EQ(body.data.size(), expectSize);
+    EXPECT_EQ(body.data[0].startTime, 0);
+
+    body.data.clear();
+}
+
 TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesList)
 {
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
@@ -202,7 +223,7 @@ TEST_F(FullDbTestSuit, FullDb_of_HostMetaData)
     auto metaData = std::vector<std::unique_ptr<Protocol::UnitTrack>>();
     database->QueryHostMetadata(metaData);
 
-    EXPECT_EQ(metaData.size(), 1);
+    EXPECT_EQ(metaData.size(), 2); // size = 2
     EXPECT_EQ(metaData[0]->children.size(), 1);
 }
 
@@ -653,7 +674,7 @@ TEST_F(FullDbTestSuit, SearchAllSlicesDetails)
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
 
     database->SearchAllSlicesDetails(params, body, minTimestamp, {});
-    const uint64_t EXPECT_COUNT = 20;
+    const uint64_t EXPECT_COUNT = 23;
 
     EXPECT_EQ(body.searchAllSlices.size(), EXPECT_COUNT);
 }

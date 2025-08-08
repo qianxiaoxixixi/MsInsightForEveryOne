@@ -1022,7 +1022,7 @@ TEST_F(DbTraceDatabaseTest, GetLockRangeSqlWhenMstx)
     std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetLockRangeSql(params, trackQueryVec);
     EXPECT_EQ(sql,
         "with ids as (select id, value from STRING_IDS where lower(value) like lower('%'||?||'%'))  SELECT mstx.ROWID "
-        "as id, mstx.globalTid as pid, 'MsTx' as tid, mstx.startNs as timestamp, mstx.endNs as endTime, mstx.depth, '' "
+        "as id, mstx.globalTid as pid, mstx.domainId as tid, mstx.startNs as timestamp, mstx.endNs as endTime, mstx.depth, '' "
         "as deviceId, ids.value from MSTX_EVENTS  mstx join ids on ids.id = mstx.message WHERE globalTid = ? AND "
         "startNs >= ? AND endNs <= ?  ORDER BY timestamp DESC  LIMIT ? OFFSET ?");
 }
@@ -1142,7 +1142,7 @@ TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenMstx)
     std::string sql =
         Dic::Module::Timeline::TraceDatabaseHelper::GetSearchSliceNameWithLockRangeSql(params, trackQueryVec, path);
     EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%'))  SELECT "
-        "mstx.ROWID as id, mstx.globalTid as pid, 'MsTx' as tid, mstx.startNs as timestamp, mstx.endNs as "
+        "mstx.ROWID as id, mstx.globalTid as pid, mstx.domainId as tid, mstx.startNs as timestamp, mstx.endNs as "
         "endTime, mstx.depth from MSTX_EVENTS  mstx join ids on ids.id = mstx.message WHERE globalTid = ? "
         "AND startNs >= ? AND endNs <= ?  ORDER BY timestamp DESC  LIMIT 1 OFFSET ?");
 }

@@ -112,8 +112,9 @@ const std::string QUERY_HOST_METADATA_OSRT_SQL =
     "SELECT 'OS Runtime API' AS name, globalTid, 'OS Runtime API' AS type, 0 AS maxDepth FROM OSRT_API"
     " a GROUP BY globalTid ORDER BY globalTid";
 const std::string QUERY_HOST_METADATA_MSTX_SQL =
-    "select 'MsTx' as name, globalTid,'MsTx' as type, max(depth) as maxDepth from MSTX_EVENTS a "
-    " group by globalTid order by globalTid";
+    "select coalesce(b.value, 'MSTX') as name, a.globalTid, a.domainId as type, max(a.depth) as maxDepth "
+    "from MSTX_EVENTS a left join STRING_IDS b on a.domainId = b.id "
+    "group by a.globalTid, a.domainId order by a.globalTid, a.domainId";
 const std::string QUERY_HOST_METADATA_PYTHONGC_SQL =
     "select 'Python GC' as name, globalTid,'Python GC' as type,  0 as maxDepth from GC_RECORD a "
     " group by globalTid order by globalTid";

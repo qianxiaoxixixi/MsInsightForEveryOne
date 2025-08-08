@@ -227,6 +227,8 @@ private:
 
     bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params, Protocol::SearchAllSlicesBody &body,
                                 uint64_t minTimestamp);
+    void AddColumns2Table(const bool isExist, const std::string &tableName, const std::string &columnName,
+                          const std::string &columnType);
 };
 }
 

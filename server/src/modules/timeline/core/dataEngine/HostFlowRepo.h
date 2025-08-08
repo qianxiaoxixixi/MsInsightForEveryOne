@@ -20,7 +20,6 @@ public:
 
 private:
     const std::string pythonApiTid = "pytorch";
-    const std::string mstxTid = "MsTx";
     std::unique_ptr<PytorchApiTable> pytorchApiTable = std::make_unique<PytorchApiTable>();
     std::unique_ptr<ConnectionIdsTable> connectionIdsTable = std::make_unique<ConnectionIdsTable>();
     std::unique_ptr<StringIdsTable> stringIdsTable = std::make_unique<StringIdsTable>();

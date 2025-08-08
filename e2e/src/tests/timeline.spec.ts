@@ -202,7 +202,7 @@ test.describe('Timeline', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('search-deep-operator.png', { maxDiffPixels: 50 });
     });
 
-    // 工具栏 - 算子连线  HostToDevice MsTx async_npu
+    // 工具栏 - 算子连线  HostToDevice MSTX async_npu
     test('test_operator_npu_LinkLine', async ({ page, timelinePage }) => {
         const { flowBtn, timelineFrame } = timelinePage;
         const hcclUnit = timelineFrame.locator('#unitWrapperScroller').getByText('Ascend Hardware (2094647552)');
@@ -210,7 +210,7 @@ test.describe('Timeline', () => {
         await page.waitForTimeout(1000);
         const LinkLineType = [
             'HostToDevice',
-            'MsTx',
+            'MSTX',
             'async_npu',
         ];
         for (const item of LinkLineType) {
