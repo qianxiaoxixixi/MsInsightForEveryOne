@@ -97,7 +97,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
     }, [funcIns, barIns]);
     return (
         <>
-            {(session.threadOps.length > 0 && session.threadId !== '') && <CollapsiblePanel title={t('FlameGraph')} style={{ minWidth: 1000 }}>
+            <CollapsiblePanel title={t('FlameGraph')} style={{ minWidth: 1000, display: session.threadOps.length > 0 && session.threadId !== '' ? 'block' : 'none' }}>
                 <Label name={t('ThreadID')} />
                 <Select
                     id={'select-threadId'}
@@ -130,7 +130,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     <Line id='funcLine' lineShow={lineShow} offset={offset} color='#999'/>
                     <MemoryFunctionCall session={session} setFuncIns={setFuncIns} />
                 </div>
-            </CollapsiblePanel >}
+            </CollapsiblePanel >
             <CollapsiblePanel title={t('LineBlockGraph')} style={{ minWidth: 1000 }}>
                 <Label name={t('DeviceID')} />
                 <Select
