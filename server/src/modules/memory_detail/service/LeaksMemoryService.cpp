@@ -236,7 +236,7 @@ void LeaksMemoryService::GetEventAttrWithDefaultValueByJson(json_t &json, Memory
     eventAttrs.used = tmp_str.empty() ? 0 : NumberUtil::StringToUnsignedLongLong(tmp_str);
     JsonUtil::SetByJsonKeyValue(eventAttrs.owner, json, BLOCK_EVENT_ATTR_OWNER_FIELD);
     tmp_str = JsonUtil::GetDumpString(json, BLOCK_EVENT_ATTR_GROUP_ID_FIELD);
-    eventAttrs.groupId = tmp_str.empty() ? 0 : NumberUtil::StringToLongLong(tmp_str);
+    eventAttrs.groupId = tmp_str.empty() ? 0 : NumberUtil::StringToUnsignedLongLong(tmp_str);
 }
 
 void LeaksMemoryService::BuildEventAttrs(const MemoryEvent &event, MemoryEventAttrs &eventAttr)

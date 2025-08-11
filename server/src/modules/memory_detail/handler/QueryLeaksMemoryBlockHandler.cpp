@@ -141,7 +141,7 @@ bool QueryLeaksMemoryBlockHandler::HandleBlocksTableRequest(LeaksMemoryBlockRequ
         errorMsg = "Failed to query memory blocks: query db failed.";
         return false;
     }
-    response.total = total;
+    response.total = static_cast<uint64_t>(total);
     std::transform(blocks.begin(), blocks.end(), std::back_inserter(response.blocks),
                    [](const MemoryBlock& block) {
                        return std::make_shared<MemoryBlock>(block);
