@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include <algorithm>
+#include <climits>
 #include "ProjectParserFactory.h"
 #include "ProjectParserBin.h"
 #include "ProjectParserJson.h"
@@ -540,7 +541,7 @@ std::set<std::string> ProjectParserBase::ParseDeviceIdSetFromCsv(const std::stri
         return {};
     }
     std::string line;
-    uint64_t index = -1;
+    uint64_t index = std::numeric_limits<uint64_t>::max();
     getline(file, line);
     auto headerRow = StringUtil::StringSplit(line);
     auto it = std::find(headerRow.begin(), headerRow.end(), DEVICE_ID);
@@ -548,7 +549,7 @@ std::set<std::string> ProjectParserBase::ParseDeviceIdSetFromCsv(const std::stri
         ServerLog::Info("No DeviceId col in step_trace_time.csv.");
         return {};
     }
-    index = std::distance(headerRow.begin(), it);
+    index = static_cast<uint64_t>(std::distance(headerRow.begin(), it));
     std::set<std::string> deviceIds;
     while (getline(file, line)) {
         auto dataRow = StringUtil::StringSplit(line);

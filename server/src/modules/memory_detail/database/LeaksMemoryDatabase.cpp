@@ -1130,10 +1130,9 @@ void LeaksMemoryDatabase::QueryEventsByGroupId(const uint64_t groupId, const std
 void LeaksMemoryDatabase::QueryAllDeviceExtremumTimestamp(
     std::unordered_map<std::string, std::pair<uint64_t, uint64_t>> &extreTsMap)
 {
-    std::string sql;
-    sql = StringUtil::FormatString("SELECT {},MIN({}),MAX({}) FROM {} WHERE {} NOT IN ('N/A','host') GROUP BY {}",
-                                   EVENT::DEVICE_ID, EVENT::TIMESTAMP, EVENT::TIMESTAMP, TABLE_LEAKS_DUMP,
-                                   EVENT::DEVICE_ID, EVENT::DEVICE_ID);
+    std::string sql = StringUtil::FormatString("SELECT {},MIN({}),MAX({}) FROM {} WHERE {} NOT IN ('N/A','host') GROUP BY {}",
+                                               EVENT::DEVICE_ID, EVENT::TIMESTAMP, EVENT::TIMESTAMP, TABLE_LEAKS_DUMP,
+                                               EVENT::DEVICE_ID, EVENT::DEVICE_ID);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {

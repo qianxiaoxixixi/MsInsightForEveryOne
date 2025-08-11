@@ -11,8 +11,8 @@
 #include "NumberUtil.h"
 #include "RenderEngine.h"
 #include "CollectionUtil.h"
-#include "ExpertHotspotManager.h"
 #include "ModelGenConfigParser.h"
+#include "ExpertHotspotManager.h"
 
 namespace Dic {
 namespace Module {
