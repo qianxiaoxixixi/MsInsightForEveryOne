@@ -140,6 +140,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     size="middle"
                     onChange={(value): void => {
                         runInAction(() => {
+                            session.threadFlag = false;
                             session.typeOpts = session.deviceIds[value].map((type: string) => ({ label: type, value: type }));
                             session.deviceId = value;
                             session.eventType = session.deviceIds[value][0];
@@ -154,6 +155,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     size="middle"
                     onChange={(value): void => {
                         runInAction(() => {
+                            session.threadFlag = false;
                             session.eventType = value;
                         });
                     }}
