@@ -30,6 +30,8 @@ bool QueryLeaksMemoryEventHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         return false;
     }
     responsePtr->total = total;
+    responsePtr->withCallStackC = database->withCallStackC;
+    responsePtr->withCallStackPython = database->withCallStackPython;
     SendResponse(std::move(responsePtr), true);
     return true;
 }
