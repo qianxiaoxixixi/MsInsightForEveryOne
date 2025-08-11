@@ -78,6 +78,8 @@ struct MemoryEvent {
     std::string ptr;
     std::string attr;
     int64_t size{0};
+    std::string callStackC;
+    std::string callStackPython;
 };
 
 struct MemoryAllocation {

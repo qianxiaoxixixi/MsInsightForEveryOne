@@ -247,6 +247,8 @@ struct LeaksMemoryEventResponse : public JsonResponse {
     int64_t total{};
     // 注意此处会将events转换为扁平data数组后返回给前端
     std::vector<MemoryEvent> events;
+    bool withCallStackC = false;
+    bool withCallStackPython = false;
 
     [[nodiscard]] std::optional<document_t> ToJson() const override
     {
@@ -256,19 +258,25 @@ struct LeaksMemoryEventResponse : public JsonResponse {
         json_t body(kObjectType);
         json_t headers(kArrayType);
         for (auto const &header : EVENT_TABLE::FIELD_FULL_COLUMNS) {
-            if (header.visible) {
+            bool needed = true;
+            if (header.name == MemoryEventTableColumn::CALL_STACK_C) {
+                needed = withCallStackC;
+            }
+            if (header.name == MemoryEventTableColumn::CALL_STACK_PYTHON) {
+                needed = withCallStackPython;
+            }
+            if (header.visible && needed) {
                 headers.PushBack(ToTableHeaderJson(header, allocator), allocator);
             }
         }
         JsonUtil::AddMember(body, "headers", headers, allocator);
-        JsonUtil::AddMember(body, "events", ToTableDataJson(events, allocator), allocator);
+        JsonUtil::AddMember(body, "events", ToTableDataJson(allocator), allocator);
         JsonUtil::AddMember(body, "total", total, allocator);
         JsonUtil::AddMember(json, "body", body, allocator);
         return std::optional<document_t>{std::move(json)};
     }
 
-    static document_t ToTableDataJson(const std::vector<MemoryEvent>& events,
-                                      Document::AllocatorType& allocator)
+    document_t ToTableDataJson(Document::AllocatorType& allocator) const
     {
         document_t dataJson(kArrayType);
         for (auto &event : events) {
@@ -283,6 +291,12 @@ struct LeaksMemoryEventResponse : public JsonResponse {
             JsonUtil::AddMember(eventJson, "deviceId", event.deviceId, allocator);
             JsonUtil::AddMember(eventJson, "ptr", event.ptr, allocator);
             JsonUtil::AddMember(eventJson, "attr", event.attr, allocator);
+            if (withCallStackC) {
+                JsonUtil::AddMember(eventJson, "callStackC", event.callStackC, allocator);
+            }
+            if (withCallStackPython) {
+                JsonUtil::AddMember(eventJson, "callStackPython", event.callStackPython, allocator);
+            }
             dataJson.PushBack(eventJson, allocator);
         }
         return dataJson;

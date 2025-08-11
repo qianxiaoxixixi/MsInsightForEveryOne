@@ -73,6 +73,9 @@ public:
     void FlushMemoryBlocksCache();
     void FlushMemoryAllocationsCache();
 
+    bool withCallStackC = false;
+    bool withCallStackPython = false;
+
 private:
     int64_t QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vector<MemoryEvent>& events,
                                     uint64_t minTimestamp, const bool withExtraCountCol);
@@ -107,6 +110,8 @@ private:
     const std::string memoryBlockTable = "memory_block";
     // 火焰图数据
     const std::string pythonTraceTablePrefix = "python_trace_";
+    // 调用栈列前缀
+    const std::string callStackPrefix = "Call Stack";
 
     const std::string allocationColumnPattern =
         StringUtil::GenerateColumnString(MemoryAllocationTableColumn::FULL_COLUMNS_WITHOUT_ID);
@@ -128,6 +133,8 @@ private:
     std::mutex cacheMutex;
     std::vector<MemoryAllocation> allocationCache;
     std::vector<MemoryBlock> blockCache;
+
+    bool SetCallStackExistsFlagByCheckColumn();
 };
 
 }  // namespace FullDb

@@ -19,7 +19,7 @@ namespace EVENT = Dic::Module::MemoryDetail::MemoryEventTableColumn;
 namespace TRACE = Dic::Module::MemoryDetail::MemoryPythonTraceTableColumn;
 void LeaksMemoryDatabase::Reset()
 {
-    ServerLog::Info("Memory reset.");
+    ServerLog::Info("[Leaks] Leaks db reset.");
     auto databaseList = Timeline::DataBaseManager::Instance().GetAllLeaksMemoryDatabase();
     for (auto &db : databaseList) {
         auto database = dynamic_cast<LeaksMemoryDatabase *>(db);
@@ -33,6 +33,12 @@ bool LeaksMemoryDatabase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
     if (!Database::OpenDb(dbPath, clearAllTable)) {
         ServerLog::Error("[Leaks] Failed to open leaks memory db with path: %.", dbPath);
+        return false;
+    }
+    // 查看CallStack列是否存在
+    if (!SetCallStackExistsFlagByCheckColumn()) {
+        ServerLog::Error("[Leaks] Failed to check callstack columns. Db error.");
+        CloseDb();
         return false;
     }
     if (!IsDatabaseVersionChange()) {
@@ -141,6 +147,7 @@ bool LeaksMemoryDatabase::UpdateParseStatus(const std::string &status)
     return UpdateValueIntoStatusInfoTable(leaksMemoryParseStatus, status);
 }
 
+// 当withExtraCountCol = true时, 要求sql必须将COUNT(*) OVER()作为首列
 int64_t LeaksMemoryDatabase::QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vector<MemoryEvent>& events,
                                                      uint64_t minTimestamp, const bool withExtraCountCol)
 {
@@ -152,6 +159,9 @@ int64_t LeaksMemoryDatabase::QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::ve
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         MemoryEvent event{};
+        if (withExtraCountCol) {
+            count = sqlite3_column_int64(stmt, col++);
+        }
         event.id = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         event.event = sqlite3_column_string(stmt, col++);
         event.eventType = sqlite3_column_string(stmt, col++);
@@ -163,10 +173,13 @@ int64_t LeaksMemoryDatabase::QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::ve
         event.deviceId = sqlite3_column_string(stmt, col++);
         event.ptr = sqlite3_column_string(stmt, col++);
         event.attr = sqlite3_column_string(stmt, col++);
-        events.emplace_back(event);
-        if (withExtraCountCol && count == 0) {
-            count = sqlite3_column_int64(stmt, col++);
+        if (withCallStackPython) {
+            event.callStackPython = sqlite3_column_string(stmt, col++);
         }
+        if (withCallStackC) {
+            event.callStackC = sqlite3_column_string(stmt, col++);
+        }
+        events.emplace_back(event);
     }
     return count;
 }
@@ -789,7 +802,7 @@ int64_t LeaksMemoryDatabase::QueryEventsByRequestParams(const LeaksMemoryEventPa
                                                         std::vector<MemoryEvent>& events)
 {
     sqlite3_stmt* stmt = nullptr;
-    std::string queryCountColumns = "*, COUNT(*) OVER()";
+    std::string queryCountColumns = "COUNT(*) OVER(), *";
     stmt = BuildQueryEventsByQueryParamsAndBindParam(queryCountColumns, queryParams);
     if (stmt == nullptr) {
         ServerLog::Error("Query events table by params failed. Failed to prepare sql.");
@@ -1148,6 +1161,32 @@ void LeaksMemoryDatabase::QueryAllDeviceExtremumTimestamp(
     }
     sqlite3_finalize(stmt);
     return;
+}
+
+bool LeaksMemoryDatabase::SetCallStackExistsFlagByCheckColumn()
+{
+    std::string sql = StringUtil::FormatString("SELECT DISTINCT name FROM pragma_table_info('{}') "
+                                               "WHERE name LIKE ?", TABLE_LEAKS_DUMP);
+    sqlite3_stmt* stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Check callstack columns exist failed. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        return false;
+    }
+    std::string namePattern = StringUtil::StrJoin(callStackPrefix, "%");
+    sqlite3_bind_text(stmt, bindStartIndex, namePattern.c_str(), namePattern.length(), SQLITE_TRANSIENT);
+    std::set<std::string> callStackCols;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        callStackCols.emplace(sqlite3_column_string(stmt, resultStartIndex));
+    }
+    sqlite3_finalize(stmt);
+    std::string callStackC = std::string(EVENT::CALL_STACK_C);
+    StringUtil::StripDbColumnName(callStackC);
+    std::string callStackPython = std::string(EVENT::CALL_STACK_PYTHON);
+    StringUtil::StripDbColumnName(callStackPython);
+    withCallStackC = callStackCols.find(callStackC) != callStackCols.end();
+    withCallStackPython = callStackCols.find(callStackPython) != callStackCols.end();
+    return true;
 }
 
 }  // FullDb

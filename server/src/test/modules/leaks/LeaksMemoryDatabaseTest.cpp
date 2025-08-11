@@ -426,17 +426,58 @@ TEST_F(LeaksMemoryDatabaseTest, QueryTotalSizeUtilTimestampUsingOwnerWhenWorkspa
     uint64_t originPtaTotalSize = memoryDatabase->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp,
                                                                                          "PTA");
     uint64_t originPtaWorkspaceTotalSize = memoryDatabase->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp,
-                                                                                                  "PTA_WORKSPACE");
+                                                                                                  LEAKS_MEMORY_ALLOC_OWNER_PTA_WORKSPACE);
     EXPECT_EQ(originPtaWorkspaceTotalSize, 0);
     EXPECT_GT(originPtaTotalSize, 0);
+    std::string testFlag = "DT-TEST";
     // 插入一条PTA_WORKSPACE数据, 内存块在之后释放
-    MemoryBlock mockPTAWorkspaceBlock("", deviceId, 1, 0, timestamp + 1,
-                                      "PTA_WORKSPACE", "PTA_WORKSPACE", "", 0, 0);
+    MemoryBlock mockPTAWorkspaceBlock(testFlag, deviceId, 1, 0, timestamp + 1,
+                                      LEAKS_MEMORY_ALLOC_OWNER_PTA_WORKSPACE, LEAKS_MEMORY_ALLOC_OWNER_PTA_WORKSPACE,
+                                      "", 0, 0);
     memoryDatabase->InsertMemoryBlock(mockPTAWorkspaceBlock);
     memoryDatabase->FlushMemoryBlocksCache();
-    uint64_t newPtaTotalSize = memoryDatabase->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp, "PTA");
+    uint64_t newPtaTotalSize = memoryDatabase->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp,
+                                                                                      LEAKS_MEMORY_ALLOC_OWNER_PTA);
     uint64_t newPtaWorkspaceTotalSize = memoryDatabase->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp,
-                                                                                               "PTA_WORKSPACE");
+                                                                                               LEAKS_MEMORY_ALLOC_OWNER_PTA_WORKSPACE);
     EXPECT_EQ(newPtaTotalSize, originPtaTotalSize);
     EXPECT_EQ(newPtaWorkspaceTotalSize, 1);
+    std::string clearSql = StringUtil::FormatString("DELETE FROM {} WHERE {} = '{}' AND {} = '{}'",
+                                                    TABLE_LEAKS_DUMP, MemoryEventTableColumn::PTR, testFlag,
+                                                    MemoryEventTableColumn::EVENT_TYPE, LEAKS_MEMORY_ALLOC_OWNER_PTA_WORKSPACE);
+    EXPECT_TRUE(memoryDatabase->ExecSql(clearSql));
+}
+
+/***
+* 该DT用于测试msleaks采集时开启CallStack的场景
+*/
+TEST_F(LeaksMemoryDatabaseTest, TestCompatibilityOfCallStack)
+{
+    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+
+    // 插入Callstack列模拟开启了CallStack
+    std::string addCallStackSql = StringUtil::FormatString("ALTER TABLE {} ADD {} TEXT DEFAULT 'N/A'",
+                                                           TABLE_LEAKS_DUMP, MemoryEventTableColumn::CALL_STACK_C);
+    EXPECT_TRUE(memoryDatabase->ExecSql(addCallStackSql));
+
+    // 重开一个db(由于db在open中会检查是否有callstack列，所以必须关闭重开)
+    std::string path = memoryDatabase->GetDbPath();
+    memoryDatabase->CloseDb();
+    EXPECT_TRUE(memoryDatabase->OpenDb(path, false));
+    EXPECT_TRUE(memoryDatabase->withCallStackC);
+    EXPECT_FALSE(memoryDatabase->withCallStackPython);
+
+    LeaksMemoryEventParams queryParams;
+    queryParams.deviceId = "1";
+    queryParams.currentPage = 1;
+    queryParams.pageSize = 10;
+    std::vector<MemoryEvent> events;
+    int64_t total = memoryDatabase->QueryEventsByRequestParams(queryParams, events);
+    EXPECT_TRUE(total > 0 && !events.empty());
+    EXPECT_EQ(events.front().callStackC, "N/A");
+
+    // 清理插入的CallStack列
+    std::string clearCallStackSql = StringUtil::FormatString("ALTER TABLE {} DROP COLUMN {}",
+                                                             TABLE_LEAKS_DUMP, MemoryEventTableColumn::CALL_STACK_C);
+    EXPECT_TRUE(memoryDatabase->ExecSql(clearCallStackSql));
 }
