@@ -231,8 +231,8 @@ const handleContextMenu = (barIns: echarts.ECharts | null | undefined, session: 
             runInAction(() => {
                 session.allowMark = true;
                 session.firstLastStamps = {
-                    first: startPoint,
-                    last: endPoint,
+                    first: startPoint + 24,
+                    last: endPoint + 24,
                 };
                 session.contextMenu.xPos = event.clientX;
                 session.contextMenu.yPos = event.clientY;
