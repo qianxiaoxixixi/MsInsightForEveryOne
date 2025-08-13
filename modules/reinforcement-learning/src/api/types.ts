@@ -24,6 +24,7 @@ export interface TraceDataItem {
 
 export interface GetTraceDataResults {
     taskData: TraceDataItem[];
+    microBatchData: TraceDataItem[];
     stageTypeList: string[];
     minTime: number;
     maxTime: number;
