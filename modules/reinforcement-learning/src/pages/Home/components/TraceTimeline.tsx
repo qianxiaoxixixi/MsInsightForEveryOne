@@ -11,7 +11,7 @@ import { merge } from 'lodash';
 import { type Theme, useTheme } from '@emotion/react';
 import { clamp, colorPalette, safeStr, StyledEmpty } from 'ascend-utils';
 import { useStores } from '@/stores';
-import { GetTraceDataResults } from '@/api/types';
+import { GetTraceDataResults, TraceDataItem } from '@/api/types';
 
 const TEXT_PADDING = 4;
 const TEXT_PADDING_X = TEXT_PADDING * 2;
@@ -26,19 +26,6 @@ interface SeriesDataItem {
         color: string;
     };
 }
-
-const PREFIX = 'prefix_';
-
-const addPrefix = (str: string, prefix = PREFIX): string => {
-    return prefix + str;
-};
-
-const removePrefix = (str: string, prefix = PREFIX): string => {
-    if (str.startsWith(prefix)) {
-        return str.slice(prefix.length);
-    }
-    return str;
-};
 
 const nsToMs = (ns: number): number => {
     return ns / 1000000;
@@ -81,39 +68,108 @@ const valueMap = {
     name: 9,
 };
 
-const formatData = (dataSource: GetTraceDataResults, theme: Theme): {ranks: Ranks; data: SeriesDataItem[]} => {
-    const { taskData: rawData } = dataSource;
-    const data: SeriesDataItem[] = [];
-    const ranks = rawData.map(item => `${item.hostName} Rank ${item.rankId}`) ?? [];
+const formatData = (
+    dataSource: GetTraceDataResults,
+    theme: Theme,
+): { ranks: Ranks; taskSeriesData: SeriesDataItem[]; microBatchSeriesData: SeriesDataItem[] } => {
+    const { taskData, microBatchData } = dataSource;
+    const taskSeriesData: SeriesDataItem[] = [];
+    const microBatchSeriesData: SeriesDataItem[] = [];
 
-    for (const item of rawData) {
-        const { rankId, hostName } = item;
-        const yName = `${hostName} Rank ${rankId}`;
+    // 提取所有 rank 信息（仅从 taskData）
+    const ranks = taskData.map(item => `${item.hostName} Rank ${item.rankId}`) ?? [];
 
-        if (!hostAliasMap.get(item.hostName)) {
-            hostAliasMap.set(item.hostName, `Host ${hostAliasMap.size + 1}`);
+    // 抽取数据处理函数
+    const processData = (
+        source: TraceDataItem[],
+        target: SeriesDataItem[],
+    ): void => {
+        for (const item of source) {
+            const { rankId, hostName } = item;
+            const yName = `${hostName} Rank ${rankId}`;
+
+            if (!hostAliasMap.has(hostName)) {
+                hostAliasMap.set(hostName, `Host ${hostAliasMap.size + 1}`);
+            }
+
+            for (const slice of item.lists) {
+                const { name, fileId, nodeType, stageType, startTime, duration } = slice;
+
+                target.push({
+                    name,
+                    value: [
+                        yName,
+                        nsToMs(startTime),
+                        nsToMs(startTime + duration),
+                        nsToMs(duration),
+                        fileId,
+                        nodeType,
+                        stageType,
+                        hostName,
+                        rankId,
+                        name,
+                    ],
+                    itemStyle: {
+                        color: theme.colorPalette[colorPalette[hashToNumber(stageType)]],
+                    },
+                });
+            }
         }
+    };
 
-        for (const slice of item.lists) {
-            const { name, fileId, nodeType, stageType, startTime, duration } = slice;
-            // 由于value中name的值可能为数字类型的字符串‘0’，导致echarts取值时会转为number类型，导致其他字符串类型的值变为NaN,所以加前缀处理，防止echarts将其转为数字类型
-            data.push({
-                name,
-                value: [yName, nsToMs(startTime), nsToMs((startTime + duration)), nsToMs(duration), fileId, nodeType, stageType, item.hostName, item.rankId, addPrefix(name)],
-                itemStyle: {
-                    color: theme.colorPalette[colorPalette[hashToNumber(stageType)]],
-                },
-            });
-        }
-    }
+    processData(taskData, taskSeriesData);
+    processData(microBatchData, microBatchSeriesData);
 
-    return { ranks, data };
+    return { ranks, taskSeriesData, microBatchSeriesData };
 };
 
-const renderRect: CustomSeriesRenderItem = (_, api) => {
+const renderTaskRect: CustomSeriesRenderItem = (_, api) => {
     const { start: vStart, end: vEnd, name: vName } = valueMap;
     const categoryIndex = api.value(0);
-    const name = removePrefix(api.value(vName) as string);
+    const name = api.value(vName) as string;
+    const start = api.coord([api.value(vStart), categoryIndex]);
+    const end = api.coord([api.value(vEnd), categoryIndex]);
+    const gridItemHeight = (api.size?.([0, 1]) as number[])[1];
+    const rectWidth = end[0] - start[0];
+    const rectHeight = gridItemHeight * 0.8;
+    const textWidth = rectWidth > TEXT_PADDING_X ? Math.floor(rectWidth - TEXT_PADDING_X) : rectWidth;
+
+    return {
+        type: 'rect',
+        transition: ['shape'],
+        shape: {
+            x: start[0],
+            y: start[1] - rectHeight / 2,
+            width: rectWidth,
+            height: rectHeight,
+        },
+        textContent: {
+            type: 'text',
+            ignore: true,
+            style: {
+                text: name,
+                fill: '#ffffff',
+                overflow: 'truncate',
+                width: textWidth,
+            },
+        },
+        textConfig: {
+            position: 'inside',
+            inside: true,
+            local: true,
+        },
+        style: {
+            fill: api.visual('color'),
+            opacity: 0.7,
+        },
+    };
+};
+
+const renderMicroBatchRect: CustomSeriesRenderItem = (_, api) => {
+    const { start: vStart, end: vEnd, nodeType: vNodeType } = valueMap;
+    const nodeType = api.value(vNodeType) as string;
+    const isFP = nodeType === 'FP';
+    const categoryIndex = api.value(0);
     const start = api.coord([api.value(vStart), categoryIndex]);
     const end = api.coord([api.value(vEnd), categoryIndex]);
     const gridItemHeight = (api.size?.([0, 1]) as number[])[1];
@@ -132,9 +188,9 @@ const renderRect: CustomSeriesRenderItem = (_, api) => {
         },
         textContent: {
             type: 'text',
-            invisible: rectHeight < 12,
+            ignore: rectHeight < 12,
             style: {
-                text: name,
+                text: nodeType,
                 fill: '#ffffff',
                 overflow: 'truncate',
                 width: textWidth,
@@ -147,6 +203,10 @@ const renderRect: CustomSeriesRenderItem = (_, api) => {
         },
         style: {
             fill: api.visual('color'),
+            opacity: 1,
+            stroke: 'rgba(255,255,255,0.9)',
+            lineDash: isFP ? 'solid' : 'dashed',
+            lineWidth: isFP ? 0 : 1,
         },
     };
 };
@@ -155,6 +215,14 @@ const baseOptions: EChartsOption = {
     grid: {
         left: 100,
         right: 100,
+    },
+    toolbox: {
+        show: true,
+        feature: {
+            dataView: {
+                show: false,
+            },
+        },
     },
     tooltip: {
         formatter: function (params: any): string {
@@ -223,12 +291,6 @@ const baseOptions: EChartsOption = {
     xAxis: {
         name: 'Time(ms)',
         scale: true,
-        axisLabel: {
-            formatter (value: number): string {
-                const ms = Math.floor(value / 1000);
-                return `${ms} k`;
-            },
-        },
     },
     yAxis: {
         name: 'Host Alias + Rank',
@@ -244,15 +306,23 @@ const baseOptions: EChartsOption = {
     series: [
         {
             type: 'custom',
-            renderItem: renderRect,
-            itemStyle: {
-                opacity: 0.8,
-            },
+            renderItem: renderTaskRect,
             encode: {
                 x: [1, 2],
                 y: 0,
             },
             clip: true,
+            z: 0,
+        },
+        {
+            type: 'custom',
+            renderItem: renderMicroBatchRect,
+            encode: {
+                x: [1, 2],
+                y: 0,
+            },
+            clip: true,
+            z: 1,
         },
     ],
 };
@@ -295,7 +365,7 @@ export const TraceTimeline = observer((): JSX.Element => {
         }
         hostAliasMap.clear();
 
-        const { data, ranks } = formatData(traceData, theme);
+        const { ranks, taskSeriesData, microBatchSeriesData } = formatData(traceData, theme);
         const height = Math.round(clamp((ranks.length * RANK_HEIGHT) + CHART_BASE_HEIGHT, 200, 800));
 
         setChartHeight(`${height}px`);
@@ -304,7 +374,8 @@ export const TraceTimeline = observer((): JSX.Element => {
                 data: ranks,
             },
             series: [
-                { data },
+                { data: taskSeriesData },
+                { data: microBatchSeriesData },
             ],
         }));
     }, [traceData]);

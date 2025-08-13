@@ -49,12 +49,16 @@ const defaultOptions: EChartsOption = {
     },
     toolbox: {
         show: false,
+        iconStyle: { borderColor: '#8D98AA' },
         feature: {
             dataZoom: {
                 yAxisIndex: 'none',
                 emphasis: { iconStyle: { textPosition: 'top' } },
             },
             restore: {
+                emphasis: { iconStyle: { textPosition: 'top' } },
+            },
+            dataView: {
                 emphasis: { iconStyle: { textPosition: 'top' } },
             },
         },
