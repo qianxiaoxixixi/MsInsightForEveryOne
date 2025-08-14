@@ -54,18 +54,18 @@ namespace MemoryEventTableColumn {
     constexpr std::string_view CALL_STACK_C = "`Call Stack(C)`";
     inline const std::vector<SqliteDbTableColumn> FIELD_FULL_COLUMNS = {
         {ID, "id", true, true, false}, // ID, 事件ID
-        {EVENT, "event", true, true, true}, // Event, 事件类型
+        {EVENT, "event", true, false, true}, // Event, 事件类型
         {EVENT_TYPE, "eventType", true, true, true}, // Event Type, 事件子类型
         {NAME, "name", true, true, true}, // Name, 名称
-        {TIMESTAMP, "timestamp", true, true, true}, // Timestamp(ns), 发生时间
+        {TIMESTAMP, "timestamp", true, true, false}, // Timestamp(ns), 发生时间
         {PROCESS_ID, "processId", true, true, true}, // Process ID, 进程ID
         {THREAD_ID, "threadId", true, true, true}, // Thread ID, 线程ID
         {DEVICE_ID, "deviceId"},
         {PTR, "ptr", true, true, true}, // Ptr, 内存地址
-        {ATTR, "attr", true, true, true}, // Attr, 特有属性
+        {ATTR, "attr", true, false, true}, // Attr, 特有属性
         // 可选列
-        {CALL_STACK_PYTHON, "callStackPython", true, true, true}, // Call Stack(Python), Python调用栈
-        {CALL_STACK_C, "callStackC", true, true, true} // Call Stack(C), C调用栈
+        {CALL_STACK_PYTHON, "callStackPython", true, false, true}, // Call Stack(Python), Python调用栈
+        {CALL_STACK_C, "callStackC", true, false, true} // Call Stack(C), C调用栈
     };
 }
 namespace MemoryAllocationTableColumn {
@@ -102,11 +102,11 @@ namespace MemoryBlockTableColumn {
         {SIZE, "size", true, true, false}, // Size, 内存块大小
         {START_TIMESTAMP, "startTimestamp", true, true, false}, // Malloc Timestamp(ns), 申请时间
         {END_TIMESTAMP, "endTimestamp", true, true, false}, // Free Timestamp(ns), 释放时间
-        {EVENT_TYPE, "eventType", true, true, true}, // 事件子类型
+        {EVENT_TYPE, "eventType", false, true, true}, // 事件子类型
         {OWNER, "owner", true, true, true}, // 内存块持有者(标签)
         {PROCESS_ID, "processId", true, true, true}, // Process Id, 进程ID
         {THREAD_ID, "threadId", true, true, true}, // Thread Id, 线程ID
-        {ATTR, "attr", true, true, true} // Attr, 特有属性
+        {ATTR, "attr", true, false, true} // Attr, 特有属性
     };
 }
 namespace MemoryPythonTraceTableColumn {
