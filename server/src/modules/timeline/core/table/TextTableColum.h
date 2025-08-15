@@ -90,6 +90,12 @@ constexpr std::string_view TASK_ID = "taskId";
 constexpr std::string_view MODEL_ID = "modelId";
 }
 
+namespace TaskPmuInfoColumn {
+constexpr std::string_view GLOBAL_TASK_ID = "globalTaskId";
+constexpr std::string_view NAME_ID = "name";
+constexpr std::string_view VALUE_ID = "value";
+}
+
 namespace CommucationTaskInfoColumn {
 constexpr std::string_view ROW_ID = "rowid";
 constexpr std::string_view NAME = "name";

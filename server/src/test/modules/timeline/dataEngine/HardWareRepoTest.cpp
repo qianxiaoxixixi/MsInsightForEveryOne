@@ -27,6 +27,8 @@ protected:
             " endGlobalTid INTEGER, domainId INTEGER, connectionId INTEGER, depth integer); ";
     const std::string memoryOperationEnumSql =
             "create table if not exists ENUM_MEMCPY_OPERATION(id INTEGER, name TEXT);";
+    const std::string taskPmuInfoSql =
+        "CREATE TABLE if not exists TASK_PMU_INFO (globalTaskId INTEGER, name INTEGER, value NUMERIC);";
     void SetUp() override
     {
         TrackInfoManager::Instance().Reset();
@@ -45,6 +47,7 @@ protected:
         DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
         DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
         DatabaseTestCaseMockUtil::CreateTable(db, memoryOperationEnumSql);
+        DatabaseTestCaseMockUtil::CreateTable(db, taskPmuInfoSql);
         std::string taskInsert =
             "INSERT INTO \"main\".\"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
             "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
@@ -64,7 +67,10 @@ protected:
             "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (4, 'ddd');\n"
             "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (5, 'eee');\n"
             "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (6, 'fff');\n"
-            "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (7, 'ggg');";
+            "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (7, 'ggg');\n"
+            "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (8, 'hhh');\n"
+            "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (9, 'iii');\n"
+            "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (10, 'jjj');";
         DatabaseTestCaseMockUtil::InsertData(db, taskInsert);
         DatabaseTestCaseMockUtil::InsertData(db, computeInsert);
         DatabaseTestCaseMockUtil::InsertData(db, stringInsert);
@@ -74,6 +80,8 @@ protected:
         dependency.computeTaskInfoTableMock->SetDb(db);
         dependency.taskTableMock = std::make_unique<TaskTableMock>();
         dependency.taskTableMock->SetDb(db);
+        dependency.taskPmuInfoTableMock = std::make_unique<TaskPmuInfoTableMock>();
+        dependency.taskPmuInfoTableMock->SetDb(db);
     }
 
     void TestQueryMemoryInfoNormalPrepare(sqlite3 *&db)
@@ -86,6 +94,21 @@ protected:
                                             "VALUES (1, \"host to device\");";
         DatabaseTestCaseMockUtil::InsertData(db, memoryOperationInsert);
     }
+
+    void TestQueryTaskPmuInfoNormalPrepare(sqlite3 *&db)
+    {
+        DatabaseTestCaseMockUtil::CreateTable(db, taskPmuInfoSql);
+        std::string taskPmuInfoInsert =
+            "INSERT INTO \"main\".\"TASK_PMU_INFO\" (\"globalTaskId\", \"name\", \"value\") "
+            "VALUES (5, 8, 111), (6, 9, 222), (6, 10, 333)";
+        DatabaseTestCaseMockUtil::InsertData(db, taskPmuInfoInsert);
+    }
+
+    void TestQueryTaskPmuInfoNormalClean(sqlite3 *&db)
+    {
+        std::string taskPmuInfoClean = "TRUNCATE TABLE TASK_PMU_INFO;";
+        DatabaseTestCaseMockUtil::ExecuteSql(db, taskPmuInfoClean);
+    }
 };
 
 class HardWareRepoMock : public HardWareRepo {
@@ -95,6 +118,7 @@ public:
         taskTable = std::move(dependency.taskTableMock);
         computeTaskInfoTable = std::move(dependency.computeTaskInfoTableMock);
         stringIdsTable = std::move(dependency.stringIdsTableMock);
+        taskPmuInfoTable = std::move(dependency.taskPmuInfoTableMock);
     }
     Stmt CreatPreparedStatement(const std::string &sql, const SliceQuery &sliceQuery) override
     {
@@ -155,6 +179,25 @@ TEST_F(HardWareRepoTest, TestQuerySliceDetailInfoNormalWithMemory)
                                    "\"taskId\":\"3731\",\"connectionId\":\"7422\",\"operation\":\"host to device\","
                                    "\"size(B)\":1000,\"bandwidth(GB/s)\":0.000426}";
     EXPECT_EQ(slice.args, expectArgs);
+}
+
+TEST_F(HardWareRepoTest, TestQuerySliceDetailInfoNormalWithTaskPmuInfo)
+{
+    HardWareDependency dependency;
+    HardWareRepoMock hardWareRepoMock;
+    TestQuerySliceDetailInfoNormalPrepare(dependency, hardWareRepoMock.db);
+    TestQueryTaskPmuInfoNormalPrepare(hardWareRepoMock.db);
+    hardWareRepoMock.SetMock(dependency);
+    SliceQuery query;
+    query.sliceId = "1";
+    query.rankId = "0";
+    CompeteSliceDomain slice;
+    bool result = hardWareRepoMock.QuerySliceDetailInfo(query, slice);
+    EXPECT_EQ(result, true);
+    const std::string expectArgs = "{\"modelId\":\"4294967295\",\"taskType\":\"qqq\",\"streamId\":\"16\",\"taskId\":"
+        "\"3731\",\"connectionId\":\"7422\",\"hhh\":111.0}";
+    EXPECT_EQ(slice.args, expectArgs);
+    TestQueryTaskPmuInfoNormalClean(hardWareRepoMock.db);
 }
 
 /**

@@ -114,6 +114,7 @@ bool HardWareRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSli
     }
     QuerySliceArgs(sliceQuery, competeSliceDomain, targetTask);
     QuerySliceShape(sliceQuery, competeSliceDomain, targetTask);
+    QuerySlicePmuInfo(sliceQuery, competeSliceDomain, targetTask.globalTaskId);
     return true;
 }
 
@@ -146,6 +147,36 @@ void HardWareRepo::QuerySliceShape(const SliceQuery &sliceQuery, CompeteSliceDom
         competeSliceDomain.sliceShape.outputShapes = strMap[targetCompute.outputShapes];
         competeSliceDomain.sliceShape.attrInfo = strMap[targetCompute.attrInfo];
     }
+}
+
+void HardWareRepo::QuerySlicePmuInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
+                                     uint64_t globalTaskId)
+{
+    if (std::empty(competeSliceDomain.args)) {
+        return;
+    }
+    std::vector<TaskPmuInfoPO> pmuInfoPOS;
+    taskPmuInfoTable->Select(TaskPmuInfoColumn::GLOBAL_TASK_ID, TaskPmuInfoColumn::NAME_ID)
+        .Select(TaskPmuInfoColumn::VALUE_ID).Eq(TaskPmuInfoColumn::GLOBAL_TASK_ID, globalTaskId)
+        .ExcuteQuery(sliceQuery.rankId, pmuInfoPOS);
+    if (std::empty(pmuInfoPOS)) {
+        return;
+    }
+    std::string error;
+    auto json = JsonUtil::TryParse(competeSliceDomain.args, error);
+    if (!json.has_value() || !error.empty()) {
+        return;
+    }
+    std::vector<uint64_t> stringIds;
+    for (auto &item : pmuInfoPOS) {
+        stringIds.emplace_back(item.name);
+    }
+    std::unordered_map<uint64_t, std::string> strMap = stringIdsTable->QueryStrMap(stringIds, sliceQuery.rankId);
+    auto &allocator = json.value().GetAllocator();
+    for (auto &item : pmuInfoPOS) {
+        JsonUtil::AddMember(json.value(), strMap[item.name], item.value, allocator);
+    }
+    competeSliceDomain.args = JsonUtil::JsonDump(json.value());
 }
 
 void HardWareRepo::QuerySliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,

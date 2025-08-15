@@ -4,6 +4,7 @@
 #ifndef PROFILER_SERVER_HARDWAREREPO_H
 #define PROFILER_SERVER_HARDWAREREPO_H
 #include "TaskTable.h"
+#include "TaskPmuInfoTable.h"
 #include "ComputeTaskInfoTable.h"
 #include "StringIdsTable.h"
 #include "SliceRepoInterface.h"
@@ -20,6 +21,7 @@ public:
                                         std::vector<CompeteSliceDomain> &res) override;
 protected:
     std::unique_ptr<TaskTable> taskTable = std::make_unique<TaskTable>();
+    std::unique_ptr<TaskPmuInfoTable> taskPmuInfoTable = std::make_unique<TaskPmuInfoTable>();
     std::unique_ptr<ComputeTaskInfoTable> computeTaskInfoTable = std::make_unique<ComputeTaskInfoTable>();
     std::unique_ptr<StringIdsTable> stringIdsTable = std::make_unique<StringIdsTable>();
 
@@ -29,6 +31,8 @@ protected:
 
     void
     QuerySliceShape(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain, const TaskPO &targetTask);
+    void QuerySlicePmuInfo(const SliceQuery& sliceQuery, CompeteSliceDomain& competeSliceDomain,
+                           uint64_t globalTaskId);
     bool QueryMemoryInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
                          const TaskPO &targetTask);
 };

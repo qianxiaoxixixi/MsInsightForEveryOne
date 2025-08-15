@@ -19,6 +19,7 @@
 #include "PytorchApiTable.h"
 #include "PytorchCallchainsTable.h"
 #include "PythonGCTable.h"
+#include "TaskPmuInfoTable.h"
 using namespace Dic::Module::Timeline;
 namespace Dic::TimeLine::Table::Default::Mock {
 class TableDefaultMock {
@@ -166,6 +167,14 @@ protected:
     }
 };
 
+class TaskPmuInfoTableMock : public TaskPmuInfoTable, public TableDefaultMock {
+protected:
+    void ExcuteQuery(const std::string &fileId, std::vector<TaskPmuInfoPO> &result) override
+    {
+        TaskPmuInfoTable::ExcuteQuery(db, result);
+        ClearThreadLocal();
+    }
+};
 
 struct PytorchApiDependency {
     std::unique_ptr<StringIdsTableMock> stringIdsTableMock = std::make_unique<StringIdsTableMock>();
@@ -178,6 +187,7 @@ struct HardWareDependency {
     std::unique_ptr<StringIdsTableMock> stringIdsTableMock = std::make_unique<StringIdsTableMock>();
     std::unique_ptr<TaskTableMock> taskTableMock = std::make_unique<TaskTableMock>();
     std::unique_ptr<ComputeTaskInfoTableMock> computeTaskInfoTableMock = std::make_unique<ComputeTaskInfoTableMock>();
+    std::unique_ptr<TaskPmuInfoTableMock> taskPmuInfoTableMock = std::make_unique<TaskPmuInfoTableMock>();
 };
 
 struct CannDependency {
