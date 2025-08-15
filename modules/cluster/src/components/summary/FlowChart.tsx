@@ -202,6 +202,12 @@ const renderRect: CustomSeriesRenderItem = (params, api) => {
         style: {
             fill: api.visual('color'),
         },
+        emphasis: {
+            style: {
+                shadowBlur: 16,
+                shadowColor: '#9d9da9',
+            },
+        },
     };
 };
 
@@ -252,6 +258,7 @@ const baseOptions: EChartsOption = {
     },
     series: [
         {
+            z: 0,
             type: 'custom',
             renderItem: renderRect,
             itemStyle: {
@@ -264,6 +271,7 @@ const baseOptions: EChartsOption = {
             clip: true,
         },
         {
+            z: 1,
             type: 'custom',
             renderItem: renderLine,
             itemStyle: {
@@ -366,5 +374,30 @@ export const FlowChart = (props: FlowChartProps): JSX.Element => {
         };
     }, []);
 
-    return <MIChart ref={chartRef} height={chartHeight} loading={loading} options={chartOptions} />;
+    return <MIChart ref={chartRef} height={chartHeight} loading={loading} options={chartOptions}
+        onEvents={
+            {
+                mouseover(params): void {
+                    // 如果是节点 则直接返回
+                    if (params.seriesIndex === 0) {
+                        return;
+                    }
+                    // 节点高亮
+                    chartRef.current?.chartInstance?.dispatchAction({
+                        type: 'highlight',
+                        seriesIndex: 0,
+                        name: [params.value[4], params.value[5]],
+                    });
+                },
+                mouseout(params): void {
+                    if (params.seriesIndex === 0) {
+                        return;
+                    }
+                    chartRef.current?.chartInstance?.dispatchAction({
+                        type: 'downplay',
+                    });
+                },
+            }
+        }
+    />;
 };
