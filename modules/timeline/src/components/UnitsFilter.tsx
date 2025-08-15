@@ -156,9 +156,9 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], selectValues: string[]): voi
             unit.children.forEach(childUnit => {
                 let isUnitMatch = false;
                 if (childUnit.name === 'Thread') {
-                    isUnitMatch = selectValues.includes((childUnit.metadata as ThreadMetaData).threadName.replace(/\(\d{0,12}\)/, ''));
+                    isUnitMatch = selectValues.includes((childUnit.metadata as ThreadMetaData).threadName.replace(/\(\d{0,12}\)/, '').trim());
                 } else {
-                    isUnitMatch = selectValues.includes((childUnit.metadata as ProcessMetaData).processName.replace(/\(\d{0,12}\)/, ''));
+                    isUnitMatch = selectValues.includes((childUnit.metadata as ProcessMetaData).processName.replace(/\(\d{0,12}\)/, '').trim());
                 }
                 childUnit.isDisplay = isUnitMatch || findMatchUnit(childUnit, selectValues);
                 hasMatchUnit = hasMatchUnit || childUnit.isDisplay;

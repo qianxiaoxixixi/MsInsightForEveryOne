@@ -280,7 +280,7 @@ test.describe('Timeline', () => {
         await unitFilterTab.click();
 
         await filterContentSelector.open();
-        await filterContentSelector.selectOption('Ascend Hardware ');
+        await filterContentSelector.selectOption('Ascend Hardware');
         await filterBtn.click();
         await page.mouse.move(0, 0);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('units-filter.png', { maxDiffPixels: 100 });
