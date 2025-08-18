@@ -330,18 +330,7 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
     OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
     std::string sql;
     if (Protocol::OperatorGroupConverter::IsCommunication(reqParams.group)) {
-        sql = "SELECT COUNT(*) as nums "
-            "FROM ("
-            " SELECT SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) as opType,"
-            " COMMUNICATION_OP.endNs as end_ns,COMMUNICATION_OP.startNs as start_ns "
-            " FROM  COMMUNICATION_OP"
-            " JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName"
-            " JOIN (SELECT DISTINCT deviceId, connectionId FROM " + TABLE_TASK + ") "
-            " AS NTASK ON NTASK.connectionId = COMMUNICATION_OP.connectionId "
-            " WHERE NTASK.deviceId = ? "
-            " GROUP BY SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) "
-            " ORDER by (end_ns - start_ns) DESC LIMIT ?"
-            ") subquery";
+        sql = GenStatSqlWithCommunication();
     } else {
         std::string group = operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ?
             "op_type || accelerator_core" : R"(name || inputShapes || accelerator_core)";
@@ -360,6 +349,9 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
             " ) subquery";
     }
     GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql);
+    if (Protocol::OperatorGroupConverter::IsCommunication(reqParams.group)) {
+        sql = StringUtil::FormatString("SELECT COUNT(*) FROM ({})", sql);
+    }
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -768,14 +760,7 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
     bool isCommunication = Protocol::OperatorGroupConverter::IsCommunication(reqParams.group);
     std::string sql;
     if (isCommunication) {
-        sql = " SELECT COUNT(*) as nums FROM ("
-            " SELECT *  FROM " +
-            TABLE_COMMUNICATION_OP +
-            " JOIN (SELECT DISTINCT deviceId, connectionId FROM " + TABLE_TASK + ") "
-            " AS NTASK ON NTASK.connectionId = COMMUNICATION_OP.connectionId "
-            " WHERE NTASK.deviceId = ? "
-            " LIMIT ?"
-            " ) subquery";
+        sql = GenerateQueryDetailSqlForHCCL(sql);
     } else {
         sql = " SELECT COUNT(*) as nums"
             " FROM ("
@@ -792,6 +777,9 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
             " ) subquery";
     }
     GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql);
+    if (isCommunication) {
+        sql = StringUtil::FormatString("SELECT COUNT(*) FROM ({})", sql);
+    }
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -803,7 +791,6 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
     sqlite3_bind_int64(stmt, index++, deviceId);
     sqlite3_bind_int64(stmt, index++, reqParams.topK);
     BindQueryFilters(reqParams, stmt, index);
-
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         total = sqlite3_column_int64(stmt, resultStartIndex);
     }
