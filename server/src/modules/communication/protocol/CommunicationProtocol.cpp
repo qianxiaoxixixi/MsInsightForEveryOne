@@ -23,6 +23,7 @@ void CommunicationProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH, ToMatrixListRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_OPERATOR_LISTS, ToDurationRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_ADVISOR, ToCommunicationAdvisorRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_DURATION_SLOW_RANK_LIST, ToDurationRequest);
 }
 
 void CommunicationProtocol::RegisterResponseToJsonFuncs()
@@ -38,6 +39,7 @@ void CommunicationProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_GROUP, ToMatrixGroupResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH, ToMatrixListResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_ADVISOR, ToCommunicationAdvisorResponse);
+    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_DURATION_SLOW_RANK_LIST, ToDurationSlowRankResponse);
 }
 
 void CommunicationProtocol::RegisterEventToJsonFuncs()
@@ -280,6 +282,13 @@ std::optional<document_t> CommunicationProtocol::ToCommunicationAdvisorResponse(
 {
     return ToResponseJson<CommunicationAdvisorResponse>(dynamic_cast<const CommunicationAdvisorResponse &>(response));
 }
+
+std::optional<document_t> CommunicationProtocol::ToDurationSlowRankResponse(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<CommunicationSlowRankAnalysisResponse>(
+        dynamic_cast<const CommunicationSlowRankAnalysisResponse &>(response));
+}
+
 #pragma endregion
 } // namespace Protocol
 } // namespace Dic

@@ -433,6 +433,32 @@ struct CommunicationAdvisorResponse : public Response {
     CommunicationAdvisorResponseBody body;
 };
 
+struct OpDetailsForSlowRank {
+    std::string name;
+    double startTime;
+    double diffTime;
+    double elapseTime;
+    double maxElapseTime;
+};
+
+struct RankDetailsForSlowRank {
+    std::string rankId;
+    double totalDiffTime;
+    double totalElapseTime;
+    double maxTotalElapseTime;
+    std::vector<OpDetailsForSlowRank> opDetails;
+};
+
+struct CommunicationSlowRankAnalysisResponseBody {
+    bool hasAdvice = false;
+    std::vector<RankDetailsForSlowRank> slowRankList;
+};
+
+struct CommunicationSlowRankAnalysisResponse : public Response {
+    CommunicationSlowRankAnalysisResponse() : Response(REQ_RES_COMMUNICATION_DURATION_SLOW_RANK_LIST) {}
+    CommunicationSlowRankAnalysisResponseBody body;
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 
