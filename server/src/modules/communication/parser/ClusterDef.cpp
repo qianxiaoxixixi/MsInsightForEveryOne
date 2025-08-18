@@ -73,15 +73,17 @@ bool ParallelStrategyConfig::CheckBaseParams(std::string& errorMsg) const
 // LCOV_EXCL_BR_START
 bool ParallelStrategyConfig::CheckParamForVLLM(std::string& errorMsg) const
 {
-    // 对于vLLM算法，需检查dpSize * tpSize是否能被epSize整除, epSize是否能被tpSize整除
-    if (algorithm == VLLM_TP_PP_DP_EP_ALG) {
-        if (dpSize * tpSize % epSize != 0) {
-            errorMsg = "[Summary] The product of DP size and TP size must be evenly divided by EP Size for the vLLM.";
-            return false;
-        } else if (epSize % tpSize != 0) {
-            errorMsg = "[Summary] EP size must be evenly divided by TP Size for the vLLM.";
-            return false;
-        }
+    // 未开启EP，无需检查
+    if (epSize == 1) {
+        return true;
+    }
+    // 在开启EP时，需检查dpSize * tpSize是否能被epSize整除, epSize是否能被tpSize整除
+    if (dpSize * tpSize % epSize != 0) {
+        errorMsg = "[Summary] The product of DP size and TP size must be evenly divided by EP Size for the vLLM.";
+        return false;
+    } else if (epSize % tpSize != 0) {
+        errorMsg = "[Summary] EP size must be evenly divided by TP Size for the vLLM.";
+        return false;
     }
     return true;
 }
