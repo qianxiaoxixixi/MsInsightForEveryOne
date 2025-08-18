@@ -4,7 +4,7 @@
 #include "MemoryDetailEntities.h"
 namespace Dic::Module::MemoryDetail {
 // [PYTHON_TRACE]
-static uint SMALL_RATIO = 10000;
+static uint32_t SMALL_RATIO = 10000;
 static std::string DEFAULT_MERGED_SEP = " -> ";
 bool LeaksMemoryPythonTrace::Empty() const
 {
