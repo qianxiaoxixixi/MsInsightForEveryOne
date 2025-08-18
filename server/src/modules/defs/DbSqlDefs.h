@@ -67,8 +67,8 @@ inline std::string GetHcclSameNameDetailSql(const std::string &tidListStr, const
     + (uniqueDevice
         ? " UNION ALL select op.startNs - p.minTime as timestamp, op.endNs - op.startNs as duration, 0 as depth, "
             "   op.ROWID as id , op.groupName || 'group' as tid, 'HCCL' as pid from COMMUNICATION_OP op "
-            "   join TASK main on op.connectionId = main.connectionId "
-            "   join COMMUNICATION_TASK_INFO c on c.globalTaskId = main.globalTaskId "
+            "   join COMMUNICATION_TASK_INFO c ON op.opId = c.opId "
+            "   join TASK main on c.globalTaskId = main.globalTaskId "
             "   join nameIds on op.opName = id join params p "
             "   where deviceId = p.rankId and op.groupName||'group' in (" + tidListStr +
             "   ) and timestamp+duration >= p.startTime AND timestamp <= p.endTime group by op.opId "
