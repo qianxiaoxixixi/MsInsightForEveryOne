@@ -145,6 +145,13 @@ void QueryFwdBwdTimelineHandler::CalFlowInfo(std::vector<FlowInfo> &flowList, co
         }
         FlowInfo flowInfo;
         flowInfo.flowPointList = item.second;
+        // 连线节点排序，保证send算子在前，receive算子在后
+        std::sort(flowInfo.flowPointList.begin(), flowInfo.flowPointList.end(),
+            [](const FlowPointInfo &pointA, const FlowPointInfo &pointB) {
+                if (StringUtil::Contains(StringUtil::ToLower(pointA.opName), "send")) return true;
+                if (StringUtil::Contains(StringUtil::ToLower(pointB.opName), "receive")) return true;
+                return false;
+            });
         flowList.push_back(flowInfo);
     }
 }
