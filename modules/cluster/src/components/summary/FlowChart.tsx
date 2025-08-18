@@ -98,7 +98,7 @@ const formatData = (dataSource: QueryFwpBwdTimelineRes, theme: Theme): {ranks: R
                 const { name, cname, start, duration } = trace;
                 // 由于value中name的值可能为数字类型的字符串‘0’，导致echarts取值时会转为number类型，导致其他字符串类型的值变为NaN,所以加前缀处理，防止echarts将其转为数字类型
                 data.push({
-                    name,
+                    name: `${rank.rank}_${name}`,
                     value: [rank.rank, nsToMs(start), nsToMs((start + duration)), nsToMs(duration), component.component, addPrefix(name)],
                     itemStyle: {
                         color: theme.colorPalette[colorPalette[hashToNumber(cname, colorPalette.length)]],
@@ -214,9 +214,10 @@ const renderRect: CustomSeriesRenderItem = (params, api) => {
 const baseOptions: EChartsOption = {
     tooltip: {
         formatter: function (params: any): string {
+            const name = removePrefix(params.value[5]);
             return `
             <div class="formatter">
-                <div class="row">${params.marker} ${safeStr(params.name)}</div>
+                <div class="row">${params.marker} ${safeStr(name)}</div>
                 <div class="row">
                     <div class="label">Rank ID</div>
                     <div class="value">${safeStr(params.value[0])}</div>
@@ -382,11 +383,13 @@ export const FlowChart = (props: FlowChartProps): JSX.Element => {
                     if (params.seriesIndex === 0) {
                         return;
                     }
+                    const sourceName = `${params.value[0]}_${params.value[4]}`;
+                    const targetName = `${params.value[2]}_${params.value[5]}`;
                     // 节点高亮
                     chartRef.current?.chartInstance?.dispatchAction({
                         type: 'highlight',
                         seriesIndex: 0,
-                        name: [params.value[4], params.value[5]],
+                        name: [sourceName, targetName],
                     });
                 },
                 mouseout(params): void {
