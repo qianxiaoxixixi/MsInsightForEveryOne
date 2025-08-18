@@ -56,6 +56,10 @@ bool VLLMParallelStrategyAlgorithm::UpdateParallelDimension(const std::string& t
 void VLLMParallelStrategyAlgorithm::SetStrategyConfig(const ParallelStrategyConfig& config)
 {
     BaseParallelStrategyAlgorithm::SetStrategyConfig(config);
+    // 未开启EP, 直接返回
+    if (config.epSize == 1) {
+        return;
+    }
     // 前端入参已校验, 无除零、整数溢出风险
     innerDpSize = static_cast<uint32_t>(config.epSize / config.tpSize);
     externalDpSize = static_cast<uint32_t>(config.dpSize / innerDpSize);
