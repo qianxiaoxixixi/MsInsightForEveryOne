@@ -21,6 +21,7 @@ private:
 
     // json to request
     static std::unique_ptr<Request> ToOperatorDetailsRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToDurationSlowRankRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToBandwidthDataRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToDistributionRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToIterationsRequest(const json_t &json, std::string &error);
@@ -42,6 +43,7 @@ private:
     static std::optional<document_t> ToMatrixGroupResponse(const Response &response);
     static std::optional<document_t> ToMatrixListResponse(const Response &response);
     static std::optional<document_t> ToCommunicationAdvisorResponse(const Response &response);
+    static std::optional<document_t> ToDurationSlowRankResponse(const Dic::Protocol::Response &response);
     // response to json
 };
 } // namespace Protocol

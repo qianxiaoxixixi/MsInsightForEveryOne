@@ -314,6 +314,39 @@ template <> std::optional<document_t> ToResponseJson<CommunicationAdvisorRespons
     return std::optional<document_t>{std::move(json)};
 }
 
+template <> std::optional<document_t> ToResponseJson<CommunicationSlowRankAnalysisResponse>(
+    const CommunicationSlowRankAnalysisResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "hasAdvice", response.body.hasAdvice, allocator);
+    json_t data(kArrayType);
+    for (const auto &slowRank : response.body.slowRankList) {
+        json_t slowRankDetail(kObjectType);
+        JsonUtil::AddMember(slowRankDetail, "rankId", slowRank.rankId, allocator);
+        JsonUtil::AddMember(slowRankDetail, "totalDiffTime", slowRank.totalDiffTime, allocator);
+        JsonUtil::AddMember(slowRankDetail, "totalElapseTime", slowRank.totalElapseTime, allocator);
+        JsonUtil::AddMember(slowRankDetail, "maxTotalElapseTime", slowRank.maxTotalElapseTime, allocator);
+        json_t opList(kArrayType);
+        for (const auto &op : slowRank.opDetails) {
+            json_t opDetail(kObjectType);
+            JsonUtil::AddMember(opDetail, "name", op.name, allocator);
+            JsonUtil::AddMember(opDetail, "startTime", op.startTime, allocator);
+            JsonUtil::AddMember(opDetail, "diffTime", op.diffTime, allocator);
+            JsonUtil::AddMember(opDetail, "elapseTime", op.elapseTime, allocator);
+            JsonUtil::AddMember(opDetail, "maxTime", op.maxElapseTime, allocator);
+            opList.PushBack(opDetail, allocator);
+        }
+        JsonUtil::AddMember(slowRankDetail, "opList", opList, allocator);
+        data.PushBack(slowRankDetail, allocator);
+    }
+    JsonUtil::AddMember(body, "data", data, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

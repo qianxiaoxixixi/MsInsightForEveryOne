@@ -348,3 +348,58 @@ TEST_F(CommunicationProtocolUtilTest, ToMatrixListResponseWithNormalData)
                   response.body.matrixList[index++].matrixData.baseline.transportType);
     }
 }
+
+TEST_F(CommunicationProtocolUtilTest, TestCommunicationSlowRankAnalysisResponse)
+{
+    CommunicationSlowRankAnalysisResponse response;
+    response.body.hasAdvice = true;
+    RankDetailsForSlowRank slowRank;
+    slowRank.rankId = "1";
+    slowRank.totalDiffTime = 100; // 100
+    slowRank.totalElapseTime = 200; // 200
+    slowRank.maxTotalElapseTime = 300; // 300
+    OpDetailsForSlowRank op1 = {"op1", 10, 10, 10, 10}; // 10
+    OpDetailsForSlowRank op2 = {"op2", 20, 20, 20, 20}; // 20
+    slowRank.opDetails.push_back(op1);
+    slowRank.opDetails.push_back(op2);
+    response.body.slowRankList.push_back(slowRank);
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+
+    ASSERT_TRUE(jsonOptional.value().HasMember("body"));
+    auto body = jsonOptional.value()["body"].GetObj();
+    ASSERT_TRUE(body.HasMember("hasAdvice"));
+    EXPECT_TRUE(body["hasAdvice"].GetBool());
+
+    ASSERT_TRUE(body.HasMember("data"));
+    auto data = body["data"].GetArray();
+    ASSERT_EQ(data.Size(), 1);
+
+    auto slowRankDetail = data[0].GetObj();
+    ASSERT_TRUE(slowRankDetail.HasMember("rankId"));
+    EXPECT_EQ(slowRankDetail["rankId"].GetString(), slowRank.rankId);
+    ASSERT_TRUE(slowRankDetail.HasMember("totalDiffTime"));
+    EXPECT_EQ(slowRankDetail["totalDiffTime"].GetDouble(), slowRank.totalDiffTime);
+    ASSERT_TRUE(slowRankDetail.HasMember("totalElapseTime"));
+    EXPECT_EQ(slowRankDetail["totalElapseTime"].GetDouble(), slowRank.totalElapseTime);
+    ASSERT_TRUE(slowRankDetail.HasMember("maxTotalElapseTime"));
+    EXPECT_EQ(slowRankDetail["maxTotalElapseTime"].GetDouble(), slowRank.maxTotalElapseTime);
+
+    ASSERT_TRUE(slowRankDetail.HasMember("opList"));
+    auto opDetails = slowRankDetail["opList"].GetArray();
+    ASSERT_EQ(opDetails.Size(), 2); // 2
+
+    auto opDetail1 = opDetails[0].GetObj();
+    ASSERT_TRUE(opDetail1.HasMember("name"));
+    EXPECT_STREQ(opDetail1["name"].GetString(), "op1");
+    ASSERT_TRUE(opDetail1.HasMember("startTime"));
+    EXPECT_EQ(opDetail1["startTime"].GetDouble(), op1.startTime);
+    ASSERT_TRUE(opDetail1.HasMember("diffTime"));
+    EXPECT_EQ(opDetail1["diffTime"].GetDouble(), op1.diffTime);
+    ASSERT_TRUE(opDetail1.HasMember("elapseTime"));
+    EXPECT_EQ(opDetail1["elapseTime"].GetDouble(), op1.elapseTime);
+    ASSERT_TRUE(opDetail1.HasMember("maxTime"));
+    EXPECT_EQ(opDetail1["maxTime"].GetDouble(), op1.maxElapseTime);
+}
