@@ -168,8 +168,9 @@ void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectEx
             parsefileInfo->host = host;
             parsefileInfo->rankId = host + rank;
             auto rankIdDeviceMap = database->QueryRankIdAndDeviceMap();
-            if (rankIdDeviceMap.find(rank) != rankIdDeviceMap.end()) {
-                parsefileInfo->deviceId = rankIdDeviceMap[rank];
+            auto deviceIdInDb = database->GetDeviceId(rank);
+            if (!deviceIdInDb.empty()) {
+                parsefileInfo->deviceId = deviceIdInDb;
             }
             std::string rankName = rank;
             hostMap[host][file].push_back(rank);

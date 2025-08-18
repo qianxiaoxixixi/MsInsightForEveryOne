@@ -116,7 +116,7 @@ public:
     std::vector<std::string> QueryRankId();
     std::string QueryHostInfo() override;
     std::string QueryHostInfoWithHostPath(const std::string &path);
-    std::string GetDeviceId(const std::string& fileId);
+    std::string GetDeviceId(const std::string& rankIdWithHost);
     std::unordered_map<std::string, std::string> QueryRankIdAndDeviceMap();
 
     bool QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params, const std::string &optimizers,

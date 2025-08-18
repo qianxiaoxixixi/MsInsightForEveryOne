@@ -935,16 +935,34 @@ bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedState
         return rankAndDeviceMap;
     }
 
-std::string DbTraceDataBase::GetDeviceId(const std::string &fileId)
+std::string DbTraceDataBase::GetDeviceId(const std::string &rankIdWithHost)
 {
     auto hostStr = QueryHostInfo();
     auto rankAndDeviceMap = QueryRankIdAndDeviceMap();
-    std::string realRankId = fileId;
-    if (!hostStr.empty() && StringUtil::StartWith(fileId, hostStr)) {
-        realRankId = fileId.substr(hostStr.length());
+    std::string realRankId = rankIdWithHost;
+    if (!hostStr.empty() && StringUtil::StartWith(rankIdWithHost, hostStr)) {
+        realRankId = rankIdWithHost.substr(hostStr.length());
     }
     if (rankAndDeviceMap.count(realRankId) > 0) {
         return rankAndDeviceMap[realRankId];
+    }
+    auto queryDevice = [this](const std::string &table) -> std::string {
+        sqlite3_stmt *stmt = nullptr;
+        std::string sql = "SELECT deviceId FROM " + table + " limit 1";
+        int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+        if (result != SQLITE_OK) {
+            sqlite3_finalize(stmt);
+            return "";
+        }
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            std::string deviceId = sqlite3_column_string(stmt, resultStartIndex);
+            sqlite3_finalize(stmt);
+            return deviceId;
+        }
+        return "";
+    };
+    if (CheckTableExist(TABLE_MEMORY_RECORD)) {
+        return queryDevice(TABLE_MEMORY_RECORD);
     }
     return realRankId;
 }
