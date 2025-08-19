@@ -26,6 +26,8 @@ public:
 private:
     void InitConfig();
     void InitDefaultConf();
+    void InitVerlGrpoConf();
+    void InitMindspeedRlGrpoConf();
 
     explicit RLMstxConfigManager();
     ~RLMstxConfigManager() = default;
