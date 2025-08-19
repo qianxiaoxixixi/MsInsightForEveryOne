@@ -88,6 +88,11 @@ RLMstxConfigManager::RLMstxConfigManager()
 
 void RLMstxConfigManager::InitDefaultConf()
 {
+    InitVerlGrpoConf();
+    InitMindspeedRlGrpoConf();
+}
+void RLMstxConfigManager::InitVerlGrpoConf()
+{
     RLMstxConfig defaultConf = {
         .framework = "verl",
         .algorithm = "GRPO",
@@ -104,8 +109,8 @@ void RLMstxConfigManager::InitDefaultConf()
     actor.AddMicroBatchConf(std::move(fp1));
     actor.AddMicroBatchConf(std::move(bp1));
     TaskConfig refLog{.roleName = "Reference", .taskName = "compute_ref_log_prob"};
-    MicroBatchConfig fp2{.batchName = "FullyShardedDataParallel.forward", .type = "FP"};
-    MicroBatchConfig bp2{.batchName = "autograd::engine", .type = "BP"};
+    MicroBatchConfig fp2{.batchName = "TransformerBlock", .type = "FP"};
+    MicroBatchConfig bp2{.batchName = "TransformerLayer", .type = "BP"};
     refLog.AddMicroBatchConf(std::move(fp2));
     refLog.AddMicroBatchConf(std::move(bp2));
     defaultConf.AddTaskConfig(std::move(gs));
@@ -113,17 +118,37 @@ void RLMstxConfigManager::InitDefaultConf()
     defaultConf.AddTaskConfig(std::move(actor));
     defaultConf.AddTaskConfig(std::move(refLog));
     config.push_back(defaultConf);
-
+}
+void RLMstxConfigManager::InitMindspeedRlGrpoConf()
+{
     RLMstxConfig mindSpeedRlConf = {
         .framework = "MindSpeed-RL",
         .algorithm = "GRPO",
     };
     TaskConfig mindSpeedGS{.roleName = "ActorRollout", .taskName= "ActorHybridWorkerBase.generate_sequences"};
+    MicroBatchConfig fp{.batchName = "TransformerBlock", .type = "FP"};
+    MicroBatchConfig bp{.batchName = "TransformerLayer", .type = "BP"};
+    mindSpeedGS.AddMicroBatchConf(std::move(fp));
+    mindSpeedGS.AddMicroBatchConf(std::move(bp));
     TaskConfig mindSpeedRef{.roleName = "Reference", .taskName = "IntegratedWorker.compute_ref_log_prob"};
+    MicroBatchConfig fp2{.batchName = "TransformerBlock", .type = "FP"};
+    MicroBatchConfig bp2{.batchName = "TransformerLayer", .type = "BP"};
+    mindSpeedRef.AddMicroBatchConf(std::move(fp2));
+    mindSpeedRef.AddMicroBatchConf(std::move(bp2));
     TaskConfig mindSpeedActor{.roleName = "Actor", .taskName = "ActorRolloutHybrid.update_actor"};
+    MicroBatchConfig fp3{.batchName = "TransformerBlock", .type = "FP"};
+    MicroBatchConfig bp3{.batchName = "TransformerLayer", .type = "BP"};
+    mindSpeedActor.AddMicroBatchConf(std::move(fp3));
+    mindSpeedActor.AddMicroBatchConf(std::move(bp3));
+    TaskConfig mindSpeedReward{.roleName = "Reward", .taskName = "Reward.compute_rm_score"};
+    MicroBatchConfig fp4{.batchName = "TransformerBlock", .type = "FP"};
+    MicroBatchConfig bp4{.batchName = "TransformerLayer", .type = "BP"};
+    mindSpeedReward.AddMicroBatchConf(std::move(fp4));
+    mindSpeedReward.AddMicroBatchConf(std::move(bp4));
     mindSpeedRlConf.AddTaskConfig(std::move(mindSpeedGS));
     mindSpeedRlConf.AddTaskConfig(std::move(mindSpeedRef));
     mindSpeedRlConf.AddTaskConfig(std::move(mindSpeedActor));
+    mindSpeedRlConf.AddTaskConfig(std::move(mindSpeedReward));
     config.push_back(mindSpeedRlConf);
 }
 }
