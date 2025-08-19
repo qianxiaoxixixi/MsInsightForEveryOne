@@ -76,6 +76,7 @@ public:
                                            const std::vector<ColumnAtt>& columns);
     virtual std::vector<std::map<std::string, std::string>> QueryDataByPage(const PageQuery& query,
                                                                             const std::vector<ColumnAtt>& columns);
+    std::vector<LinkInfo> QueryTableNameAndCol(const std::string &linkName);
 
 protected:
     bool CheckTableContainData(const std::string& tableName);

@@ -230,7 +230,7 @@ export const queryTableDataNameList = async (param: { rankId: string; dbPath: st
 };
 
 export const queryTableDataDetails = async (param: {
-    rankId: string; dbPath: string; pageSize: number; currentPage: number; orderBy?: string; order?: string;
+    rankId: string; pageSize: number; currentPage: number; orderBy?: string; order?: string;
     selectKey: number;
 }): Promise<any> => {
     return window.requestData('tableData/detail', param, 'timeline');

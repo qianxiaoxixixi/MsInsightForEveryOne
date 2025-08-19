@@ -397,8 +397,8 @@ export const ThreadUnit = unit<ThreadMetaData>({
     bottomPanelRender: (newSession: Session, metadata) => {
         return [
             {
-                Detail: ({ session }): JSX.Element => <SelectedDataBottomPanel
-                    session={session} detail={singleSliceDetail}>{EmptyJSXElement}</SelectedDataBottomPanel>,
+                Detail: ({ session, height }): JSX.Element => <SelectedDataBottomPanel
+                    session={session} height={height} detail={singleSliceDetail}>{EmptyJSXElement}</SelectedDataBottomPanel>,
             },
             {
                 Detail: ({ session, height }): JSX.Element => <SelectSimpleTabularDetail

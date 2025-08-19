@@ -19,9 +19,61 @@ bool QueryTableDataDetailHandler::HandleRequest(std::unique_ptr<Dic::Protocol::R
         session.OnResponse(std::move(responsePtr));
         return false;
     }
-    ComputeTableDetail(request, response, database);
+    if (request.params.type.empty()) {
+        ComputeTableDetail(request, response, database);
+    } else if (request.params.type == "1") {
+        ComputeLinkPageDetail(request, response, database);
+    }
     session.OnResponse(std::move(responsePtr));
     return true;
+}
+
+void QueryTableDataDetailHandler::ComputeLinkPageDetail(TableDataDetailRequest& request,
+                                                        TableDataDetailResponse& response,
+                                                        const std::shared_ptr<VirtualTraceDatabase>& database) const
+{
+    if (request.params.equalConditions.empty()) {
+        return;
+    }
+    std::shared_ptr<TextTraceDatabase> databasePtr =
+        std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(database);
+    if (databasePtr == nullptr) {
+        ServerLog::Warn("Failed to get text connection when query table detail,ID: %", request.params.rankId);
+        return;
+    }
+    auto linkInfos = databasePtr->QueryTableNameAndCol(request.params.equalConditions[0].col);
+    if (linkInfos.empty()) {
+        return;
+    }
+    const std::string tableName = linkInfos[0].tableName;
+    auto colums = databasePtr->QueryTableInfoByName(tableName);
+    PageQuery query;
+    query.fileId = request.params.rankId;
+    query.curPage = request.params.currentPage;
+    query.size = request.params.pageSize;
+    query.viewName = tableName;
+    query.order = request.params.order;
+    query.orderBy = request.params.orderBy;
+    for (const auto& item : request.params.filterconditions) {
+        query.pageFilters.push_back({item.col, item.content});
+    }
+    const std::string col = linkInfos[0].col;
+    for (const auto& item : request.params.equalConditions) {
+        query.equalFilters.push_back({col, item.content});
+    }
+    auto datas = databasePtr->QueryDataByPage(query, colums);
+    uint64_t count = databasePtr->QueryCountByTableName(query, colums);
+    for (const auto& item : colums) {
+        TableColumn column;
+        column.name = item.name;
+        column.type = item.type;
+        column.key = item.key;
+        response.body.columnAttr.emplace_back(column);
+    }
+    for (const auto& item : datas) {
+        response.body.columnData.emplace_back(item);
+    }
+    response.body.totalNum = count;
 }
 
 void QueryTableDataDetailHandler::ComputeTableDetail(const TableDataDetailRequest& request,
