@@ -543,12 +543,21 @@ std::unique_ptr<Request> TimelineProtocol::ToTableDataDetailRequest(const Dic::j
             reqPtr->params.filterconditions.emplace_back(filtercondition);
         }
     }
+    if (json["params"].HasMember("equalConditions") && json["params"]["equalConditions"].IsArray()) {
+        for (const auto &item : json["params"]["equalConditions"].GetArray()) {
+            EqualCondition equalCondition;
+            JsonUtil::SetByJsonKeyValue(equalCondition.col, item, "col");
+            JsonUtil::SetByJsonKeyValue(equalCondition.content, item, "content");
+            reqPtr->params.equalConditions.emplace_back(equalCondition);
+        }
+    }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.tableIndex, json["params"], "selectKey");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.currentPage, json["params"], "currentPage");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.type, json["params"], "type");
     return reqPtr;
 }
 

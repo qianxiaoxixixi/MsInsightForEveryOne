@@ -14,12 +14,21 @@ struct ColumnAtt {
     std::string key;
 };
 
+struct LinkInfo {
+    std::string tableName;
+    std::string col;
+};
+
 struct TableDatas {
     std::vector<ColumnAtt> att;
     std::vector<std::map<std::string, std::string>> datas;
     uint64_t count = 0;
 };
 struct PageFilter {
+    std::string col;
+    std::string content;
+};
+struct EqualFilter {
     std::string col;
     std::string content;
 };
@@ -33,6 +42,7 @@ struct PageQuery {
     std::string start;
     std::string end;
     std::vector<PageFilter> pageFilters;
+    std::vector<EqualFilter> equalFilters;
     uint64_t ComputeOffset() const
     {
         if (curPage == 0 || size == 0) {

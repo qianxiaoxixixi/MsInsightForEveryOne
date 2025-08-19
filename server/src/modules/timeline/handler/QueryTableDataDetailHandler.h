@@ -17,6 +17,9 @@ public:
     bool HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override;
     static void ComputeTableDetail(const TableDataDetailRequest &request, TableDataDetailResponse &response,
                                    std::shared_ptr<VirtualTraceDatabase> databasePtr) ;
+
+    void ComputeLinkPageDetail(TableDataDetailRequest &request, TableDataDetailResponse &response,
+                               const std::shared_ptr<VirtualTraceDatabase> &database) const;
 };
 }  // namespace Dic::Module::IE
 #endif  // PROFILER_SERVER_QUERYTABLEDATADETAILHANDLER_H

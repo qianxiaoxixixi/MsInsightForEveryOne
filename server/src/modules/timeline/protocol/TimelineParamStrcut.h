@@ -13,6 +13,10 @@ struct Filtercondition {
     std::string col;
     std::string content;
 };
+struct EqualCondition {
+    std::string col;
+    std::string content;
+};
 struct TableDataDetailParams {
     std::string rankId;
     uint64_t tableIndex = 0;
@@ -20,7 +24,9 @@ struct TableDataDetailParams {
     uint64_t currentPage = 0;
     std::string order;
     std::string orderBy;
+    std::string type;
     std::vector<Filtercondition> filterconditions;
+    std::vector<EqualCondition> equalConditions;
     bool CommonCheck(std::string& errorMsg)
     {
         static const uint64_t PAGE_LIMIT = 500;

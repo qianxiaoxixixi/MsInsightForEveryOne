@@ -774,6 +774,27 @@ std::vector<ColumnAtt> Database::QueryTableInfoByName(const std::string& tableNa
     return res;
 }
 
+std::vector<LinkInfo> Database::QueryTableNameAndCol(const std::string& linkName)
+{
+    const std::string sql = "SELECT target_table, target_name FROM data_link WHERE source_name = ?;";
+    auto stmt = CreatPreparedStatement(sql);
+    if (!TryOpt(stmt, "Query table name and col to prepare sql!")) {
+        return {};
+    }
+    auto result = stmt->ExecuteQuery(linkName);
+    if (!TryOpt(result, "Query table name and col failed to get result!")) {
+        return {};
+    }
+    std::vector<LinkInfo> res;
+    while (result->Next()) {
+        LinkInfo linkInfo;
+        linkInfo.tableName = result->GetString("target_table");
+        linkInfo.col = result->GetString("target_name");
+        res.emplace_back(linkInfo);
+    }
+    return res;
+}
+
 uint64_t Database::QueryCountByTableName(const PageQuery& query,
                                          const std::vector<ColumnAtt>& columns)
 {
@@ -789,15 +810,30 @@ uint64_t Database::QueryCountByTableName(const PageQuery& query,
         if (std::find(columnName.begin(), columnName.end(), "\"" + filter.col + "\"") == columnName.end()) {
             continue;
         }
-        sql += " AND lower(" + filter.col + ") LIKE lower(?) ";
+        sql += " AND lower(\"" + filter.col + "\") LIKE lower(?) ";
+    }
+    for (const auto& filter : query.equalFilters) {
+        if (std::find(columnName.begin(), columnName.end(), "\"" + filter.col + "\"") == columnName.end()) {
+            continue;
+        }
+        sql += " AND \"" + filter.col + "\" = ? ";
     }
     auto stmt = CreatPreparedStatement(sql);
     if (!TryOpt(stmt, "Query count by table name failed to prepare sql!")) {
         return 0;
     }
     for (const auto &filter : query.pageFilters) {
+        if (std::find(columnName.begin(), columnName.end(), "\"" + filter.col + "\"") == columnName.end()) {
+            continue;
+        }
         std::string bindFilter = "%" + filter.content + "%";
         stmt->BindParams(bindFilter);
+    }
+    for (const auto &filter : query.equalFilters) {
+        if (std::find(columnName.begin(), columnName.end(), "\"" + filter.col + "\"") == columnName.end()) {
+            continue;
+        }
+        stmt->BindParams(filter.content);
     }
     auto result = stmt->ExecuteQuery();
     if (!TryOpt(result, "Query count by table name failed to get result!")) {
@@ -835,8 +871,17 @@ std::vector<std::map<std::string, std::string>> Database::QueryDataByPage(const 
         return {};
     }
     for (const auto &filter : query.pageFilters) {
+        if (std::find(columnName.begin(), columnName.end(), "\"" + filter.col + "\"") == columnName.end()) {
+            continue;
+        }
         std::string bindFilter = "%" + filter.content + "%";
         stmt->BindParams(bindFilter);
+    }
+    for (const auto &filter : query.equalFilters) {
+        if (std::find(columnName.begin(), columnName.end(), "\"" + filter.col + "\"") == columnName.end()) {
+            continue;
+        }
+        stmt->BindParams(filter.content);
     }
     auto result = stmt->ExecuteQuery();
     if (!TryOpt(result, "Query data by page failed to get result!")) {
@@ -879,7 +924,13 @@ std::string Database::ComputeConditionSql(const PageQuery& query, std::vector<st
         if (std::find(columnName.begin(), columnName.end(), "\"" + filter.col + "\"") == columnName.end()) {
             continue;
         }
-        sql += " AND lower(" + filter.col + ") LIKE lower(?) ";
+        sql += " AND lower(\"" + filter.col + "\") LIKE lower(?) ";
+    }
+    for (const auto& filter : query.equalFilters) {
+        if (std::find(columnName.begin(), columnName.end(), "\"" + filter.col + "\"") == columnName.end()) {
+            continue;
+        }
+        sql += " AND \"" + filter.col + "\" = ? ";
     }
     return sql;
 }
