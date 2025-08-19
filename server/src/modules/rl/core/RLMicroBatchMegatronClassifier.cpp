@@ -14,6 +14,9 @@ using namespace FullDb;
 std::vector<Protocol::RLPipelineNode> RLMicroBatchMegatronClassifier::MicroBatchClassifier(
     std::vector<RLPipelineNode> &nodes)
 {
+    if (nodes.empty()) {
+        return {};
+    }
     Clear();
     std::vector<Protocol::RLPipelineNode> res;
     for (auto &node: nodes) {
@@ -88,6 +91,10 @@ void RLMicroBatchMegatronClassifier::FPStateProcess(std::vector<Protocol::RLPipe
                                                     const RLPipelineNode &node)
 {
     if (node.nodeType == "FP") {
+        if (node.startTime >= current.startTime
+            && node.startTime + node.duration <= current.startTime + current.duration) {
+            return;
+        }
         PushFPNode(res);
         SetStateAndNode(node, FP);
     } else {
