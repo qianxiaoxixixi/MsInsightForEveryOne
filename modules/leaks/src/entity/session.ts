@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
 */
 import { makeAutoObservable } from 'mobx';
-import { type BlocksTableData, EventsTableData } from '../utils/RequestUtils';
+import { type BlocksTableData, EventsTableData, ThreShold } from '../utils/RequestUtils';
 import { type MenuItemModel } from '../components/ContextMenu';
 interface TypeOption {
     label: string | number;
@@ -69,6 +69,10 @@ export class Session {
     allowMark: boolean = true;
     contextMenu: ContextMenu = { visible: false, xPos: 0, yPos: 0 };
     menuItems: MenuItemModel[] = [];
+    lazyUsedThreshold: ThreShold = { perT: null, valueT: null };
+    delayedFreeThreshold: ThreShold = { perT: null, valueT: null };
+    longIdleThreshold: ThreShold = { perT: null, valueT: null };
+    onlyInefficient: boolean = false;
     constructor() {
         makeAutoObservable(this);
     }

@@ -7,7 +7,7 @@ import * as d3 from 'd3';
 import { useTranslation } from 'react-i18next';
 import { MIChart } from 'ascend-components';
 import type { ChartsHandle } from 'ascend-components/MIChart';
-import { safeStr, safeJSONParse } from 'ascend-utils';
+import { safeStr } from 'ascend-utils';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import { useTheme } from '@emotion/react';
@@ -214,9 +214,9 @@ const handleContextMenu = (barIns: echarts.ECharts | null | undefined, session: 
     barIns?.off('contextmenu');
     const contextmenuCb = (params: any): void => {
         const index = params?.dataIndex;
-        const attr = safeJSONParse(session.blockData.blocks[index].attr);
-        if (attr === null || typeof attr === 'number') return;
-        if (attr.first_access_timestamp === 0 || attr.first_access_timestamp === undefined) {
+        const firstAccessTimestamp = session.blockData.blocks[index].firstAccessTimestamp;
+        const lastAccessTimestamp = session.blockData.blocks[index].lastAccessTimestamp;
+        if (firstAccessTimestamp === -1 && lastAccessTimestamp === -1) {
             const event = params.event.event;
             runInAction(() => {
                 session.allowMark = false;
@@ -225,8 +225,8 @@ const handleContextMenu = (barIns: echarts.ECharts | null | undefined, session: 
                 session.contextMenu.visible = true;
             });
         } else {
-            const startPoint = barIns?.convertToPixel('xAxis', attr.first_access_timestamp);
-            const endPoint = barIns?.convertToPixel('xAxis', attr.last_access_timestamp);
+            const startPoint = barIns?.convertToPixel('xAxis', firstAccessTimestamp);
+            const endPoint = barIns?.convertToPixel('xAxis', lastAccessTimestamp);
             const event = params.event.event;
             runInAction(() => {
                 session.allowMark = true;
@@ -335,8 +335,8 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: Session; set
                 loading={loading}
                 options={chartOptions}
             />
-            <Line id="firstLine" lineShow={markLineshow} offset={firstOffset} color='green' />
-            <Line id="lastLine" lineShow={markLineshow} offset={lastOffset} color='green' />
+            <Line id='firstLine' lineShow={markLineshow} offset={firstOffset} color='green' />
+            <Line id='lastLine' lineShow={markLineshow} offset={lastOffset} color='green' />
             <ContextMenu session={session} menuItems={getMenuItems()} />
         </>
     );

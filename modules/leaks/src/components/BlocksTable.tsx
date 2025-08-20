@@ -7,12 +7,29 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
+import { Tag } from 'antd';
 import { ResizeTable, fetchColumnFilterProps } from 'ascend-resize';
 import { Tooltip } from 'ascend-components';
 import { Session } from '../entity/session';
 import { getBlockTableData } from './dataHandler';
 import { generateJsonShow } from '../utils/utils';
-
+const columnRender = (col: any, text: string, record: any, t: TFunction): React.ReactNode => {
+    const tags: { [key: string]: boolean } = { 'early-alloc': record.lazyUsed, 'late-free': record.delayedFree, idle: record.longIdle };
+    const showTag = Object.keys(tags).filter(tag => tags[tag]);
+    if (col.key === 'id') {
+        return <>
+            <span style={{ marginRight: '5px' }}>{text}</span>
+            {showTag.map((tag) => <Tag key={tag} color="red">{t(tag)}</Tag>)}
+        </>;
+    } else {
+        return <Tooltip
+            title={col.key === 'attr' && text ? generateJsonShow(text) : text || ''}
+            placement="top"
+        >
+            {text ?? ''}
+        </Tooltip>;
+    }
+};
 const getTableColumns = (t: TFunction, session: Session): any => {
     return session.blocksTableHeader.map((col: any) => {
         const item = {
@@ -26,12 +43,7 @@ const getTableColumns = (t: TFunction, session: Session): any => {
             showSorterTooltip: t(col.name, { keyPrefix: 'tableHeadTooltip', defaultValue: '' }) === ''
                 ? true
                 : { title: t(col.name, { keyPrefix: 'tableHeadTooltip' }) },
-            render: (text: string): React.ReactNode => (<Tooltip
-                title={col.key === 'attr' && text ? generateJsonShow(text) : text || ''}
-                placement="top"
-            >
-                {text || ''}
-            </Tooltip>),
+            render: (text: string, record: any): React.ReactNode => columnRender(col, text, record, t),
         };
         if (col.searchable) {
             return { ...item, ...fetchColumnFilterProps(col.key, col.name.replace(' ', '')) };
@@ -65,6 +77,7 @@ const BlocksTable = observer(({ session }: { session: Session }): React.ReactEle
         deviceId, eventType, blocksTableData, blocksTableHeader, tableKey,
         blocksCurrentPage, blocksPageSize, blocksTotal, blocksOrder, blocksOrderBy,
         blocksFilters, blocksRangeFilters, maxTime, minTime,
+        lazyUsedThreshold, delayedFreeThreshold, longIdleThreshold, onlyInefficient,
     } = session;
     const [loading, setLoading] = useState(false);
     const defaultDataSource = (process.env.NODE_ENV === 'development' ? [{}] : []);
@@ -95,7 +108,11 @@ const BlocksTable = observer(({ session }: { session: Session }): React.ReactEle
         setLoading(true);
         getBlockTableData(session);
         setLoading(false);
-    }, [deviceId, eventType, maxTime, minTime, blocksCurrentPage, blocksPageSize, blocksOrder, blocksOrderBy, JSON.stringify(blocksFilters), JSON.stringify(blocksRangeFilters)]);
+    }, [deviceId, eventType, maxTime, minTime, blocksCurrentPage,
+        blocksPageSize, blocksOrder, blocksOrderBy, JSON.stringify(blocksFilters), JSON.stringify(blocksRangeFilters),
+        JSON.stringify(lazyUsedThreshold), JSON.stringify(delayedFreeThreshold), JSON.stringify(longIdleThreshold),
+        onlyInefficient,
+    ]);
     return (
         <>
             <ResizeTable

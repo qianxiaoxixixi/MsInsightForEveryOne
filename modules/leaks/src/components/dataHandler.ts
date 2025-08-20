@@ -4,6 +4,7 @@
 import {
     getLeaksGraphData, getMemoryDetailData, getFuncData, getBlockDetails, getEventDetails,
     type GraphParam, FuncParam, BlockParam, EventParam,
+    ThreShold,
 } from '../utils/RequestUtils';
 import { message } from 'antd';
 import { runInAction } from 'mobx';
@@ -70,6 +71,37 @@ export const getNewDetailData = async (session: any): Promise<void> => {
         message.error(error.message);
     }
 };
+const handleThreshold = (blockParam: any, session: any): void => {
+    const { lazyUsedThreshold, delayedFreeThreshold, longIdleThreshold } = session;
+    if (lazyUsedThreshold.valueT === null && lazyUsedThreshold.perT === null && delayedFreeThreshold.valueT === null &&
+        delayedFreeThreshold.perT === null && longIdleThreshold.valueT === null && longIdleThreshold.perT === null
+    ) return;
+    const threshold: { [key: string]: ThreShold } = {};
+    if (lazyUsedThreshold.valueT !== null || lazyUsedThreshold.perT !== null) {
+        blockParam.lazyUsedThreshold = { perT: null, valueT: null };
+        threshold.lazyUsedThreshold = lazyUsedThreshold;
+    }
+    if (delayedFreeThreshold.valueT !== null || delayedFreeThreshold.perT !== null) {
+        blockParam.delayedFreeThreshold = { perT: null, valueT: null };
+        threshold.delayedFreeThreshold = delayedFreeThreshold;
+    }
+    if (longIdleThreshold.valueT !== null || longIdleThreshold.perT !== null) {
+        blockParam.longIdleThreshold = { perT: null, valueT: null };
+        threshold.longIdleThreshold = longIdleThreshold;
+    }
+    Object.keys(threshold).forEach((key) => {
+        if (threshold[key].valueT !== null) {
+            blockParam[key].valueT = threshold[key].valueT;
+        } else {
+            blockParam[key].valueT = 0;
+        }
+        if (threshold[key].perT !== null) {
+            blockParam[key].perT = threshold[key].perT;
+        } else {
+            blockParam[key].perT = 0;
+        }
+    });
+};
 export const getBlockTableData = async (session: any): Promise<void> => {
     try {
         const blockParam: BlockParam = {
@@ -92,6 +124,10 @@ export const getBlockTableData = async (session: any): Promise<void> => {
         if (Object.keys(session.blocksRangeFilters).length > 0) {
             blockParam.rangeFilters = session.blocksRangeFilters;
         }
+        if (session.onlyInefficient) {
+            blockParam.onlyInefficient = true;
+        }
+        handleThreshold(blockParam, session);
         const blockTableData = await getBlockDetails(blockParam);
         runInAction(() => {
             session.blocksTableData = blockTableData.blocks;
