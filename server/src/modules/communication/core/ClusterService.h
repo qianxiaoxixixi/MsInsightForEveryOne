@@ -8,6 +8,7 @@
 #include "ClusterDomainObject.h"
 #include "CommunicationProtocolRequest.h"
 #include "CommunicationProtocolResponse.h"
+#include "DataBaseManager.h"
 
 namespace Dic {
 namespace Module {
@@ -20,6 +21,8 @@ public:
     static void QueryMatrixInfo(Protocol::MatrixBandwidthParam &params, Protocol::MatrixListResponseBody &body);
     static void QueryOperatorList(Protocol::DurationListParams &params, Protocol::OperatorListsResponseBody &body);
     static void QueryDurationList(Protocol::DurationListParams &params, Protocol::DurationListsResponseBody &body);
+    static bool AnalyzeCommunicationSlowRanks(const Protocol::DurationListParams &params,
+        CommunicationSlowRankAnalysisResponseBody &body);
 private:
     static std::vector<Protocol::GroupInfo> MergeGroupInfo(std::vector<std::string> &compareGroupList,
                                                            std::vector<std::string> &baselineGroupList);
@@ -34,9 +37,20 @@ private:
                                             Protocol::DurationListsResponseBody &responseBody);
     static void CalBandwidthData(Protocol::DurationListsResponseBody &body,
                                  const std::vector<DurationDo> &durationDoList);
+    static bool CheckOpNameList(const Protocol::DurationListParams &params,
+                                const std::shared_ptr<VirtualClusterDatabase> &database);
+    static void FindSlowRankByCommDuration(const std::shared_ptr<VirtualClusterDatabase> &database,
+        const Protocol::DurationListParams &params, RankDetailsForSlowRank &fastestRank,
+        CommunicationSlowRankAnalysisResponseBody &body);
     const static inline std::string underline = "_";
     // 矩阵端点数量，从起始卡到目标卡，固定为2
     const static inline int matrixPointNumber = 2;
+    // communication slow rank list
+    const static inline std::string ppPgName = "pp";
+    const static inline std::string totalOpInfo = "Total Op Info";
+    const static inline int slowRankCnt = 3; // 展示Top3慢卡
+    const static inline double thresholdForSlowRank = 0.1;
+    const static inline int doubleReservedNum = 3;
 };
 }
 }

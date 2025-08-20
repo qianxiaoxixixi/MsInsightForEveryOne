@@ -319,6 +319,100 @@ void ClusterService::QueryDurationList(Protocol::DurationListParams &params, Pro
     MergeDurationData(body, compareDurationDoList, baselineDurationDoList, params.clusterPath);
     CalBandwidthData(body, compareDurationDoList);
 }
+
+bool ClusterService::AnalyzeCommunicationSlowRanks(const Protocol::DurationListParams &params,
+    CommunicationSlowRankAnalysisResponseBody &body)
+{
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(params.clusterPath);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection for analyze communication slow rank list.");
+        return false;
+    }
+    if (!CheckOpNameList(params, database)) {
+        body.hasAdvice = false;
+        return true;
+    }
+    body.hasAdvice = true;
+
+    // 异常卡定位
+    RankDetailsForSlowRank fastestRank;
+    FindSlowRankByCommDuration(database, params, fastestRank, body);
+    if (body.slowRankList.empty()) {
+        return true;
+    }
+
+    // 异常算子定位
+    for (auto &slowRank : body.slowRankList) {
+        if (!database->QuerySlowOpByCommDuration(params, fastestRank.rankId, slowRank)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void ClusterService::FindSlowRankByCommDuration(const std::shared_ptr<VirtualClusterDatabase> &database,
+    const Protocol::DurationListParams &params, RankDetailsForSlowRank &fastestRank,
+    CommunicationSlowRankAnalysisResponseBody &body)
+{
+    std::vector<CommInfoUnderRank> commTimeForRankDim = database->GetCommTimeForRankDim(params.iterationId);
+    std::set<RankDetailsForSlowRank> rankDetails;
+    for (const auto& commInfo : commTimeForRankDim) {
+        if (commInfo.rankSet == params.stage) {
+            rankDetails.insert({commInfo.rankId, 0.0, commInfo.commTime, 0.0, {}});
+        }
+    }
+    if (rankDetails.size() <= 1) {
+        // 当前通信域内不足2张卡，不可能存在快慢卡
+        ServerLog::Warn("Not enough communication time info for analyze communication slow rank list.");
+        return;
+    }
+    // get fastest rank and top N slow rank
+    fastestRank = *rankDetails.begin();
+    int cnt = 0;
+    double thresholdComm = thresholdForSlowRank * fastestRank.totalElapseTime;
+    for (auto it = rankDetails.rbegin(); it != rankDetails.rend() && cnt < slowRankCnt; ++it, ++cnt) {
+        // check threshold for slow rank
+        double commTimeDiff = fastestRank.totalElapseTime - it->totalElapseTime;
+        if (commTimeDiff >= thresholdComm) {
+            RankDetailsForSlowRank rankDetail;
+            rankDetail.rankId = it->rankId;
+            rankDetail.totalDiffTime = NumberUtil::DoubleReservedNDigits(commTimeDiff, doubleReservedNum);
+            rankDetail.totalElapseTime = NumberUtil::DoubleReservedNDigits(it->totalElapseTime, doubleReservedNum);
+            rankDetail.maxTotalElapseTime = NumberUtil::DoubleReservedNDigits(fastestRank.totalElapseTime,
+                                                                              doubleReservedNum);
+            body.slowRankList.emplace_back(rankDetail);
+        }
+    }
+}
+
+// 若校验失败结果为false，则不返回慢卡专家建议
+bool ClusterService::CheckOpNameList(const Protocol::DurationListParams &params,
+    const std::shared_ptr<VirtualClusterDatabase> &database)
+{
+    if (params.operatorName != totalOpInfo || params.pgName == ppPgName) {
+        return false;
+    }
+    Protocol::OperatorNamesParams queryOpNameParams;
+    queryOpNameParams.iterationId = params.iterationId;
+    queryOpNameParams.stage = params.stage;
+    queryOpNameParams.pgName = params.pgName;
+    std::vector<OperatorNamesObject> opNameList;
+    if (!database->QueryOperatorNames(queryOpNameParams, opNameList)) {
+        ServerLog::Error("Failed to query operator names for analyze communication slow rank list.");
+        return false;
+    }
+    // p2p, all2allv
+    const std::vector<std::string> opKey = {"send", "receive", "recv", "all2allv", "alltoallv"};
+    for (const auto& name : opNameList) {
+        std::string opNameLower = StringUtil::ToLower(name.operatorName);
+        for (const auto& key : opKey) {
+            if (opNameLower.find(key) != std::string::npos) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
 }
 }
 }

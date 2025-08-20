@@ -6,6 +6,7 @@
 #include "pch.h"
 #include "NumDefs.h"
 #include "CollectionUtil.h"
+#include "TraceTime.h"
 #include "VirtualClusterDatabase.h"
 
 namespace Dic {
@@ -773,6 +774,46 @@ std::vector<std::string> VirtualClusterDatabase::ExecuteGetAllRankFromStepStatis
         res.push_back(resultSet->GetString("rankId"));
     }
     return res;
+}
+
+bool VirtualClusterDatabase::ExecuteQuerySlowOpByCommDuration(const std::string &sql,
+    const Protocol::DurationListParams &params, const std::string &fastestRankId,
+    Protocol::RankDetailsForSlowRank &slowRank)
+{
+    uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare sql for query slow operator by communication duration.");
+        return false;
+    }
+    stmt->BindParams(startTime, fastestRankId, params.iterationId, params.stage,
+                     startTime, slowRank.rankId, params.iterationId, params.stage);
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result for query slow operator by communication duration.");
+        return false;
+    }
+    int slowOpCnt = 0;
+    while (resultSet->Next()) {
+        slowOpCnt++;
+        Protocol::OpDetailsForSlowRank opDetail;
+        opDetail.diffTime = NumberUtil::DoubleReservedNDigits(resultSet->GetDouble("diffElapseTime"),
+                                                              doubleReservedNum);
+        if (opDetail.diffTime <= 0 || slowOpCnt > slowRankOpCount) {
+            return true;
+        }
+        opDetail.name = resultSet->GetString("opName");
+        opDetail.startTime = NumberUtil::DoubleReservedNDigits(resultSet->GetDouble("startTimeOfSlow"),
+                                                               doubleReservedNum);
+        opDetail.elapseTime = NumberUtil::DoubleReservedNDigits(resultSet->GetDouble("elapseTimeOfSlow"),
+                                                                doubleReservedNum);
+        opDetail.maxElapseTime = NumberUtil::DoubleReservedNDigits(resultSet->GetDouble("elapseTimeOfFast"),
+                                                                   doubleReservedNum);
+        opDetail.maxStartTime = NumberUtil::DoubleReservedNDigits(resultSet->GetDouble("startTimeOfFast"),
+                                                                  doubleReservedNum);
+        slowRank.opDetails.push_back(opDetail);
+    }
+    return true;
 }
 
 std::vector<CommInfoUnderRank> VirtualClusterDatabase::ExecuteGetCommTimeForRankDim(std::string &sql,

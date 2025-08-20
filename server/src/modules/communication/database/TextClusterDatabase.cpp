@@ -1279,6 +1279,40 @@ bool TextClusterDatabase::QueryAllPerformanceDataByStep(const std::string &step,
     return ExecuteQueryAllPerformanceDataByStep(sql, step, data);
 }
 
+/**
+ * 按快卡rankId查询通信时间，得到fast表；按慢卡rankId查询通信时间，得到slow表；
+ * 通过opName join两表，计算得到差值diffElapseTime、算子名称、开始时间、持续时间等算子信息
+ * 时间单位统一返回us
+ * Text场景原表中, start_time时间单位为ns，Timeline::TraceTime::Instance().GetStartTime();得到时间戳单位为ns（占位符绑定）
+ * 因此算子开始时间startTime为CASE WHEN t.start_time = 0 THEN 0 ELSE ROUND((start_time - ?) / 1000.0, 3)，
+ * elapseTime原表中时间单位为ms，查询时折算为ROUND(t.elapse_time * 1000, 3)
+ */
+bool TextClusterDatabase::QuerySlowOpByCommDuration(const Protocol::DurationListParams &params,
+    const std::string &fastestRankId, Protocol::RankDetailsForSlowRank &slowRank)
+{
+    std::string sql =
+        " select "
+        "    fast.opName, slow.startTime as startTimeOfSlow, slow.elapseTime AS elapseTimeOfSlow, "
+        "    (fast.elapseTime - slow.elapseTime) AS diffElapseTime, "
+        "    fast.elapseTime AS elapseTimeOfFast, fast.startTime as startTimeOfFast"
+        " from ( "
+        "    select t.rank_id as rankId, t.op_name AS opName, "
+        "    ROUND(t.elapse_time * 1000, 3) AS elapseTime, g.rank_set AS rankSet, "
+        "    CASE WHEN start_time = 0 THEN 0 ELSE ROUND((start_time - ?) / 1000.0, 3) END as startTime "
+        "    from " + TABLE_TIME_INFO + " t left join " + TABLE_GROUP_ID + " g on t.stage_id = g.id "
+        "    where t.rank_id = ? and iteration_id = ? and rankSet = ? and opName != 'Total Op Info' "
+        " ) fast "
+        " join ( "
+        "    select t.rank_id as rankId, t.op_name AS opName, "
+        "    ROUND(t.elapse_time * 1000, 3) AS elapseTime, g.rank_set AS rankSet, "
+        "    CASE WHEN start_time = 0 THEN 0 ELSE ROUND((start_time - ?) / 1000.0, 3) END as startTime "
+        "    from " + TABLE_TIME_INFO + " t left join " + TABLE_GROUP_ID + " g on t.stage_id = g.id "
+        "    where t.rank_id = ? and iteration_id = ? and rankSet = ? and opName != 'Total Op Info' "
+        " ) slow "
+        " on fast.opName = slow.opName ORDER BY diffElapseTime DESC;";
+    return ExecuteQuerySlowOpByCommDuration(sql, params, fastestRankId, slowRank);
+}
+
 std::vector<CommInfoUnderRank> TextClusterDatabase::GetCommTimeForRankDim(const std::string &stepId)
 {
     std::string sql;

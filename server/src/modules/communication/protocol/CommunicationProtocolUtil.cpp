@@ -337,6 +337,7 @@ template <> std::optional<document_t> ToResponseJson<CommunicationSlowRankAnalys
             JsonUtil::AddMember(opDetail, "diffTime", op.diffTime, allocator);
             JsonUtil::AddMember(opDetail, "elapseTime", op.elapseTime, allocator);
             JsonUtil::AddMember(opDetail, "maxTime", op.maxElapseTime, allocator);
+            JsonUtil::AddMember(opDetail, "maxStartTime", op.maxStartTime, allocator);
             opList.PushBack(opDetail, allocator);
         }
         JsonUtil::AddMember(slowRankDetail, "opList", opList, allocator);

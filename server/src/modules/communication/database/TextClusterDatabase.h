@@ -45,6 +45,8 @@ public:
     bool QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo) override;
     std::vector<std::string> GetAllRankFromStepStatisticInfo() override;
     std::vector<CommInfoUnderRank> GetCommTimeForRankDim(const std::string &stepId) override;
+    bool QuerySlowOpByCommDuration(const Protocol::DurationListParams &params, const std::string &fastestRankId,
+                                   Protocol::RankDetailsForSlowRank &slowRank) override;
     bool GetGroups(const std::string &iterationId, std::vector<std::string> &groupList) override;
     bool QueryMatrixList(Protocol::MatrixBandwidthParam &param, std::vector<MatrixInfoDo> &matrixInfoDoList) override;
     bool QueryAllOperators(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody) override;

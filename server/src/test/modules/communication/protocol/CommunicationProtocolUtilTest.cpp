@@ -358,14 +358,13 @@ TEST_F(CommunicationProtocolUtilTest, TestCommunicationSlowRankAnalysisResponse)
     slowRank.totalDiffTime = 100; // 100
     slowRank.totalElapseTime = 200; // 200
     slowRank.maxTotalElapseTime = 300; // 300
-    OpDetailsForSlowRank op1 = {"op1", 10, 10, 10, 10}; // 10
-    OpDetailsForSlowRank op2 = {"op2", 20, 20, 20, 20}; // 20
+    OpDetailsForSlowRank op1 = {"op1", 10, 10, 10, 10, 10}; // 10
+    OpDetailsForSlowRank op2 = {"op2", 20, 20, 20, 20, 20}; // 20
     slowRank.opDetails.push_back(op1);
     slowRank.opDetails.push_back(op2);
     response.body.slowRankList.push_back(slowRank);
     std::string err;
     std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
-    jsonOptional = protocol.ToJson(response, err);
     EXPECT_EQ(jsonOptional.has_value(), true);
 
     ASSERT_TRUE(jsonOptional.value().HasMember("body"));
@@ -402,4 +401,6 @@ TEST_F(CommunicationProtocolUtilTest, TestCommunicationSlowRankAnalysisResponse)
     EXPECT_EQ(opDetail1["elapseTime"].GetDouble(), op1.elapseTime);
     ASSERT_TRUE(opDetail1.HasMember("maxTime"));
     EXPECT_EQ(opDetail1["maxTime"].GetDouble(), op1.maxElapseTime);
+    ASSERT_TRUE(opDetail1.HasMember("maxStartTime"));
+    EXPECT_EQ(opDetail1["maxStartTime"].GetDouble(), op1.maxStartTime);
 }
