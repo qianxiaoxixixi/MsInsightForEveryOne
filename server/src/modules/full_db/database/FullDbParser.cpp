@@ -18,6 +18,7 @@
 #include "RenderEngine.h"
 #include "FullDbParser.h"
 #include "TrackInfoManager.h"
+#include "CacheManager.h"
 
 namespace Dic::Module::FullDb {
 using namespace Dic::Server;
@@ -62,6 +63,7 @@ void FullDbParser::Reset()
         conn->Stop();
     }
     TrackInfoManager::Instance().Reset();
+    CacheManager::Instance().ClearAll();
     DataBaseManager::Instance().ClearClusterDb();
     Timeline::DataBaseManager::Instance().Clear();
     Timeline::TraceTime::Instance().Reset();
