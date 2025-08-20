@@ -55,6 +55,15 @@
       "firstAccessTimestamp": "首次访问时间(ns)",
       "lastAccessTimestamp": "末次访问时间(ns)",
       "maxAccessInterval": "最大访问时间间隔(ns)"
-    }
+    },
+    "setThreshold": "过滤低效显存",
+    "lazyUsedThreshold": "提前申请阈值",
+    "delayedFreeThreshold": "延迟释放阈值",
+    "longIdleThreshold": "空闲过长阈值",
+    "or": "或",
+    "early-alloc": "提前申请",
+    "late-free": "延迟释放",
+    "idle": "过长闲置",
+    "onlyInefficient": "只展示低效内存块"
   }
 }

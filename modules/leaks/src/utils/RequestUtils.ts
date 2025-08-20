@@ -49,7 +49,10 @@ export interface FuncParam {
     startTimestamp?: number;
     endTimestamp?: number;
 }
-
+export interface ThreShold {
+    perT: number | null;
+    valueT: number | null;
+}
 export interface BlockParam {
     deviceId: string;
     eventType: string;
@@ -63,6 +66,10 @@ export interface BlockParam {
     pageSize?: number;
     filters?: { [key: string]: string };
     rangeFilters?: { [key: string]: number[] };
+    lazyUsedThreshold?: ThreShold;
+    delayedFreeThreshold?: ThreShold;
+    longIdleThreshold?: ThreShold;
+    onlyInefficient?: boolean;
 }
 export interface EventParam {
     deviceId: string;

@@ -55,6 +55,15 @@
       "firstAccessTimestamp": "First Access Timestamp(ns)",
       "lastAccessTimestamp": "Last Access Timestamp(ns)",
       "maxAccessInterval": "Max Access Interval(ns)"
-    }
+    },
+    "setThreshold": "Filter Inefficient Memory Blocks",
+    "lazyUsedThreshold": "Lazy Used Threshold",
+    "delayedFreeThreshold": "Delayed Free Threshold",
+    "longIdleThreshold": "Long Idle Threshold",
+    "or": "or",
+    "early-alloc": "early-alloc",
+    "late-free": "late-free",
+    "idle": "idle",
+    "onlyInefficient": "Only Show Inefficient Blocks"
   }
 }

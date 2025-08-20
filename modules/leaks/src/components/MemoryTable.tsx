@@ -1,19 +1,20 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-import React from 'react';
-import type { RadioChangeEvent } from 'antd';
+import React, { useState } from 'react';
+import { type RadioChangeEvent } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
-import { Radio } from 'ascend-components';
+import { Radio, Button } from 'ascend-components';
 import { Session } from '../entity/session';
 import BlocksTable from './BlocksTable';
 import EventsTable from './EventsTable';
-
+import ThresholdModal from './ThresholdModal';
 const MemoryTable = observer(({ session }: { session: Session }): React.ReactElement => {
     const { t } = useTranslation('leaks');
     const { tableType } = session;
+    const [open, setOpen] = useState(false);
     const radioChange = (e: RadioChangeEvent): void => {
         runInAction(() => {
             const type = e.target.value;
@@ -38,19 +39,25 @@ const MemoryTable = observer(({ session }: { session: Session }): React.ReactEle
                 session.eventsOrderBy = '';
                 session.eventsFilters = {};
                 session.eventsRangeFilters = {};
+                session.lazyUsedThreshold = { perT: null, valueT: null };
+                session.delayedFreeThreshold = { perT: null, valueT: null };
+                session.longIdleThreshold = { perT: null, valueT: null };
             }
         });
     };
     return (
         <>
-            <Radio.Group value={tableType}
-                style={{ marginBottom: 10 }}
-                onChange={radioChange}>
-                <Radio value={'blocks'}>{t('Block View')}</Radio>
-                <Radio
-                    value={'events'}>{t('Event View')}</Radio>
-            </Radio.Group>
-            {tableType === 'blocks' ? <BlocksTable session={session} /> : <EventsTable session={session} />}
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Radio.Group value={tableType}
+                    style={{ marginBottom: 10 }}
+                    onChange={radioChange}>
+                    <Radio value={'blocks'}>{t('Block View')}</Radio>
+                    <Radio
+                        value={'events'}>{t('Event View')}</Radio>
+                </Radio.Group>
+                {tableType === 'blocks' ? <Button type="primary" onClick={() => { setOpen(true); }}>{t('setThreshold')}</Button> : <></>}
+            </div>
+            {tableType === 'blocks' ? <><BlocksTable session={session} /><ThresholdModal session={session} open={open} setOpen={setOpen} /></> : <EventsTable session={session} />}
         </>
     );
 });

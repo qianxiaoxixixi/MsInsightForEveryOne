@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-
 import styled from '@emotion/styled';
 
 export const Line = styled.div<{ lineShow: string; offset: number; color: string }>`
@@ -16,7 +15,6 @@ export const Line = styled.div<{ lineShow: string; offset: number; color: string
     z-index: 10;
     border-left: 1px dashed ${(props): string => props.color};
 `;
-
 export const initLine = (mouseEnter: any, mouseMove: any, mouseLeave: any): void => {
     const funcContent = document.getElementById('funcContent');
     const barContent = document.getElementById('barContent');
