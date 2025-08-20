@@ -362,3 +362,25 @@ TEST_F(TestSuit, QueryRetransmissionAnalyzerClassificationData)
     ASSERT_TRUE(result);
     ASSERT_EQ(data.size(), expectSize);
 }
+
+TEST_F(TestSuit, GetCommTimeForRankDimTest)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::string iterationId = "2";
+    auto commTimeForRankDim = database->GetCommTimeForRankDim(iterationId);
+    EXPECT_EQ(commTimeForRankDim.size(), 2); // 2
+}
+
+TEST_F(TestSuit, QuerySlowOpByCommDurationTest)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::string fastestRankId = "1";
+    Protocol::DurationListParams params;
+    params.iterationId = "2";
+    params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    RankDetailsForSlowRank slowRank;
+    slowRank.rankId = "0";
+    auto res = database->QuerySlowOpByCommDuration(params, fastestRankId, slowRank);
+    EXPECT_TRUE(res);
+    EXPECT_EQ(slowRank.opDetails.size(), 2); // 2
+}

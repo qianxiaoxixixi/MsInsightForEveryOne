@@ -232,3 +232,35 @@ TEST_F(ClusterServiceTest, QueryDurationListFailWithoutDb)
     ClusterService::QueryDurationList(params, body);
     EXPECT_EQ(body.durationList.size(), NUMBER_ZERO);
 }
+
+TEST_F(ClusterServiceTest, AnalyzeCommunicationSlowRanksCheckOpNameListFalse)
+{
+    Clear();
+    InitParser(filePath, Dic::COMPARE);
+    Dic::Protocol::DurationListParams params;
+    params.operatorName = "hcom_broadcast__483_1";
+    params.iterationId = "2";
+    params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    params.isCompare = false;
+    params.clusterPath = Dic::COMPARE;
+    Dic::Protocol::CommunicationSlowRankAnalysisResponseBody body;
+    auto res = ClusterService::AnalyzeCommunicationSlowRanks(params, body);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(body.hasAdvice, false);
+}
+
+TEST_F(ClusterServiceTest, AnalyzeCommunicationSlowRanksSuccess)
+{
+    Clear();
+    InitParser(filePath, Dic::COMPARE);
+    Dic::Protocol::DurationListParams params;
+    params.operatorName = "Total Op Info";
+    params.iterationId = "2";
+    params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    params.isCompare = false;
+    params.clusterPath = Dic::COMPARE;
+    Dic::Protocol::CommunicationSlowRankAnalysisResponseBody body;
+    auto res = ClusterService::AnalyzeCommunicationSlowRanks(params, body);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(body.hasAdvice, true);
+}

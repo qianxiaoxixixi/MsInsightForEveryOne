@@ -34,6 +34,8 @@ public:
     virtual bool QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo) = 0;
     virtual std::vector<std::string> GetAllRankFromStepStatisticInfo() = 0;
     virtual std::vector<CommInfoUnderRank> GetCommTimeForRankDim(const std::string &stepId) = 0;
+    virtual bool QuerySlowOpByCommDuration(const Protocol::DurationListParams &params, const std::string &fastestRankId,
+                                           Protocol::RankDetailsForSlowRank &slowRank) = 0;
     virtual bool GetGroups(const std::string &iterationId, std::vector<std::string> &groupList) = 0;
     virtual bool QueryMatrixList(Protocol::MatrixBandwidthParam &param,
                                  std::vector<MatrixInfoDo> &matrixInfoDoList) = 0;
@@ -83,6 +85,8 @@ public:
     std::vector<ExpertHotspotStruct> QueryExpertHotspotData(const std::string &modelStage, const std::string &version);
     void ReleaseStmt();
 protected:
+    const static inline int doubleReservedNum = 3;
+    const static inline int slowRankOpCount = 3;
     const std::string totalOpInfo = "Total Op Info";
     const std::string clusterParseStatus = "Cluster files parsing status";
     const std::string commonSql = "CREATE TABLE IF NOT EXISTS " + TABLE_EXPERT_HOTSPOT_INTO +
@@ -104,6 +108,8 @@ protected:
     bool ExecuteInsertDuplicateUpdateBaseInfo(const std::map<std::string, std::string> &baseInfoMap,
                                               const std::string &tableName);
     std::vector<std::string> ExecuteGetAllRankFromStepStatisticInfo(std::string &sql);
+    bool ExecuteQuerySlowOpByCommDuration(const std::string &sql, const Protocol::DurationListParams &params,
+        const std::string &fastestRankId, Protocol::RankDetailsForSlowRank &slowRank);
     std::vector<CommInfoUnderRank> ExecuteGetCommTimeForRankDim(std::string &sql, const std::string &step);
     bool ExecuteGetGroups(const std::string &iterationId, std::vector<std::string> &groupList, std::string sql);
     bool ExecuteQueryMatrixList(Protocol::MatrixBandwidthParam &param, std::vector<MatrixInfoDo> &matrixInfoDoList,

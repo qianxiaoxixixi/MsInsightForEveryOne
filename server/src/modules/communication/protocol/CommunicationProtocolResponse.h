@@ -435,10 +435,11 @@ struct CommunicationAdvisorResponse : public Response {
 
 struct OpDetailsForSlowRank {
     std::string name;
-    double startTime;
-    double diffTime;
-    double elapseTime;
-    double maxElapseTime;
+    double startTime; // 当前卡算子start time
+    double diffTime; // maxElapseTime - elapseTime
+    double elapseTime; // 当前卡算子elapse time
+    double maxStartTime; // 最快卡（最大通信时间卡）算子 start time
+    double maxElapseTime; // 最快卡（最大通信时间卡）算子 elapse time
 };
 
 struct RankDetailsForSlowRank {
@@ -447,6 +448,13 @@ struct RankDetailsForSlowRank {
     double totalElapseTime;
     double maxTotalElapseTime;
     std::vector<OpDetailsForSlowRank> opDetails;
+    bool operator<(const RankDetailsForSlowRank &other) const
+    {
+        if (totalElapseTime != other.totalElapseTime) {
+            return totalElapseTime > other.totalElapseTime;
+        }
+        return rankId < other.rankId;
+    }
 };
 
 struct CommunicationSlowRankAnalysisResponseBody {

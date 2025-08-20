@@ -16,6 +16,7 @@
 #include "OperatorNamesHandler.h"
 #include "DurationListHandler.h"
 #include "CommunicationAdvisorHandler.h"
+#include "CommunicationSlowRankAnalysisHandler.h"
 
 
 using namespace Dic::Module;
@@ -224,4 +225,16 @@ TEST_F(HandlerTest, DurationListHandlerExecSqlFailed)
     DurationListHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_TRUE(result);
+}
+
+TEST_F(HandlerTest, CommunicationSlowRankAnalysisHandlerExecSqlFailed)
+{
+    auto request = std::make_unique<DurationListRequest>();
+    request->params.clusterPath = "test";
+    request->params.iterationId = "0";
+    request->params.operatorName = "xxx";
+    request->params.stage = "0";
+    CommunicationSlowRankAnalysisHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
 }
