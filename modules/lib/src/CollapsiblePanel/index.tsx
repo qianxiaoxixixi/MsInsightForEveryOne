@@ -22,11 +22,15 @@ interface CollapsiblePanelProps {
     testId?: string; // 用于 playwright 用例
     destroy?: boolean;
     tooltip?: ReactNode | RenderFunction;
+    suffix?: ReactNode | RenderFunction;
 }
 
 const PanelContainer = styled.div<Partial<CollapsiblePanelProps>>`
   margin-bottom: 10px;
   .panel-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: ${(props): string => props.secondary ? '0 24px' : '6px 24px'};
     background: ${(props): string => props.secondary ? 'transparent' : props.theme.bgColorLight};
     color: ${(props): string => props.theme.textColorPrimary};
@@ -66,6 +70,7 @@ export const CollapsiblePanel = forwardRef<HTMLDivElement, CollapsiblePanelProps
                     <div className={'mr-6'}>{icon}{title}</div>
                     { tooltip && <MITooltipHelp title={tooltip}></MITooltipHelp>}
                 </div>
+                { typeof props.suffix === 'function' ? props.suffix() : props.suffix }
             </div>
             {
                 destroy
