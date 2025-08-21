@@ -8,7 +8,7 @@ import { localStorageService, LocalStorageKey } from 'ascend-local-storage';
 import { ThemeName, Language } from '@/utils/enum';
 import type { LayerType } from '@/centralServer/websocket/defs';
 
-export function sendTheme(to?: number): void {
+export function sendTheme(to?: string): void {
     connector.send({
         event: 'setTheme',
         body: { isDark: themeInstance.getCurrentTheme() === ThemeName.DARK },
@@ -42,7 +42,7 @@ export function sendStatus(): void {
     });
 }
 
-export function sendLanguage(to?: number): void {
+export function sendLanguage(to?: string): void {
     connector.send({
         event: 'switchLanguage',
         to,
@@ -84,7 +84,7 @@ export const sendShortcutKeys = (key: {hasCtrl: boolean;key: string}): void => {
     });
 };
 
-export const sendDirectory = (to?: number): void => {
+export const sendDirectory = (to?: string): void => {
     const session = store.sessionStore.activeSession;
     let rankId: string = '';
     let selectedFileType: LayerType;
@@ -123,7 +123,7 @@ export const sendDirectory = (to?: number): void => {
     });
 };
 
-export const sendSessionKey = (key: string, to?: number): void => {
+export const sendSessionKey = (key: string, to?: string): void => {
     const session = store.sessionStore.activeSession;
     const value = (session as any)[key];
     if (value === undefined) {
@@ -136,7 +136,7 @@ export const sendSessionKey = (key: string, to?: number): void => {
     });
 };
 
-export const sendMap: Record<string, (to?: number) => void> = {
+export const sendMap: Record<string, (to?: string) => void> = {
     directory: sendDirectory,
     status: sendStatus,
     theme: sendTheme,

@@ -25,7 +25,7 @@ export interface NotificationMessage {
         };
         event: string;
         module: string;
-        from?: number;
+        from?: string;
         modules?: string[];
         port?: number;
     };
