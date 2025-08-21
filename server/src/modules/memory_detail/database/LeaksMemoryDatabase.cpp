@@ -594,6 +594,9 @@ int64_t LeaksMemoryDatabase::QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::ve
         block.firstAccessTimestamp = sqlite3_column_int64(stmt, col++);
         block.lastAccessTimestamp = sqlite3_column_int64(stmt, col++);
         block.maxAccessInterval = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        block.lazyUsed = sqlite3_column_int(stmt, col++) > 0;
+        block.delayedFree = sqlite3_column_int(stmt, col++) > 0;
+        block.longIdle = sqlite3_column_int(stmt, col++) > 0;
         blocks.emplace_back(block);
     }
     return count;
@@ -816,8 +819,6 @@ std::string LeaksMemoryDatabase::BuildQueryBlocksConditionSqlByParams(const Leak
     if (!queryParams.orderBy.empty()) {
         conditionSql.append(BuildQueryOrderSqlByParams(queryParams));
     }
-    // 构造LIMIT OFFSET
-    conditionSql.append(" LIMIT ? OFFSET ? ");
     return conditionSql;
 }
 
@@ -862,8 +863,14 @@ sqlite3_stmt* LeaksMemoryDatabase::BuildQueryBlocksByQueryParamsAndBindParam(con
     bool onlyAllocOrFreeInTimeRange = !isTable;
     std::string conditionSql = BuildQueryBlocksConditionSqlByParams(queryParams, onlyAllocOrFreeInTimeRange,
                                                                     timeCondition, filtersCondition);
+    std::string withInefficientCol = AppendInefficientBlockColumnSql(selectColumns, queryParams);
     std::string sql = StringUtil::FormatString("select {} from {} {} ",
-                                               selectColumns, memoryBlockTable, conditionSql);
+                                               withInefficientCol, memoryBlockTable, conditionSql);
+    // 如果仅展示低效内存块
+    if (queryParams.onlyInefficient) {
+        sql.append(StringUtil::FormatString(" AND ({} > 0 OR {} > 0 OR {} > 0) ", lazyUsedCol, delayedFreeCol, longIdleCol));
+    }
+    sql.append(" LIMIT ? OFFSET ? ");
     sqlite3_stmt *stmt = nullptr;
     int result  = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -1425,6 +1432,94 @@ std::string LeaksMemoryDatabase::GetSelectBlocksFullColumns(const bool relativeT
         columns.append(StringUtil::FormatString(", {} AS _{}", columnObj.name, columnObj.key));
     }
     return columns;
+}
+
+static std::string BuildLazyUsedThresholdColumn(const Threshold &threshold)
+{
+    if (threshold.valueT == 0 && (threshold.perT == Threshold::MIN_PER || threshold.perT == Threshold::MAX_PER)) {
+        return "0"; // 代表lazyUsed = false, 不处理该场景
+    }
+    std::string firstAccessInterval = StringUtil::FormatString("({}-{})",
+                                                               BLOCK::FIRST_ACCESS_TIMESTAMP, BLOCK::START_TIMESTAMP);
+    // 有效时间戳
+    std::string validCondition = StringUtil::FormatString("{}>0", firstAccessInterval);
+    // 数值阈值
+    std::string valueCondition = "0";
+    if (threshold.valueT > 0) {
+        valueCondition = StringUtil::FormatString("{}>{}", firstAccessInterval, std::to_string(threshold.valueT));
+    }
+    // 百分比阈值
+    std::string duration = StringUtil::FormatString("({}-{})", BLOCK::END_TIMESTAMP, BLOCK::START_TIMESTAMP);
+    std::string perCondition = "0";
+    if (threshold.perT != threshold.MAX_PER && threshold.perT != threshold.MIN_PER) {
+        perCondition = StringUtil::FormatString("{}*1.0/{}>{}", firstAccessInterval,
+                                                duration, threshold.GetPerStr());
+    }
+    return StringUtil::FormatString("({} AND ({} OR {}))", validCondition, valueCondition, perCondition);
+}
+
+static std::string BuildDelayedFreeThresholdColumn(const Threshold &threshold)
+{
+    if (threshold.valueT == 0 && (threshold.perT == Threshold::MIN_PER || threshold.perT == Threshold::MAX_PER)) {
+        return "0"; // 代表delayedFree = false, 不识别该场景
+    }
+    auto lastAccessInterval = StringUtil::FormatString("({}-{})",
+                                                       BLOCK::LAST_ACCESS_TIMESTAMP, BLOCK::START_TIMESTAMP);
+    auto freeInterval = StringUtil::FormatString("({}-{})",
+                                                 BLOCK::END_TIMESTAMP, BLOCK::LAST_ACCESS_TIMESTAMP);
+    // 有效时间戳
+    std::string validCondition = StringUtil::FormatString("{}>0", lastAccessInterval);
+    // 数值阈值
+    std::string valueCondition = "0";
+    if (threshold.valueT > 0) {
+        valueCondition = StringUtil::FormatString("{}>{}", freeInterval, std::to_string(threshold.valueT));
+    }
+    // 百分比阈值
+    std::string duration = StringUtil::FormatString("({}-{})", BLOCK::END_TIMESTAMP, BLOCK::START_TIMESTAMP);
+    std::string perCondition = "0";
+    if (threshold.perT != threshold.MAX_PER && threshold.perT != threshold.MIN_PER) {
+        perCondition = StringUtil::FormatString("{}*1.0/{}>{}", freeInterval,
+                                                duration, threshold.GetPerStr());
+    }
+    return StringUtil::FormatString("({} AND ({} OR {}))", validCondition, valueCondition, perCondition);
+}
+
+static std::string BuildLongIdleThresholdColumn(const Threshold &threshold)
+{
+    if (threshold.valueT == 0 && (threshold.perT == Threshold::MIN_PER || threshold.perT == Threshold::MAX_PER)) {
+        return "0"; // 代表longIdle = false, 不处理该场景
+    }
+    // 有效时间戳
+    std::string validCondition = StringUtil::FormatString("{}>0", BLOCK::MAX_ACCESS_INTERVAL);
+    // 数值阈值
+    std::string valueCondition = "0";
+    if (threshold.valueT > 0) {
+        valueCondition = StringUtil::FormatString("{}>{}",
+                                                  BLOCK::MAX_ACCESS_INTERVAL, std::to_string(threshold.valueT));
+    }
+    // 百分比阈值
+    std::string duration = StringUtil::FormatString("({}-{})", BLOCK::END_TIMESTAMP, BLOCK::START_TIMESTAMP);
+    std::string perCondition = "0";
+    if (threshold.perT != threshold.MAX_PER && threshold.perT != threshold.MIN_PER) {
+        perCondition = StringUtil::FormatString("{}*1.0/{}>{}", BLOCK::MAX_ACCESS_INTERVAL,
+                                                duration, threshold.GetPerStr());
+    }
+    return StringUtil::FormatString("({} AND ({} OR {}))", validCondition, valueCondition, perCondition);
+}
+
+std::string LeaksMemoryDatabase::AppendInefficientBlockColumnSql(const std::string& selectColumn,
+                                                                 const LeaksMemoryBlockParams& queryParams)
+{
+    std::string res = selectColumn;
+    std::string inefficientColPattern = ", {} AS {}";
+    // 提前申请
+    auto isLazyUsed = BuildLazyUsedThresholdColumn(queryParams.lazyUsedThreshold);
+    res.append(StringUtil::FormatString(inefficientColPattern, isLazyUsed, lazyUsedCol));
+    auto isDelayedFree = BuildDelayedFreeThresholdColumn(queryParams.delayedFreeThreshold);
+    res.append(StringUtil::FormatString(inefficientColPattern, isDelayedFree, delayedFreeCol));
+    auto isLongIdle = BuildLongIdleThresholdColumn(queryParams.longIdleThreshold);
+    res.append(StringUtil::FormatString(inefficientColPattern, isLongIdle, longIdleCol));
+    return res;
 }
 
 }  // FullDb

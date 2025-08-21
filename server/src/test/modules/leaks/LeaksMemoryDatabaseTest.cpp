@@ -409,6 +409,60 @@ TEST_F(LeaksMemoryDatabaseTest, QueryEventsByGroupId)
 }
 
 /***
+ * 测试低效显存识别
+ */
+TEST_F(LeaksMemoryDatabaseTest, QueryBlocksTableWithInefficientThreshold)
+{
+    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    ASSERT_TRUE(memoryDatabase != nullptr);
+    LeaksMemoryBlockParams queryParams;
+    queryParams.deviceId = "1";
+    queryParams.relativeTime = true;
+    queryParams.eventType = "PTA";
+    queryParams.onlyInefficient = true; // 仅过滤
+    queryParams.currentPage = 1;
+    queryParams.pageSize = 10;
+
+    // 提前申请场景
+    queryParams.lazyUsedThreshold.perT = 10;
+    std::vector<MemoryBlock> blocks;
+    memoryDatabase->QueryMemoryBlocks(queryParams, true, blocks);
+    EXPECT_FALSE(blocks.empty());
+    for (auto &block : blocks) {
+        EXPECT_TRUE(block.lazyUsed);
+        uint64_t firstAccessInterval = block.firstAccessTimestamp - block.startTimestamp;
+        uint64_t duration = block.endTimestamp - block.startTimestamp;
+        EXPECT_GT(firstAccessInterval, duration*0.1);
+    }
+    queryParams.lazyUsedThreshold.perT = 0;
+    blocks.clear();
+    // 延迟释放场景
+    queryParams.delayedFreeThreshold.perT = 10;
+    queryParams.delayedFreeThreshold.valueT = 100000000;
+    memoryDatabase->QueryMemoryBlocks(queryParams, true, blocks);
+    EXPECT_FALSE(blocks.empty());
+    for (auto &block : blocks) {
+        EXPECT_TRUE(block.delayedFree);
+        uint64_t freeInterval = block.endTimestamp - block.lastAccessTimestamp;
+        uint64_t duration = block.endTimestamp - block.startTimestamp;
+        EXPECT_TRUE(freeInterval > 100000000 || freeInterval > duration*0.1);
+    }
+    queryParams.delayedFreeThreshold.perT = 0;
+    queryParams.delayedFreeThreshold.valueT = 0;
+    blocks.clear();
+    // 超长空闲场景
+    queryParams.longIdleThreshold.perT = 10;
+    memoryDatabase->QueryMemoryBlocks(queryParams, true, blocks);
+    EXPECT_FALSE(blocks.empty());
+    for (auto &block : blocks) {
+        EXPECT_TRUE(block.longIdle);
+        uint64_t maxInterval = block.maxAccessInterval;
+        uint64_t duration = block.endTimestamp - block.startTimestamp;
+        EXPECT_TRUE(maxInterval > duration*0.1);
+    }
+}
+
+/***
  * 该测试专用于针对以下场景：
  *  1. msleaks新增了某固化标签(如在进程占用下新增了Workspace内存池，其标签为PTA_WORKSPACE)
  *  2. 新增的标签 以原某固化标签为前缀，却并原固化标签分类的子分类(如新增的PTA_WORKSPACE, 与原固化标签PTA存在前缀关系，却并非PTA子类)

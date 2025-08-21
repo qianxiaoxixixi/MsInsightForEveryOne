@@ -201,3 +201,33 @@ TEST_F(LeaksMemoryProtocolTest, BuildTraceRequestFromJson)
     EXPECT_EQ(request.params.threadId, expectThreadId);
     EXPECT_TRUE(request.params.relativeTime);
 }
+
+TEST_F(LeaksMemoryProtocolTest, BuildBlockTableThresholdParamsFromJson)
+{
+    std::string jsonStr = R"({"id": 11, "moduleName": "leaks", "type": "request", "command": "Memory/leaks/blocks",
+                                "params": {"deviceId": "1", "relativeTime": true, "eventType": "PTA", "isTable": true,
+                                "startTimestamp": 7707721000, "endTimestamp": 42623722980,
+                                "lazyUsedThreshold":{"perT": 20, "valueT": 100000000},
+                                "delayedFreeThreshold": {"perT": 0, "valueT": 999999}}})";
+    std::string errMsg;
+    auto json = JsonUtil::TryParse(jsonStr, errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    EXPECT_FALSE(json->HasParseError());
+    EXPECT_TRUE(json.has_value());
+    auto requestPtr = LeaksMemoryBlockRequest::FromJson(json.value(), errMsg);
+    EXPECT_TRUE(errMsg.empty());
+    auto &request = dynamic_cast<LeaksMemoryBlockRequest &>(*requestPtr);
+    EXPECT_TRUE(request.params.CommonCheck(errMsg));
+    EXPECT_EQ(request.params.deviceId, "1");
+    const uint64_t expectStartTimestamp = 7707721000;
+    const uint64_t expectEndTimestamp = 42623722980;
+    EXPECT_EQ(request.params.startTimestamp, expectStartTimestamp);
+    EXPECT_EQ(request.params.endTimestamp, expectEndTimestamp);
+    EXPECT_TRUE(request.isTable);
+    EXPECT_EQ(request.params.lazyUsedThreshold.perT, 20);
+    EXPECT_EQ(request.params.lazyUsedThreshold.valueT, 100000000);
+    EXPECT_EQ(request.params.delayedFreeThreshold.perT, 0);
+    EXPECT_EQ(request.params.delayedFreeThreshold.valueT, 999999);
+    EXPECT_EQ(request.params.longIdleThreshold.perT, 0);
+    EXPECT_EQ(request.params.longIdleThreshold.valueT, 0);
+}

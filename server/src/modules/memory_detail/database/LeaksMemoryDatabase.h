@@ -92,6 +92,8 @@ private:
     std::string BuildQueryEventsConditionSqlByParams(const LeaksMemoryEventParams &queryParams,
                                                      bool &timeCondition,
                                                      bool &filtersCondition);
+    std::string AppendInefficientBlockColumnSql(const std::string& selectColumn,
+                                                const LeaksMemoryBlockParams& queryParams);
     std::string BuildQueryBlocksConditionSqlByParams(const LeaksMemoryBlockParams &queryParams,
                                                      bool onlyAllocOrFreeInTimeRange,
                                                      bool &timeCondition,
@@ -100,7 +102,7 @@ private:
                                                             const LeaksMemoryEventParams &queryParams);
     sqlite3_stmt* BuildQueryBlocksByQueryParamsAndBindParam(const std::string &selectColumns,
                                                             const LeaksMemoryBlockParams &queryParams,
-                                                            bool isTable);
+                                                            const bool isTable);
 
     static std::string BuildQueryFiltersConditionSqlByParams(const FiltersParam &filtersParam);
     static std::string BuildQueryOrderSqlByParams(const OrderByParam &orderByParam);
@@ -127,6 +129,11 @@ private:
     const std::string pythonTraceTablePrefix = "python_trace_";
     // 调用栈列前缀
     const std::string callStackPrefix = "Call Stack";
+
+    // 低效显存列别名标识
+    const std::string lazyUsedCol = "_lazyUsed";
+    const std::string delayedFreeCol = "_delayedFree";
+    const std::string longIdleCol = "_longIdle";
 
     const std::string allocationColumnPattern =
         StringUtil::GenerateColumnString(MemoryAllocationTableColumn::FULL_COLUMNS_WITHOUT_ID);

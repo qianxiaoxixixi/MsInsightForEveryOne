@@ -49,42 +49,7 @@ public:
 
     bool SetFiltersFromJson(const json_t &json,
                             const std::vector<SqliteDbTableColumn> &columns,
-                            std::string &errorMsg)
-    {
-        if (!json.IsObject()) {
-            errorMsg = "Failed to set filters params from param json object: json is null or type invalid";
-            return false;
-        }
-        if (!json.HasMember("filters")) {
-            return true;
-        }
-        const json_t& filtersJson = json["filters"];
-        if (!filtersJson.IsObject()) {
-            errorMsg = "Failed to set filters params from param json object: filter json is null or type invalid";
-            return false;
-        }
-        for (auto member = filtersJson.MemberBegin(); member != filtersJson.MemberEnd(); member++) {
-            auto &key  = member->name;
-            auto &value = member->value;
-            if (!key.IsString() || !value.IsString()) {
-                errorMsg = "Failed to set filters params from param json object: invalid type";
-                return false;
-            }
-            std::string strKey = key.GetString();
-            std::string strValue = value.GetString();
-            auto const columnIt = FindColumnByKey(strKey, columns);
-            if (columnIt == columns.end()) {
-                errorMsg = StringUtil::FormatString("Invalid filter, detail: Non-exist column '{}'", strKey);
-                return false;
-            }
-            if (!columnIt->searchable) {
-                errorMsg = StringUtil::FormatString("Invalid filter, detail: column '{}' is not searchable", strKey);
-                return false;
-            }
-            filters.emplace(StringUtil::FormatString("_{}", columnIt->key), strValue);
-        }
-        return true;
-    }
+                            std::string &errorMsg);
 };
 
 class OrderByParam {
@@ -94,38 +59,7 @@ public:
 
     bool SetOrderFromJson(const json_t &json,
                           const std::vector<SqliteDbTableColumn> &columns,
-                          std::string &errorMsg)
-    {
-        if (!json.IsObject()) {
-            errorMsg = "Failed to set orderBy param from param json object: json is null or type invalid";
-            return false;
-        }
-        if (!json.HasMember("orderBy")) {
-            return true;
-        }
-        const json_t &orderByJson = json["orderBy"];
-        if (orderByJson.IsNull() || !orderByJson.IsString()) {
-            errorMsg = "Failed to set orderBy param from param json object: orderBy is null or type invalid";
-            return false;
-        }
-        std::string orderByStr = orderByJson.GetString();
-        if (orderByStr.empty()) {
-            return true;
-        }
-        auto const columnIt = FindColumnByKey(orderByStr, columns);
-        if (columnIt == columns.end()) {
-            errorMsg = "Failed to set orderBy param from param json object: Non-exist column " + orderByStr;
-            return false;
-        }
-        if (!columnIt->sortable) {
-            errorMsg = StringUtil::FormatString("Invalid order, detail: column '{}' is not sortable",
-                                                columnIt->name);
-            return false;
-        }
-        orderBy = StringUtil::FormatString("_{}", columnIt->key);
-        JsonUtil::SetByJsonKeyValue(desc, json, "desc");
-        return true;
-    }
+                          std::string &errorMsg);
 };
 
 class RangeFiltersParam {
@@ -134,50 +68,27 @@ public:
 
     bool SetRangeFiltersFromJson(const json_t &json,
                                  const std::vector<SqliteDbTableColumn> &columns,
-                                 std::string &errorMsg)
+                                 std::string &errorMsg);
+};
+
+struct Threshold {
+public:
+    uint32_t perT{0};
+    uint64_t valueT{0};
+
+    static const uint32_t MAX_PER = 100;
+    static const uint32_t MIN_PER = 0;
+    static const uint64_t MAX_VALUE = INT64_MAX;
+    static const uint64_t MIN_VALUE = 0;
+
+    bool CheckValid() const
     {
-        if (!json.IsObject()) {
-            errorMsg = "Failed to set range filters params from param json object: json is null or type invalid";
-            return false;
-        }
-        // 没有rangeFilters字段或rangeFilters为空代表不做范围过滤，合法
-        if (!json.HasMember("rangeFilters") || json["rangeFilters"].MemberCount() == 0) {
-            return true;
-        }
-        const json_t& rangeFiltersJson = json["rangeFilters"];
-        if (!rangeFiltersJson.IsObject()) {
-            errorMsg = "Failed to set range filters params from param json object: filter json is null or type invalid";
-            return false;
-        }
-        for (auto member = rangeFiltersJson.MemberBegin(); member != rangeFiltersJson.MemberEnd(); member++) {
-            auto &key  = member->name;
-            auto &value = member->value;
-            if (!key.IsString() || !value.IsArray()) {
-                errorMsg = "Failed to set range filters params from param json object: format error.";
-                return false;
-            }
-            std::string strKey = key.GetString();
-            auto rangeJson = value.GetArray();
-            if (rangeJson.Size() != 2 || !rangeJson[0].IsNumber() || !rangeJson[1].IsNumber()) {
-                errorMsg = StringUtil::FormatString("Invalid range array size or range array type.");
-                return false;
-            }
-            std::pair<double, double> rangePair;
-            rangePair.first = rangeJson[0].GetDouble();
-            rangePair.second = rangeJson[1].GetDouble();
-            auto const columnIt = FindColumnByKey(strKey, columns);
-            if (columnIt == columns.end()) {
-                errorMsg = StringUtil::FormatString("Invalid filter, detail: Non-exist column '{}'", strKey);
-                return false;
-            }
-            if (!columnIt->rangeFilterable) {
-                errorMsg = StringUtil::FormatString("Invalid range filter, "
-                                                    "detail: column '{}' is not range filterable", strKey);
-                return false;
-            }
-            rangeFilters.emplace(StringUtil::FormatString("_{}", columnIt->key), rangePair);
-        }
-        return true;
+        return perT <= MAX_PER && valueT < MAX_VALUE;
+    }
+
+    std::string GetPerStr() const
+    {
+        return StringUtil::DoubleToStringWithTwoDecimalPlaces(perT/100.0f);
     }
 };
 
@@ -189,6 +100,13 @@ struct LeaksMemoryBlockParams : PaginationParam, FiltersParam, OrderByParam, Ran
     std::string deviceId;
     std::string eventType;
     bool relativeTime;
+
+    // 低效内存识别相关请求参数
+    Threshold lazyUsedThreshold;
+    Threshold delayedFreeThreshold;
+    Threshold longIdleThreshold;
+    // 仅展示低效内存
+    bool onlyInefficient{false};
 
     LeaksMemoryBlockParams() : startTimestamp(0), endTimestamp(0), minSize(0), maxSize(0), relativeTime(false) {}
 
@@ -213,6 +131,18 @@ struct LeaksMemoryBlockParams : PaginationParam, FiltersParam, OrderByParam, Ran
         }
         if (!CheckStrParamValid(deviceId, errorMsg)) {
             errorMsg = "Invalid deviceId, detail: " + errorMsg;
+            return false;
+        }
+        if (!lazyUsedThreshold.CheckValid()) {
+            errorMsg = "Invalid lazy_used threshold.";
+            return false;
+        }
+        if (!delayedFreeThreshold.CheckValid()) {
+            errorMsg = "Invalid delayed free threshold.";
+            return false;
+        }
+        if (!longIdleThreshold.CheckValid()) {
+            errorMsg = "Invalid long idle threshold";
             return false;
         }
         if (!CheckStrParamValid(eventType, errorMsg)) {
@@ -357,6 +287,22 @@ struct LeaksMemoryBlockRequest : public Request {
     LeaksMemoryBlockParams params;
     bool isTable{};
 
+    void SetThresholdsFromJson(const json_t& json)
+    {
+        if (json.HasMember("lazyUsedThreshold") && json["lazyUsedThreshold"].IsObject()) {
+            JsonUtil::SetByJsonKeyValue(params.lazyUsedThreshold.perT, json["lazyUsedThreshold"], "perT");
+            JsonUtil::SetByJsonKeyValue(params.lazyUsedThreshold.valueT, json["lazyUsedThreshold"], "valueT");
+        }
+        if (json.HasMember("delayedFreeThreshold") && json["delayedFreeThreshold"].IsObject()) {
+            JsonUtil::SetByJsonKeyValue(params.delayedFreeThreshold.perT, json["delayedFreeThreshold"], "perT");
+            JsonUtil::SetByJsonKeyValue(params.delayedFreeThreshold.valueT, json["delayedFreeThreshold"], "valueT");
+        }
+        if (json.HasMember("longIdleThreshold") && json["longIdleThreshold"].IsObject()) {
+            JsonUtil::SetByJsonKeyValue(params.longIdleThreshold.perT, json["longIdleThreshold"], "perT");
+            JsonUtil::SetByJsonKeyValue(params.longIdleThreshold.valueT, json["longIdleThreshold"], "valueT");
+        }
+    }
+
     static std::unique_ptr<Request> FromJson(const json_t& json, std::string& error)
     {
         std::unique_ptr<LeaksMemoryBlockRequest> reqPtr = std::make_unique<LeaksMemoryBlockRequest>();
@@ -372,6 +318,7 @@ struct LeaksMemoryBlockRequest : public Request {
         }
         const json_t& param_json = json["params"];
         JsonUtil::SetByJsonKeyValue(reqPtr->isTable, param_json, "isTable");
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.onlyInefficient, param_json, "onlyInefficient");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.startTimestamp, param_json, "startTimestamp");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.endTimestamp, param_json, "endTimestamp");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.minSize, param_json, "minSize");
@@ -393,6 +340,7 @@ struct LeaksMemoryBlockRequest : public Request {
                 Server::ServerLog::Error("Failed set range filters from json param: %", error);
                 return nullptr;
             }
+            reqPtr->SetThresholdsFromJson(param_json);
         } else {
             // 展示block图时，只可根据startTimestamp排序
             reqPtr->params.orderBy = std::string(BLOCK_TABLE::START_TIMESTAMP);
