@@ -61,6 +61,7 @@ export function updateDataScene(data: Record<string, any>): void {
         instrVersion: data.instrVersion ?? -1,
         isLeaks: data.isLeaks ?? false,
         isIE: data.isIE ?? false,
+        isRL: false,
     };
     updateSession(scenceInfo);
 }

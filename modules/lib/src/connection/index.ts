@@ -2,11 +2,12 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import { customConsole as console } from 'ascend-utils';
+
 type ReservedEventHandler = 'request';
 type EventHanlder = string;
 interface SendParams<T extends EventHanlder> {
     [x: string]: unknown;
-    to?: SendTargetKey;
+    to?: string;
     module?: string;
     event: T extends ReservedEventHandler ? never : T;
 }
@@ -73,7 +74,7 @@ abstract class BaseConnector {
             reject?.(new Error(errMsg));
             return;
         }
-        body.from = this.getCurWindowIndex();
+        body.from = window.name;
         const postBody = body.keepRawData === true ? body : JSON.stringify(body);
         targetWindows.forEach(targetWindow => {
             targetWindow.postMessage(postBody, this.getTargetOrigin());
@@ -113,20 +114,17 @@ abstract class BaseConnector {
         return `[${this._errMsgType}]: ${errMsg}`;
     }
 
-    protected getClientWindows(id?: string | number): TargetWindow[] {
+    protected getClientWindows(windowName?: string): TargetWindow[] {
         const frames = this.getFrameWindow().frames;
-        if (typeof id === 'number' || typeof id === 'string') {
-            return [frames[id as any]];
+        if (windowName) {
+            return [(frames as any)[windowName]];
+        } else {
+            const res: TargetWindow[] = [];
+            for (let i = 0; i < frames.length; i++) {
+                res.push(frames[i]);
+            }
+            return res;
         }
-        const res: TargetWindow[] = [];
-        for (let i = 0; i < frames.length; i++) {
-            res.push(frames[i]);
-        }
-        return res;
-    }
-
-    protected getCurWindowIndex(): number {
-        return Object.entries(this.getFrameWindow().frames).findIndex(([, val]) => val === window);
     }
 
     protected abstract getFrameWindow(): TargetWindow;
@@ -235,7 +233,7 @@ export class ServerConnector extends BaseConnector {
 
     protected async awaitFetch(event: MessageEvent): Promise<void> {
         if (typeof event.data.id !== 'number' || !this._responseForFetch) {
-            const errMsg = 'something wrong with requset response for fetch listener or data.id, please check your config';
+            const errMsg = 'something wrong with request response for fetch listener or data.id, please check your config';
             console.error(this.printErrMsg(errMsg));
             return;
         }
