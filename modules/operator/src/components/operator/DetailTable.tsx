@@ -472,8 +472,10 @@ const DetailTable = ({ condition, filterType, session }: { condition: ConditionT
     return <CollapsiblePanel
         title={<div className={'flex items-center'}>
             {t('sessionTitle.OperatorDetails')}{useHit(condition)}
-            <ExportBtn condition={condition} />
-        </div>} secondary>
+        </div>}
+        suffix={<ExportBtn condition={condition} />}
+        secondary
+    >
         {table}
     </CollapsiblePanel>;
 };

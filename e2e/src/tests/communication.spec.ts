@@ -161,8 +161,8 @@ test.describe('Communication', () => {
         // HCCL图中悬浮窗测试
         await communicationFrame.locator('#hccl').hover({
             position: {
-                x: 300,
-                y: 150,
+                x: 226,
+                y: 81,
             },
         });
         await expect(communicationFrame.locator('#hccl')).toHaveScreenshot('communication-hccl-tooltip.png', { maxDiffPixels: 500 });
@@ -301,22 +301,22 @@ test.describe('Communication', () => {
         await communicationFrame.getByTestId('operators').locator('canvas').click({
             position: {
                 x: 162,
-                y: 10
-            }
+                y: 10,
+            },
         });
         await expect(canvas).toHaveScreenshot('packet-distribution-data.png');
         await communicationFrame.getByTestId('operators').locator('canvas').click({
             position: {
                 x: 162,
-                y: 10
-            }
+                y: 10,
+            },
         });
         // 图表中的数据以表格形式展示
         await communicationFrame.getByTestId('operators').locator('canvas').click({
             position: {
                 x: 218,
-                y: 29
-            }
+                y: 29,
+            },
         });
         await expect(canvas).toHaveScreenshot('packet-distribution-data-view-open.png');
         await communicationFrame.getByText('Close').click();
@@ -324,24 +324,24 @@ test.describe('Communication', () => {
         await communicationFrame.getByTestId('operators').locator('canvas').click({
             position: {
                 x: 243,
-                y: 27
-            }
+                y: 27,
+            },
         });
         await expect(canvas).toHaveScreenshot('packet-distribution-data-switch-to-line-chart.png');
         // 将图表形式转为柱状图
         await communicationFrame.getByTestId('operators').locator('canvas').click({
             position: {
                 x: 275,
-                y: 29
-            }
+                y: 29,
+            },
         });
         await expect(canvas).toHaveScreenshot('packet-distribution-data-switch-to-bar-chart.png');
         // 将图表恢复为原始状态
         await communicationFrame.getByTestId('operators').locator('canvas').click({
             position: {
                 x: 304,
-                y: 29
-            }
+                y: 29,
+            },
         });
         await expect(canvas).toHaveScreenshot('packet-distribution-data-restore.png');
     });
@@ -357,8 +357,8 @@ test.describe('Communication', () => {
         await hcclChart.click({
             button: 'right',
             position: {
-                x: 278,
-                y: 78,
+                x: 219,
+                y: 82,
             },
         });
         await communicationFrame.getByText('Find in Timeline').click();
