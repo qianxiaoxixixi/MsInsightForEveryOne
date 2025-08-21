@@ -64,6 +64,9 @@ static document_t ToLeaksMemoryBlockJson(const std::shared_ptr<MemoryBlock>& blo
     JsonUtil::AddMember(json, "firstAccessTimestamp", blockPtr->firstAccessTimestamp, allocator);
     JsonUtil::AddMember(json, "lastAccessTimestamp", blockPtr->lastAccessTimestamp, allocator);
     JsonUtil::AddMember(json, "maxAccessInterval", blockPtr->maxAccessInterval, allocator);
+    JsonUtil::AddMember(json, "lazyUsed", blockPtr->lazyUsed, allocator);
+    JsonUtil::AddMember(json, "delayedFree", blockPtr->delayedFree, allocator);
+    JsonUtil::AddMember(json, "longIdle", blockPtr->longIdle, allocator);
     document_t pathJson(kArrayType);
     if (withPath) {
         const std::shared_ptr<MemoryBlockItem> blockItemPtr = std::dynamic_pointer_cast<MemoryBlockItem>(blockPtr);

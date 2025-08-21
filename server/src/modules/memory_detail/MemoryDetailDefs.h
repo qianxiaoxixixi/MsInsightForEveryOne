@@ -116,6 +116,10 @@ struct MemoryBlock {
     int64_t firstAccessTimestamp{-1};
     int64_t lastAccessTimestamp{-1};
     uint64_t maxAccessInterval{0};
+    // 低效显存标识
+    bool lazyUsed{false};
+    bool delayedFree{false};
+    bool longIdle{false};
 
     MemoryBlock() = default;
     virtual ~MemoryBlock() = default;
