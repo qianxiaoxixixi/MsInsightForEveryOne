@@ -815,10 +815,6 @@ std::string LeaksMemoryDatabase::BuildQueryBlocksConditionSqlByParams(const Leak
         conditionSql.append(BuildQueryFiltersConditionSqlByParams(queryParams));
         conditionSql.append(BuildQueryRangeFiltersConditionSqlByParams(queryParams));
     }
-    // 构造排序参数, 此前orderBy已经过存在性校验，并已转换成列名，列名无法通过参数化绑定；如果不指定排序，默认根据startTimestamp排序
-    if (!queryParams.orderBy.empty()) {
-        conditionSql.append(BuildQueryOrderSqlByParams(queryParams));
-    }
     return conditionSql;
 }
 
@@ -869,6 +865,10 @@ sqlite3_stmt* LeaksMemoryDatabase::BuildQueryBlocksByQueryParamsAndBindParam(con
     // 如果仅展示低效内存块
     if (queryParams.onlyInefficient) {
         sql.append(StringUtil::FormatString(" AND ({} > 0 OR {} > 0 OR {} > 0) ", lazyUsedCol, delayedFreeCol, longIdleCol));
+    }
+    // 构造排序参数, 此前orderBy已经过存在性校验，并已转换成列名，列名无法通过参数化绑定；如果不指定排序，默认根据startTimestamp排序
+    if (!queryParams.orderBy.empty()) {
+        sql.append(BuildQueryOrderSqlByParams(queryParams));
     }
     sql.append(" LIMIT ? OFFSET ? ");
     sqlite3_stmt *stmt = nullptr;
