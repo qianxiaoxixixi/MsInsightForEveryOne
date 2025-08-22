@@ -275,7 +275,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
     }, []);
     useEffect(() => {
         updateCondition(condition);
-    }, [session.clusterCompleted, session.selectedClusterPath, session.communicatorData.partitionModes, session.isCompare, session.targetOperator]);
+    }, [session.clusterCompleted, session.durationFileCompleted, session.selectedClusterPath, session.communicatorData.partitionModes, session.isCompare, session.targetOperator]);
     useEffect(() => {
         setTimeout(() => {
             if (activeCommunicator !== undefined && activeCommunicator !== condition.stage) {
