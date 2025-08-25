@@ -117,13 +117,8 @@ test.describe('Timeline(DB)', () => {
     // 工具栏 - 算子连线
     test('test_operatorLinkLine', async ({ page, timelinePage }) => {
         const { flowBtn, timelineFrame } = timelinePage;
-        await timelineFrame.locator('div:nth-child(7) > .chart > div > .canvasContainer > .drawCanvas').click({
-            position: {
-                x: 84,
-                y: 17,
-            },
-        });
         await timelineFrame.locator('div:nth-child(12) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold').click();
+        await page.waitForTimeout(100);
         await timelineFrame.locator('div:nth-child(13) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold').click();
         const LinkLineType = [
             'HostToDevice',
