@@ -512,6 +512,22 @@ test.describe('Timeline', () => {
         }
     });
 
+    // 右键菜单--隐藏 python 调用栈
+    test('test_hidePythonCallStack', async ({ timelinePage, page }) => {
+        const { timelineFrame, mainContainer } = timelinePage;
+        const secondLayerUnit = mainContainer.getByText('Python (2045554)');
+
+        await secondLayerUnit.click();
+
+        const threadUnit = mainContainer.getByText('Thread 2045554');
+        await threadUnit.click({ button: 'right' });
+
+        await timelineFrame.getByText('Hide python call stack').click();
+        await page.mouse.move(0, 0);
+        await page.waitForTimeout(1000);
+        await expect(mainContainer).toHaveScreenshot('hide-python-call-stack.png', { animations: 'disabled', maxDiffPixels: 100 });
+    });
+
     // 快捷键 - 键盘 W、S、A、D、方向键
     test('test_keyword', async ({ timelinePage, page }) => {
         const { timelineFrame, zoomOutBtn, resetBtn } = timelinePage;
@@ -592,6 +608,70 @@ test.describe('Timeline', () => {
         await page.keyboard.press('K');
         await page.waitForTimeout(1000);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-keyword-k-flag.png', { maxDiffPixels:100 });
+    });
+
+
+    // 快捷键 - 放大当前选区（shift + z）
+    test('test_Shift+z', async ({ timelinePage, page }) => {
+        const { timelineFrame, mainContainer } = timelinePage;
+        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
+        await secondUnitInfo.click();
+        const chart = timelineFrame.locator('.chart-selected > div > .canvasContainer > .drawCanvas');
+        const chartInfo = await chart.boundingBox();
+        if (!chartInfo) {
+            return;
+        }
+        const { x: startX, y: startY } = chartInfo;
+
+        await page.mouse.move(startX + 50, startY + 50);
+        await page.mouse.down();
+        await page.mouse.move(startX + 200, startX - 200);
+        await page.mouse.up();
+        await page.keyboard.press('Shift+z');
+        await page.mouse.move(0,0);
+        await page.waitForTimeout(100);
+        await expect(mainContainer).toHaveScreenshot('test-hotkeys-Shift-z.png', { maxDiffPixels: 100 });
+    });
+
+    // 快捷键 - Alt 放大、撤销缩放（Backspace）、重置缩放（ctrl + 0）
+    test('test_Alt_Backspace_and_Ctrl+0', async ({ timelinePage, page }) => {
+        const { timelineFrame, mainContainer } = timelinePage;
+        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
+        await secondUnitInfo.click();
+        const chart = timelineFrame.locator('.chart-selected > div > .canvasContainer > .drawCanvas');
+        const chartInfo = await chart.boundingBox();
+        if (!chartInfo) {
+            return;
+        }
+        const { x: startX, y: startY } = chartInfo;
+
+        await page.keyboard.down('Alt');
+        await page.mouse.move(startX + 50, startY + 50);
+        await page.mouse.down();
+        await page.mouse.move(startX + 200, startX - 200);
+        await page.mouse.up();
+        await page.keyboard.up('Alt');
+
+        await page.waitForTimeout(200);
+
+        await page.keyboard.down('Alt');
+        await page.mouse.move(startX + 50, startY + 50);
+        await page.mouse.down();
+        await page.mouse.move(startX + 200, startX - 200);
+        await page.mouse.up();
+        await page.keyboard.up('Alt');
+
+        await page.mouse.move(0,0);
+        await page.waitForTimeout(200);
+        await expect(mainContainer).toHaveScreenshot('test-zoom-Alt.png', { maxDiffPixels: 100 });
+
+        await page.keyboard.press('Backspace');
+        await page.waitForTimeout(200);
+        await expect(mainContainer).toHaveScreenshot('test-zoom-Backspace.png', { maxDiffPixels: 100 });
+
+        await page.keyboard.press('Control+0');
+        await page.waitForTimeout(200);
+        await expect(mainContainer).toHaveScreenshot('test-zoom-Ctrl_0_reset.png', { maxDiffPixels: 100 });
     });
 
     // 图形化窗格 - 测试直方图的显示 如NPU_MEM
