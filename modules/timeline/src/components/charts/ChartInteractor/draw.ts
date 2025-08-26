@@ -451,7 +451,6 @@ export const draw = (props: DrawCanvasArgs): void => {
     heightMap.clear();
     threadIsCol.clear();
     processIsCol.clear();
-    cardIsCol.clear();
     unitIsHidden.clear();
     const pinnedScrollArea = document.querySelector('#main-container .topC');
     const pinnedAreaHeight = pinnedScrollArea?.clientHeight ?? 0;
@@ -490,23 +489,9 @@ export const getHeight = (session: Session, data: DataBlock, cardId: string): nu
     let height;
     const unitHeight = heightMap.get(`${cardId}-${data.pid}-${data.tid}`);
     const processHeight = heightMap.get(`${cardId}-${data.pid}`);
-    let cardHeight = heightMap.get(`${cardId}`);
-    let isUsingHostCardHeight = false;
-    // 如果是全量db，卡结尾是 .db (说明是 Host 下的 ProcessUnit 卡)，且没有高度（说明 Host 折叠了），那么取 Host 的高度作为卡高度
-    if (session.isFullDb && cardId.endsWith('.db') && cardHeight === undefined) {
-        const key = [...heightMap.keys()].find((key) => key.endsWith('Host'));
-        if (key !== undefined) {
-            cardHeight = heightMap.get(key);
-            isUsingHostCardHeight = true;
-        }
-    }
     // 卡折叠的情况
     if (unitHeight === undefined && processHeight === undefined) {
-        height = UNDRAW_HEIGHT + cardHeight - session.scrollTop + (0.5 * (isUsingHostCardHeight ? UnitHeight.STANDARD : UnitHeight.UPPER));
-        if (session.isFullDb) { // 全量 db 情况，卡折叠时隐藏
-            cardIsCol.set(`${cardId}`, true);
-        }
-        return height;
+        return undefined;
     }
     // 进程折叠的情况
     if (unitHeight === undefined && processHeight !== undefined) {

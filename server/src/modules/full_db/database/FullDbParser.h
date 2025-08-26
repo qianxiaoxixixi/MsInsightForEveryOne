@@ -35,7 +35,6 @@ private:
     static void InitSummary(const std::vector<std::string> &rankIds, const std::string &path);
 
     static void ParserCallBack(std::string rankId, const std::string &fileId, bool result);
-    static void SendHostEvent(const std::string &fileId);
     static std::shared_ptr<DbTraceDataBase> GetTraceDatabase(const std::string &filePath);
     static void EndParseTask(const std::vector<std::string> &rankIds, const std::string &filePath,
                              const std::shared_ptr<std::vector<std::future<void>>>& futures,

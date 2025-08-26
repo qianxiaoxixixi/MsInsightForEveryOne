@@ -77,10 +77,6 @@ void ProjectParserDb::SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, 
 {
     uint32_t rankSize = 0;
     for (auto &hostInfo : hostInfoMap) {
-        if (!hostInfo.second.empty()) {
-            // 如果rank列表为空，则Timeline页面不展示Host
-            SetBaseActionOfResponse(response, "Host", hostInfo.first, hostInfo.second.begin()->first);
-        }
         rankSize += hostInfo.second.size();
         for (auto &ranks : hostInfo.second) {
             for (auto &rank : ranks.second) {

@@ -53,14 +53,14 @@ bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint
     return true;
 }
 
-void DbTraceDataBase::ProcessHostCounterEventsMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+void DbTraceDataBase::ProcessHostCounterEventsMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     CounterEventHelper helper;
     helper.RegisterHostMap();
     for (const auto &element : helper.hostCounterEventMap) {
         std::string progressName = element.second.processName;
         std::string metaDataSQL = helper.GenerateHostMetadataSQL(element.first);
-        auto counter = GenerateBaseUnitTrack("label", path, progressName, progressName,
+        auto counter = GenerateBaseUnitTrack("label", fileId, progressName, progressName,
                                              ENUM_TO_STR(element.first).value());
         auto stmt = CreatPreparedStatement(metaDataSQL);
         if (!stmt) {
@@ -75,7 +75,7 @@ void DbTraceDataBase::ProcessHostCounterEventsMetadata(std::vector<std::unique_p
             continue;
         }
         while (resultSet->Next()) {
-            auto thread = GenerateBaseUnitTrack("counter", path, progressName, progressName,
+            auto thread = GenerateBaseUnitTrack("counter", fileId, progressName, progressName,
                                                 ENUM_TO_STR(element.first).value());
             thread->metaData.threadId = resultSet->GetString("name");
             thread->metaData.threadName = thread->metaData.threadId;
@@ -206,6 +206,9 @@ bool DbTraceDataBase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestPar
     }
     if (flowLocations.size() < 2) { // 小于2表示没有连线
         return false;
+    }
+    for (auto &item: flowLocations) {
+        item.rankId = requestParams.rankId;
     }
     std::map<std::string, std::vector<UnitSingleFlow>> flowMap;
     for (size_t index = 1; index < flowLocations.size(); index++) {

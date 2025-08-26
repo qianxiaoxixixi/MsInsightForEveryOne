@@ -5,7 +5,7 @@ import { observable, observe } from 'mobx';
 import * as d3 from 'd3';
 import { getTimeOffset } from '../../../insight/units/utils';
 import { Session } from '../../../entity/session';
-import { cardIsCol, getHeight, processIsCol, UNDRAW_HEIGHT } from './draw';
+import { getHeight, processIsCol, UNDRAW_HEIGHT } from './draw';
 import { DataBlock, FlowEvent } from '../../FilterLinkLine';
 import { handlerEmptyString } from '../../../utils/string';
 
@@ -91,8 +91,8 @@ export function calculateLinkLines(rawList: Array<Record<string, unknown>>, sess
             getHeightWithCache(from, sourceCardId, session)];
         const targetPos: Array<[x: number, y: number]> = [[targetX, targetY]];
         const offset = ((targetX - sourceX) / 2);
-        const isAllCol = (cardIsCol.get(`${targetCardId}`) ?? processIsCol.get(`${targetCardId}-${to.pid}`) ?? false) &&
-            (cardIsCol.get(`${sourceCardId}`) ?? processIsCol.get(`${sourceCardId}-${from.pid}`) ?? false);
+        const isAllCol = (processIsCol.get(`${targetCardId}-${to.pid}`) ?? false) &&
+            (processIsCol.get(`${sourceCardId}-${from.pid}`) ?? false);
         return {
             targetX,
             targetY: isAllCol ? undefined : targetY,

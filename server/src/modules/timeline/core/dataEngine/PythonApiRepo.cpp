@@ -293,7 +293,7 @@ bool PythonApiRepo::QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, C
     competeSliceDomain.endTime = target.endTime;
     competeSliceDomain.pid = std::to_string(target.globalTid);
     competeSliceDomain.tid = pythonApiTid;
-    competeSliceDomain.cardId = TrackInfoManager::Instance().GetHostCardId(sliceQuery.rankId);
+    competeSliceDomain.cardId = sliceQuery.rankId;
     competeSliceDomain.trackId = TrackInfoManager::Instance().GetTrackId(competeSliceDomain.cardId,
         competeSliceDomain.pid, competeSliceDomain.tid);
     competeSliceDomain.duration = target.endTime - target.timestamp;

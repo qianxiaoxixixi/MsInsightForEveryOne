@@ -28,9 +28,7 @@ bool SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
         return false;
     }
     std::vector<TrackQuery> trackQueryVec = GetTrackQueryVec(request, minTimestamp);
-    if (request.params.rankId.empty() || !DataBaseManager::Instance().GetDbPathByHost(request.params.rankId).empty()) {
-        QueryHostNameCount(request, response, trackQueryVec);
-    } else if (!request.params.metadataList.empty()) {
+    if (!request.params.metadataList.empty()) {
         SearchResult searchResult;
         searchResult.rankId = request.params.rankId;
         auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
@@ -54,26 +52,6 @@ bool SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
     return true;
-}
-
-void SearchCountHandler::QueryHostNameCount(const SearchCountRequest &request, SearchCountResponse &response,
-    const std::vector<TrackQuery> &trackQueryVec) const
-{
-    auto fileIdList = DataBaseManager::Instance().GetDbPathByHost(request.params.rankId);
-    for (const auto &fileId : fileIdList) {
-        ServerLog::Info("request.params.rankId is: ", fileId);
-        SearchResult searchResult;
-        searchResult.rankId = fileId;
-        auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
-        if (database != nullptr) {
-            searchResult.count = database->SearchSliceNameCount(request.params, trackQueryVec);
-            searchResult.dbPath = database->GetDbPath();
-        }
-        response.body.totalCount += searchResult.count;
-        if (searchResult.count > 0) {
-            response.body.countList.emplace_back(searchResult);
-        }
-    }
 }
 
 std::vector<TrackQuery> SearchCountHandler::GetTrackQueryVec(SearchCountRequest &request, uint64_t minTimestamp) const

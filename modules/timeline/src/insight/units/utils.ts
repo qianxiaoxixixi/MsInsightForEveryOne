@@ -33,7 +33,7 @@ export function getTimeOffsetKey(session: Session, metaData: { cardId?: string; 
     const realCardId = unit ? (unit.metadata as CardMetaData).cardId : 'Host';
     let realProcessId = metaData.processId;
     // db数据的Host侧有2层process类型的泳道，第二层的processId的前32位是第一层的ProcessId，后32位是本泳道的threadId
-    if (realCardId.endsWith('Host') && realProcessId !== undefined && !isNaN(Number(realProcessId))) {
+    if (realProcessId !== undefined && !isNaN(Number(realProcessId))) {
         const upper32BitProcessId = Math.floor(Number(realProcessId) / Math.pow(2, 32));
         if (upper32BitProcessId !== 0) {
             realProcessId = upper32BitProcessId.toString();
