@@ -125,6 +125,7 @@ const RidMoreTable = observer(({ card, value, bottomHeight }: RidMoreProps) => {
     const [column, setColumn] = useState<any[]>([]);
     const [isLoading, setLoading] = useState(false);
     const [condition, setCondition] = useState({ page, sorter });
+    useTranslation();
     useEffect(() => {
         setCondition({ page, sorter });
     }, [sorter, page.current, page.pageSize]);
