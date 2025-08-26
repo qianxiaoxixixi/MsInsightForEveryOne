@@ -158,15 +158,16 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenStreamExistMSTXWithoutDomain)
 
     std::string fileId = "7";
     std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
-    const uint8_t expectProcessCount = 2;
+    const uint8_t expectProcessCount = 3;
     const uint8_t expectHardWareCount = 2;
+    const uint64_t first = 1;
     database.QueryUnitsMetadata(fileId, metaData);
     ASSERT_EQ(metaData.size(), expectProcessCount);
-    ASSERT_EQ(metaData[0]->children.size(), expectHardWareCount);
-    EXPECT_EQ(metaData[0]->children[0]->metaData.threadName, "Stream 2 MSTX");
-    EXPECT_EQ(metaData[0]->children[0]->metaData.cardId, fileId);
-    EXPECT_EQ(metaData[0]->children[1]->metaData.threadName, "Stream 2");
-    EXPECT_EQ(metaData[0]->children[1]->metaData.cardId, fileId);
+    ASSERT_EQ(metaData[first]->children.size(), expectHardWareCount);
+    EXPECT_EQ(metaData[first]->children[0]->metaData.threadName, "Stream 2 MSTX");
+    EXPECT_EQ(metaData[first]->children[0]->metaData.cardId, fileId);
+    EXPECT_EQ(metaData[first]->children[1]->metaData.threadName, "Stream 2");
+    EXPECT_EQ(metaData[first]->children[1]->metaData.cardId, fileId);
 }
 
 TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenStreamExistMSTXWithDomain)
@@ -205,15 +206,16 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenStreamExistMSTXWithDomain)
 
     std::string fileId = "7";
     std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
-    const uint8_t expectProcessCount = 2;
+    const uint8_t expectProcessCount = 3;
     const uint8_t expectHardWareCount = 2;
+    const uint64_t first = 1;
     database.QueryUnitsMetadata(fileId, metaData);
     ASSERT_EQ(metaData.size(), expectProcessCount);
-    ASSERT_EQ(metaData[0]->children.size(), expectHardWareCount);
-    EXPECT_EQ(metaData[0]->children[0]->metaData.threadName, "Stream 2 MSTX domain compute");
-    EXPECT_EQ(metaData[0]->children[0]->metaData.cardId, fileId);
-    EXPECT_EQ(metaData[0]->children[1]->metaData.threadName, "Stream 2");
-    EXPECT_EQ(metaData[0]->children[1]->metaData.cardId, fileId);
+    ASSERT_EQ(metaData[first]->children.size(), expectHardWareCount);
+    EXPECT_EQ(metaData[first]->children[0]->metaData.threadName, "Stream 2 MSTX domain compute");
+    EXPECT_EQ(metaData[first]->children[0]->metaData.cardId, fileId);
+    EXPECT_EQ(metaData[first]->children[1]->metaData.threadName, "Stream 2");
+    EXPECT_EQ(metaData[first]->children[1]->metaData.cardId, fileId);
 }
 
 /**
@@ -518,7 +520,7 @@ TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenAllHostExistThenhaveThreeTrack)
     DatabaseTestCaseMockUtil::InsertData(db, mstxDataSql);
     DatabaseTestCaseMockUtil::InsertData(db, numeApiDataSql);
     std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
-    database.QueryHostMetadata(metaData);
+    database.QueryHostMetadata("2", metaData);
     const uint64_t expectSize = 3;
     const uint64_t first = 0;
     const uint64_t second = 1;
@@ -562,7 +564,7 @@ TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenPytorchNotExistThenhaveTwoTrack
     DatabaseTestCaseMockUtil::InsertData(db, mstxDataSql);
     DatabaseTestCaseMockUtil::InsertData(db, numeApiDataSql);
     std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
-    database.QueryHostMetadata(metaData);
+    database.QueryHostMetadata("hhh", metaData);
     const uint64_t expectSize = 2;
     const uint64_t first = 0;
     const uint64_t second = 1;

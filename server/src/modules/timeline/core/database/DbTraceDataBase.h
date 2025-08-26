@@ -111,7 +111,7 @@ public:
     bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
                                          Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp,
                                          const std::vector<uint64_t> &trackIdList) override;
-    bool QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
+    bool QueryHostMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
 
     std::vector<std::string> QueryRankId();
     std::string QueryHostInfo() override;
@@ -157,7 +157,7 @@ public:
         std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> &smallOpInfo);
     static std::string GetHostPath(const std::string &filePath);
 
-    void ProcessHostCounterEventsMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
+    void ProcessHostCounterEventsMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     void QueryDeviceIdInStepTraceTime(std::set<std::string>& deviceIds);
 
     bool QueryFwdBwdFromMstx(std::vector<Protocol::ThreadTraces> &traceList) override;
@@ -207,7 +207,7 @@ private:
     static std::unique_ptr<Protocol::UnitTrack> GenerateBaseUnitTrack(const std::string &type,
         const std::string &cardId, const std::string &processId, const std::string &processName,
         const std::string &metaType);
-    void DealHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData,
+    void DealHostMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData,
                           std::map<std::string, std::vector<MetaDataDto>> &threadMap);
     bool UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &updateComputeStmt,
                                 std::unique_ptr<SqlitePreparedStatement> &updateCommunicationStmt);

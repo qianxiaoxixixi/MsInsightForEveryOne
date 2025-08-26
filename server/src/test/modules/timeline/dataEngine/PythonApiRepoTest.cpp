@@ -206,7 +206,7 @@ TEST_F(PythonApiRepoTest, TestQuerySliceByTimepointAndNameNormal)
     EXPECT_EQ(competeSliceDomain.tid, "pytorch");
     EXPECT_EQ(competeSliceDomain.trackId, one);
     EXPECT_EQ(competeSliceDomain.duration, competeSliceDomain.endTime - competeSliceDomain.timestamp);
-    EXPECT_EQ(competeSliceDomain.cardId, hostCardId);
+    EXPECT_EQ(competeSliceDomain.cardId, sliceQuery.rankId);
 }
 
 /**

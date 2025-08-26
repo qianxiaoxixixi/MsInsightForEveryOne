@@ -210,9 +210,9 @@ TEST_F(FullDbTestSuit, FullDb_of_UnitMetaData)
 
     auto metaData = std::vector<std::unique_ptr<Protocol::UnitTrack>>();
     database->QueryUnitsMetadata("2", metaData);
-
-    EXPECT_EQ(metaData.size(), 5); // size = 5
-    EXPECT_EQ(metaData[0]->children.size(), 3); // size = 3
+    const uint64_t third = 2;
+    EXPECT_EQ(metaData.size(), 7); // size = 5
+    EXPECT_EQ(metaData[third]->children.size(), 3); // size = 3
 }
 
 TEST_F(FullDbTestSuit, FullDb_of_HostMetaData)
@@ -221,7 +221,7 @@ TEST_F(FullDbTestSuit, FullDb_of_HostMetaData)
         Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb"));
 
     auto metaData = std::vector<std::unique_ptr<Protocol::UnitTrack>>();
-    database->QueryHostMetadata(metaData);
+    database->QueryHostMetadata("2", metaData);
 
     EXPECT_EQ(metaData.size(), 2); // size = 2
     EXPECT_EQ(metaData[0]->children.size(), 1);

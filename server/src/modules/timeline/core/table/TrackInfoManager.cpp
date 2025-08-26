@@ -117,16 +117,6 @@ void TrackInfoManager::UpdateHostCardId(const std::string &cardId, const std::st
     hostCardIdMap[cardId] = hostCardId;
 }
 
-std::string TrackInfoManager::GetHostCardId(const std::string &deviceCardId)
-{
-    std::unique_lock<std::mutex> lock(trackMutex);
-    auto it = hostCardIdMap.find(deviceCardId);
-    if (it == hostCardIdMap.end()) {
-        return deviceCardId;
-    }
-    return it->second;
-}
-
 std::string TrackInfoManager::GetRankId(const std::string &host, const std::string &deviceId)
 {
     std::unique_lock<std::mutex> lock(trackMutex);

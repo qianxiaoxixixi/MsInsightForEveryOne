@@ -927,10 +927,11 @@ TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenConnectionIdIsTwoThenReturnTru
     Dic::Protocol::UnitFlowsParams requestParams;
     requestParams.id = "476320";
     requestParams.metaType = "CANN_API";
+    requestParams.rankId = "15";
     Dic::Protocol::UnitFlowsBody responseBody;
     bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
     EXPECT_EQ(result, true);
-    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "");
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "15");
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "15");
 }
 
@@ -974,11 +975,12 @@ TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenDeviceUniqueThenReturnTrue)
     Dic::Protocol::UnitFlowsParams requestParams;
     requestParams.id = "476320";
     requestParams.metaType = "CANN_API";
+    requestParams.rankId = "15";
     Dic::Protocol::UnitFlowsBody responseBody;
     MockNpuInfoRepoFunc();
     bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
     EXPECT_EQ(result, true);
-    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "");
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "15");
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "15");
     RestoreRepoFunc();
 }
@@ -1027,10 +1029,11 @@ TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsWhenRankIdAndDeviceIdNotSame)
     Dic::Protocol::UnitFlowsParams requestParams;
     requestParams.id = "476320";
     requestParams.metaType = "CANN_API";
+    requestParams.rankId = "999";
     Dic::Protocol::UnitFlowsBody responseBody;
     bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
     EXPECT_EQ(result, true);
-    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "");
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "999");
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "999");
 }
 

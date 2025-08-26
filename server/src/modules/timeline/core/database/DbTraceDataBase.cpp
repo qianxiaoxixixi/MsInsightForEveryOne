@@ -55,12 +55,14 @@ bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestPar
 bool DbTraceDataBase::QueryUnitsMetadata(const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
+    QueryHostMetadata(fileId, metaData);
     if (CheckTableExist(TABLE_TASK)) {
         QueryAscendHardwareOperatorMetadata(fileId, metaData);
         QueryHCCLOperatorMetadata(fileId, metaData);
         GenerateOverlapAnalysisMetadata(fileId, metaData);
     }
     QueryCounterMetadata(fileId, metaData);
+    ProcessHostCounterEventsMetadata(fileId, metaData);
     return false;
 }
 
@@ -1304,7 +1306,7 @@ void DbTraceDataBase::AddColumns2Table(const bool isExist, const std::string &ta
     }
 }
 
-bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+bool DbTraceDataBase::QueryHostMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     PROCESS_TYPE types[] = {PROCESS_TYPE::CANN_API, PROCESS_TYPE::API, PROCESS_TYPE::OSRT_API, PROCESS_TYPE::MS_TX,
                             PROCESS_TYPE::PYTHON_GC};
@@ -1347,12 +1349,11 @@ bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::Un
             ServerLog::Error("Failed to query host metadata, MetaType: ", typeName, " reason: ", e.What());
         }
     }
-    DealHostMetadata(metaData, threadMap);
-    ProcessHostCounterEventsMetadata(metaData);
+    DealHostMetadata(fileId, metaData, threadMap);
     return true;
 }
 
-void DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData,
+void DbTraceDataBase::DealHostMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData,
                                        std::map<std::string, std::vector<MetaDataDto>> &threadMap)
 {
     uint64_t curPid = 0;
@@ -1365,20 +1366,20 @@ void DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::Uni
             if (process.operator bool()) {
                 metaData.emplace_back(std::move(process));
             }
-            process = GenerateBaseUnitTrack("process", path, thread.first, "process " + std::to_string(pid),
+            process = GenerateBaseUnitTrack("process", fileId, thread.first, "process " + std::to_string(pid),
                 ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
             curPid = pid;
         }
-        auto threadUnit = GenerateBaseUnitTrack("process", path, thread.first, "Thread " + std::to_string(tid),
+        auto threadUnit = GenerateBaseUnitTrack("process", fileId, thread.first, "Thread " + std::to_string(tid),
             ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
         threadUnit->metaData.threadId = std::to_string(tid);
         auto cannApiUnit =
-            GenerateBaseUnitTrack("label", path, thread.first, "CANN", ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
+            GenerateBaseUnitTrack("label", fileId, thread.first, "CANN", ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
         auto mstxUnit =
-            GenerateBaseUnitTrack("process", path, thread.first, "MSTX", ENUM_TO_STR(PROCESS_TYPE::MS_TX).value());
+            GenerateBaseUnitTrack("process", fileId, thread.first, "MSTX", ENUM_TO_STR(PROCESS_TYPE::MS_TX).value());
         mstxUnit->metaData.threadId = std::to_string(tid);
         for (const auto &item : thread.second) {
-            auto level = GenerateBaseUnitTrack("thread", path, thread.first, "", item.metaType);
+            auto level = GenerateBaseUnitTrack("thread", fileId, thread.first, "", item.metaType);
             level->metaData.threadId = item.threadId;
             level->metaData.threadName = item.threadName;
             level->metaData.maxDepth = item.maxDepth;
@@ -1668,8 +1669,8 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
         searchAllSlice.pid = resultSet->GetString("pid");
         searchAllSlice.depth = resultSet->GetUint64("depth");
         auto deviceId = resultSet->GetString("deviceId");
-        searchAllSlice.rankId = deviceId.empty() ? path : params.rankId;
-        searchAllSlice.deviceId = deviceId.empty() ? path : QueryHostInfo() + deviceId;
+        searchAllSlice.rankId = params.rankId;
+        searchAllSlice.deviceId = deviceId.empty() ? params.rankId : QueryHostInfo() + deviceId;
         body.searchAllSlices.emplace_back(searchAllSlice);
     }
     body.currentPage = params.current;
@@ -1679,8 +1680,6 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
     searchCountParams.isMatchCase = params.isMatchCase;
     searchCountParams.isMatchExact = params.isMatchExact;
     searchCountParams.rankId = params.rankId;
-    count += SearchSliceNameCount(searchCountParams, {});
-    searchCountParams.rankId = QueryHostInfo() + "Host";
     count += SearchSliceNameCount(searchCountParams, {});
     body.count = count;
     return true;
@@ -1721,8 +1720,8 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
         searchAllSlice.pid = resultSet->GetString("pid");
         searchAllSlice.depth = resultSet->GetUint64("depth");
         auto deviceId = resultSet->GetString("deviceId");
-        searchAllSlice.rankId = deviceId.empty() ? path : params.rankId;
-        searchAllSlice.deviceId = deviceId.empty() ? path : QueryHostInfo() + deviceId;
+        searchAllSlice.rankId = params.rankId;
+        searchAllSlice.deviceId = deviceId.empty() ? params.rankId : QueryHostInfo() + deviceId;
         body.searchAllSlices.emplace_back(searchAllSlice);
     }
     body.currentPage = params.current;
@@ -1732,8 +1731,6 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
     searchCountParams.isMatchCase = params.isMatchCase;
     searchCountParams.isMatchExact = params.isMatchExact;
     searchCountParams.rankId = params.rankId;
-    count += SearchSliceNameCount(searchCountParams, trackQueryVec);
-    searchCountParams.rankId = QueryHostInfo() + "Host";
     count += SearchSliceNameCount(searchCountParams, trackQueryVec);
     body.count = count;
     return true;

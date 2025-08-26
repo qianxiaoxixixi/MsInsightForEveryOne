@@ -192,9 +192,6 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
     }
     std::string dbId = (rankIds.size() > 0 && Global::BaselineManager::Instance().IsBaselineRankId(rankIds[0])) ?
         rankIds[0] : filePath;
-    bool isNotSendMessage = (Global::BaselineManager::Instance().IsBaselineRankId(rankIds[0])
-            && DataBaseManager::Instance().IsContainDatabasePath(filePath))
-                    || DataBaseManager::Instance().GetFileTypeByRankId(rankIds[0])==FileType::LEAKS;
     for (const std::string& id : rankIds) {
         ParserCallBack(id, filePath, true);
     }
@@ -202,9 +199,6 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Parse completed.",
                     " Cost time(ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-    if (!isNotSendMessage) {
-        SendHostEvent(dbId);
-    }
     for (auto rankId: rankIds) {
         Timeline::ParserStatusManager::Instance().SetParserStatus(rankId, Timeline::ParserStatus::FINISH_ALL);
         auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(rankId);
@@ -214,34 +208,6 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
         }
         db->SetDataBaseVersion();
     }
-}
-
-void FullDbParser::SendHostEvent(const std::string &fileId)
-{
-    auto event = std::make_unique<ParseSuccessEvent>();
-    event->moduleName = MODULE_TIMELINE;
-    event->result = true;
-    event->body.unit.type = "card";
-    event->body.isFullDb = true;
-    event->body.fileId = fileId;
-    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
-    if (db == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:Host");
-        return;
-    }
-    auto database = std::dynamic_pointer_cast<FullDb::DbTraceDataBase, Timeline::VirtualTraceDatabase>(db);
-    if (database == nullptr) {
-        ServerLog::Error("Failed to convert virtual trace database to db trace dataBase in full db send host event.");
-        return;
-    }
-    std::vector<std::string> taskNameList = RL::RLMstxConfigManager::Instance().GetMstxTaskNameList();
-    auto mstxSliceList = FullDb::RenderEngine::Instance()->QueryMstxRLDetail(fileId,
-        Timeline::DataBaseManager::Instance().GetDataType(), taskNameList);
-    event->body.isRl = !mstxSliceList.empty();
-    event->body.unit.metadata.cardId = database->QueryHostInfo()+"Host";
-    event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
-    database->QueryHostMetadata(event->body.unit.children);
-    SendEvent(std::move(event));
 }
 
 void FullDbParser::ParserCallBack(std::string rankId, const std::string &fileId, bool result)
