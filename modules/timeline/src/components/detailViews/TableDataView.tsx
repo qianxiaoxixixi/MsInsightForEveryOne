@@ -4,6 +4,7 @@
 
 import { observer } from 'mobx-react';
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DETAIL_HEADER_HEIGHT_ETC_PX, type SelectContentViewProps } from './SystemView';
 import { fetchColumnFilterProps, ResizeTable } from 'ascend-resize';
 import { getDefaultColumData, getPageData, queryTableDataDetails } from './Common';
@@ -27,6 +28,7 @@ export const TableDataDetail = observer((props: SelectContentViewProps & { selec
     const [isLoading, setLoading] = useState(false);
     const [condition, setCondition] = useState({ page, sorter });
     const [filters, setFilters] = useState<any>();
+    useTranslation();
     useEffect(() => {
         setCondition({ page, sorter });
     }, [sorter, page.current, page.pageSize]);
