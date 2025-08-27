@@ -104,9 +104,7 @@ const getSeries = (t: TFunction, source: InitParam['source'], lineSource: InitPa
                 points.push(points[0]);
                 return {
                     type: 'polygon',
-                    shape: {
-                        points: points,
-                    },
+                    shape: { points },
                     style: {
                         fill: colorScale(String(categoryIndex)),
                         stroke: 'black',
@@ -335,8 +333,8 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: Session; set
                 loading={loading}
                 options={chartOptions}
             />
-            <Line id='firstLine' lineShow={markLineshow} offset={firstOffset} color='green' />
-            <Line id='lastLine' lineShow={markLineshow} offset={lastOffset} color='green' />
+            <Line id="firstLine" lineShow={markLineshow} offset={firstOffset} color="green" />
+            <Line id="lastLine" lineShow={markLineshow} offset={lastOffset} color="green" />
             <ContextMenu session={session} menuItems={getMenuItems()} />
         </>
     );

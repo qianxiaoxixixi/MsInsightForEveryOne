@@ -10,6 +10,7 @@ import { themeInstance } from './theme/theme';
 import { registerEventHandlers, getInitStatus } from './index';
 import { GlobalStyles } from 'ascend-theme';
 import { SharedConfigProvider } from 'ascend-shared-config-provider';
+import './index.css';
 const App = observer(() => {
     const { sessionStore } = useRootStore();
     const [locale, setLocale] = useState<'zhCN' | 'enUS'>('zhCN');

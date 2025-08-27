@@ -173,13 +173,13 @@ const MemoryFunctionCall = observer(({ session, setFuncIns }: {
         if (deviceId === '' || threadFlag) return;
         setLoading(true);
         getFuncNewData(session);
+        setLoading(false);
     }, [deviceId, eventType, threadId]);
     useEffect(() => {
         setChartOptions(getOptions(session, theme));
         if (chartRef.current !== null && chartRef.current !== undefined) {
             setFuncIns(chartRef.current.getInstance());
         }
-        setLoading(false);
         chartResize(chartRef?.current?.getInstance());
     }, [deviceId, eventType, JSON.stringify(funcData.traces), maxTime, minTime]);
     useEffect(() => {
