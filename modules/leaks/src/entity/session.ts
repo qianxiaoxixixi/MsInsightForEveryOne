@@ -73,6 +73,7 @@ export class Session {
     delayedFreeThreshold: ThreShold = { perT: null, valueT: null };
     longIdleThreshold: ThreShold = { perT: null, valueT: null };
     onlyInefficient: boolean = false;
+    allowTrim: boolean = true;
     constructor() {
         makeAutoObservable(this);
     }

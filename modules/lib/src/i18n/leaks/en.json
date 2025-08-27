@@ -64,6 +64,7 @@
     "early-alloc": "early-alloc",
     "late-free": "late-free",
     "idle": "idle",
-    "onlyInefficient": "Only Show Inefficient Blocks"
+    "onlyInefficient": "Only Show Inefficient Blocks",
+    "allowTrim":"Allow Trim"
   }
 }

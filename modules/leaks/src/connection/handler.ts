@@ -50,6 +50,7 @@ const funcRestore = (session: any): void => {
     session.searchFunc = [];
     session.funcOptions = [];
     session.maxDepth = 0;
+    session.allowTrim = true;
 };
 const barRestore = (session: any): void => {
     session.deviceId = '';

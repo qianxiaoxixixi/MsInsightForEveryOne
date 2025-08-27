@@ -2,10 +2,11 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
-import { Select } from 'ascend-components';
+import { Select, Checkbox } from 'ascend-components';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
+import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import MemoryBarChart from './MemoryBarChart';
 import MemorySliceChart from './MemorySliceChart';
@@ -117,7 +118,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     id={'select-funcName'}
                     mode="multiple"
                     value={session.searchFunc}
-                    style={{ width: 550 }}
+                    style={{ width: 550, marginRight: 20 }}
                     onChange={(val: string[]): void => {
                         runInAction(() => { session.searchFunc = val; });
                     }}
@@ -126,8 +127,14 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     maxTagTextLength={10}
                     maxTagCount={4}
                 />
+                <Checkbox
+                    checked={session.allowTrim}
+                    onChange={(event: CheckboxChangeEvent): void => {
+                        runInAction(() => { session.allowTrim = event.target.checked; getFuncNewData(session, session.minTime, session.maxTime); });
+                    }}
+                >{t('allowTrim')}</Checkbox>
                 <div id="funcContent" style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
-                    <Line id='funcLine' lineShow={lineShow} offset={offset} color='#999'/>
+                    <Line id="funcLine" lineShow={lineShow} offset={offset} color="#999" />
                     <MemoryFunctionCall session={session} setFuncIns={setFuncIns} />
                 </div>
             </CollapsiblePanel >
@@ -162,7 +169,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     options={session.typeOpts}
                 />
                 <div id="barContent" style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
-                    <Line id="barLine" lineShow={lineShow} offset={offset} color='#999' />
+                    <Line id="barLine" lineShow={lineShow} offset={offset} color="#999" />
                     <MemoryBarChart session={session} setBarIns={setBarIns} />
                 </div>
             </CollapsiblePanel>

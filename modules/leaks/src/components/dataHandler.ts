@@ -11,7 +11,7 @@ import { runInAction } from 'mobx';
 
 export const getFuncNewData = async (session: any, startTimestamp?: number, endTimestamp?: number): Promise<void> => {
     try {
-        const funcParam: FuncParam = { deviceId: session.deviceId, relativeTime: true, threadId: session.threadId };
+        const funcParam: FuncParam = { deviceId: session.deviceId, relativeTime: true, threadId: session.threadId, allowTrim: session.allowTrim };
         if (startTimestamp !== undefined && endTimestamp !== undefined) {
             funcParam.startTimestamp = startTimestamp;
             funcParam.endTimestamp = endTimestamp;
@@ -22,8 +22,10 @@ export const getFuncNewData = async (session: any, startTimestamp?: number, endT
             session.funcOptions = [...new Set(funcDatas.traces.map(trace => trace.func))].map(func => ({ label: func, value: func }));
             const funcSet = new Set(session.searchFunc);
             session.searchFunc = funcSet.size ? session.funcOptions.filter((item: any) => funcSet.has(item.value)).map((i: any) => i.value) : [];
-            session.maxTime = endTimestamp;
-            session.minTime = startTimestamp;
+            if (startTimestamp !== undefined && endTimestamp !== undefined) {
+                session.maxTime = endTimestamp;
+                session.minTime = startTimestamp;
+            }
             session.maxDepth = funcDatas.maxDepth;
         });
     } catch (error: any) {

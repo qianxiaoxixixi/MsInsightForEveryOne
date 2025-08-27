@@ -48,6 +48,7 @@ export interface FuncParam {
     relativeTime?: boolean;
     startTimestamp?: number;
     endTimestamp?: number;
+    allowTrim: boolean;
 }
 export interface ThreShold {
     perT: number | null;

@@ -64,6 +64,7 @@
     "early-alloc": "提前申请",
     "late-free": "延迟释放",
     "idle": "过长闲置",
-    "onlyInefficient": "只展示低效内存块"
+    "onlyInefficient": "只展示低效内存块",
+    "allowTrim":"允许压缩"
   }
 }
