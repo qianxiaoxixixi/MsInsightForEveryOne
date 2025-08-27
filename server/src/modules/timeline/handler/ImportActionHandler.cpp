@@ -125,7 +125,7 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
         SendParseFailEvent(warnMsg);
         warnMsg = "";
     }
-    bool isNotCluster = parseFileList.size() == 1 && !ClusterFileParser::CheckIsCluster(parseFileList[0]);
+    bool isNotCluster = !ClusterFileParser::CheckIsCluster(parseFileList[0]);
     // 如果没有找到文件（warnMag不为空），并且不是集群数据，则需要发送错误提示给前端
     if (!warnMsg.empty() && isNotCluster) {
         SendParseFailEvent(warnMsg);
