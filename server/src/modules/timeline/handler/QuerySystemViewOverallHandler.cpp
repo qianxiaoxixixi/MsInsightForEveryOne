@@ -28,7 +28,7 @@ bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Requ
         SendResponse(std::move(responsePtr), false, error);
         return false;
     }
-    std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "timeline");
+    std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
     if (deviceId.empty()) {
         SendResponse(std::move(responsePtr), false, "Failed to get deviceId for system view overall statistics.");
         return false;

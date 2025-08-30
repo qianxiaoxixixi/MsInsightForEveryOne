@@ -528,7 +528,7 @@ void DataBaseManager::UpdateRankIdToDeviceId(const std::string &fileId,
     rankIdToDeviceIdMap[fileId + rankId] = deviceIdTmp;
 }
 
-std::string DataBaseManager::GetDeviceIdFromRankId(const std::string &rankId, const std::string& module)
+std::string DataBaseManager::GetDeviceIdFromRankId(const std::string &rankId)
 {
     std::string fileId = GetFileIdByRankId(rankId);
     return rankIdToDeviceIdMap[fileId + rankId];

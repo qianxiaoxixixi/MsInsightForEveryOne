@@ -193,7 +193,7 @@ TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOpsTimeDataByGroupNameTest
                        "Communication(Not Overlapped)" : "2";
     uint64_t totalTime = 0;
     std::vector<Protocol::ThreadTraces> notOverlapData{};
-    std::string deviceId = Dic::Module::Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId("0", "timeline");
+    std::string deviceId = Dic::Module::Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId("0");
     requestParams.deviceId = deviceId;
     int deviceIdInt = StringUtil::StringToInt(deviceId);
     ParamsForOAData paramsForOaData = { sql, type, minTimestamp };

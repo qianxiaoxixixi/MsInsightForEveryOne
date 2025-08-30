@@ -24,7 +24,7 @@ bool FusedOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Op
     if (std::count(FUSED_OP_ORDER_BY_NAME_LIST.begin(), FUSED_OP_ORDER_BY_NAME_LIST.end(), params.orderBy) == 0) {
         param.orderBy = "duration";
     }
-    param.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(params.rankId, "timeline");
+    param.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(params.rankId);
     if (param.deviceId.empty()) {
         ServerLog::Error("Query Fused Operator advice failed to get deviceId.");
         return false;

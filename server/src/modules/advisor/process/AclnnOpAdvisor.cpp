@@ -34,7 +34,7 @@ bool AclnnOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Ac
 bool AclnnOpAdvisor::AclnnOpProcess(const std::shared_ptr<Timeline::VirtualTraceDatabase>& database,
     Protocol::KernelDetailsParams &param, Protocol::AclnnOperatorResBody &resBody)
 {
-    std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(param.rankId, "timeline");
+    std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(param.rankId);
     if (deviceId.empty()) {
         ServerLog::Error("Query Aclnn op advice failed to get deviceId.");
         return false;

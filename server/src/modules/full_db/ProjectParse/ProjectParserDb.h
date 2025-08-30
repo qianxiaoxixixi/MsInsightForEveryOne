@@ -7,6 +7,7 @@
 
 #include "ProjectParserFactory.h"
 #include "TimelineRequestHandler.h"
+#include "DbTraceDataBase.h"
 
 namespace Dic {
 namespace Module {
@@ -26,7 +27,7 @@ public:
     static void BuildProjectFromParseFile(ProjectExplorerInfo& info, const std::string& parsedFile);
     static std::string GetFileIdWithDb(const std::string& filePath);
 
-private:
+protected:
     std::map<std::string, HostInfo> GetReportFiles(const std::vector<ProjectExplorerInfo> &projectInfos);
     void GetReportFilesOneFile(const Dic::Module::Global::ProjectExplorerInfo &project,
                                std::map<std::string, HostInfo> &hostMap,
@@ -46,6 +47,8 @@ private:
     void ParseClusterInfo(const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isCluster,
                           ProjectTypeEnum projectType);
     static void FilterHostMap(std::map<std::string, HostInfo>& hostInfoMap, const std::string& filePath);
+
+    std::shared_ptr<FullDb::DbTraceDataBase> GetTraceDbConnect(const std::string& fileId);
 };
 } // end of namespace Module
 } // end of namespace Dic

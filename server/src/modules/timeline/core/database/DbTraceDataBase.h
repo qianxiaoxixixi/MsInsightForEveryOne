@@ -116,6 +116,7 @@ public:
     std::string QueryHostInfo() override;
     std::string QueryHostInfoWithHostPath(const std::string &path);
     std::string GetDeviceId(const std::string& rankIdWithHost);
+    std::string GetDeviceIdFromMemoryTable();
     std::unordered_map<std::string, std::string> QueryRankIdAndDeviceMap();
 
     bool QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params, const std::string &optimizers,

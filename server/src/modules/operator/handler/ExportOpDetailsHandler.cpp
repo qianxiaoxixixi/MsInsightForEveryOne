@@ -148,7 +148,7 @@ namespace Dic::Module::Operator {
             return false;
         }
 
-        request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "operator");
+        request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
         if (request.params.deviceId.empty()) {
             ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail because empty device id.");
             SendResponse(std::move(responsePtr), false);
