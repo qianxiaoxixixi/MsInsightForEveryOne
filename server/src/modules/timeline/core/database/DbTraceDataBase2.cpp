@@ -239,4 +239,28 @@ bool DbTraceDataBase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestPar
     }
     return true;
 }
+
+std::string DbTraceDataBase::GetDeviceIdFromMemoryTable()
+{
+    auto queryDevice = [this](const std::string &table) -> std::string {
+        sqlite3_stmt *stmt = nullptr;
+        std::string sql = "SELECT deviceId FROM " + table + " limit 1";
+        int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+        if (result != SQLITE_OK) {
+            sqlite3_finalize(stmt);
+            return "";
+        }
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            std::string deviceId = sqlite3_column_string(stmt, resultStartIndex);
+            sqlite3_finalize(stmt);
+            return deviceId;
+        }
+        sqlite3_finalize(stmt);
+        return "";
+    };
+    if (CheckTableExist(TABLE_MEMORY_RECORD)) {
+        return queryDevice(TABLE_MEMORY_RECORD);
+    }
+    return "";
+}
 }

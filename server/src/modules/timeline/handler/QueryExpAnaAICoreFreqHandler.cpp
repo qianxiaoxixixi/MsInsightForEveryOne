@@ -25,7 +25,7 @@ bool QueryExpAnaAICoreFreqHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         session.OnResponse(std::move(responsePtr));
         return false;
     }
-    std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "timeline");
+    std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
     if (deviceId.empty()) {
         ServerLog::Error("Query system view AI core freq failed to get deviceId.");
         session.OnResponse(std::move(responsePtr));

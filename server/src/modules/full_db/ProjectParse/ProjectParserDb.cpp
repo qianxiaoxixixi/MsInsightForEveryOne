@@ -142,18 +142,8 @@ void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectEx
     // 非RL数据不下发集群
     std::string clusterId = project.GetClusterInfos().empty() ? "" : parsefileInfo->clusterId;
     for (const auto &file: dbFiles) {
-        if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(file, file)) {
-            ServerLog::Error("Failed to create connection pool. ", file);
-        }
-        auto db = Timeline::DataBaseManager::Instance().GetTraceDatabaseByFileId(file);
-        if (db == nullptr) {
-            ServerLog::Error("Failed to get connection.");
-            continue;
-        }
-        auto database = std::dynamic_pointer_cast<FullDb::DbTraceDataBase, Timeline::VirtualTraceDatabase>(db);
-        if (database == nullptr) {
-            ServerLog::Error(
-                "Failed to convert virtual trace database to db trace database in getting report files.");
+        auto database = GetTraceDbConnect(file);
+        if (!database) {
             continue;
         }
         auto host = database->QueryHostInfo();
@@ -164,9 +154,11 @@ void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectEx
             parsefileInfo->host = host;
             parsefileInfo->rankId = host + rank;
             auto rankIdDeviceMap = database->QueryRankIdAndDeviceMap();
-            auto deviceIdInDb = database->GetDeviceId(rank);
-            if (!deviceIdInDb.empty()) {
-                parsefileInfo->deviceId = deviceIdInDb;
+            auto deviceIdInMem = database->GetDeviceIdFromMemoryTable();
+            if (rankIdDeviceMap.find(rank) != rankIdDeviceMap.end()) {
+                parsefileInfo->deviceId = rankIdDeviceMap[rank];
+            } else if (!deviceIdInMem.empty() && parsefileInfo->type != DEVICE_CHIP) {
+                parsefileInfo->deviceId = deviceIdInMem;
             }
             std::string rankName = rank;
             hostMap[host][file].push_back(rank);
@@ -499,6 +491,24 @@ std::vector<std::string> ProjectParserDb::GetDbFilesInDir(const std::string &fil
         }
     }
     return {};
+}
+std::shared_ptr<FullDb::DbTraceDataBase> ProjectParserDb::GetTraceDbConnect(const std::string &fileId)
+{
+    if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(fileId, fileId)) {
+        ServerLog::Error("[ProjectParser] Failed to create connection pool. ", fileId);
+    }
+    auto db = Timeline::DataBaseManager::Instance().GetTraceDatabaseByFileId(fileId);
+    if (db == nullptr) {
+        ServerLog::Error("[ProjectParser] Failed to get connection.", fileId);
+        return nullptr;
+    }
+    auto database = std::dynamic_pointer_cast<FullDb::DbTraceDataBase, Timeline::VirtualTraceDatabase>(db);
+    if (database == nullptr) {
+        ServerLog::Error(
+            "[ProjectParser] Failed to convert virtual trace database to db trace database in getting report files.");
+        return nullptr;
+    }
+    return database;
 }
 
 ProjectAnalyzeRegister<ProjectParserDb>  pRegDB(ParserType::DB);

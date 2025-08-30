@@ -141,7 +141,7 @@ namespace Dic::Module::Operator {
         }
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
-        std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId, "operator");
+        std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
         if (deviceId.empty()) {
             return false;
         }
@@ -160,7 +160,7 @@ namespace Dic::Module::Operator {
         }
         auto databaseBaseline = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(baselineId);
         std::vector<Protocol::OperatorDetailInfoRes> baselineRes;
-        request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId, "operator");
+        request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId);
         if (!databaseBaseline ||
             !databaseBaseline->QueryAllOperatorDetailInfo(request.params, baselineRes, response.level)) {
             ServerLog::Error("[Operator]Failed to query baseline detail Info by baselineId.");
@@ -191,7 +191,7 @@ namespace Dic::Module::Operator {
     {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
-        std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId, "operator");
+        std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
         if (deviceId.empty()) {
             return false;
         }

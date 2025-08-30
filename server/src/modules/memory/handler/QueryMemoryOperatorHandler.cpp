@@ -34,7 +34,7 @@ bool QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
         return false;
     }
 
-    std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "memory");
+    std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
     if (deviceId.empty()) {
         SendResponse(std::move(responsePtr), false, "Failed to query memory operator data.");
         return false;
@@ -85,7 +85,7 @@ bool QueryMemoryOperatorHandler::GetRespectiveData(std::shared_ptr<VirtualMemory
         errorMsg = "Failed to query memory operator compare data.";
         return false;
     }
-    request.params.deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId, "memory");
+    request.params.deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId);
     uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileIdUsingMinTimestamp(baselineId);
     if (!databaseBaseline->QueryEntireOperatorTable(request.params, baselineData, offsetTimeBaseline)) {
         errorMsg = "Failed to query memory operator baseline data.";

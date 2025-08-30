@@ -32,7 +32,7 @@ bool QuerySystemViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         session.OnResponse(std::move(responsePtr));
         return false;
     }
-    std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "timeline");
+    std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
     if (deviceId.empty()) {
         ServerLog::Error("Query system view failed to get deviceId.");
         session.OnResponse(std::move(responsePtr));

@@ -391,7 +391,7 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
     std::vector<std::function<void(const std::map<std::string, size_t> &dataMap,
         const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> parseProcessList;
 
-    std::string realDeviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId, "operator");
+    std::string realDeviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId);
     std::vector<std::string> columns;
     uint64_t lineNumber = 0;
     while (getline(file, line)) {

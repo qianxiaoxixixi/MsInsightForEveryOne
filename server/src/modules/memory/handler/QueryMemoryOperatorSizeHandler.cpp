@@ -27,7 +27,7 @@ bool QueryMemoryOperatorSizeHandler::HandleRequest(std::unique_ptr<Protocol::Req
         return false;
     }
 
-    std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "memory");
+    std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
     if (deviceId.empty()) {
         SendResponse(std::move(responsePtr), false, "Failed to query operator size data.");
         return false;
@@ -74,7 +74,7 @@ bool QueryMemoryOperatorSizeHandler::GetRespectiveData(std::shared_ptr<VirtualMe
         errorMsg = "Failed to query memory operator size compare data.";
         return false;
     }
-    request.params.deviceId = FullDb::DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId, "memory");
+    request.params.deviceId = FullDb::DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId);
     if (!databaseBaseline->QueryOperatorSize(request.params, baselineData.minSize, baselineData.maxSize)) {
         errorMsg = "Failed to query memory operator size baseline data.";
         return false;

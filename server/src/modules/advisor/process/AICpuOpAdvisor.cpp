@@ -23,7 +23,7 @@ bool AICpuOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::AI
     if (std::count(AICPU_OP_ORDER_BY_NAME_LIST.begin(), AICPU_OP_ORDER_BY_NAME_LIST.end(), params.orderBy) == 0) {
         param.orderBy = "duration";
     }
-    std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(params.rankId, "timeline");
+    std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(params.rankId);
     if (deviceId.empty()) {
         ServerLog::Error("Query AI CPU advice failed to get deviceId. deviceId:", deviceId);
         return false;
