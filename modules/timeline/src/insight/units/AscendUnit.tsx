@@ -72,14 +72,40 @@ const nsToMs = (ns: number): number => {
     return ns / 1000000;
 };
 
-const nsToNs = (ns: number): string => {
-    const ms = Math.floor(ns / 1000000);
-    const us = Math.floor((ns - (ms * 1000000)) / 1000);
-    const nsRemainder = ns - (ms * 1000000) - (us * 1000);
-    if (ms === 0 && us === 0) {
+const nsToNs = (ns: string | bigint): string => {
+    let nsBig: bigint;
+    if (typeof ns === 'bigint') {
+        // 已经是纳秒
+        nsBig = ns;
+    } else {
+        const s = ns.trim();
+
+        if (s.includes('.')) {
+            let [intPart] = s.split('.');
+            // 仅取数字，防杂字符
+            intPart = intPart.replace(/[^-\d]/g, '');
+            // 舍弃小数位
+            nsBig = BigInt(intPart);
+        } else {
+            // 纯整数：直接按纳秒
+            const intNs = s.replace(/[^-\d]/g, '');
+            nsBig = BigInt(intNs);
+        }
+    }
+
+    const MS = 1_000_000n; // 1 ms = 1,000,000 ns
+    const US = 1_000n; // 1 us = 1,000 ns
+
+    const ms = nsBig / MS;
+    const nsAfterMs = nsBig % MS;
+
+    const us = nsAfterMs / US;
+    const nsRemainder = nsAfterMs % US;
+
+    if (ms === 0n && us === 0n) {
         return `${nsRemainder}ns`;
     }
-    if (ms === 0) {
+    if (ms === 0n) {
         return `${us}us${nsRemainder}ns`;
     }
     return `${ms}ms${us}us${nsRemainder}ns`;
@@ -96,7 +122,7 @@ export const getDetailTimeDisplay = (startTime: number | undefined): string => {
     if (startTime === undefined) {
         return '';
     }
-    return nsToNs(startTime);
+    return nsToNs(startTime.toString());
 };
 
 export const getDisplay = (val: string | undefined): string => {

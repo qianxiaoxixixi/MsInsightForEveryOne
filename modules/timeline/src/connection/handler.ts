@@ -74,6 +74,7 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
         updateRankDbPathMap(unitData.rankList ?? [], unitData.dbPath);
         runInAction(() => {
             session.isFullDb = unitData.isFullDb;
+            session.startTime = unitData.startTime;
             // parse suceess之后关闭进度条
             setUnitProgressByFileId(unitData, session);
             session.units.forEach((unit) => {
@@ -731,6 +732,7 @@ export const allSuccessHandler: NotificationHandler = async (data): Promise<void
             if (data.isAllPageParsed as boolean) {
                 session.isPending = false;
                 session.isParserLoading = false;
+                session.startTime = data.minTime as number;
             }
             session.units.forEach((unit) => {
                 unit.alignStartTimestamp = offsetMap.get((unit.metadata as CardMetaData).cardId);

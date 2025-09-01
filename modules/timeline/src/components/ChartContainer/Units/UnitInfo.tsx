@@ -37,6 +37,7 @@ import { parseCards } from '../../../api/request';
 import type { ParseCardsParam } from '../../../api/interface';
 import { useComplexMouseEvent } from './mouseEvent';
 import { CardMetaData } from '../../../entity/data';
+import { getTimeOffset, bigSubtract } from '../../../insight/units/utils';
 
 const DefaultInfoContainer = styled.div`
     display: flex;
@@ -299,7 +300,14 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
         />;
     }
     const tooltip = (children: JSX.Element): JSX.Element => unit.name === 'Card'
-        ? <Tooltip placement="leftBottom" title={(unit.metadata as CardMetaData).cardPath}>{children}</Tooltip>
+        ? <Tooltip placement="leftBottom"
+            title={
+                <>
+                    <div>{(unit.metadata as CardMetaData).cardPath}</div>
+                    <div>Timestamp Counter value at t=0: { bigSubtract(session.startTime, getTimeOffset(session, unit.metadata as CardMetaData)) } ns</div>
+                </>
+            }
+        >{children}</Tooltip>
         : children;
     React.useEffect(() => {
         if ((unit.metadata as CardMetaData).cardName.startsWith('Baseline')) { return; }

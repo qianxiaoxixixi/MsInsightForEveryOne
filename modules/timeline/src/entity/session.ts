@@ -143,6 +143,8 @@ export class Session {
     // should use ns time unit
     isNsMode: boolean = false;
 
+    startTime: TimeStamp;
+
     // some params for selected value which is not a range.
     selectedParams: SelectedParams = { baseRawId: undefined, curRawId: undefined };
     scrollTop: number = 0;
@@ -267,6 +269,7 @@ export class Session {
         this._name = conf?.name ?? this.id;
         this._interval = 100;
         this.startRecordTime = 0;
+        this.startTime = 0;
         if (conf) {
             Object.assign(this, conf);
         }
