@@ -52,6 +52,7 @@ struct ParseSuccessEventBody {
     bool isFullDb = false;
     bool isRl = false;
     uint64_t maxTimeStamp = 0;
+    uint64_t startTime = 0;
     uint64_t offset = 0;
     std::string fileId;
     std::vector<RankInfo> rankList;  // 值为 cluster + host + rankId + deviceId 拼接

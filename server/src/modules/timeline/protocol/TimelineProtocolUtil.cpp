@@ -786,6 +786,7 @@ template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const Parse
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
     json_t body(kObjectType);
+    JsonUtil::AddMember(body, "startTime", event.body.maxTimeStamp, allocator);
     JsonUtil::AddMember(body, "maxTimeStamp", event.body.maxTimeStamp, allocator);
     JsonUtil::AddMember(body, "offset", event.body.offset, allocator);
     JsonUtil::AddMember(body, "startTimeUpdated", event.body.startTimeUpdated, allocator);

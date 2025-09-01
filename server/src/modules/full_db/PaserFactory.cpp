@@ -185,6 +185,7 @@ void ProjectParserBase::SendParseSuccessEvent(const std::string &rankId, const s
         TraceTime::Instance().UpdateCardTimeDuration(rankId, min, max);
     }
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
+    event->body.startTime = TraceTime::Instance().GetStartTime();
     event->body.offset = TraceTime::Instance().GetOffsetByFileId(rankId);
     event->body.fileId = fileId;
     std::vector<std::string> taskNameList = RL::RLMstxConfigManager::Instance().GetMstxTaskNameList();
