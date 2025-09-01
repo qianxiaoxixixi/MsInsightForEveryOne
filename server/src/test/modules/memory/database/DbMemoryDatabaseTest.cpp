@@ -94,6 +94,14 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorData)
     int expectColumnSize = 14;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
+    // 新增db多机多卡场景 rankId不等于deviceId的情况(rankId一般为"{host} {rankId}")
+    requestParams.rankId = "host_0 0";
+    columnAttr.clear();
+    responseBody.clear();
+    result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithTime)

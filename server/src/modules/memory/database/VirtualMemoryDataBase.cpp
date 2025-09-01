@@ -357,7 +357,7 @@ bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams
     sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
     opDetails = QueryOperatorDetail(stmt);
-    std::vector<std::string> streams = GetStreamLists(requestParams.rankId, deviceIdColumnName);
+    std::vector<std::string> streams = GetStreamLists(requestParams.deviceId, deviceIdColumnName);
     std::vector<std::string> columns = activeRelatedColumn;
     for (const auto& column : tableColumnAttr) {
         if (streams.empty() && std::find(columns.begin(), columns.end(), column.name) != columns.end()) {
