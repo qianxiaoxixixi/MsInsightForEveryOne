@@ -42,6 +42,7 @@ private:
     std::unordered_map<std::string, RLPipelineItem> taskPipelineMap;
     std::unordered_map<std::string, RLPipelineItem> microBatchPipelineMap;
     RLBackEndType rlBackEndType{RLBackEndType::Unknown};
+    std::string framework;
 };
 }
 #endif // PROFILER_SERVER_RLPIPELINESERVICE_H

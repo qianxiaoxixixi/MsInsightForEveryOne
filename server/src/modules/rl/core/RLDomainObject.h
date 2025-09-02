@@ -15,6 +15,19 @@ namespace Dic::Module::RL {
         Unknown
     };
 
+    inline std::string RLBackendToStr(enum RLBackEndType type)
+    {
+        switch (type) {
+            case RLBackEndType::Megatron:
+                return "Megatron";
+            case RLBackEndType::FSDP:
+                return "fsdp";
+            case RLBackEndType::Unknown:
+                return "unknown";
+        }
+        return "";
+    }
+
     struct MicroBatchConfig {
         std::string batchName;
         std::string type;
