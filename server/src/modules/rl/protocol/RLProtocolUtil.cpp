@@ -29,6 +29,8 @@ template<> std::optional<document_t> ToResponseJson<RLPipelineResponse>(const RL
     JsonUtil::AddMember(body, "taskData", taskDataJson, allocator);
     JsonUtil::AddMember(body, "microBatchData", microBatchDataJson, allocator);
     JsonUtil::AddMember(body, "stageTypeList", response.body.stageTypeList, allocator);
+    JsonUtil::AddMember(body, "backendType", response.body.backendType, allocator);
+    JsonUtil::AddMember(body, "framework", response.body.framework, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
 }

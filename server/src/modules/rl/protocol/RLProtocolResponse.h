@@ -32,6 +32,8 @@ struct RLPipelineBody {
     std::vector<RLPipelineItem> taskData;
     std::vector<RLPipelineItem> microBatchData;
     std::vector<std::string> stageTypeList;
+    std::string backendType;
+    std::string framework;
 };
 
 struct RLPipelineResponse : public Response {

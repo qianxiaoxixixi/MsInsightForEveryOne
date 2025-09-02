@@ -21,6 +21,7 @@ void RLPipelineService::Clear()
     taskPipelineMap.clear();
     microBatchPipelineMap.clear();
     rlBackEndType = RLBackEndType::Unknown;
+    framework.clear();
 }
 
 std::vector<Protocol::RLPipelineNode> RLPipelineService::SearchNode(const std::string &rankId)
@@ -93,6 +94,7 @@ void RLPipelineService::QueryPipelineByRankId(const std::string &rankIdWithHost)
                        return node.name;
                    });
     auto rlMstxConfig = RLMstxConfigManager::Instance().GetMstxConfigByTaskName(taskNames);
+    framework = rlMstxConfig.framework;
     std::vector<Protocol::RLPipelineNode> microBatchNodeList = QueryMicroBatchByTask(fileId,
                                                                                      taskPipelineNodeList,
                                                                                      rlMstxConfig);
@@ -121,6 +123,8 @@ bool RLPipelineService::GetPipelineInfo(Protocol::RLPipelineResponse &response)
     response.body.minTime = minTime;
     response.body.maxTime = maxTime;
     response.body.stageTypeList.insert(response.body.stageTypeList.end(), stageTypeList.begin(), stageTypeList.end());
+    response.body.backendType = RLBackendToStr(rlBackEndType);
+    response.body.framework = framework;
     return true;
 }
 
