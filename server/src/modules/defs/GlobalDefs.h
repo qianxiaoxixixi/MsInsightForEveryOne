@@ -27,6 +27,7 @@ enum class ParserType {
     JSON = 2,
     IPYNB = 3,
     IE = 4,
+    DB_NPUMONITOR = 5,
     OTHER = 20
 };
 
@@ -57,7 +58,8 @@ enum class ProjectTypeEnum {
     TRACE = 5,
     DB_CLUSTER = 6,
     IE = 7,
-    OTHER = 8
+    DB_NPUMONITOR = 8,
+    OTHER = 9
 };
 
 inline std::vector<ProjectTypeEnum> projectTypeSupportCompare = {
