@@ -8,6 +8,7 @@
 #include "ProjectParserJson.h"
 #include "ProjectParserIpynb.h"
 #include "ProjectParserDb.h"
+#include "ProjectParserDbNPUMonitor.h"
 #include "ParserIE.h"
 #include "DataBaseManager.h"
 #include "ClusterFileParser.h"
@@ -35,9 +36,14 @@ using namespace Dic::Module::Global;
 std::mutex ParserFactory::mutex;
 std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::string &path)
 {
+    // 判别顺序是优先判别只支持单个文件导入的leaks bin ipynb npumonitor文件，然后判别服务化调优数据，再判别系统调优数据
+    // 判别系统调优数据时，优先db，然后text，都没有再寻找npumonitor数据
     if (!FileUtil::IsFolder(path) && std::regex_match(FileUtil::GetFileName(path),
                                                       std::regex(leaksMemDbReg))) {
         return std::make_pair(path, ParserType::DB);
+    }
+    if (!FileUtil::IsFolder(path) && std::regex_match(FileUtil::GetFileName(path), std::regex(npumonitorDBReg))) {
+        return std::make_pair(path, ParserType::DB_NPUMONITOR);
     }
     if (StringUtil::EndWith(path, computeBinSuffix)) {
         return std::make_pair(path, ParserType::BIN);
@@ -49,15 +55,16 @@ std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::strin
     if (ie->ExistIEFile(path)) {
         return std::make_pair(path, ParserType::IE);
     }
-    std::pair<std::string, ParserType> result;
     if (FileUtil::FindIfDbTypeByRegex(path, std::regex(traceViewReg), std::regex(DB_REG))) {
-        result = std::make_pair(path, ParserType::DB);
-    } else if (ProjectParserJson::ExistJsonFormatFile(path) || ClusterFileParser::CheckIsCluster(path)) {
-        result = std::make_pair(path, ParserType::JSON);
-    } else {
-        result = std::make_pair(path, ParserType::OTHER);
+        return std::make_pair(path, ParserType::DB);
     }
-    return result;
+    if (ProjectParserJson::ExistJsonFormatFile(path) || ClusterFileParser::CheckIsCluster(path)) {
+        return std::make_pair(path, ParserType::JSON);
+    }
+    if (FileUtil::FindIfDbTypeByRegex(path, std::regex(traceViewReg), std::regex(npumonitorDBReg))) {
+        return std::make_pair(path, ParserType::DB_NPUMONITOR);
+    }
+    return std::make_pair(path, ParserType::OTHER);
 }
 
 std::shared_ptr<ProjectParserBase> ParserFactory::GetProjectParser(ParserType allocType)
@@ -78,6 +85,9 @@ std::shared_ptr<ProjectParserBase> ParserFactory::GetProjectParser(ParserType al
             break;
         case ParserType::IE:
             alloc = std::make_shared<ParserIE>();
+            break;
+        case ParserType::DB_NPUMONITOR:
+            alloc = std::make_shared<ProjectParserDbNPUMonitor>();
             break;
         default:
             alloc = std::make_shared<ProjectParserBase>();

@@ -80,6 +80,28 @@ TEST_F(ParserFactoryTest, GetImportTypeDbClusterTest)
 #endif
 }
 
+TEST_F(ParserFactoryTest, GetImportTypeDbNPUMonitorTest)
+{
+#ifdef __linux__
+    std::string currPath = Dic::FileUtil::GetCurrPath();
+    int index = currPath.find("server");
+    const std::string folderPath = currPath.substr(0, index) + "test/data/npumonitor";
+    const std::string dbPath = folderPath + "/msmonitor_99092_20250901114924883_0.db";
+    const std::string mkdirCommand = "mkdir -p " + folderPath;
+    system(mkdirCommand.c_str());
+    const std::string touchCommand = "touch " + dbPath;
+    system(touchCommand.c_str());
+
+    std::string pathList1{currPath.substr(0, index) + "test/data/npumonitor"};
+    std::pair<std::string, ParserType> result1 = ParserFactory::GetImportType(pathList1);
+    std::pair<std::string, ParserType> expect1{pathList1, ParserType::DB_NPUMONITOR};
+    EXPECT_EQ(result1, expect1);
+
+    const std::string rmCommand = "rm -rf " + currPath.substr(0, index) + "test/data/npumonitor";
+    system(rmCommand.c_str());
+#endif
+}
+
 TEST_F(ParserFactoryTest, GetImportTypeTextTest)
 {
 #ifdef __linux__
