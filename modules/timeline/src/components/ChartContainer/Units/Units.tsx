@@ -54,10 +54,15 @@ const Lane = styled.div<{ laneHeight: number; className: string; top: number; zI
 `;
 
 const VIRTUAL_SCROLL_THRESHOLD = 30;
+const MOUSE_STOPPED_THRESHOLD = 50;
 const UNIT_SELECTED = 'unit-selected';
 const UNIT_VISIBLE = 'unit-visible';
 export const UNIT_WRAPPER_SCROLLER_ID = 'unitWrapperScroller';
 export const PINNED_UNIT_WRAPPER_SCROLLER_ID = 'pinnedUnitWrapperScroller';
+const UP = 'up';
+const DOWN = 'down';
+let scrollDirection = '';
+let moveDirectionHasChange = false;
 
 const Splitter = styled.div`
     width: 100%;
@@ -336,11 +341,19 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
     );
     const totalHeight = React.useMemo(() => headOffset + visibleUnitsHeight + tailOffset, [headOffset, visibleUnitsHeight, tailOffset]);
     const expandedCardIdSet = computeOnScreenExpandedCardIdSet(flattenUnits, first, last);
+    const [lastMouseMoveTime, setLastMouseMoveTime] = useState<Date>(new Date());
+    const autoScrollIntervals = useRef<NodeJS.Timeout[]>([]);
+    const mergedSelected = new Set<string>();
 
     const [isSelecting, setIsSelecting] = useState(false);
     const [selectedUnitKeys, setSelectedUnitKeys] = useState<Set<string>>(new Set());
     const startPoint = useRef({ x: 0, y: 0 });
+    // 记录相对于当前屏幕的绝对值Y，用于滑动判断
+    const startAbsPointY = useRef({ y: 0 });
     const unitsRefs = useRef(new Map());
+    // 记录鼠标移动后的Y值，用于鼠标移动方向判断
+    const [movementChangeY, setMovementChangeY] = useState(0);
+    const scrollElement = document.getElementById(UNIT_WRAPPER_SCROLLER_ID);
 
     runInAction(() => {
         updateSession(session, totalHeight, expandedCardIdSet);
@@ -364,45 +377,231 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         };
     }, []);
 
+    // 辅助函数
+    const isNearTop = (e: React.MouseEvent, scrollElement: HTMLElement): boolean => {
+        return e.clientY <= 150 && scrollElement.scrollTop > 0;
+    };
+
+    const isNearBottom = (e: React.MouseEvent, scrollElement: HTMLElement): boolean => {
+        return e.clientY >= scrollElement.clientHeight - 100 &&
+                scrollElement.scrollTop < scrollElement.scrollHeight - window.innerHeight;
+    };
+
+    const updateStartPoint = (e: React.MouseEvent): void => {
+        startAbsPointY.current.y = e.clientY;
+    };
+
     const handleMouseUp = (): void => {
+        mergedSelected.clear();
         setIsSelecting(false);
         for (const [key, value] of unitsRefs.current) {
             if (value === null) {
                 unitsRefs.current.delete(key);
             }
         }
+        clearAutoScrollIntervals();
+        moveDirectionHasChange = false;
     };
-    const handleMouseLeave = (e: MouseEvent): void => {
+    const handleMouseDown = (e: React.MouseEvent): void => {
+        // 右键不取消状态
+        if (e.button === 2) {
+            return;
+        }
+        scrollDirection = '';
+        // 左键单击后记录起始坐标点，清空已选中区域，清除其他判断状态
+        setMovementChangeY(e.clientY);
+        setSelectedUnitKeys(new Set());
+        clearAutoScrollIntervals();
+        moveDirectionHasChange = false;
+        // 禁止在Unit Info区域触发框选
+        if (scrollElement) {
+            const currentScrollTop = scrollElement.scrollTop;
+            if (e.clientX - PAGE_PADDING > laneInfoWidth) {
+                setIsSelecting(true);
+                startPoint.current = { x: e.clientX, y: Math.abs(currentScrollTop + e.clientY) };
+                startAbsPointY.current = { y: e.clientY };
+            }
+        }
+    };
+
+    const handleMouseLeave = (): void => {
+        mergedSelected.clear();
         setIsSelecting(false);
+        // 清除所有定时器
+        clearAutoScrollIntervals();
     };
 
     const handleMouseMove = (e: React.MouseEvent): void => {
-        if (!isSelecting) { return; }
-        if (session.selectedRangeIsLock) {
+        // 获取滚动元素
+        if (!scrollElement) return;
+        if (!isSelecting) return;
+        // 有时候会出现触发了移动，但是Y值相同的情况，这种情况要忽略掉，否则会影响下方else逻辑
+        if (movementChangeY === e.clientY) {
             return;
         }
-        const top = Math.min(e.clientY, startPoint.current.y);
-        const bottom = Math.max(e.clientY, startPoint.current.y);
-        const newSelected: Set<string> = new Set();
-        for (const [key, value] of unitsRefs.current) {
-            const rect = value?.getBoundingClientRect();
-
-            if (rect !== undefined && rect.top < bottom && rect.bottom > top) {
-                newSelected.add(key);
-            }
+        // 初始化方向
+        if (scrollDirection === '') {
+            handleDirectionInitialization(e);
+            return;
+        }
+        // 用来判断用户选中一个元素向上之后再向下 反复操作的情况
+        if (Math.abs(startPoint.current.y - (scrollElement.scrollTop + e.clientY)) < 10) {
+            scrollDirection = '';
+            moveDirectionHasChange = false;
+            setMovementChangeY(e.clientY);
+            startAbsPointY.current.y = e.clientY;
+            return;
         }
 
-        setSelectedUnitKeys(newSelected);
+        // 处理滑动方向变化逻辑
+        if ((scrollDirection === DOWN && movementChangeY > e.clientY) || (scrollDirection !== DOWN && movementChangeY < e.clientY)) {
+            // 确定新的滑动方向
+            const newDirection = scrollDirection === DOWN ? UP : DOWN;
+            scrollDirection = newDirection;
+            clearAutoScrollIntervals();
+            setMovementChangeY(e.clientY);
+            moveDirectionHasChange = !moveDirectionHasChange;
+            return;
+        }
+
+        // 更新当前 Y 位置（统一处理）
+        setMovementChangeY(e.clientY);
+
+        // 检查选择范围是否锁定
+        if (session.selectedRangeIsLock) return;
+
+        // 处理自动滚动
+        handleAutoScrollLogic(e);
+
+        // 更新选中元素
+        updateSelectedElements(e);
+    };
+
+    // 初始化方向
+    const handleDirectionInitialization = (e: React.MouseEvent): void => {
+        if (movementChangeY < e.clientY) {
+            scrollDirection = DOWN;
+        } else {
+            scrollDirection = UP;
+        }
+    };
+
+    // 更新选中元素
+    const updateSelectedElements = (e: React.MouseEvent): void => {
+        if (startAbsPointY.current.y <= e.clientY) {
+            updateSelectedUnits(e, DOWN);
+        } else {
+            updateSelectedUnits(e, UP);
+        }
+    };
+
+    // 处理自动滚动逻辑
+    const handleAutoScrollLogic = (e: React.MouseEvent): void => {
+        setLastMouseMoveTime(new Date());
+        const currentTime = new Date().getTime();
+        const mouseStopped = currentTime - lastMouseMoveTime.getTime() > MOUSE_STOPPED_THRESHOLD;
+
+        if (mouseStopped && scrollElement) {
+            if (!moveDirectionHasChange) {
+                handleAutoScroll(e, scrollElement);
+            } else if (scrollDirection === UP && isNearTop(e, scrollElement)) {
+                updateStartPoint(e);
+                handleAutoScroll(e, scrollElement);
+            } else if (scrollDirection === DOWN && isNearBottom(e, scrollElement)) {
+                updateStartPoint(e);
+                handleAutoScroll(e, scrollElement);
+            }
+        }
+    };
+
+    // 清除自动滚动定时器
+    const clearAutoScrollIntervals = (): void => {
+        autoScrollIntervals.current.forEach(clearInterval);
+        autoScrollIntervals.current = [];
+    };
+
+    // 处理自动滚动逻辑
+    const handleAutoScroll = (e: React.MouseEvent, scrollElement: HTMLElement): void => {
+        const contentHeight = scrollElement.scrollHeight;
+        const currentScrollTop = scrollElement.scrollTop;
+        clearAutoScrollIntervals();
+        // 存在点击后未选中数据情况，做返回处理
+        if (selectedUnitKeys.size === 0) {
+            return;
+        }
+        // 自动向下滚动
+        if (scrollDirection === DOWN && isNearBottom(e, scrollElement)) {
+            const interval = setInterval(() => {
+                scrollElement.scrollBy(0, 20);
+                updateSelectedUnits(e, DOWN);
+                if (currentScrollTop >= contentHeight - window.innerHeight) {
+                    clearInterval(interval);
+                }
+            }, 50);
+            autoScrollIntervals.current.push(interval);
+        }
+
+        // 自动向上滚动
+        if (scrollDirection === UP && isNearTop(e, scrollElement)) {
+            const interval = setInterval(() => {
+                scrollElement.scrollBy(0, -20);
+                updateSelectedUnits(e, UP);
+                if (scrollElement.scrollTop <= 0) {
+                    clearInterval(interval);
+                }
+            }, 50);
+            autoScrollIntervals.current.push(interval);
+        }
+    };
+
+    // 更新选中元素
+    const updateSelectedUnits = (e: React.MouseEvent, moveDirection: string): void => {
+        const newSelected: Set<string> = new Set();
+        const newDeleted: Set<string> = new Set();
+        // 遍历所有单元，判断是否在选区范围内
+        for (const [key, value] of unitsRefs.current) {
+            if (!value) continue;
+            const rect = value.getBoundingClientRect();
+            if (moveDirectionHasChange) {
+                // 滚动方向改变，删除后续选中
+                const condition = scrollDirection === UP
+                    ? e.clientY < rect.bottom
+                    : rect.top < e.clientY;
+                if (condition) {
+                    newDeleted.add(key);
+                }
+            } else {
+                // 正常添加选中
+                const condition = moveDirection === UP
+                    ? (rect.top < startAbsPointY.current.y && e.clientY < rect.bottom)
+                    : (rect.top < e.clientY && startAbsPointY.current.y < rect.bottom);
+                if (condition) {
+                    newSelected.add(key);
+                }
+            }
+        }
+        // 获取当前的选中集合
+        const currentSelected = new Set(selectedUnitKeys);
+        currentSelected.forEach(key => mergedSelected.add(key));
+        // 如果是删除模式，则从组中删除，反之为添加模式，不应把自己初始的选项删除，限制条件
+        if (moveDirectionHasChange && mergedSelected.size !== 1) {
+            newDeleted.forEach(key => {
+                if (mergedSelected.has(key)) {
+                    mergedSelected.delete(key);
+                }
+            });
+        } else {
+            newSelected.forEach((key: string) => {
+                if (!mergedSelected.has(key)) {
+                    mergedSelected.add(key);
+                }
+            });
+        }
+        setSelectedUnitKeys(mergedSelected);
     };
 
     return <div ref={ref} style={{ display: 'flex', flexDirection: 'column', height: totalHeight }} className="laneView"
-        onMouseDown={(e): void => {
-            // 禁止在Unit Info区域触发框选
-            if (e.clientX - PAGE_PADDING > laneInfoWidth) {
-                setIsSelecting(true);
-                startPoint.current = { x: e.clientX, y: e.clientY };
-            }
-        }}
+        onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
     >
