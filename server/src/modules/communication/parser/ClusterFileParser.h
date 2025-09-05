@@ -61,6 +61,10 @@ private:
                                    const std::string &key);
     bool SkipClusterParse();
     bool InitBaseInfoAndMatrixData();
+    bool BackupExistedClusterFiles(const std::vector<std::string>& backUpMatrixList,
+        const std::vector<std::string>& backUpGroupList, const std::vector<std::string>& backUpStepList);
+    bool RestoreClusterFiles(const std::vector<std::string>& backUpMatrixList,
+        const std::vector<std::string>& backUpGroupList, const std::vector<std::string>& backUpStepList);
 };
 } // end of namespace Timeline
 } // end of namespace Module
