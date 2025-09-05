@@ -228,8 +228,12 @@ bool ClusterFileParser::InitBaseInfoAndMatrixData()
     std::regex patternCommunicationMatrix(R"(cluster_communication_matrix.json)");
     std::vector<std::string> communicationMatrixFileList =
             FileUtil::FindFirstFileByRegex(selectedFilePath, patternCommunicationMatrix);
+    std::regex patternCommunicationTime(R"(cluster_communication.json)");
+    std::vector<std::string> communicationTimeFileList =
+        FileUtil::FindFirstFileByRegex(selectedFilePath, patternCommunicationTime);
     // cluster analysis
-    if (communicationMatrixFileList.empty() && !AttAnalyze(selectedFilePath, ATT_MODEL_MATRIX, AttDataType::TEXT)) {
+    if ((communicationMatrixFileList.empty() && communicationTimeFileList.empty())
+        && !AttAnalyze(selectedFilePath, ATT_MODEL_MATRIX, AttDataType::TEXT)) {
         return false;
     }
     // 解析group数据并进行落库，解析失败不阻塞进程
@@ -257,28 +261,64 @@ bool ClusterFileParser::InitBaseInfoAndMatrixData()
     return true;
 }
 
+bool ClusterFileParser::BackupExistedClusterFiles(const std::vector<std::string>& backUpMatrixList,
+    const std::vector<std::string>& backUpGroupList, const std::vector<std::string>& backUpStepList)
+{
+    if (backUpMatrixList.empty() || backUpGroupList.empty() || backUpStepList.empty()) {
+        return false;
+    }
+    bool isCopyFile = FileUtil::CopyFileByPath(FileUtil::PathPreprocess(backUpMatrixList[0]),
+                                               FileUtil::SplicePath(selectedFilePath, "tmp_matrix.json"));
+    isCopyFile = isCopyFile && FileUtil::CopyFileByPath(FileUtil::PathPreprocess(backUpStepList[0]),
+        FileUtil::SplicePath(selectedFilePath, "tmp_step.csv"));
+    isCopyFile = isCopyFile && FileUtil::CopyFileByPath(FileUtil::PathPreprocess(backUpGroupList[0]),
+        FileUtil::SplicePath(selectedFilePath, "tmp_group.json"));
+    return isCopyFile;
+}
+
+bool ClusterFileParser::RestoreClusterFiles(const std::vector<std::string>& backUpMatrixList,
+    const std::vector<std::string>& backUpGroupList, const std::vector<std::string>& backUpStepList)
+{
+    std::string tempMatrixPath = FileUtil::SplicePath(selectedFilePath, "tmp_matrix.json");
+    std::string tempStepPath = FileUtil::SplicePath(selectedFilePath, "tmp_step.csv");
+    std::string tempGroupPath = FileUtil::SplicePath(selectedFilePath, "tmp_group.json");
+    bool reductionFileRes =
+        FileUtil::CopyFileByPath(tempMatrixPath, FileUtil::PathPreprocess(backUpMatrixList[0].c_str()))
+        && FileUtil::RemoveFile(tempMatrixPath);
+    reductionFileRes = reductionFileRes &&
+        FileUtil::CopyFileByPath(tempStepPath, FileUtil::PathPreprocess(backUpStepList[0].c_str()))
+        && FileUtil::RemoveFile(tempStepPath);
+    reductionFileRes = reductionFileRes &&
+        FileUtil::CopyFileByPath(tempGroupPath, FileUtil::PathPreprocess(backUpGroupList[0].c_str()))
+        && FileUtil::RemoveFile(tempGroupPath);
+    return reductionFileRes;
+}
+
 bool ClusterFileParser::ParseClusterStep2Files()
 {
     if (ParserStatusManager::Instance().IsClusterParserFinalState(uniqueKey)) {
         return true;
     }
     // parse communication file
-    std::regex patternCommunication(R"(cluster_communication.json)");
     std::vector<std::string> communicationFileList =
-            FileUtil::FindFirstFileByRegex(selectedFilePath, patternCommunication);
-    std::regex patternCommunicationMatrix(R"(cluster_communication_matrix.json)");
-    std::vector<std::string> communicationMatrixFileList =
-            FileUtil::FindFirstFileByRegex(selectedFilePath, patternCommunicationMatrix);
-    bool isCopyMatrixFile = false;
-    std::string tempFilePath = FileUtil::SplicePath(selectedFilePath, "tmp_matrix.json");
-    // cluster_communication_matrix存在，但cluster_communication不存在时，将matrix文件复制到selectedPath下的临时文件中
-    if (!communicationMatrixFileList.empty() && communicationFileList.empty()) {
-        isCopyMatrixFile = FileUtil::CopyFileByPath(FileUtil::PathPreprocess(communicationMatrixFileList[0].c_str()),
-                                                    tempFilePath);
-        if (!isCopyMatrixFile) {
-            ServerLog::Warn("Copy matrix file failed.");
+            FileUtil::FindFirstFileByRegex(selectedFilePath, std::regex(R"(cluster_communication.json)"));
+
+    std::vector<std::string> backUpMatrixList =
+        FileUtil::FindFirstFileByRegex(selectedFilePath, std::regex(R"(cluster_communication_matrix.json)"));
+    std::vector<std::string> backUpGroupList =
+        FileUtil::FindFirstFileByRegex(selectedFilePath, std::regex(R"(communication_group.json)"));
+    std::vector<std::string> backUpStepList =
+        FileUtil::FindFirstFileByRegex(selectedFilePath, std::regex(R"(cluster_step_trace_time.csv)"));
+
+    bool isCopyFile = false;
+    // cluster_communication不存在时，将matrix等可能存在的三份文件复制备份到selectedPath下的临时文件中
+    if (communicationFileList.empty()) {
+        isCopyFile = BackupExistedClusterFiles(backUpMatrixList, backUpGroupList, backUpStepList);
+        if (!isCopyFile) {
+            ServerLog::Warn("Copy matrix and other files failed.");
         }
     }
+
     // cluster analysis
     if (communicationFileList.empty() && !AttAnalyze(selectedFilePath, ATT_MODEL_TIME, AttDataType::TEXT)) {
         ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
@@ -286,15 +326,10 @@ bool ClusterFileParser::ParseClusterStep2Files()
     }
 
     // 如果发生过文件的复制，则将临时文件复制回cluster_analysis_output文件夹中，并且删除临时文件
-    if (isCopyMatrixFile) {
-        bool reductionFileRes =
-                FileUtil::CopyFileByPath(tempFilePath, FileUtil::PathPreprocess(communicationMatrixFileList[0].c_str()))
-                && FileUtil::RemoveFile(tempFilePath);
-        if (!reductionFileRes) {
-            ServerLog::Warn("Copy and clear matrix temp file failed.");
-        }
+    if (isCopyFile && !RestoreClusterFiles(backUpMatrixList, backUpGroupList, backUpStepList)) {
+        ServerLog::Warn("Copy and clear matrix temp file failed.");
     }
-    bool res = TransCommunicationToDb(selectedFilePath, patternCommunication);
+    bool res = TransCommunicationToDb(selectedFilePath, std::regex(R"(cluster_communication.json)"));
     ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
     return res;
 }
