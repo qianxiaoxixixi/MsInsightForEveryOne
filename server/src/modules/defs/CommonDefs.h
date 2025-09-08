@@ -34,6 +34,7 @@ namespace Dic {
     const std::string pytorchDBReg = R"((ascend_pytorch_profiler)(_[0-9]{1,16}){0,1}\.db$)";
     const std::string leaksMemDbReg = R"(^leaks_dump_\d+\.db$)";
     const std::string mindsporeDBReg = R"((ascend_mindspore_profiler)(_[0-9]{1,16}){0,1}\.db$)";
+    const std::string npumonitorDBReg = R"(msmonitor_\d+_\d+_(-1|\d+)\.db)";
     const std::string clusterDBReg = R"(cluster_analysis\.db$)";
     const std::string computeBinSuffix = ".bin";
     const std::string ipynbSuffix = ".ipynb";

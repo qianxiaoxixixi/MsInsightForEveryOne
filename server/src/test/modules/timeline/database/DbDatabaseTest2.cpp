@@ -526,12 +526,12 @@ TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenAllHostExistThenhaveThreeTrack)
     const uint64_t second = 1;
     const uint64_t third = 2;
     EXPECT_EQ(metaData.size(), expectSize);
-    EXPECT_EQ(metaData[first]->metaData.processName, "process 288224");
+    EXPECT_EQ(metaData[first]->metaData.processName, "Process 288224");
     EXPECT_EQ(metaData[first]->children[first]->metaData.metaType, "CANN_API");
     EXPECT_EQ(metaData[first]->children[first]->metaData.threadId, "292753");
     EXPECT_EQ(metaData[first]->children[first]->children[first]->metaData.threadId, "");
     EXPECT_EQ(metaData[first]->children[first]->children[first]->metaData.processId, "1237912654215057");
-    EXPECT_EQ(metaData[second]->metaData.processName, "process 3931124");
+    EXPECT_EQ(metaData[second]->metaData.processName, "Process 3931124");
     EXPECT_EQ(metaData[second]->children[first]->metaData.metaType, "CANN_API");
     EXPECT_EQ(metaData[second]->children[first]->metaData.threadId, "3931572");
     EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.threadId, "3931572");
@@ -539,7 +539,7 @@ TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenAllHostExistThenhaveThreeTrack)
     EXPECT_EQ(metaData[second]->children[first]->children[first]->children[first]->metaData.metaType, "MSTX_EVENTS");
     EXPECT_EQ(metaData[second]->children[first]->children[first]->children[first]->metaData.threadId, "65535");
     EXPECT_EQ(metaData[second]->children[first]->children[first]->children[first]->metaData.processId, "16884049020452276");
-    EXPECT_EQ(metaData[third]->metaData.processName, "process 2045554");
+    EXPECT_EQ(metaData[third]->metaData.processName, "Process 2045554");
     EXPECT_EQ(metaData[third]->children[first]->metaData.metaType, "CANN_API");
     EXPECT_EQ(metaData[third]->children[first]->metaData.threadId, "2045554");
     EXPECT_EQ(metaData[third]->children[first]->children[first]->metaData.threadId, "pytorch");
@@ -569,12 +569,12 @@ TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenPytorchNotExistThenhaveTwoTrack
     const uint64_t first = 0;
     const uint64_t second = 1;
     EXPECT_EQ(metaData.size(), expectSize);
-    EXPECT_EQ(metaData[first]->metaData.processName, "process 288224");
+    EXPECT_EQ(metaData[first]->metaData.processName, "Process 288224");
     EXPECT_EQ(metaData[first]->children[first]->metaData.metaType, "CANN_API");
     EXPECT_EQ(metaData[first]->children[first]->metaData.threadId, "292753");
     EXPECT_EQ(metaData[first]->children[first]->children[first]->metaData.threadId, "");
     EXPECT_EQ(metaData[first]->children[first]->children[first]->metaData.processId, "1237912654215057");
-    EXPECT_EQ(metaData[second]->metaData.processName, "process 3931124");
+    EXPECT_EQ(metaData[second]->metaData.processName, "Process 3931124");
     EXPECT_EQ(metaData[second]->children[first]->metaData.metaType, "CANN_API");
     EXPECT_EQ(metaData[second]->children[first]->metaData.threadId, "3931572");
     EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.threadId, "3931572");
@@ -1294,6 +1294,168 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHardWareAndTidIsNotEmpty)
     const std::string rankId;
     bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
     EXPECT_EQ(res, false);
+}
+
+TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithoutMSTX)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
+    std::string taskTableInsert =
+        "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
+        "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
+        "(1729733883833924932, 1729733883833924952, 7, 4294967295, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0),"
+        "(1729733883833924952, 1729733883833924972, 7, 4294967295, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0),"
+        "(1729733883833924972, 1729733883833924992, 7, 4294967295, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0),"
+        "(1729733883833924932, 1729733883833924952, 7, 4294967295, 82550, 511284, 221, 4294967295, 3, 40, 4294967295, "
+        "0),"
+        "(1729733883833924952, 1729733883833924972, 7, 4294967295, 82550, 511284, 221, 4294967295, 3, 40, 4294967295, "
+        "0),"
+        "(1729733883833924972, 1729733883833924992, 7, 4294967295, 82550, 511284, 221, 4294967295, 3, 40, 4294967295, "
+        "0);";
+    DatabaseTestCaseMockUtil::InsertData(db, taskTableInsert);
+    // 初始化所有全量查询功能需要的表，DbTraceDataBase在OpenDb()时会调用到以下逻辑
+    for (const auto &item: FULL_DB_TABLE_MAP) {
+        if (!database.CheckTableExist(item.first)) {
+            database.ExecSql(item.second);
+        }
+    }
+
+    auto stmt = database.CreatPreparedStatement();
+    Dic::Protocol::EventsViewParams params;
+    params.currentPage = 1;
+    params.pageSize = 10; // 10
+    params.metaType = "Ascend Hardware";
+    params.threadIdList = {"2"};
+    Dic::Protocol::EventsViewBody body;
+    const uint64_t minTimestamp = 0;
+    const std::string rankId = "7";
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    ASSERT_TRUE(res);
+    ASSERT_EQ(body.eventDetailList.size(), 3); // 3
+
+    auto stmt2 = database.CreatPreparedStatement();
+    params.threadIdList = {"3"};
+    body.eventDetailList.clear();
+    res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt2, params, body, minTimestamp, rankId);
+    ASSERT_TRUE(res);
+    ASSERT_EQ(body.eventDetailList.size(), 3); // 3
+}
+
+TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithMSTXWithInvalidDomain)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    std::string taskTableInsert =
+        "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
+        "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
+        "(1729733883833924932, 1729733883833924952, 7, 4000000001, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0),"
+        "(1729733883833924972, 1729733883833924992, 7, 4294967295, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0)";
+    std::string mstxTableInsert =
+        "INSERT INTO MSTX_EVENTS (startNs, endNs, eventType, rangeId, category, message, globalTid, endGlobalTid, "
+        "domainId, connectionId, depth) VALUES "
+        "(1729733883833924932, 1729733883833924952, 2, 4294967295, 4294967295, 447, "
+        "4754301164515056, 4754301164515056, 65535, 4000000001, 0)";
+    std::string stringIdsTableInsert = "INSERT INTO STRING_IDS(id, value) VALUES (447, 'start')";
+    DatabaseTestCaseMockUtil::InsertData(db, taskTableInsert);
+    DatabaseTestCaseMockUtil::InsertData(db, mstxTableInsert);
+    DatabaseTestCaseMockUtil::InsertData(db, stringIdsTableInsert);
+    // 初始化所有全量查询功能需要的表，DbTraceDataBase在OpenDb()时会调用到以下逻辑
+    for (const auto &item: FULL_DB_TABLE_MAP) {
+        if (!database.CheckTableExist(item.first)) {
+            database.ExecSql(item.second);
+        }
+    }
+
+    auto stmt = database.CreatPreparedStatement();
+    Dic::Protocol::EventsViewParams params;
+    params.currentPage = 1;
+    params.pageSize = 10; // 10
+    params.metaType = "Ascend Hardware";
+    params.threadIdList = {"2_65535"};
+    Dic::Protocol::EventsViewBody body;
+    const uint64_t minTimestamp = 0;
+    const std::string rankId = "7";
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    ASSERT_TRUE(res);
+    ASSERT_EQ(body.eventDetailList.size(), 1);
+    EXPECT_EQ(dynamic_cast<DeviceEventDetail *>(body.eventDetailList[0].get())->threadName, "Stream 2 MSTX");
+
+    auto stmt2 = database.CreatPreparedStatement();
+    params.threadIdList = {"2"};
+    body.eventDetailList.clear();
+    res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt2, params, body, minTimestamp, rankId);
+    ASSERT_TRUE(res);
+    ASSERT_EQ(body.eventDetailList.size(), 1);
+}
+
+TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithMSTXWithValidDomain)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    std::string taskTableInsert =
+        "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
+        "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
+        "(1729733883833924932, 1729733883833924952, 7, 4000000001, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0),"
+        "(1729733883833924972, 1729733883833924992, 7, 4294967295, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0)";
+    std::string mstxTableInsert =
+        "INSERT INTO MSTX_EVENTS (startNs, endNs, eventType, rangeId, category, message, globalTid, endGlobalTid, "
+        "domainId, connectionId, depth) VALUES "
+        "(1729733883833924932, 1729733883833924952, 2, 4294967295, 4294967295, 447, "
+        "4754301164515056, 4754301164515056, 2967, 4000000001, 0)";
+    std::string stringIdsTableInsert = "INSERT INTO STRING_IDS(id, value) VALUES (447, 'start'), (2967, 'cat')";
+    DatabaseTestCaseMockUtil::InsertData(db, taskTableInsert);
+    DatabaseTestCaseMockUtil::InsertData(db, mstxTableInsert);
+    DatabaseTestCaseMockUtil::InsertData(db, stringIdsTableInsert);
+    // 初始化所有全量查询功能需要的表，DbTraceDataBase在OpenDb()时会调用到以下逻辑
+    for (const auto &item: FULL_DB_TABLE_MAP) {
+        if (!database.CheckTableExist(item.first)) {
+            database.ExecSql(item.second);
+        }
+    }
+
+    auto stmt = database.CreatPreparedStatement();
+    Dic::Protocol::EventsViewParams params;
+    params.currentPage = 1;
+    params.pageSize = 10; // 10
+    params.metaType = "Ascend Hardware";
+    params.threadIdList = {"2_2967"};
+    Dic::Protocol::EventsViewBody body;
+    const uint64_t minTimestamp = 0;
+    const std::string rankId = "7";
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    ASSERT_TRUE(res);
+    ASSERT_EQ(body.eventDetailList.size(), 1);
+    EXPECT_EQ(dynamic_cast<DeviceEventDetail *>(body.eventDetailList[0].get())->threadName, "Stream 2 MSTX domain cat");
+
+    auto stmt2 = database.CreatPreparedStatement();
+    params.threadIdList = {"2"};
+    body.eventDetailList.clear();
+    res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt2, params, body, minTimestamp, rankId);
+    ASSERT_TRUE(res);
+    ASSERT_EQ(body.eventDetailList.size(), 1);
 }
 
 TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHccl)

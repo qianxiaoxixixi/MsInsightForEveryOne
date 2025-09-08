@@ -125,10 +125,11 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
         SendParseFailEvent(warnMsg);
         warnMsg = "";
     }
-    bool isNotCluster = !ClusterFileParser::CheckIsCluster(parseFileList[0]);
+    bool isNotCluster = parseFileList.size() == 1 && !ClusterFileParser::CheckIsCluster(parseFileList[0]);
     // 如果没有找到文件（warnMag不为空），并且不是集群数据，则需要发送错误提示给前端
     if (!warnMsg.empty() && isNotCluster) {
         SendParseFailEvent(warnMsg);
+        // 这里不能return false，return false会导致插件导入时数据管理器无法保存目录，且对于一般的性能数据，导入失败时也保存目录
     }
     projectExplorerInfo.fileName = importPath;
     projectExplorerInfo.projectName = request.params.projectName;

@@ -409,75 +409,10 @@ public:
     static std::vector<std::string> FindAllFilesByRegex(const std::string &path, const std::regex &fileRegex);
 
     // 遍历目录，最大不超过5层，优先遍历ASCEND_PROFILER_OUTPUT/mindstudio_profiler_output目录，其存在则跳过其他文件夹
-    static inline std::vector<std::string> FindFilesWithFilter(const std::string &path, const std::regex &fileRegex)
-    {
-        std::vector<std::string> matchedFiles = {};
-        if (!FileUtil::IsFolder(path)) {
-            if (std::regex_match(FileUtil::GetFileName(path), fileRegex)) {
-                matchedFiles.emplace_back(path);
-            }
-            return matchedFiles;
-        }
-        std::string error;
-        std::function<void(const std::string &, int)> find = [&find, &matchedFiles, &fileRegex,
-            &error](const std::string &path, int depth) {
-            if (!std::empty(error)) {
-                return;
-            }
-            if (!IsWithinRecursionLimit(matchedFiles, depth, error)) {
-                return;
-            }
-            std::vector<std::string> folders;
-            std::vector<std::string> files;
-            if (!FileUtil::FindFolders(path, folders, files)) {
-                return;
-            }
-            // msprof db
-            static std::regex msprofRegex(R"(msprof_[0-9]{1,16}\.db$)");
-            bool findMsprofDb = std::any_of(files.begin(), files.end(), [](const std::string &file) {
-                return std::regex_match(file, msprofRegex);
-            });
-            if (!files.empty() && findMsprofDb) {
-                return CollectMatchdFiles(fileRegex, matchedFiles, path, files);
-            }
-
-            auto dirs = {FileUtil::SplicePath(path, ASCEND_PROFILER_OUTPUT),
-                         FileUtil::SplicePath(path, MINDSTUDIO_PROFILER_OUTPUT)};
-            for (const auto &dir: dirs) {
-                if (FileUtil::IsFolder(dir)) {
-                    find(dir, depth + 1);
-                    return;
-                }
-            }
-            for (const auto &folder: folders) {
-                std::string tmpPath = FileUtil::SplicePath(path, folder);
-                find(tmpPath, depth + 1);
-            }
-            CollectMatchdFiles(fileRegex, matchedFiles, path, files);
-        };
-        find(path, 0);
-        if (!std::empty(error)) {
-            Server::ServerLog::Warn(StringUtil::GetPrintAbleString(path), " warn is: ", error);
-        }
-        return matchedFiles;
-    }
+    static std::vector<std::string> FindFilesWithFilter(const std::string &path, const std::regex &fileRegex);
 
     static void CollectMatchdFiles(const std::regex &fileRegex, std::vector<std::string> &matchedFiles,
-        const std::string &path, std::vector<std::string> &files)
-    {
-        sort(files.begin(), files.end(), std::greater<std::string>());
-        for (const auto &file : files) {
-            std::string tmpPath = SplicePath(path, file);
-            if (!std::regex_match(file, fileRegex)) {
-                continue;
-            }
-            matchedFiles.push_back(tmpPath);
-            if (!RegexUtil::RegexSearch(file, SLICE_STR).has_value()) {
-                // 对于分片文件，需要找到所有的带有slice的文件；其他文件，则只找最新的一个
-                break;
-            }
-        }
-    }
+        const std::string &path, std::vector<std::string> &files);
 
     static inline bool IsWithinRecursionLimit(const std::vector<std::string> &files, int depth, std::string &error)
     {
@@ -517,6 +452,8 @@ public:
         return pos != std::string::npos ? fileName.substr(0, pos) : fileName;
     }
 
+    static std::vector<std::string> FindNPUMonitorFiles(const std::string &path);
+
     /**
     * @brief 获取一个目录下的子目录，如果路径类型不为目录，则返回空
     */
@@ -551,7 +488,7 @@ public:
                                 const std::regex &jsonRegex, const std::regex &dbRegex);
     static std::vector<std::string> FindFirstByRegex(const std::string &path, int depth, const std::regex &fileRegex);
 
-    static bool CheckFileSize(const std::string &filePath);
+    static bool CheckFileSize(const std::string &filePath, bool emptyAllow = false, size_t maxFileSize = 20ULL * 1024 * 1024 * 1024);
 
     /**
     * @brief 检查路径中是否包含非法字符

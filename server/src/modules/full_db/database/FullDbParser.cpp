@@ -157,30 +157,10 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
         if (!database->InitStmt()) {
             return;
         }
+        // sqlite同一时刻只支持一个数据库连接进行写操作，以下4个线程都是写操作，并发可能导致某个线程写失败
         database->UpdateAllDepth();
-    }, TraceIdManager::GetTraceId()));
-    futures->emplace_back(pool->AddTask([dbId]() {
-        std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
-        if (!database) {
-            return;
-        }
         database->UpdateWaitTime();
-    }, TraceIdManager::GetTraceId()));
-    futures->emplace_back(pool->AddTask([dbId]() {
-        std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
-        if (!database) {
-            return;
-        }
         database->InitConnectionCats();
-    }, TraceIdManager::GetTraceId()));
-    futures->emplace_back(pool->AddTask([dbId]() {
-        std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
-        if (!database) {
-            return;
-        }
-        if (!database->InitStmt()) {
-            return;
-        }
         database->GenerateOverlapAnalysis();
     }, TraceIdManager::GetTraceId()));
 }
