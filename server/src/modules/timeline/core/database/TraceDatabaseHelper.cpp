@@ -419,6 +419,9 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadsByPid(std::uni
         case PROCESS_TYPE::ASCEND_HARDWARE:
             // Device侧的非MSTX事件和MSTX事件分开显示，其中MSTX事件会分domainId展示，且摆放在非MSTX事件的上方
             // 非MSTX事件的threadId是其Stream编号，MSTX事件的threadId是{Stream编号}_{domain编号}
+            // 非MSTX事件查询时必须使用connectionId NOT IN显式排除MSTX事件，否则会将MSTX事件同时查询
+            // 因为TASK表没有字段表征该事件是否为MSTX事件，所以需要和MSTX_EVENTS表连接，和MSTX_EVENTS表中具有相同connectionId的事件才是Device侧的MSTX事件
+            // 因为DbTraceDataBase在执行OpenDb()方法时当MSTX_EVENTS表不存在时，会创建临时表MSTX_EVENTS，所以可以默认MSTX_EVENTS表在操作数据库时存在
             if (metaData.tid.find('_') != std::string::npos) {
                 size_t pos = metaData.tid.find('_');
                 std::string streamId = metaData.tid.substr(0, pos);
@@ -557,24 +560,47 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Hardware(std::unique_ptr <Sqli
 std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& rankId)
 {
+    // Device侧的非MSTX事件和MSTX事件分开显示，其中MSTX事件会分domainId展示，且摆放在非MSTX事件的上方
+    // 非MSTX事件的threadId是其Stream编号，MSTX事件的threadId是{Stream编号}_{domain编号}
+    // 非MSTX事件查询时必须使用connectionId NOT IN显式排除MSTX事件，否则会将MSTX事件同时查询
+    // 因为TASK表没有字段表征该事件是否为MSTX事件，所以需要和MSTX_EVENTS表连接，和MSTX_EVENTS表中具有相同connectionId的事件才是Device侧的MSTX事件
+    // 因为DbTraceDataBase在执行OpenDb()方法时当MSTX_EVENTS表不存在时，会创建临时表MSTX_EVENTS，所以可以默认MSTX_EVENTS表在操作数据库时存在
     std::string sql =
         "SELECT main.ROWID as id, si.value AS name, main.startNs AS start, main.endNs - main.startNs as duration, "
         "'Stream '||streamId as threadName, deviceId AS rankId, main.depth, 'Ascend Hardware' as processId, "
         "streamId as threadId FROM TASK AS main "
         " LEFT JOIN COMPUTE_TASK_INFO AS CTI on CTI.globalTaskId = main.globalTaskId "
         " LEFT JOIN COMMUNICATION_SCHEDULE_TASK_INFO schedule ON main.globalTaskId = schedule.globalTaskId "
-        " LEFT JOIN MSTX_EVENTS mstx ON main.connectionId = mstx.connectionId "
-        " LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, schedule.name, mstx.message, main.taskType) "
-        "WHERE main.deviceId = ? ";
+        " LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, schedule.name, main.taskType) "
+        "WHERE main.deviceId = ? AND main.connectionId NOT IN (SELECT connectionId FROM MSTX_EVENTS) ";
     std::vector<std::string> temp = std::vector<std::string>(params.threadIdList.size(), "?");
     std::string tempSql = StringUtil::join(temp, ",");
     sql.append("AND main.streamId IN ( ");
+    sql.append(tempSql);
+    sql.append(" ) ");
+
+    std::string sqlForMSTX =
+        " UNION ALL "
+        "SELECT main.ROWID as id, si.value AS name, main.startNs AS start, main.endNs - main.startNs as duration, "
+        "'Stream '|| streamId || ' MSTX' || (CASE WHEN si2.value IS NULL THEN '' ELSE ' domain ' || si2.value END) "
+        "AS threadName, deviceId AS rankId, main.depth, 'Ascend Hardware' as processId, "
+        "streamId || '_' || domainId as threadId FROM TASK AS main "
+        " INNER JOIN MSTX_EVENTS mstx ON main.connectionId = mstx.connectionId "
+        " INNER JOIN STRING_IDS AS si ON si.id = mstx.message "
+        " LEFT JOIN STRING_IDS AS si2 ON mstx.domainId = si2.id "
+        "WHERE main.deviceId = ? ";
+    sql.append(sqlForMSTX);
+    sql.append("AND main.streamId || '_' || mstx.domainId IN ( ");
     sql.append(tempSql);
     sql.append(" ) ");
     sql.append(orderByCondition);
     stmt->Prepare(sql);
     if (stmt == nullptr) {
         throw DatabaseException("Failed to prepare sql.");
+    }
+    stmt->BindParams(rankId);
+    for (const auto &item: params.threadIdList) {
+        stmt->BindParams(item);
     }
     stmt->BindParams(rankId);
     for (const auto &item: params.threadIdList) {
