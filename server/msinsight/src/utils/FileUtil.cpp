@@ -527,17 +527,16 @@ std::vector<std::string> FileUtil::FindFirstByRegex(const std::string &path, int
     return matchedFiles;
 }
 
-bool FileUtil::CheckFileSize(const std::string &filePath)
+bool FileUtil::CheckFileSize(const std::string &filePath, bool emptyAllow, size_t fileMaxSize)
 {
     constexpr size_t fileMinSize = 0;
-    constexpr size_t fileMaxSize = 20ULL * 1024 * 1024 * 1024;
 #ifdef _WIN32
     std::string tmpFilePath = FileUtil::PathPreprocess(filePath);
     WIN32_FILE_ATTRIBUTE_DATA fileData;
     if (GetFileAttributesEx(tmpFilePath.c_str(), GetFileExInfoStandard, &fileData)) {
         // 获取文件大小
         uintmax_t fileSize = (static_cast<uintmax_t>(fileData.nFileSizeHigh) << 32) | fileData.nFileSizeLow;
-        if (fileSize <= fileMinSize) {
+        if (fileSize <= fileMinSize && !emptyAllow) {
             Server::ServerLog::Error("This file % is an empty file.", tmpFilePath);
             return false;
         }
@@ -557,7 +556,7 @@ bool FileUtil::CheckFileSize(const std::string &filePath)
             return false;
         }
         size_t fileSize = static_cast<size_t>(fileStat.st_size);
-        if (fileSize == fileMinSize) {
+        if (fileSize == fileMinSize && !emptyAllow) {
             Server::ServerLog::Error("This file % is an empty file.", filePath);
             return false;
         }

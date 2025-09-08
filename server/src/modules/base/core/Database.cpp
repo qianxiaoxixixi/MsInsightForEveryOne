@@ -63,6 +63,10 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
         ServerLog::Error("This db path is illegal.Db path:", dbPath);
         return false;
     }
+    if (!FileUtil::CheckFileSize(dbPath, true)) {
+        ServerLog::Error("This db file exceed the file size limit.Db path:", dbPath);
+        return false;
+    }
     if (isOpen) {
         ServerLog::Error("The db file has been opened.");
         return false;
