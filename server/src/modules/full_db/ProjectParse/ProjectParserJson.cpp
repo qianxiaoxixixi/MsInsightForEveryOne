@@ -792,7 +792,7 @@ void ProjectParserJson::SetBaseAction(const std::map<std::string, RankEntry> &ra
     for (const auto &rankEntry : rankListMap) {
         auto folder = rankEntry.second.parseFolder;
         std::string fileId = rankEntry.second.fileId;
-        SetBaseActionOfResponse(response, rankEntry.first, fileId, rankEntry.first, {folder});
+        SetBaseActionOfResponse(response, rankEntry.first, fileId, FileUtil::GetRankIdFromPath(fileId), {folder});
         if (rankEntry.second.isDevice) {
             response.body.isMultiDevice = true;
         }

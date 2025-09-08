@@ -104,7 +104,7 @@ void RLPipelineService::QueryPipelineByRankId(const std::string &rankIdWithHost)
 bool RLPipelineService::GetPipelineInfo(Protocol::RLPipelineResponse &response)
 {
     Clear();
-    ThreadPool threadPool = ThreadPool(std::thread::hardware_concurrency());
+    static ThreadPool threadPool = ThreadPool(std::thread::hardware_concurrency());
     for (const auto &rankIdWithHost: FullDb::DataBaseManager::Instance().GetAllRankId()) {
         if (rlBackEndType == RLBackEndType::Unknown) {
             rlBackEndType = GetBackendType(rankIdWithHost);
@@ -115,7 +115,6 @@ bool RLPipelineService::GetPipelineInfo(Protocol::RLPipelineResponse &response)
             TraceIdManager::GetTraceId(), rankIdWithHost);
     }
     threadPool.WaitForAllTasks();
-    threadPool.ShutDown();
 
     std::lock_guard<std::mutex> lock(mtx);
     FillAndProcessPipelineData(taskPipelineMap, response.body.taskData);

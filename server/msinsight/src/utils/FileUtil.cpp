@@ -527,17 +527,16 @@ std::vector<std::string> FileUtil::FindFirstByRegex(const std::string &path, int
     return matchedFiles;
 }
 
-bool FileUtil::CheckFileSize(const std::string &filePath)
+bool FileUtil::CheckFileSize(const std::string &filePath, bool emptyAllow, size_t fileMaxSize)
 {
     constexpr size_t fileMinSize = 0;
-    constexpr size_t fileMaxSize = 20ULL * 1024 * 1024 * 1024;
 #ifdef _WIN32
     std::string tmpFilePath = FileUtil::PathPreprocess(filePath);
     WIN32_FILE_ATTRIBUTE_DATA fileData;
     if (GetFileAttributesEx(tmpFilePath.c_str(), GetFileExInfoStandard, &fileData)) {
         // 获取文件大小
         uintmax_t fileSize = (static_cast<uintmax_t>(fileData.nFileSizeHigh) << 32) | fileData.nFileSizeLow;
-        if (fileSize <= fileMinSize) {
+        if (fileSize <= fileMinSize && !emptyAllow) {
             Server::ServerLog::Error("This file % is an empty file.", tmpFilePath);
             return false;
         }
@@ -557,7 +556,7 @@ bool FileUtil::CheckFileSize(const std::string &filePath)
             return false;
         }
         size_t fileSize = static_cast<size_t>(fileStat.st_size);
-        if (fileSize == fileMinSize) {
+        if (fileSize == fileMinSize && !emptyAllow) {
             Server::ServerLog::Error("This file % is an empty file.", filePath);
             return false;
         }
@@ -750,5 +749,98 @@ bool FileUtil::IsSubDir(const std::string &parent, const std::string &children)
         }
     }
     return true;
+}
+
+std::vector<std::string> FileUtil::FindFilesWithFilter(const std::string &path, const std::regex &fileRegex)
+{
+    std::vector<std::string> matchedFiles = {};
+    if (!FileUtil::IsFolder(path)) {
+        if (std::regex_match(FileUtil::GetFileName(path), fileRegex)) {
+            matchedFiles.emplace_back(path);
+        }
+        return matchedFiles;
+    }
+    std::string error;
+    std::function<void(const std::string &, int)> find = [&find, &matchedFiles, &fileRegex,
+            &error](const std::string &path, int depth) {
+        if (!std::empty(error)) {
+            return;
+        }
+        if (!IsWithinRecursionLimit(matchedFiles, depth, error)) {
+            return;
+        }
+        std::vector<std::string> folders;
+        std::vector<std::string> files;
+        if (!FileUtil::FindFolders(path, folders, files)) {
+            return;
+        }
+        // msprof db
+        static std::regex msprofRegex(R"(msprof_[0-9]{1,16}\.db$)");
+        bool findMsprofDb = std::any_of(files.begin(), files.end(), [](const std::string &file) {
+            return std::regex_match(file, msprofRegex);
+        });
+        if (!files.empty() && findMsprofDb) {
+            return CollectMatchdFiles(fileRegex, matchedFiles, path, files);
+        }
+
+        auto dirs = {FileUtil::SplicePath(path, ASCEND_PROFILER_OUTPUT),
+                     FileUtil::SplicePath(path, MINDSTUDIO_PROFILER_OUTPUT)};
+        for (const auto &dir: dirs) {
+            if (FileUtil::IsFolder(dir)) {
+                find(dir, depth + 1);
+                return;
+            }
+        }
+        for (const auto &folder: folders) {
+            std::string tmpPath = FileUtil::SplicePath(path, folder);
+            find(tmpPath, depth + 1);
+        }
+        CollectMatchdFiles(fileRegex, matchedFiles, path, files);
+    };
+    find(path, 0);
+    if (!std::empty(error)) {
+        Server::ServerLog::Warn(StringUtil::GetPrintAbleString(path), " warn is: ", error);
+    }
+    return matchedFiles;
+}
+
+void FileUtil::CollectMatchdFiles(const std::regex &fileRegex, std::vector<std::string> &matchedFiles,
+                                  const std::string &path, std::vector<std::string> &files)
+{
+    sort(files.begin(), files.end(), std::greater<std::string>());
+    for (const auto &file : files) {
+        std::string tmpPath = SplicePath(path, file);
+        if (!std::regex_match(file, fileRegex)) {
+            continue;
+        }
+        matchedFiles.push_back(tmpPath);
+        if (!RegexUtil::RegexSearch(file, SLICE_STR).has_value()) {
+            // 对于分片文件，需要找到所有的带有slice的文件；其他文件，则只找最新的一个
+            break;
+        }
+    }
+}
+
+std::vector<std::string> FileUtil::FindNPUMonitorFiles(const std::string &path)
+{
+    std::vector<std::string> matchedFiles;
+    std::regex fileRegex(R"(msmonitor_\d+_\d+_(-1|\d+)\.db)");
+    if (!FileUtil::IsFolder(path)) {
+        if (std::regex_match(FileUtil::GetFileName(path), fileRegex)) {
+            matchedFiles.emplace_back(path);
+        }
+        return matchedFiles;
+    }
+    std::vector<std::string> folders;
+    std::vector<std::string> files;
+    if (!FileUtil::FindFolders(path, folders, files)) {
+        return {};
+    }
+    for (const auto &file : files) {
+        if (std::regex_match(file, fileRegex)) {
+            matchedFiles.emplace_back(SplicePath(path, file));
+        }
+    }
+    return matchedFiles;
 }
 } // Dic

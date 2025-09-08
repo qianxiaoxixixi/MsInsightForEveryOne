@@ -21,8 +21,8 @@ public:
     void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
     void ParserBaseline(const Global::ProjectExplorerInfo &projectInfo,
         Global::BaselineInfo &baselineInfo) final;
-    ProjectTypeEnum GetProjectType(const std::string &dataPath) final;
-    std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, std::string &error) final;
+    ProjectTypeEnum GetProjectType(const std::string &dataPath) override;
+    std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, std::string &error) override;
     static void BuildProjectExploreInfo(ProjectExplorerInfo& info, const std::vector<std::string>& parsedFiles);
     static void BuildProjectFromParseFile(ProjectExplorerInfo& info, const std::string& parsedFile);
     static std::string GetFileIdWithDb(const std::string& filePath);
