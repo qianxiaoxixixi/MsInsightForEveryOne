@@ -488,7 +488,7 @@ public:
                                 const std::regex &jsonRegex, const std::regex &dbRegex);
     static std::vector<std::string> FindFirstByRegex(const std::string &path, int depth, const std::regex &fileRegex);
 
-    static bool CheckFileSize(const std::string &filePath);
+    static bool CheckFileSize(const std::string &filePath, bool emptyAllow = false, size_t maxFileSize = 20ULL * 1024 * 1024 * 1024);
 
     /**
     * @brief 检查路径中是否包含非法字符
