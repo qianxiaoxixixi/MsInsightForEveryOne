@@ -275,11 +275,11 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
             GetQueryThreadSameOperatorsDetailsHeadSql(params, uniqueDevice, overlapType, type);
     }
     const auto sameOperatorsDetailsSql = withHeadSql +
-        " , all_same_operator_detail as (SELECT * from ascend UNION ALL " // PROCESS_TYPE::ASCEND_HARDWARE
-        "   SELECT * from hccl UNION ALL " // PROCESS_TYPE::HCCL
-        "   SELECT * from cann UNION ALL " // PROCESS_TYPE::CANN_API
-        "   SELECT * from mstx UNION ALL " // PROCESS_TYPE::MS_TX
-        "   SELECT * from python UNION ALL " // PROCESS_TYPE::API
+        " , all_same_operator_detail as (SELECT * from ascend UNION " // PROCESS_TYPE::ASCEND_HARDWARE
+        "   SELECT * from hccl UNION " // PROCESS_TYPE::HCCL
+        "   SELECT * from cann UNION " // PROCESS_TYPE::CANN_API
+        "   SELECT * from mstx UNION " // PROCESS_TYPE::MS_TX
+        "   SELECT * from python UNION " // PROCESS_TYPE::API
         "   SELECT * from overlap)\n" // PROCESS_TYPE::OVERLAP_ANALYSIS
         " SELECT * from all_same_operator_detail ";
     Prepare(stmt, sameOperatorsDetailsSql + orderBy)->BindParams(rankId, minTimestamp,
