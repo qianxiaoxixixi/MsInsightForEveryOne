@@ -52,6 +52,9 @@ inline std::string GetAscendSameNameDetailSql(const std::vector<std::string> &ti
     // 已经在DbTraceDataBase::QueryThreadSameOperatorsDetails中检查过tid sql注入风险
     // Device侧的非MSTX事件和MSTX事件分开显示，其中MSTX事件会分domainId展示，且摆放在非MSTX事件的上方
     // 非MSTX事件的threadId是其Stream编号，MSTX事件的threadId是{Stream编号}_{domain编号}
+    // 非MSTX事件查询时必须使用connectionId NOT IN显式排除MSTX事件，否则会将MSTX事件同时查询
+    // 因为TASK表没有字段表征该事件是否为MSTX事件，所以需要和MSTX_EVENTS表连接，和MSTX_EVENTS表中具有相同connectionId的事件才是Device侧的MSTX事件
+    // 因为DbTraceDataBase在执行OpenDb()方法时当MSTX_EVENTS表不存在时，会创建临时表MSTX_EVENTS，所以可以默认MSTX_EVENTS表在操作数据库时存在
     const std::string tidListStr = StringUtil::Join4SqlGroup(tidList);
     sql = " ascend as (select main.startNs - p.minTime as timestamp, main.endNs - main.startNs as duration, "
     "   main.depth, main.ROWID as id, streamId as tid, 'Ascend Hardware' as pid from TASK main "
@@ -59,7 +62,8 @@ inline std::string GetAscendSameNameDetailSql(const std::vector<std::string> &ti
     TABLE_COMMUNICATION_SCHEDULE_TASK +
     " s on main.globalTaskId = s.globalTaskId "
     "     join nameIds n on coalesce(c.name, s.name, main.taskType) = id join params p"
-    " where deviceId = p.rankId and streamId in (" + tidListStr +
+    " where deviceId = p.rankId and main.connectionId NOT IN (select connectionId from " + TABLE_MSTX_EVENTS +
+    ") and streamId in (" + tidListStr +
     " ) and timestamp + duration >= p.startTime AND timestamp <= p.endTime";
 
     sql += " union all select main.startNs - p.minTime as timestamp, main.endNs - main.startNs as duration, "
