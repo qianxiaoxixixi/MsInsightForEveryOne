@@ -333,7 +333,7 @@ function getChartHeight(dataSource: AnalysisChartData): number {
     return calculateDataHeight(dataSource) + DEFAULT_CHART_HEIGHT - DEFAULT_INNER_CHART_HEIGHT;
 }
 
-async function redirectToTimeline(): Promise<void> {
+async function redirectToTimeline(setDropDownVisible: (_: boolean) => void): Promise<void> {
     if (selectedOpDetail === null) {
         return;
     }
@@ -345,6 +345,7 @@ async function redirectToTimeline(): Promise<void> {
     };
     try {
         const res = await queryTimelineUnitKernelDetail(params);
+        setDropDownVisible(false);
         const resObj = res ?? {};
         connector.send({
             event: 'switchModule',
@@ -363,20 +364,38 @@ async function redirectToTimeline(): Promise<void> {
         });
     } catch (e) {
         const errMsg = (e as ErrorInfo)?.message;
+        setDropDownVisible(false);
         if (errMsg !== undefined) {
             message.error(errMsg);
         }
     }
 }
 
-const useMenuItems = (session: Session): MenuProps['items'] => {
+const findInTimelineLoad = (isLoading: boolean): void => {
+    const element = document?.getElementById('findInTimeline');
+    if (!element) {
+        return;
+    }
+
+    if (isLoading) {
+        element.classList.add('find-in-time-line-load');
+    } else {
+        element.classList.remove('find-in-time-line-load');
+    }
+};
+
+const useMenuItems = (session: Session, setDropDownVisible: (_: boolean) => void): MenuProps['items'] => {
     const { t } = useTranslation('communication');
     const findInTimeline = {
         label: t('Find in Timeline'),
         key: 'findInTimeline',
+        id: 'findInTimeline',
         disabled: false,
-        onClick: (): void => {
-            redirectToTimeline();
+        onClick: () => {
+            findInTimelineLoad(true);
+            setTimeout(() => {
+                redirectToTimeline(setDropDownVisible);
+            });
         },
     };
     const alignOperator = {
@@ -384,6 +403,7 @@ const useMenuItems = (session: Session): MenuProps['items'] => {
         key: 'alignAccordingToSelectedOperator',
         disabled: false,
         onClick: (): void => {
+            setDropDownVisible(false);
             if (selectedOpDetail === null) {
                 return;
             }
@@ -414,7 +434,7 @@ const useMenuItems = (session: Session): MenuProps['items'] => {
 const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading }: { dataSource: AnalysisChartData; session: Session; loading: boolean}) => {
     const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT);
     const [dropDownVisible, setDropDownVisible] = useState(false);
-    const menuItems = useMenuItems(session);
+    const menuItems = useMenuItems(session, setDropDownVisible);
     const chartRef = useRef<HTMLDivElement>(null);
     const scrollContainer = document.querySelector('.mi-page-content');
     const chartInst = useRef<echarts.ECharts | null>(null);
@@ -488,7 +508,6 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading 
         ? <Dropdown
             menu={{
                 items: menuItems,
-                onClick: (): void => setDropDownVisible(false),
                 onBlur: (e: React.FocusEvent<HTMLUListElement, Element>): void => {
                     const hasItem = menuItems?.findIndex(item =>
                         (e.relatedTarget as HTMLElement)?.dataset?.menuId?.includes(item?.key as string)) !== -1;
