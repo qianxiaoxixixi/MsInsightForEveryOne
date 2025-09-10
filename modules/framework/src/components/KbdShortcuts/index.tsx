@@ -245,6 +245,14 @@ export const ShortcutsModal = ({ open, onClose }: {open: boolean;onClose: () => 
                     shortcuts={['↓']}
                 />
                 <Shortcut
+                    label={t('shortcuts.Scroll Left')}
+                    shortcuts={[`${getShortcutKey('Shift+↑')}`]}
+                />
+                <Shortcut
+                    label={t('shortcuts.Scroll Right')}
+                    shortcuts={[`${getShortcutKey('Shift+↓')}`]}
+                />
+                <Shortcut
                     label={t('shortcuts.Toggle bottom drawer')}
                     shortcuts={[KEYS.Q]}
                 />

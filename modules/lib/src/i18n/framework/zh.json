@@ -85,6 +85,8 @@
       "Pan right": "右移",
       "Scroll up": "页面向上滚动",
       "Scroll down": "页面向下滚动",
+      "Scroll Left": "图表向左滚动",
+      "Scroll Right": "图表向右滚动",
       "Toggle bottom drawer": "收起/展开底部面板",
       "Create Flag Mark": "创建旗帜标记",
       "M selection": "根据当前选中的算子设置或取消框选区域",

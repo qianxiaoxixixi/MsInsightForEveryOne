@@ -244,6 +244,7 @@ const option: any = {
             type: 'inside',
             filterMode: 'weakFilter',
             zoomOnMouseWheel: 'ctrl',
+            moveOnMouseWheel: 'shift',
         },
     ],
     grid: {
@@ -445,7 +446,7 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading 
             return;
         }
 
-        if (!e.ctrlKey) {
+        if (!e.ctrlKey && !e.shiftKey) {
             scrollContainer?.scrollBy(0, e.deltaY);
         }
     };
