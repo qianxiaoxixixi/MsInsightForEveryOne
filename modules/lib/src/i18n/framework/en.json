@@ -85,6 +85,8 @@
       "Pan right": "Pan right",
       "Scroll up": "Scroll up",
       "Scroll down": "Scroll down",
+      "Scroll Left": "Scroll Left",
+      "Scroll Right": "Scroll Right",
       "Toggle bottom drawer": "Toggle drawer",
       "Create Flag Mark": "Create Flag Mark",
       "M selection": "Set or unset the temporary selection based on the current selected operator",
