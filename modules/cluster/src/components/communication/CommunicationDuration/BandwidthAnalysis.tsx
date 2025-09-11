@@ -96,14 +96,14 @@ function wrapData(data: any): any {
 }
 
 const BandwidthChart: React.FC<BandwidthElementProps> = (props: BandwidthElementProps) => {
-    const { iterationId, rankId, dbPath, operatorName, stage, pgName } = props;
+    const { iterationId, rankId, dbPath, operatorName, stage, pgName, groupIdHash } = props;
     const { t } = useTranslation('communication');
     const theme = useTheme();
     const isDark = theme.mode === 'dark';
     const locale = i18n.language?.slice(0, 2);
 
     useEffect(() => {
-        const params = { iterationId, rankId, dbPath, operatorName, stage, isDark, locale, pgName };
+        const params = { iterationId, rankId, dbPath, operatorName, stage, isDark, locale, pgName, groupIdHash };
         InitPacketAndBandwidthCharts({ ...params, domId: 'HCCS' });
         InitPacketAndBandwidthCharts({ ...params, domId: 'PCIE' });
         InitPacketAndBandwidthCharts({ ...params, domId: 'RDMA' });
@@ -135,7 +135,7 @@ const BandwidthChart: React.FC<BandwidthElementProps> = (props: BandwidthElement
 };
 
 const BandwidthAnalysis = observer((props:
-{ iterationId: string; rankId: number; dbPath: string; operatorName: string; stage: string; pgName: string }) => {
+{ iterationId: string; rankId: number; dbPath: string; operatorName: string; stage: string; pgName: string; groupIdHash: string }) => {
     const { t } = useTranslation('communication');
     return (
         <div>
@@ -167,10 +167,11 @@ async function InitPacketAndBandwidthCharts({
     isDark,
     locale,
     pgName,
+    groupIdHash,
 }: PacketAndBandwidthChartsParams): Promise<void> {
     const chartDom = document.getElementById(domId);
     if (chartDom !== null) {
-        const res = await wrapBandwidthData({ domId, iterationId, rankId, dbPath, operatorName, stage, isDark, pgName });
+        const res = await wrapBandwidthData({ domId, iterationId, rankId, dbPath, operatorName, stage, isDark, pgName, groupIdHash });
         if (res === null || res === undefined) {
             const root = createRoot(chartDom);
             root.render(<Empty style={{ margin: 'auto' }} image={Empty.PRESENTED_IMAGE_SIMPLE}/>);
@@ -189,9 +190,9 @@ const translateList = <T extends Record<string, any>>(list: T[]): T[] => {
     }));
 };
 
-async function wrapBandwidthData({ domId, iterationId, rankId, dbPath, operatorName, stage, isDark, pgName }: WrapBandwidthDataParams):
+async function wrapBandwidthData({ domId, iterationId, rankId, dbPath, operatorName, stage, isDark, pgName, groupIdHash }: WrapBandwidthDataParams):
 Promise<echarts.EChartsOption | null> {
-    const distributionData = await getChartData({ domId, iterationId, rankId, dbPath, operatorName, stage, pgName } as PacketAndBandwidthChartsParams);
+    const distributionData = await getChartData({ domId, iterationId, rankId, dbPath, operatorName, stage, pgName, groupIdHash } as PacketAndBandwidthChartsParams);
     const packetSizeData: number[] = [];
     const packetNumberData: number[] = [];
     const packetBandwidthData: number[] = [];

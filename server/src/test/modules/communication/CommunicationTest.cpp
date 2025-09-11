@@ -28,7 +28,7 @@ TEST_F(TestSuit, QueryOperatorNameData)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::OperatorNamesParams requestParams;
     requestParams.iterationId = "2";
-    requestParams.stage = "p2p";
+    requestParams.groupIdHash = "13337953553061386822";
     std::vector<Dic::Protocol::OperatorNamesObject> responseBody;
     database->QueryOperatorNames(requestParams, responseBody);
     int expectSize = 2;
@@ -49,28 +49,12 @@ TEST_F(TestSuit, QueryIterationAndCommunicationGroupSuccess)
     EXPECT_EQ(responseBody.group, "(0, 1, 2, 3, 4, 5, 6, 7)");
 }
 
-TEST_F(TestSuit, QueryOperatorNameDataWithRank)
+TEST_F(TestSuit, QueryOperatorNamesFailWithErrorGroupIdHash)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::OperatorNamesParams requestParams;
     requestParams.iterationId = "2";
-    requestParams.stage = "p2p";
-    requestParams.rankList = {"0"};
-    std::vector<Dic::Protocol::OperatorNamesObject> responseBody;
-    database->QueryOperatorNames(requestParams, responseBody);
-    int expectSize = 2;
-    EXPECT_EQ(responseBody.size(), expectSize);
-    EXPECT_EQ(responseBody[0].operatorName, "Total Op Info");
-    EXPECT_EQ(responseBody[1].operatorName, "hcom_send__822_0");
-}
-
-TEST_F(TestSuit, GetStageIdByGroupIdFail)
-{
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    Dic::Protocol::OperatorNamesParams requestParams;
-    requestParams.iterationId = "2";
-    requestParams.stage = "";
-    requestParams.rankList = {"0"};
+    requestParams.groupIdHash = "test";
     std::vector<Dic::Protocol::OperatorNamesObject> responseBody;
     database->QueryOperatorNames(requestParams, responseBody);
     int expectSize = 0;
@@ -102,21 +86,8 @@ TEST_F(TestSuit, QueryDurationData)
     Dic::Protocol::DurationListParams requestParams;
     std::vector<Dic::Module::DurationDo> durationList;
     requestParams.iterationId = "2";
-    requestParams.stage = "p2p";
     requestParams.operatorName = "hcom_send__822_0";
-    database->QueryDurationList(requestParams, durationList);
-    int expectSize = 2;
-    EXPECT_EQ(durationList.size(), expectSize);
-}
-
-TEST_F(TestSuit, QueryDurationDataWithRank)
-{
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    Dic::Protocol::DurationListParams requestParams;
-    std::vector<Dic::Module::DurationDo> durationList;
-    requestParams.iterationId = "2";
-    requestParams.stage = "p2p";
-    requestParams.operatorName = "hcom_send__822_0";
+    requestParams.groupIdHash = "13337953553061386822";
     database->QueryDurationList(requestParams, durationList);
     int expectSize = 2;
     EXPECT_EQ(durationList.size(), expectSize);
@@ -132,6 +103,7 @@ TEST_F(TestSuit, QueryBandwidthDistributionData)
     requestParams.operatorName = "hcom_broadcast__483_1";
     requestParams.transportType = "HCCS";
     requestParams.rankId = "1";
+    requestParams.groupIdHash = "9350434047717501483";
     database->QueryDistributionData(requestParams, responseBody);
     std::string expectResult = "{\"0.016512\":[7,0.01114],\"0.015504\":[1,0.00166]}";
     EXPECT_EQ(responseBody.distributionData, expectResult);
@@ -143,9 +115,9 @@ TEST_F(TestSuit, QueryBandwidthData)
     Dic::Protocol::BandwidthDataParam requestParams;
     Dic::Protocol::BandwidthDataResBody responseBody;
     requestParams.iterationId = "2";
-    requestParams.stage = "p2p";
-    requestParams.operatorName = "Total Op Info";
+    requestParams.operatorName = "hcom_send__822_0";
     requestParams.rankId = "1";
+    requestParams.groupIdHash = "13337953553061386822";
     database->QueryBandwidthData(requestParams, responseBody);
     int expectSize = 4;
     EXPECT_EQ(responseBody.items.size(), expectSize);
@@ -176,14 +148,14 @@ TEST_F(TestSuit, QueryOperatorsCount)
     Dic::Protocol::OperatorDetailsParam requestParams;
     Dic::Protocol::OperatorDetailsResBody responseBody;
     requestParams.iterationId = "2";
-    requestParams.stage = "p2p";
     requestParams.rankId = "1";
+    requestParams.groupIdHash = "13337953553061386822";
     database->QueryOperatorsCount(requestParams, responseBody);
     const int expectSize = 1;
     EXPECT_EQ(responseBody.count, expectSize);
     requestParams.iterationId = "2";
-    requestParams.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
     requestParams.rankId = "1";
+    requestParams.groupIdHash = "9350434047717501483";
     database->QueryOperatorsCount(requestParams, responseBody);
     const int stageExpectSize = 2;
     EXPECT_EQ(responseBody.count, stageExpectSize);
@@ -192,9 +164,8 @@ TEST_F(TestSuit, QueryOperatorsCount)
 TEST_F(TestSuit, GetCommunicationGroups)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    std::string iterationId = "2";
-    std::vector<std::string> groupList;
-    database->GetGroups(iterationId, groupList);
+    std::vector<Dic::Module::GroupInfoDo> groupList;
+    database->GetGroups(groupList);
     int expectSize = 28;
     EXPECT_EQ(groupList.size(), expectSize);
 }
@@ -213,8 +184,8 @@ TEST_F(TestSuit, QueryMatrixData)
     Dic::Protocol::MatrixBandwidthParam requestParams;
     std::vector<Dic::Module::MatrixInfoDo> matrixList;
     requestParams.iterationId = "2";
-    requestParams.stage = "p2p";
-    requestParams.operatorName = "Total Op Info";
+    requestParams.operatorName = "hcom_send__822_0";
+    requestParams.groupIdHash = "13337953553061386822";
     database->QueryMatrixList(requestParams, matrixList);
     int expectSize = 2;
     EXPECT_EQ(matrixList.size(), expectSize);
@@ -232,8 +203,8 @@ TEST_F(TestSuit, QueryAllCommunicationOperatorsDetails)
     Dic::Protocol::OperatorDetailsParam requestParams;
     Dic::Protocol::OperatorDetailsResBody responseBody;
     requestParams.iterationId = "2";
-    requestParams.stage = "p2p";
     requestParams.rankId = "1";
+    requestParams.groupIdHash = "13337953553061386822";
     requestParams.currentPage = 1;
     requestParams.pageSize = 10; // pageSize = 10
     database->QueryAllOperators(requestParams, responseBody);
@@ -256,10 +227,10 @@ TEST_F(TestSuit, QueryMatrixSortOpNames)
     std::vector<Dic::Protocol::OperatorNamesObject> responseBody;
     Dic::Protocol::OperatorNamesParams requestParams;
     requestParams.iterationId = "2";
-    requestParams.stage = "p2p";
+    requestParams.groupIdHash = "9350434047717501483";
     requestParams.rankList = {};
     database->QueryMatrixSortOpNames(requestParams, responseBody);
-    int expectSize = 3;
+    int expectSize = 2;
     EXPECT_EQ(responseBody.size(), expectSize);
 }
 
@@ -286,7 +257,7 @@ TEST_F(TestSuit, GetCommTimeForRankDimByStepWhenSingleStep)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string step = "2";
     std::vector<Dic::Module::CommInfoUnderRank> result = database->GetCommTimeForRankDim(step);
-    const int exceptSize = 2;
+    const int exceptSize = 4;
     EXPECT_EQ(result.size(), exceptSize);
 }
 
@@ -296,7 +267,7 @@ TEST_F(TestSuit, GetCommTimeForRankDimByStepWhenAllStep)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string step = "";
     std::vector<Dic::Module::CommInfoUnderRank> result = database->GetCommTimeForRankDim(step);
-    const int exceptSize = 2;
+    const int exceptSize = 4;
     EXPECT_EQ(result.size(), exceptSize);
 }
 
@@ -342,15 +313,17 @@ TEST_F(TestSuit, QueryBandwidthContentionAnalyzerDataTest)
     std::string rankId = "0";
     bool result = database->QueryBandwidthContentionAnalyzerData(res, rankId);
     ASSERT_TRUE(result);
-    ASSERT_EQ(res.size(), 1);
-    EXPECT_EQ(res[0].name, "hcom_broadcast__483_1");
+    ASSERT_EQ(res.size(), 2);
+    EXPECT_EQ(res[0].name, "Total Op Info");
+    EXPECT_EQ(res[1].name, "hcom_broadcast__483_1");
     rankId = "1";
     res.clear();
     result = database->QueryBandwidthContentionAnalyzerData(res, rankId);
     ASSERT_TRUE(result);
-    ASSERT_EQ(res.size(), 2); // 2
-    EXPECT_EQ(res[0].name, "hcom_broadcast__483_0");
-    EXPECT_EQ(res[1].name, "hcom_broadcast__483_1");
+    ASSERT_EQ(res.size(), 3); // 3
+    EXPECT_EQ(res[0].name, "Total Op Info");
+    EXPECT_EQ(res[1].name, "hcom_broadcast__483_0");
+    EXPECT_EQ(res[2].name, "hcom_broadcast__483_1");
 }
 
 TEST_F(TestSuit, QueryRetransmissionAnalyzerClassificationData)
@@ -358,9 +331,20 @@ TEST_F(TestSuit, QueryRetransmissionAnalyzerClassificationData)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::vector<Dic::Module::RetransmissionClassificationInfo> data;
     bool result = database->QueryRetransmissionAnalyzerData(data);
-    int expectSize = 0;
+    int expectSize = 2;
     ASSERT_TRUE(result);
     ASSERT_EQ(data.size(), expectSize);
+}
+
+TEST_F(TestSuit, GetOpStatByStepIdSuccess)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::string stepId = "2";
+    std::vector<Dic::Module::OpTypeStatistics> res = database->GetOpStatByStepId(stepId);
+    const int expectSize = 2;
+    ASSERT_EQ(res.size(), expectSize);
+    EXPECT_EQ(res[0].opType, "hcombroadcast");
+    EXPECT_EQ(res[1].opType, "hcomsend");
 }
 
 TEST_F(TestSuit, GetCommTimeForRankDimTest)
@@ -368,7 +352,7 @@ TEST_F(TestSuit, GetCommTimeForRankDimTest)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string iterationId = "2";
     auto commTimeForRankDim = database->GetCommTimeForRankDim(iterationId);
-    EXPECT_EQ(commTimeForRankDim.size(), 2); // 2
+    EXPECT_EQ(commTimeForRankDim.size(), 4); // 2
 }
 
 TEST_F(TestSuit, QuerySlowOpByCommDurationTest)
@@ -377,7 +361,7 @@ TEST_F(TestSuit, QuerySlowOpByCommDurationTest)
     std::string fastestRankId = "1";
     Protocol::DurationListParams params;
     params.iterationId = "2";
-    params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    params.groupIdHash = "9350434047717501483";
     RankDetailsForSlowRank slowRank;
     slowRank.rankId = "0";
     auto res = database->QuerySlowOpByCommDuration(params, fastestRankId, slowRank);

@@ -43,6 +43,18 @@ namespace Module {
         double sdmaTime = 0;
         double rdmaTime = 0;
     };
+
+    struct GroupInfoDo {
+        std::string rankSet;
+        std::string groupIdHash;
+        std::string pgName;
+    };
+
+    struct OpTypeStatistics {
+        uint64_t count;
+        std::string opType;
+        std::string groupIdHash;
+    };
 }
 }
 #endif // PROFILER_SERVER_CLUSTERDOMAINOBJECT_H

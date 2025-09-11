@@ -191,6 +191,7 @@ export interface WrapBandwidthDataParams {
     stage: string;
     isDark: boolean;
     pgName: string;
+    groupIdHash: string;
 }
 
 export interface PacketAndBandwidthChartsParams extends WrapBandwidthDataParams {

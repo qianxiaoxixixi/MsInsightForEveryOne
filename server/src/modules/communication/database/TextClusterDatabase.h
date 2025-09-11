@@ -36,6 +36,7 @@ public:
     void InsertStepStatisticsInfo(StepStatistic &stepStatistic);
     void InsertClusterBaseInfo(ClusterBaseInfo &baseInfo);
     bool InsertGroupInfos(const std::vector<CommGroupParallelInfo> &groupInfos);
+    bool BatchInsertDuplicateUpdateGroupInfo(const std::vector<CommGroupParallelInfo> &groupInfoList);
     bool InsertGroupInfoReturnIndex(const CommGroupParallelInfo &groupInfo, uint64_t &index);
     void InsertCommunicationMatrix(CommunicationMatrixInfo &communicationMatrix);
     void InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &matrixInfos);
@@ -47,7 +48,7 @@ public:
     std::vector<CommInfoUnderRank> GetCommTimeForRankDim(const std::string &stepId) override;
     bool QuerySlowOpByCommDuration(const Protocol::DurationListParams &params, const std::string &fastestRankId,
                                    Protocol::RankDetailsForSlowRank &slowRank) override;
-    bool GetGroups(const std::string &iterationId, std::vector<std::string> &groupList) override;
+    bool GetGroups(std::vector<GroupInfoDo> &groupList) override;
     bool QueryMatrixList(Protocol::MatrixBandwidthParam &param, std::vector<MatrixInfoDo> &matrixInfoDoList) override;
     bool QueryAllOperators(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody) override;
     bool QueryOperatorsCount(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody) override;
@@ -77,7 +78,7 @@ public:
     std::map<std::string, std::string> QueryBaseInfoByKeys(const std::vector<std::string> &keys) override;
     bool InsertDuplicateUpdateBaseInfo(const std::map<std::string, std::string> &baseInfoMap) override;
 
-    std::unordered_map<std::string, int64_t> GetAllGroupMap();
+    std::vector<CommGroupParallelInfo> GetAllGroupInfo();
     bool QueryAllPerformanceDataByStep(const std::string &step,
                                        std::unordered_map<std::uint32_t, StepStatistic> &data) override;
 
@@ -85,6 +86,7 @@ public:
     bool QueryBandwidthContentionAnalyzerData(std::vector<BandwidthContentionSDMAInfo> &res,
         const std::string &rankId) override;
     bool QueryRetransmissionAnalyzerData(std::vector<RetransmissionClassificationInfo> &data) override;
+    std::vector<OpTypeStatistics> GetOpStatByStepId(const std::string &stepId) override;
 
 private:
     sqlite3_stmt *insertTimeInfoStmt = nullptr;
@@ -94,10 +96,6 @@ private:
     bool isInitStmt = false;
     int reservedNumber = 4;
     // pp通信域
-    std::string ppVal = "pp";
-    std::string p2pVal = "p2p";
-    std::string sendOpKey = "send";
-    std::string receiveOpKey = "receive";
     std::vector<CommunicationTimeInfo> timeInfoCache;
     std::vector<CommunicationBandWidth> bandwidthCache;
     std::vector<CommunicationMatrixInfo> matrixCache;
@@ -106,25 +104,10 @@ private:
     std::string GetMatrixStmtSql(int len);
 
     std::string GetStageIdByGroupId(const std::string &groupId);
-    bool CheckIsPpOp(const std::string &opName);
-    std::vector<MatrixInfoDo> MergeMatrixInfoDoList(const std::vector<MatrixInfoDo> &collective,
-                                                    const std::vector<MatrixInfoDo> &p2p);
-    std::string GetRankStrForSql(const std::string &rankListStr);
-    std::vector<Protocol::OperatorNamesObject> MergeOperatorNameObject(
-        const std::vector<Protocol::OperatorNamesObject> &collective,
-        const std::vector<Protocol::OperatorNamesObject> &p2p);
     std::string GetDurationListSql(const std::string &bandwidthCondition, const std::string &timeCondition);
-    std::vector<DurationDo> MergeDurationDoList(const std::vector<DurationDo> &collective,
-                                                const std::vector<DurationDo> &p2p);
     std::string GetAllOperatorsSql(const std::string &startTime, const std::string &bandwidthCondition,
                                    const std::string &timeCondition);
     std::string GetAllOperatorsSql(uint64_t &startTime, const Protocol::OperatorDetailsParam &param);
-    Protocol::DistributionResBody MergeDistribution(Protocol::DistributionResBody &collective,
-                                                    Protocol::DistributionResBody &p2p);
-    std::string MergeDistributionJson(const std::optional<document_t> &colData,
-                                      const std::optional<document_t> &p2pData);
-    Protocol::BandwidthDataResBody MergeBandwidthData(const Protocol::BandwidthDataResBody &collective,
-                                                      const Protocol::BandwidthDataResBody &p2p);
     void BindTextForClusterBaseInfo(ClusterBaseInfo &baseInfo, sqlite3_stmt *stmt);
 };
 } // end of namespace Module

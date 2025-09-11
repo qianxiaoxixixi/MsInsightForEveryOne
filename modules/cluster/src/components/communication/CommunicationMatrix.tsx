@@ -370,12 +370,12 @@ const updateChart = ({ dataSource, switchCondition, range, shouldUpdateRange, se
 
 // 数据更新
 const updateData = async(condition: ConditionDataType, setDataSource: VoidFunction, isCompare: boolean): Promise<void> => {
-    const { iterationId, stage, operatorName, baselineIterationId, pgName } = condition;
+    const { iterationId, stage, operatorName, baselineIterationId, pgName, groupIdHash, baselineGroupIdHash } = condition;
     if (stage === '' || operatorName === '') {
         setDataSource({ data: [], rankIds: [] });
         return;
     }
-    const param = { iterationId, pgName, stage, operatorName, isCompare, baselineIterationId };
+    const param = { iterationId, pgName, stage, operatorName, isCompare, baselineIterationId, groupIdHash, baselineGroupIdHash };
     const res = await queryCommunicationMatrix(param);
     const data = res?.matrixList ?? [];
     // 从矩阵数据中获取要展示的rankId列表

@@ -16,13 +16,15 @@ import type { partitionMode } from '../communicatorContainer/ContainerUtils';
 import { ClusterSelect } from '../ClusterSelect';
 
 export interface ConditionDataType {
-    iterationId: string ;
-    baselineIterationId: string ;
+    iterationId: string;
+    baselineIterationId: string;
     stage: string;
-    operatorName: string ;
+    operatorName: string;
     type: AnalysisType;
     targetOperatorName?: string;
     pgName: string;
+    groupIdHash: string;
+    baselineGroupIdHash: string;
 }
 export const totalOperator = 'Total Op Info';
 export enum AnalysisType { COMMUNICATION_DURATION_ANALYSIS = 'CommunicationDurationAnalysis', COMMUNICATION_MATRIX = 'CommunicationMatrix' };
@@ -34,6 +36,8 @@ export const defaultCondition = {
     operatorName: '',
     type: AnalysisType.COMMUNICATION_MATRIX,
     pgName: '',
+    groupIdHash: '',
+    baselineGroupIdHash: '',
 };
 const defaultOptionMap = {
     clusterOptions: [],
@@ -49,7 +53,7 @@ export function updateData(filterParams: Partial<ConditionDataType>): void {
     observeCondition.value = filterParams;
 }
 
-function getDefaultStage(inputArray: Array<{value: string | number}>): string | number {
+function getDefaultStageOptValue(inputArray: Array<{value: string | number}>): string | number {
     if (inputArray.length === 0) {
         return '';
     }
@@ -62,12 +66,48 @@ function getDefaultStage(inputArray: Array<{value: string | number}>): string | 
     return result.value;
 }
 
-function getPgNameByStage(stageOptions: optionDataType[], stage: string): string {
-    const stageData = stageOptions.find(item => item.value === stage);
+function getPgNameByValue(stageOptions: optionDataType[], value: string): string {
+    const stageData = stageOptions.find(item => item.value === value);
     if (stageData === undefined) {
         return '';
     }
     return (stageData as unknown as {strategy: string}).strategy as string;
+}
+
+function getStageByValue(stageOptions: optionDataType[], value: string): string {
+    const stageData = stageOptions.find(item => item.value === value);
+    if (stageData === undefined) {
+        return '';
+    }
+    return (stageData as unknown as {stage: string}).stage as string;
+}
+
+function generateStageKeyValue(groupIdHash: string, baselineGroupIdHash: string): string {
+    return `${groupIdHash}:${baselineGroupIdHash}`;
+}
+
+function getStageKeyFromCondition(condition: ConditionDataType): string {
+    if (condition.groupIdHash === '' && condition.baselineGroupIdHash === '') {
+        return '';
+    }
+    return generateStageKeyValue(condition.groupIdHash, condition.baselineGroupIdHash);
+}
+
+function getStageValueByObserveCondition(condition: ConditionDataType, stageOptions: optionDataType[]): string {
+    let res: string = '';
+    for (let i = 0; i < stageOptions.length; i++) {
+        const temp = (stageOptions[i] as unknown as {groupIdHash: {compare: string; baseline: string}; stage: string; strategy: string});
+        // 选取stageOptions列表的第一个作为默认值，然后根据stage和pgName进行匹配 看是否有对应的
+        if (i === 0) {
+            res = generateStageKeyValue(temp.groupIdHash.compare, temp.groupIdHash.baseline);
+            continue;
+        }
+        if (temp?.strategy === condition.pgName && temp?.stage === condition.stage) {
+            res = generateStageKeyValue(temp.groupIdHash.compare, temp.groupIdHash.baseline);
+            break;
+        }
+    }
+    return res;
 }
 
 const getOptionsAndValue = async (session: Session, initObj: ConditionDataType, initOptionMap: optionMapDataType, key?: keyof ConditionDataType, val?: any):
@@ -81,17 +121,24 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
         }
         if (['iterationId', 'baselineIterationId'].includes(key as string)) {
             const stageOptions: optionDataType[] = await getStageOptions(condition, session);
-            const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage, getDefaultStage);
+            // 切换迭代id后，group信息需要更新，这里会获取第一个选值信息
+            const value = getUsableVal(getStageKeyFromCondition(initObj), stageOptions, getStageKeyFromCondition(defaultCondition), getDefaultStageOptValue);
+            // 切换变量中的信息
             optionMap.stageOptions = stageOptions;
-            condition.pgName = getPgNameByStage(stageOptions, stage.toString());
-            condition.stage = stage.toString();
+            condition.pgName = getPgNameByValue(stageOptions, value.toString());
+            condition.stage = getStageByValue(stageOptions, value.toString());
         }
         if (['iterationId', 'stage', 'type'].includes(key as string)) {
             if ((key as string) === 'stage') {
-                condition.pgName = getPgNameByStage(optionMap.stageOptions, val);
+                // stage切换参数更新
+                condition.pgName = getPgNameByValue(optionMap.stageOptions, val);
+                condition.stage = getStageByValue(optionMap.stageOptions, val);
+                const groupIdHashList = val.split(':');
+                condition.groupIdHash = groupIdHashList.length >= 1 ? groupIdHashList[0] : '';
+                condition.baselineGroupIdHash = groupIdHashList.length >= 2 ? groupIdHashList[1] : '';
             }
             const operatorOptions: optionDataType[] = await getOperatorOptions(
-                { iterationId: condition.iterationId, stage: condition.stage, type: condition.type, pgName: condition.pgName });
+                { iterationId: condition.iterationId, stage: condition.stage, type: condition.type, pgName: condition.pgName, groupIdHash: condition.groupIdHash });
             optionMap.operatorOptions = operatorOptions;
             condition.operatorName = getUsableVal(initObj.operatorName, operatorOptions, totalOperator).toString();
         }
@@ -107,20 +154,24 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
 
     // stage
     const stageOptions: optionDataType[] = await getStageOptions({ iterationId, baselineIterationId }, session);
-    const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage, getDefaultStage).toString();
-    const pgName = getPgNameByStage(stageOptions, stage.toString());
+    const value = getStageValueByObserveCondition(initObj, stageOptions);
+    const pgName = getPgNameByValue(stageOptions, value.toString());
+    const stage = getStageByValue(stageOptions, value.toString());
+    const groupIdHashList = (value as string).split(':');
+    const groupIdHash = groupIdHashList.length >= 1 ? groupIdHashList[0] : '';
+    const baselineGroupIdHash = groupIdHashList.length >= 2 ? groupIdHashList[1] : '';
 
     // type
     // stage === '' 时，页面不显示单选框，此时应该恢复 type 的默认值
-    const type = stage !== '' ? initObj.type ?? defaultCondition.type : defaultCondition.type;
+    const type = value !== '' ? initObj.type ?? defaultCondition.type : defaultCondition.type;
 
     // Operator Name
     const operatorOptions: optionDataType[] =
-        await getOperatorOptions({ iterationId, stage, type, pgName });
+        await getOperatorOptions({ iterationId, stage, type, pgName, groupIdHash });
     const operatorName = getUsableVal(initObj.operatorName === '' ? totalOperator : initObj.operatorName, operatorOptions, totalOperator).toString();
     return {
         optionMap: { iterationOptions, baselineIterationOptions, stageOptions, operatorOptions },
-        condition: { iterationId, stage, pgName, type, operatorName, baselineIterationId },
+        condition: { iterationId, stage, pgName, type, operatorName, baselineIterationId, groupIdHash, baselineGroupIdHash },
     };
 };
 
@@ -194,16 +245,20 @@ function compareStageInfo(stageA: string, stageB: string): number {
 }
 
 const getStageOptions = async (condition: {iterationId: string;baselineIterationId: string}, session: Session): Promise<optionDataType[]> => {
-    const res: {data: [{group: string}] } = await queryStages({ ...condition, isCompare: session.isCompare });
+    const res: {data: [{group: string; parallelStrategy: string; groupIdHash: {compare: string; baseline: string}}] } = await queryStages({ ...condition, isCompare: session.isCompare });
     const list = res?.data ?? [];
     const modes = session.selectedClusterPath === session.communicatorData.clusterPath ? session.communicatorData.partitionModes : [];
     const options: optionDataType[] = list
         .map(item => {
             // 如果stage是由数字组成，则对数据进行重排序，否则不做任何处理（p2p的情况）
             const stageAfterSort = isNumberPairsFormat(item.group) ? toSortedStage(item.group) : item.group;
-            const strategy = getParallelStrategyByStage(modes, stageAfterSort);
-            const label = strategy.length === 0 ? stageAfterSort : `${strategy}:${stageAfterSort}`;
-            return { value: item.group, strategy, label, stageAfterSort };
+            // 并行策略 如果该数据后端传回来已有该数据，则直接使用，如果没有才进行并行策略的匹配
+            const strategy = item.parallelStrategy ? item.parallelStrategy : getParallelStrategyByStage(modes, stageAfterSort);
+            // value使用group id的hash值，考虑对比场景，使用两个hash值拼接而成，
+            const value = generateStageKeyValue(item.groupIdHash.compare, item.groupIdHash.baseline);
+            // label的显示格式为 并行策略：通信域，如果并行策略不存在，则在通信域后面加上groupId的hash值信息
+            const label = strategy.length === 0 ? `${stageAfterSort}:${value}` : `${strategy}:${stageAfterSort}`;
+            return { value, strategy, label, stageAfterSort, groupIdHash: item.groupIdHash, stage: item.group };
         })
         .sort((a, b) => {
             // 存在并行策略的排在前面
@@ -230,15 +285,15 @@ const getStageOptions = async (condition: {iterationId: string;baselineIteration
         });
     return options;
 };
-const getOperatorOptions = async ({ iterationId, stage, type, pgName }: {iterationId: string;
-    stage: string;type: string; pgName: string;}):
+const getOperatorOptions = async ({ iterationId, stage, type, pgName, groupIdHash }: {iterationId: string;
+    stage: string;type: string; pgName: string; groupIdHash: string;}):
 Promise<optionDataType[]> => {
     if (stage === '') {
         return [];
     }
     const res: {operatorName: string[] } = (type === AnalysisType.COMMUNICATION_DURATION_ANALYSIS
-        ? await queryOperators({ iterationId, stage, pgName })
-        : await queryMatrixOperators({ iterationId, stage, pgName }));
+        ? await queryOperators({ iterationId, stage, pgName, groupIdHash })
+        : await queryMatrixOperators({ iterationId, stage, pgName, groupIdHash }));
     const list = res?.operatorName ?? [];
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;
@@ -332,7 +387,7 @@ function FilterCom({ optionMap, condition, handleChange, session }: IcomProps): 
         <Form.Item label={t('searchCriteria.CommunicationGroup')}>
             <Select
                 id={'communicationGroup-select'}
-                value={condition.stage}
+                value={generateStageKeyValue(condition.groupIdHash, condition.baselineGroupIdHash)}
                 style={{ width: 200 }}
                 onChange={(val: string): void => {
                     handleChange('stage', val);
