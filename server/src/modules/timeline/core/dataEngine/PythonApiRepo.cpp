@@ -48,7 +48,9 @@ void PythonApiRepo::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector
         ServerLog::Warn("python api query slice by cat track info is not exist, track is: ", sliceQuery.trackId);
         return;
     }
-    std::string sql = "SELECT ROWID as id from " + TABLE_API + " where globalTid = ? and type = 50003";
+    std::string sql = "SELECT api.ROWID as id from " + TABLE_API + " api "
+        " JOIN " + TABLE_ENUM_API_TYPE + " enum ON enum.id = api.type "
+        " where api.globalTid = ? and enum.name = 'trace'";
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(sliceQuery.rankId);
     if (database == nullptr) {
         ServerLog::Warn("python api open database is failed");
@@ -79,7 +81,9 @@ uint64_t PythonApiRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &slic
             sliceQuery.trackId);
         return count;
     }
-    std::string sql = "SELECT count(*) as count from " + TABLE_API + " where globalTid = ? and type = 50003";
+    std::string sql = "SELECT count(*) as count from " + TABLE_API + " api "
+        " JOIN " + TABLE_ENUM_API_TYPE + " enum ON enum.id = api.type "
+        " where api.globalTid = ? and enum.name = 'trace'";
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(sliceQuery.rankId);
     if (database == nullptr) {
         ServerLog::Warn("python api open database is failed");

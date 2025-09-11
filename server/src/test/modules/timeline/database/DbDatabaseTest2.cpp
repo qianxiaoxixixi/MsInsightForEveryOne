@@ -1458,33 +1458,156 @@ TEST_F(DbDatabaseTest2, TestQueryEventsView4StreamWithMSTXWithValidDomain)
     ASSERT_EQ(body.eventDetailList.size(), 1);
 }
 
+TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenCann)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, canSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, enumApiType);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    std::string insertStringIdsSql = "INSERT INTO \"STRING_IDS\" (\"id\", \"value\") "
+                                     "VALUES (5413, 'cann_test');";
+    DatabaseTestCaseMockUtil::InsertData(db, cannDataSql);
+    DatabaseTestCaseMockUtil::InsertData(db, numeApiDataSql);
+    DatabaseTestCaseMockUtil::InsertData(db, insertStringIdsSql);
+    auto stmt = database.CreatPreparedStatement();
+    Dic::Protocol::EventsViewParams params;
+    params.metaType = "CANN_API";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.processName = "CANN";
+    params.pid = "1237912654215057";
+    Dic::Protocol::EventsViewBody body;
+    const uint64_t minTimestamp = 0;
+    const std::string rankId = "0";
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    EXPECT_EQ(res, true);
+    ASSERT_EQ(body.eventDetailList.size(), 1);
+    EXPECT_EQ(body.eventDetailList[0]->name, "cann_test");
+}
+
+TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenCannWithHccl)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, canSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, enumApiType);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    std::string insertEnumSql = "INSERT INTO \"ENUM_API_TYPE\" (\"id\", \"name\") "
+                                "VALUES (20000, 'hccl');";
+    std::string insertStringIdsSql = "INSERT INTO \"STRING_IDS\" (\"id\", \"value\") "
+                                     "VALUES (5413, 'cann_test');";
+    DatabaseTestCaseMockUtil::InsertData(db, cannDataSql);
+    DatabaseTestCaseMockUtil::InsertData(db, insertEnumSql);
+    DatabaseTestCaseMockUtil::InsertData(db, insertStringIdsSql);
+    auto stmt = database.CreatPreparedStatement();
+    Dic::Protocol::EventsViewParams params;
+    params.metaType = "CANN_API";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.processName = "Thread";
+    params.threadName = "hccl";
+    params.pid = "1237912654215057";
+    Dic::Protocol::EventsViewBody body;
+    const uint64_t minTimestamp = 0;
+    const std::string rankId = "0";
+    bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(body.eventDetailList.size(), 1);
+    EXPECT_EQ(body.eventDetailList[0]->name, "cann_test");
+}
+
 TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHccl)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    std::string insertTaskSql = "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", "
+                                "\"globalTaskId\", \"globalPid\", \"taskType\", \"contextId\", \"streamId\", "
+                                "\"taskId\", \"modelId\", \"depth\") VALUES (1737098043298003143, "
+                                "1737098043298003743, 0, 19076, 3453, 13877, 262, 0, 5, 2950, 4294967295, 1);";
+    std::string insertInfoSql = "INSERT INTO \"COMMUNICATION_TASK_INFO\" (\"name\", \"globalTaskId\", \"taskType\", "
+                                "\"planeId\", \"groupName\", \"notifyId\", \"rdmaType\", \"srcRank\", \"dstRank\", "
+                                "\"transportType\", \"size\", \"dataType\", \"linkType\", \"opId\") VALUES (400, "
+                                "3453, 401, 0, 402, 0, 65535, 0, 4294967295, 0, 4, 2, 0, 1);";
+    std::string insertOpSql = "INSERT INTO \"COMMUNICATION_OP\" (\"opName\", \"startNs\", \"endNs\", \"connectionId\", "
+                              "\"groupName\", \"opId\", \"relay\", \"retry\", \"dataType\", \"algType\", \"count\", "
+                              "\"opType\", \"waitNs\") VALUES (400, 1737098043298003143, 1737098043314228587, 19076, "
+                              "402, 1, 0, 0, 5, 1167, 2048, 235, 4865418);";
+    std::string insertStringIdsSql = "INSERT INTO \"STRING_IDS\" (\"id\", \"value\") "
+                                     "VALUES (400, 'hcom_broadcast__559_0_1');";
+    DatabaseTestCaseMockUtil::InsertData(db, insertTaskSql);
+    DatabaseTestCaseMockUtil::InsertData(db, insertInfoSql);
+    DatabaseTestCaseMockUtil::InsertData(db, insertOpSql);
+    DatabaseTestCaseMockUtil::InsertData(db, insertStringIdsSql);
     auto stmt = database.CreatPreparedStatement();
     Dic::Protocol::EventsViewParams params;
     params.metaType = "HCCL";
+    params.currentPage = 1;
+    params.pageSize = 10;
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId;
+    const std::string rankId = "0";
     bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
-    EXPECT_EQ(res, false);
+    EXPECT_EQ(res, true);
+    ASSERT_EQ(body.eventDetailList.size(), 1);
+    EXPECT_EQ(body.eventDetailList[0]->name, "hcom_broadcast__559_0_1");
 }
 
 TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenHcclAndTidNotEmpty)
 {
     std::recursive_mutex testMutex;
     MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    std::string insertTaskSql = "INSERT INTO \"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", "
+                                "\"globalTaskId\", \"globalPid\", \"taskType\", \"contextId\", \"streamId\", "
+                                "\"taskId\", \"modelId\", \"depth\") VALUES (1737098043298003143, "
+                                "1737098043298003743, 0, 19076, 3453, 13877, 262, 0, 5, 2950, 4294967295, 1);";
+    std::string insertInfoSql = "INSERT INTO \"COMMUNICATION_TASK_INFO\" (\"name\", \"globalTaskId\", \"taskType\", "
+                                "\"planeId\", \"groupName\", \"notifyId\", \"rdmaType\", \"srcRank\", \"dstRank\", "
+                                "\"transportType\", \"size\", \"dataType\", \"linkType\", \"opId\") VALUES (400, "
+                                "3453, 401, 0, 402, 0, 65535, 0, 4294967295, 0, 4, 2, 0, 1);";
+    std::string insertOpSql = "INSERT INTO \"COMMUNICATION_OP\" (\"opName\", \"startNs\", \"endNs\", \"connectionId\", "
+                              "\"groupName\", \"opId\", \"relay\", \"retry\", \"dataType\", \"algType\", \"count\", "
+                              "\"opType\", \"waitNs\") VALUES (400, 1737098043298003143, 1737098043314228587, 19076, "
+                              "402, 1, 0, 0, 5, 1167, 2048, 235, 4865418);";
+    std::string insertStringIdsSql = "INSERT INTO \"STRING_IDS\" (\"id\", \"value\") "
+                                     "VALUES (400, 'hcom_broadcast__559_0_1');";
+    DatabaseTestCaseMockUtil::InsertData(db, insertTaskSql);
+    DatabaseTestCaseMockUtil::InsertData(db, insertInfoSql);
+    DatabaseTestCaseMockUtil::InsertData(db, insertOpSql);
+    DatabaseTestCaseMockUtil::InsertData(db, insertStringIdsSql);
     auto stmt = database.CreatPreparedStatement();
     Dic::Protocol::EventsViewParams params;
     params.metaType = "HCCL";
-    params.tid = "lllll";
+    params.tid = "402group";
+    params.currentPage = 1;
+    params.pageSize = 10;
     Dic::Protocol::EventsViewBody body;
     const uint64_t minTimestamp = 0;
-    const std::string rankId;
+    const std::string rankId = "0";
     bool res = Dic::Protocol::TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, rankId);
-    EXPECT_EQ(res, false);
+    EXPECT_EQ(res, true);
+    ASSERT_EQ(body.eventDetailList.size(), 1);
+    EXPECT_EQ(body.eventDetailList[0]->name, "hcom_broadcast__559_0_1");
 }
 
 TEST_F(DbDatabaseTest2, TestQueryEventsView4PytorchWhenOverlap)
