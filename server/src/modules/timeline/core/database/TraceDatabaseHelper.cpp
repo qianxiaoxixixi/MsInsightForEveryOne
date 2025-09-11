@@ -563,7 +563,8 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4HostHccl(std::unique_ptr <Sqli
     std::string sql = "SELECT ca.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, type as threadId, "
         "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
-        "WHERE globalTid = ? AND ca.type = 5500 ";
+        " LEFT JOIN ENUM_API_TYPE AS enum ON enum.id = ca.type "
+        "WHERE globalTid = ? AND enum.name = 'hccl' ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid);
 }
 
@@ -573,7 +574,8 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4CANN(std::unique_ptr <SqlitePr
     std::string sql = "SELECT ca.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, type as threadId, "
         "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
-        "WHERE globalTid = ? AND ca.type IN (5000, 10000, 15000, 20000) ";
+        " LEFT JOIN ENUM_API_TYPE AS enum ON enum.id = ca.type "
+        "WHERE globalTid = ? AND enum.name IN ('runtime', 'node', 'model', 'acl') ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid);
 }
 

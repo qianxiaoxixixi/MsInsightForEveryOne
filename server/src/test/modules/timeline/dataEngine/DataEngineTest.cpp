@@ -10,6 +10,38 @@
 
 using namespace Dic::Module::Timeline;
 class DataEngineTest : public ::testing::Test {
+public:
+    static std::string g_testDbPath;
+    static std::recursive_mutex g_testMutex;
+    static Module::Database g_testDataBase;
+    const std::string pytorch_api = "CREATE TABLE PYTORCH_API (startNs TEXT, endNs TEXT, globalTid INTEGER, "
+        "connectionId INTEGER, name INTEGER, sequenceNumber INTEGER, fwdThreadId INTEGER, inputDtypes INTEGER, "
+        "inputShapes INTEGER, callchainId INTEGER, type INTEGER, depth integer);";
+    const std::string enum_api_type = "CREATE TABLE ENUM_API_TYPE (id INTEGER PRIMARY KEY,name TEXT);";
+    static void SetUpTestSuite()
+    {
+        std::string currPath = Dic::FileUtil::GetCurrPath();
+        const u_long index = currPath.find("server");
+        currPath = currPath.substr(0, index + std::strlen("server"));
+#ifdef _WIN32
+        g_testDbPath = currPath + R"(\src\test\test_data\test_data_engine.db)";
+#else
+        g_testDbPath = currPath + R"(/src/test/test_data/test_data_engine.db)";
+#endif
+        g_testDataBase.OpenDb(g_testDbPath, true);
+        DataBaseManager::Instance().SetDataType(DataType::DB);
+        DataBaseManager::Instance().CreatConnectionPool("0", g_testDbPath);
+    }
+
+    static void TearDownTestSuite()
+    {
+        DataBaseManager::Instance().Clear(DatabaseType::TRACE);
+        g_testDataBase.CloseDb();
+        if (FileUtil::CheckFilePathExist(g_testDbPath) && !FileUtil::RemoveFile(g_testDbPath)) {
+            printf("Remove error: %s", strerror(errno));
+        }
+    }
+
     void SetUp() override
     {
         TrackInfoManager::Instance().Reset();
@@ -56,6 +88,10 @@ protected:
         }
     };
 };
+
+std::string DataEngineTest::g_testDbPath;
+std::recursive_mutex DataEngineTest::g_testMutex;
+Module::Database DataEngineTest::g_testDataBase(g_testMutex);
 
 TEST_F(DataEngineTest, QueryAllThreadInfoNormalTest)
 {
@@ -147,10 +183,21 @@ TEST_F(DataEngineTest, QueryPythonFunctionCountByTrackIdTestWithOutFactory)
 
 TEST_F(DataEngineTest, QuerySliceIdsByCatTestWithOutFactory)
 {
+    g_testDataBase.ExecSql(pytorch_api);
+    g_testDataBase.ExecSql(enum_api_type);
+    const std::string apiData =
+        "INSERT INTO \"PYTORCH_API\" (\"startNs\", \"endNs\", \"globalTid\", \"connectionId\", \"name\", "
+        "\"sequenceNumber\", \"fwdThreadId\", \"inputDtypes\", \"inputShapes\", \"callchainId\", \"type\", \"depth\") "
+        "VALUES ('1737098043288321660', '1737098043288323230', 59601261180469, NULL, 268435513, NULL, NULL, NULL, "
+        "NULL, NULL, 50003, 10);";
+    const std::string enumData = R"(INSERT INTO "ENUM_API_TYPE" ("id", "name") VALUES (50003, 'trace');)";
+    g_testDataBase.ExecSql(apiData);
+    g_testDataBase.ExecSql(enumData);
+    DataBaseManager::Instance().SetDbPathMapping("0", g_testDbPath, "");
+    Dic::Module::Timeline::DataEngine dataEngine;
+    SliceQuery sliceQuery;
+    std::vector<uint64_t> sliceIds;
     EXPECT_NO_THROW({
-        Dic::Module::Timeline::DataEngine dataEngine;
-        SliceQuery sliceQuery;
-        std::vector<uint64_t> sliceIds;
         dataEngine.QuerySliceIdsByCat(sliceQuery, sliceIds);
         std::shared_ptr<Dic::Module::Timeline::RepositoryFactoryInterface> repositoryFactoryInterface =
             std::make_shared<Dic::Module::Timeline::RepositoryFactory>();
@@ -158,8 +205,6 @@ TEST_F(DataEngineTest, QuerySliceIdsByCatTestWithOutFactory)
         sliceQuery.metaType = PROCESS_TYPE::CANN_API;
         dataEngine.QuerySliceIdsByCat(sliceQuery, sliceIds);
         sliceQuery.metaType = PROCESS_TYPE::MS_TX;
-        dataEngine.QuerySliceIdsByCat(sliceQuery, sliceIds);
-        sliceQuery.metaType = PROCESS_TYPE::API;
         dataEngine.QuerySliceIdsByCat(sliceQuery, sliceIds);
         sliceQuery.metaType = PROCESS_TYPE::OVERLAP_ANALYSIS;
         dataEngine.QuerySliceIdsByCat(sliceQuery, sliceIds);
@@ -172,6 +217,11 @@ TEST_F(DataEngineTest, QuerySliceIdsByCatTestWithOutFactory)
         sliceQuery.metaType = PROCESS_TYPE::TEXT;
         dataEngine.QuerySliceIdsByCat(sliceQuery, sliceIds);
     });
+    sliceQuery.metaType = PROCESS_TYPE::API;
+    sliceQuery.rankId = "0";
+    sliceQuery.trackId = TrackInfoManager::Instance().GetTrackId("0", "59601261180469", "0");
+    dataEngine.QuerySliceIdsByCat(sliceQuery, sliceIds);
+    EXPECT_EQ(sliceIds.size(), 1);
 }
 
 TEST_F(DataEngineTest, QueryCompeteSliceVecByTimeRangeAndTrackIdTestWithOutFactory)
