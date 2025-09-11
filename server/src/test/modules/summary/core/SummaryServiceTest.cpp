@@ -249,3 +249,31 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithTpDimWh
     SummaryService::QueryParallelismPerformanceInfo(params, indicatorData);
     EXPECT_EQ(indicatorData.performanceData.size(), 16); // 16 for dpSize * ppSize * cpSize * tpSize
 }
+
+TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithoutConfigWhenIsNotCompare)
+{
+    Clear();
+    std::string dbPath = InitParser(filePath, Dic::BASELINE);
+    InitParser(filePath, Dic::COMPARE);
+    Dic::Module::ParallelStrategyConfig config;
+    const int defaultSize = 1;
+    config.ppSize = defaultSize;
+    config.tpSize = defaultSize;
+    config.dpSize = defaultSize;
+    config.cpSize = defaultSize;
+    config.epSize = defaultSize;
+    config.moeTpSize = defaultSize;
+    std::string err;
+    ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(dbPath, config, err);
+    ParallelismPerformance params;
+    params.dimension = "ep-dp-pp-cp-tp";
+    params.step = "2";
+    params.isCompare = false;
+    params.config = config;
+    params.clusterPath = Dic::COMPARE;
+    auto algorithm = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(dbPath);
+    algorithm->UpdateParallelDimension(params.dimension, config, err);
+    PerformanceIndicatorData indicatorData;
+    SummaryService::QueryParallelismPerformanceInfo(params, indicatorData);
+    EXPECT_EQ(indicatorData.performanceData.size(), 16); // 16 ranks for cluster
+}

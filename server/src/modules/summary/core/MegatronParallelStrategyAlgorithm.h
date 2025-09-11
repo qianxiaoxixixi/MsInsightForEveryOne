@@ -39,9 +39,6 @@ private:
     void UpdateOrderAndParallelSize();
     bool GetConnectionsByMegatronToken(std::string &err, bool independentEp);
     bool GetConnectionsByTokenList(std::string &err);
-    void GetConnections(Element &curEle);
-    void AddConnection(std::vector<Connection> &connections, const std::string &paraType, uint32_t len,
-                       uint32_t stepSize, Element &curEle);
     const static inline int epPosDpLast = 3; // tp-cp-pp-ep-dp
 };
 }

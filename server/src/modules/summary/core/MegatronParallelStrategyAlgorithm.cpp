@@ -97,6 +97,10 @@ bool MegatronParallelStrategyAlgorithm::GenerateArrangementByDimension(std::stri
     for (uint32_t index = 0; index < elementSize; index++) {
         GetPerArrangement(index, indexAttributes);
     }
+    // 兼容未设置并行策略的情况，此时不计算连线，且返回true
+    if (wordSize == 1) {
+        return true;
+    }
     // get connections
     if (dimension != DIMENSIONS_DP && !GetConnectionsByTokenList(err)) {
         return false;
@@ -221,52 +225,6 @@ bool MegatronParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &e
         allCommunicationGroups = data.connections;
     }
     return true;
-}
-
-void MegatronParallelStrategyAlgorithm::GetConnections(Element &curEle)
-{
-    // 全展开维度的连线由GetConnectionsByTokenList()生成
-    static const std::vector<std::string> dimsHasConnection = {DIMENSIONS_CP, DIMENSIONS_PP};
-    if (std::find(dimsHasConnection.begin(), dimsHasConnection.end(), dimension) == dimsHasConnection.end()) {
-        return;
-    }
-    uint32_t hiddenSize = (elementSize == 0 || wordSize == 0) ? 1 : (wordSize / elementSize);
-    // 求tp连接，范围为[0, tp size)，步长为1
-    AddConnection(data.connections, TP_PARA, tpSize / hiddenSize, 1, curEle);
-    // 求cp连接，范围为[0, cp_size * tp_size)，步长为tp_size
-    AddConnection(data.connections, CP_PARA, tpCpSize / hiddenSize, tpSize / hiddenSize, curEle);
-
-    if (strategyConfig.algorithm == MEGATRON_LM_TP_CP_EP_DP_PP_ALG) {
-        // 求dp连接，范围为[0, cp_size * tp_size * dp_size)，步长为tp size * cp size
-        AddConnection(data.connections, DP_PARA, tpCpDpSize / hiddenSize, tpCpSize / hiddenSize, curEle);
-        // 求pp连接，范围为[0, cp size，步长为tp size * cp size * dp size
-        AddConnection(data.connections, PP_PARA, data.size - curEle.index, tpCpDpSize / hiddenSize, curEle);
-        return;
-    } else {
-        // 求pp连接，范围为cp size，步长为tp size * cp size * dp size
-        AddConnection(data.connections, PP_PARA, tpCpPpSize / hiddenSize, tpCpSize / hiddenSize, curEle);
-        // 求dp连接，范围为cp size，步长为tp size * cp size
-        AddConnection(data.connections, DP_PARA, data.size - curEle.index, tpCpPpSize, curEle);
-    }
-}
-
-void MegatronParallelStrategyAlgorithm::AddConnection(std::vector<Connection> &connections,
-    const std::string &paraType, uint32_t len, uint32_t stepSize, Element &curEle)
-{
-    if (curEle.indexAttributes[paraType + STR_INDEX] != 0) {
-        return;
-    }
-    if (len <= 1) {
-        return;
-    }
-    std::vector<uint32_t> indexes{};
-    for (uint32_t index = curEle.index; index < curEle.index + len; index += stepSize) {
-        indexes.push_back(index);
-    }
-    // 若只含单个点，则无连线，不加入connections
-    if (indexes.size() > 1) {
-        connections.emplace_back(paraType, indexes, std::vector<std::string>{});
-    }
 }
 
 void MegatronParallelStrategyAlgorithm::CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
