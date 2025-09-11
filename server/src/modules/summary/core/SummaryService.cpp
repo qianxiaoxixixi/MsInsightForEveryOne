@@ -81,10 +81,18 @@ std::vector<IndicatorDataStruct> SummaryService::GetPerformanceDataByDimension(
         ServerLog::Warn("Fail to query compare parallelism info");
         return indicatorData;
     }
-    std::unordered_map<std::uint32_t, StepStatistic> stepStatisticData{};
+    std::unordered_map<std::uint32_t, StepStatistic> stepStatisticData{}; // key: rankId, value: step trace data
     bool result = database->QueryAllPerformanceDataByStep(params.step, stepStatisticData);
     if (!result || stepStatisticData.empty()) {
         ServerLog::Warn("Failed to query original parallelism performance data.");
+        return indicatorData;
+    }
+    // 前端入参已校验，无整数溢出风险
+    uint32_t worldSize = params.config.dpSize * params.config.cpSize * params.config.tpSize * params.config.ppSize;
+    // 允许在未设置并行策略时，直接返回计算通信概览, 最多允许展示64卡
+    if (worldSize == 1 && stepStatisticData.size() > maxRankCountForSummaryWithoutConfig) {
+        ServerLog::Warn("When no parallel strategy is configured, computation/communication overview is limited to "
+                        "a maximum of " + std::to_string(maxRankCountForSummaryWithoutConfig) + " cards.");
         return indicatorData;
     }
     auto algPtr = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(database->GetDbPath());

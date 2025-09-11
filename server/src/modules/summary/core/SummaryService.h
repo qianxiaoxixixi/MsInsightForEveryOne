@@ -42,6 +42,7 @@ private:
     static void MergeCommInfo(std::vector<CommInfoUnderRank> compare, std::vector<CommInfoUnderRank> baseline,
                               CompareData<std::unordered_map<std::string, double>> &commRes);
     static inline int numberThousands = 1000;
+    static inline size_t maxRankCountForSummaryWithoutConfig = 64; // 未配置并行策略，最多允许展示64卡的概览
 };
 }
 }

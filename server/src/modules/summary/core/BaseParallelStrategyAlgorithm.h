@@ -113,7 +113,7 @@ protected:
 
     ParallelStrategyConfig strategyConfig;
     bool orderIsTpPpDp = false; // 用于区分算法排布顺序是TP-PP-DP类型还是TP-DP-PP类型, 默认为TP-DP-PP类型
-    std::string dimension = DIMENSIONS_DP; // 默认一层级
+    std::string dimension = DIMENSIONS_TP; // 默认全展开
     uint32_t wordSize = 1;
     uint32_t tpSize = 1;
     uint32_t tpCpSize = 1;

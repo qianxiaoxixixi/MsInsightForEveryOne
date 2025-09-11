@@ -273,9 +273,9 @@ void BaseParallelStrategyAlgorithm::SetPpIndicatorAttr()
     data.indicators.push_back({index++, KEY_TOTAL_COMPUTING_TIME + KEY_MAX_SUFFIX,
         VALUE_MAX + VALUE_TOTAL_COMPUTING_TIME, true, true, true, BAR_CHART, "", TIME_AXIS});
     data.indicators.push_back({index++, KEY_TOTAL_COMMUNICATION + KEY_MAX_SUFFIX,
-        VALUE_MAX + VALUE_TOTAL_COMMUNICATION, true, true, false, BAR_CHART, "", TIME_AXIS});
+        VALUE_MAX + VALUE_TOTAL_COMMUNICATION, true, true, true, BAR_CHART, "", TIME_AXIS});
     data.indicators.push_back({index++, KEY_FREE_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_FREE_TIME,
-        true, true, false, BAR_CHART, "", TIME_AXIS});
+        true, true, true, BAR_CHART, "", TIME_AXIS});
     data.indicators.push_back({index++, KEY_NPU_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_NPU_TIME,
         true, true, false, BAR_CHART, "", TIME_AXIS});
     data.indicators.push_back({index++, KEY_TOTAL_COMPUTING_TIME + KEY_MIN_SUFFIX,
@@ -322,7 +322,10 @@ void BaseParallelStrategyAlgorithm::CalculatePerformanceDataWithTpDimension(
     const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
     std::vector<IndicatorDataStruct> &indicatorData)
 {
-    for (uint32_t i = 0; i < wordSize; ++i) {
+    // 为了兼容缺卡的情况，例如profiling时采样，每8张卡只有1张有数据,
+    // 即wordSize可能大于statistic.size()，此处需取较大值，并用map映射
+    uint32_t dataSize = std::max(wordSize, static_cast<uint32_t>(statistic.size()));
+    for (uint32_t i = 0; i < dataSize; ++i) {
         if (statistic.find(i) == statistic.end()) {
             continue;
         }
