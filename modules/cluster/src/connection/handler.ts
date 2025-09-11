@@ -144,6 +144,8 @@ export const locateCommunication: NotificationHandler = (data): void => {
         type: AnalysisType.COMMUNICATION_DURATION_ANALYSIS,
         baselineIterationId: '',
         pgName: '',
+        groupIdHash: '',
+        baselineGroupIdHash: '',
     });
 };
 

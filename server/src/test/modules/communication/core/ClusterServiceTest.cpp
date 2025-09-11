@@ -113,8 +113,7 @@ TEST_F(ClusterServiceTest, QueryGroupInfoAllSuccess)
     BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
     Dic::Protocol::MatrixGroupResponse response;
     ClusterService::QueryGroupInfo(request, response);
-    EXPECT_EQ(response.body.groupList.size(), NUMBER_TWENTY_EIGHT);
-    EXPECT_EQ(response.body.groupList[0].type, "common");
+    EXPECT_EQ(response.body.groupList.size(), NUMBER_ONE);
     Clear();
 }
 
@@ -128,8 +127,7 @@ TEST_F(ClusterServiceTest, QueryGroupInfoOnlyCompareSuccess)
     request.params.clusterPath = Dic::COMPARE;
     Dic::Protocol::MatrixGroupResponse response;
     ClusterService::QueryGroupInfo(request, response);
-    EXPECT_EQ(response.body.groupList.size(), NUMBER_TWENTY_EIGHT);
-    EXPECT_EQ(response.body.groupList[0].type, "compare");
+    EXPECT_EQ(response.body.groupList.size(), NUMBER_ONE);
     Clear();
 }
 
@@ -138,7 +136,8 @@ TEST_F(ClusterServiceTest, QueryMatrixInfoSuccess)
     InitParser(filePath, Dic::COMPARE);
     InitParser(filePath, Dic::BASELINE);
     Dic::Protocol::MatrixBandwidthParam params = {"(0, 1, 2, 3, 4, 5, 6, 7)", "hcom_broadcast__483_0",
-                                                  "2", "", true, "2", Dic::COMPARE};
+                                                  "2", "", "9350434047717501483", true, "2",
+                                                  Dic::COMPARE, "9350434047717501483"};
     BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
     Dic::Protocol::MatrixListResponseBody body;
     ClusterService::QueryMatrixInfo(params, body);
@@ -151,7 +150,8 @@ TEST_F(ClusterServiceTest, QueryMatrixInfoFailOfDatabaseNotExist)
 {
     Clear();
     Dic::Protocol::MatrixBandwidthParam params = {"(0, 1, 2, 3, 4, 5, 6, 7)", "hcom_broadcast__483_0",
-                                                  "2", "", true, "2", Dic::COMPARE};
+                                                  "2", "", "9350434047717501483", true,
+                                                  "2", Dic::COMPARE};
     Dic::Protocol::MatrixListResponseBody body;
     ClusterService::QueryMatrixInfo(params, body);
     EXPECT_EQ(body.matrixList.size(), NUMBER_ZERO);
@@ -164,7 +164,8 @@ TEST_F(ClusterServiceTest, QueryOperatorListSuccess)
     Dic::Protocol::DurationListParams params;
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
-    params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    params.groupIdHash = "9350434047717501483";
+    params.baselineGroupIdHash = "9350434047717501483";
     params.baselineIterationId = "2";
     params.isCompare = true;
     params.clusterPath = Dic::COMPARE;
@@ -187,7 +188,7 @@ TEST_F(ClusterServiceTest, QueryOperatorListFailWithoutDb)
     Dic::Protocol::DurationListParams params;
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
-    params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    params.groupIdHash = "9350434047717501483";
     params.isCompare = true;
     params.clusterPath = Dic::COMPARE;
     Dic::Protocol::OperatorListsResponseBody body;
@@ -202,7 +203,7 @@ TEST_F(ClusterServiceTest, QueryDurationListSuccess)
     Dic::Protocol::DurationListParams params;
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
-    params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    params.groupIdHash = "9350434047717501483";
     params.baselineIterationId = "2";
     params.isCompare = true;
     params.clusterPath = Dic::COMPARE;
@@ -224,7 +225,7 @@ TEST_F(ClusterServiceTest, QueryDurationListFailWithoutDb)
     Dic::Protocol::DurationListParams params;
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
-    params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    params.groupIdHash = "9350434047717501483";
     params.baselineIterationId = "2";
     params.isCompare = true;
     params.clusterPath = Dic::COMPARE;
@@ -240,7 +241,7 @@ TEST_F(ClusterServiceTest, AnalyzeCommunicationSlowRanksCheckOpNameListFalse)
     Dic::Protocol::DurationListParams params;
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
-    params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    params.groupIdHash = "9350434047717501483";
     params.isCompare = false;
     params.clusterPath = Dic::COMPARE;
     Dic::Protocol::CommunicationSlowRankAnalysisResponseBody body;
@@ -256,7 +257,7 @@ TEST_F(ClusterServiceTest, AnalyzeCommunicationSlowRanksSuccess)
     Dic::Protocol::DurationListParams params;
     params.operatorName = "Total Op Info";
     params.iterationId = "2";
-    params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    params.groupIdHash = "9350434047717501483";
     params.isCompare = false;
     params.clusterPath = Dic::COMPARE;
     Dic::Protocol::CommunicationSlowRankAnalysisResponseBody body;

@@ -12,13 +12,14 @@
 #include "VirtualClusterDatabase.h"
 #include "GlobalDefs.h"
 #include "DataBaseManager.h"
+#include "CommonRapidHandler.h"
 
 namespace Dic {
 namespace Module {
 namespace Timeline {
 
 class CommunicationRapidSaxHandler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>,
-        CommunicationRapidSaxHandler> {
+        CommunicationRapidSaxHandler>, CommonRapidHandler {
 public:
     explicit CommunicationRapidSaxHandler(std::shared_ptr<TextClusterDatabase> database, const std::string &uniqueKey);
     ~CommunicationRapidSaxHandler();
@@ -38,7 +39,6 @@ public:
     bool EndArray(rapidjson::SizeType elementCount);
     void GetBandwidth();
     void GetTimeInfo();
-    std::string GetIndexByStage(const std::string &stage);
 private:
     std::string currentKey;
     std::string rankId;
@@ -59,12 +59,21 @@ private:
     uint32_t infoDepthSeven = 7;
     uint32_t sizeDistributionDepth = 8;
     std::string exception;
-    std::unordered_map<std::string, int64_t> groupIdsMap;
-    std::shared_ptr<TextClusterDatabase> database;
     std::string uniqueKey;
 
     CommunicationBandWidth bandwidth;
     CommunicationTimeInfo timeInfo;
+
+    std::unordered_map<std::string, CommunicationTimeInfo> timeOpTotalInfoMap;
+    std::unordered_map<std::string, CommunicationBandWidth> bandwidthOpTotalInfoMap;
+
+    std::string GenerateTimeInfoKey(const CommunicationTimeInfo &info);
+    void StatTimeTotalOpInfo(const CommunicationTimeInfo &info);
+    std::string GenerateBandwidthInfoKey(const CommunicationBandWidth &info);
+    void StatBandwidthTotalOpInfo(const CommunicationBandWidth &info);
+    std::unordered_map<std::string, PackageInfo> TransStrToPackageMap(const std::string &str);
+    std::string TransPackageMapToStr(std::unordered_map<std::string, PackageInfo> &packageMap);
+    void DealData();
 };
 } // end of namespace Timeline
 } // end of namespace Module

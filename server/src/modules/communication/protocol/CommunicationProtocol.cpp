@@ -65,6 +65,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToOperatorDetailsRequest(const j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.queryType, json["params"], "queryType");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pgName, json["params"], "pgName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.groupIdHash, json["params"], "groupIdHash");
     return reqPtr;
 }
 
@@ -82,6 +83,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToDistributionRequest(const json
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pgName, json["params"], "pgName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.groupIdHash, json["params"], "groupIdHash");
     return reqPtr;
 }
 
@@ -98,6 +100,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToBandwidthDataRequest(const jso
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pgName, json["params"], "pgName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.groupIdHash, json["params"], "groupIdHash");
     return reqPtr;
 }
 
@@ -129,6 +132,8 @@ std::unique_ptr<Request> CommunicationProtocol::ToMatrixListRequest(const json_t
     JsonUtil::SetByJsonKeyValue(reqPtr->params.baselineIterationId, json["params"], "baselineIterationId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pgName, json["params"], "pgName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.groupIdHash, json["params"], "groupIdHash");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.baselineGroupIdHash, json["params"], "baselineGroupIdHash");
     return reqPtr;
 }
 
@@ -167,6 +172,8 @@ std::unique_ptr<Request> CommunicationProtocol::ToDurationRequest(const json_t &
             }
         }
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.baselineGroupIdHash, json["params"], "baselineGroupIdHash");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.groupIdHash, json["params"], "groupIdHash");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
@@ -189,6 +196,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToOperatorNamesRequest(const jso
         }
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.groupIdHash, json["params"], "groupIdHash");
     return reqPtr;
 }
 
@@ -210,6 +218,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToMatrixOpNamesRequest(const jso
         }
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.groupIdHash, json["params"], "groupIdHash");
     return reqPtr;
 }
 

@@ -11,8 +11,9 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 CommunicationMatrixRapidHandler::CommunicationMatrixRapidHandler(std::shared_ptr<TextClusterDatabase> database,
-    const std::string &uniqueKey) : database(database), uniqueKey(uniqueKey)
+    const std::string &uniqueKey) : uniqueKey(uniqueKey)
 {
+    this->database = database;
     currentObject.SetObject();
 }
 
@@ -97,6 +98,33 @@ bool CommunicationMatrixRapidHandler::Key(const char *str, rapidjson::SizeType l
     return true;
 }
 
+std::string CommunicationMatrixRapidHandler::GenerateMatrixKey(const CommunicationMatrixInfo &matrixInfo)
+{
+    return StringUtil::FormatString("{}_{}_{}_{}_{}", matrixInfo.iterationId, std::to_string(matrixInfo.srcRank),
+                                    std::to_string(matrixInfo.dstRank), matrixInfo.transportType,
+                                    matrixInfo.groupName);
+}
+
+void CommunicationMatrixRapidHandler::StatTotalOpInfo(const CommunicationMatrixInfo &matrixInfo)
+{
+    if (matrixInfo.groupName == "" || matrixInfo.sortOp == "Total Op Info" ||
+        !StringUtil::Contains(matrixInfo.sortOp, "total")) {
+        return;
+    }
+    std::string key = GenerateMatrixKey(matrixInfo);
+    if (matrixTotalOpInfoMap.find(key) != matrixTotalOpInfoMap.end()) {
+        matrixTotalOpInfoMap[key].transitSize += matrixInfo.transitSize;
+        matrixTotalOpInfoMap[key].transitTime += matrixInfo.transitTime;
+        matrixTotalOpInfoMap[key].bandwidth = NumberUtil::DoubleReservedNDigits(
+            matrixTotalOpInfoMap[key].transitSize / matrixTotalOpInfoMap[key].transitTime, 4);
+    } else {
+        matrixTotalOpInfoMap[key] = {matrixInfo.groupId, matrixInfo.iterationId, "Total Op Info", "",
+                                     matrixInfo.groupName, matrixInfo.srcRank, matrixInfo.dstRank,
+                                     matrixInfo.transportType, matrixInfo.transitSize, matrixInfo.transitTime,
+                                     matrixInfo.bandwidth};
+    }
+}
+
 bool CommunicationMatrixRapidHandler::EndObject(rapidjson::SizeType memberCount)
 {
     if (ParserStatusManager::Instance().IsClusterParserFinalState(uniqueKey)) {
@@ -107,13 +135,28 @@ bool CommunicationMatrixRapidHandler::EndObject(rapidjson::SizeType memberCount)
         return false;
     }
     if (groupIdsMap.empty()) {
-        groupIdsMap = database->GetAllGroupMap();
+        InitGroupInfoMap();
     }
     currentDepth--;
     if (currentDepth == ranksDepth) {
         CommunicationMatrixInfo matrix = MapToMatrixInfo(currentObject);
-        database->InsertCommunicationMatrix(matrix);
+        if (matrix.groupName != "") {
+            database->InsertCommunicationMatrix(matrix);
+        } else {
+            isOldData = true;
+        }
+        StatTotalOpInfo(matrix);
         currentObject.RemoveAllMembers();
+    }
+    if (currentDepth == 0) {
+        if (isOldData) {
+            for (auto &item: matrixTotalOpInfoMap) {
+                database->InsertCommunicationMatrix(item.second);
+            }
+        }
+        if (!SaveGroupInfoMap()) {
+            ServerLog::Error("Fail to insert duplicate update group info when parse communication matrix data.");
+        }
     }
     return true;
 }
@@ -131,18 +174,6 @@ bool CommunicationMatrixRapidHandler::EndArray(rapidjson::SizeType elementCount)
 CommunicationMatrixInfo CommunicationMatrixRapidHandler::MapToMatrixInfo(const rapidjson::Document &json)
 {
     CommunicationMatrixInfo matrixInfo;
-    if (groupIdsMap.count(groupId) == 0) {
-        uint64_t curIndex = 0;
-        CommGroupParallelInfo info;
-        info.rankSetStr = groupId;
-        info.type = "collective";
-        if (database->InsertGroupInfoReturnIndex(info, curIndex)) {
-            groupIdsMap.insert({groupId, curIndex});
-        } else {
-            ServerLog::Warn("Fail to add group id when parse matrix data, group id:", groupId);
-        }
-    }
-    matrixInfo.groupId = std::to_string(groupIdsMap[groupId]);
     matrixInfo.iterationId = iterationId;
     matrixInfo.iterationId = iterationId.length() > stepSubLen ? iterationId.substr(stepSubLen) : iterationId;
     if (std::strcmp(iterationId.c_str(), "step") == 0) {
@@ -167,6 +198,7 @@ CommunicationMatrixInfo CommunicationMatrixRapidHandler::MapToMatrixInfo(const r
     matrixInfo.transitSize = JsonUtil::GetDouble(json, "Transit Size(MB)");
     matrixInfo.bandwidth = JsonUtil::GetDouble(json, "Bandwidth(GB/s)");
     matrixInfo.opName = JsonUtil::GetString(json, "Op Name");
+    matrixInfo.groupId = GenerateAndGetGroupInfoId(groupId, matrixInfo.groupName);
     return matrixInfo;
 }
 

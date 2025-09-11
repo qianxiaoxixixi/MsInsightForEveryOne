@@ -25,7 +25,7 @@ public:
     bool QuerySlowOpByCommDuration(const Protocol::DurationListParams &params, const std::string &fastestRankId,
                                    Protocol::RankDetailsForSlowRank &slowRank) override;
     std::vector<CommInfoUnderRank> GetCommTimeForRankDim(const std::string &stepId) override;
-    bool GetGroups(const std::string &iterationId, std::vector<std::string> &groupList) override;
+    bool GetGroups(std::vector<GroupInfoDo> &groupList) override;
     bool QueryMatrixList(Protocol::MatrixBandwidthParam &param, std::vector<MatrixInfoDo> &matrixInfoDoList) override;
     bool QueryAllOperators(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody) override;
     bool QueryOperatorsCount(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody) override;
@@ -65,6 +65,7 @@ public:
     bool QueryBandwidthContentionAnalyzerData(std::vector<BandwidthContentionSDMAInfo> &res,
         const std::string &rankId) override;
     bool QueryRetransmissionAnalyzerData(std::vector<RetransmissionClassificationInfo> &data) override;
+    std::vector<OpTypeStatistics> GetOpStatByStepId(const std::string &stepId) override;
 private:
     std::string parseStatus = "UN_FINISH";
     // 标记初始状态的数据库是否有ClusterBaseInfo表

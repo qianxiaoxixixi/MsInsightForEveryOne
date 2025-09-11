@@ -22,6 +22,7 @@ struct OperatorDetailsParam {
     std::string queryType = "Comparison";
     std::string pgName;
     std::string clusterPath;
+    std::string groupIdHash;
     int pageSize{};
     int currentPage{};
     bool CheckParams(std::string &errorMsg) const
@@ -62,6 +63,10 @@ struct OperatorDetailsParam {
             errorMsg = "[Communication] Failed to check cluster." + paramError;
             return false;
         }
+        if (!CheckStrParamValid(groupIdHash, paramError)) {
+            errorMsg = "[Communication] Failed to check cluster." + paramError;
+            return false;
+        }
         return true;
     }
 
@@ -76,6 +81,7 @@ struct OperatorDetailsParam {
         this->pageSize = param.pageSize;
         this->currentPage = param.currentPage;
         this->pgName = param.pgName;
+        this->groupIdHash = param.groupIdHash;
     }
     OperatorDetailsParam& operator=(const OperatorDetailsParam& param) = delete;
 };
@@ -92,6 +98,7 @@ struct BandwidthDataParam {
     std::string stage;
     std::string pgName;
     std::string clusterPath;
+    std::string groupIdHash;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -119,6 +126,10 @@ struct BandwidthDataParam {
             errorMsg = "[Communication] Failed to check cluster." + paramError;
             return false;
         }
+        if (!CheckStrParamValid(groupIdHash, paramError)) {
+            errorMsg = "[Communication] Failed to check group id hash." + paramError;
+            return false;
+        }
         return true;
     }
 };
@@ -136,6 +147,7 @@ struct DistributionDataParam {
     std::string stage;
     std::string pgName;
     std::string clusterPath;
+    std::string groupIdHash;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -165,6 +177,10 @@ struct DistributionDataParam {
         }
         if (!CheckStrParamValid(clusterPath, paramError)) {
             errorMsg = "[Communication] Failed to check cluster." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(groupIdHash, paramError)) {
+            errorMsg = "[Communication] Failed to check group id hash." + paramError;
             return false;
         }
         return true;
@@ -202,6 +218,7 @@ struct OperatorNamesParams {
     std::string stage;
     std::string pgName;
     std::string clusterPath;
+    std::string groupIdHash;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -221,6 +238,10 @@ struct OperatorNamesParams {
             errorMsg = "[Communication] Failed to check cluster." + paramError;
             return false;
         }
+        if (!CheckStrParamValid(groupIdHash, paramError)) {
+            errorMsg = "[Communication] Failed to check group id hash." + paramError;
+            return false;
+        }
         return true;
     }
 
@@ -232,6 +253,7 @@ struct OperatorNamesParams {
             this->rankList.push_back(item);
         }
         this->stage = params.stage;
+        this->groupIdHash = params.groupIdHash;
     }
     OperatorNamesParams& operator=(const OperatorNamesParams &params) = delete;
 };
@@ -256,6 +278,8 @@ struct DurationListParams {
     std::string baselineIterationId;
     std::string pgName;
     std::string clusterPath;
+    std::string groupIdHash;
+    std::string baselineGroupIdHash;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -283,6 +307,14 @@ struct DurationListParams {
             errorMsg = "[Communication] Failed to check cluster." + paramError;
             return false;
         }
+        if (!CheckStrParamValidEmptyAllowed(this->baselineGroupIdHash, paramError)) {
+            errorMsg = "[Communication] Failed to check baseline group id hash." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->groupIdHash, paramError)) {
+            errorMsg = "[Communication] Failed to check group id hash." + paramError;
+            return false;
+        }
         return true;
     }
 
@@ -297,6 +329,7 @@ struct DurationListParams {
         for (const auto &item: params.rankList) {
             this->rankList.push_back(item);
         }
+        this->groupIdHash = params.groupIdHash;
     }
     DurationListParams& operator=(const DurationListParams& params) = delete;
 };
@@ -340,9 +373,11 @@ struct MatrixBandwidthParam {
     std::string operatorName;
     std::string iterationId;
     std::string pgName;
+    std::string groupIdHash;
     bool isCompare = false;
     std::string baselineIterationId;
     std::string clusterPath;
+    std::string baselineGroupIdHash;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;

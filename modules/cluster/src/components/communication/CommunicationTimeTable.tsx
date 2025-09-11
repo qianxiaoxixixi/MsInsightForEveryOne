@@ -192,6 +192,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
             stage: conditions.stage,
             queryType: record.source,
             pgName: conditions.pgName,
+            groupIdHash: conditions.groupIdHash,
         }).finally(() => {
             setLoading(false);
         });

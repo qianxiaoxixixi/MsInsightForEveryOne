@@ -402,6 +402,7 @@ struct MatrixListResponse : public Response {
 struct GroupInfo {
     std::string group;
     std::string parallelStrategy;
+    CompareData<std::string> groupIdHash;
     std::string type; // BASELINE or COMPARE
     bool operator==(const GroupInfo& other) const
     {

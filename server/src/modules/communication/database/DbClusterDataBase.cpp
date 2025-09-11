@@ -91,12 +91,15 @@ bool DbClusterDataBase::InsertDuplicateUpdateBaseInfo(const std::map<std::string
     return ExecuteInsertDuplicateUpdateBaseInfo(baseInfoMap, TABLE_CLUSTER_BASE_INFO);
 }
 
-bool DbClusterDataBase::GetGroups(const std::string &iterationId, std::vector<std::string> &groupList)
+bool DbClusterDataBase::GetGroups(std::vector<GroupInfoDo> &groupList)
 {
-    std::string sql = "SELECT DISTINCT m.rank_set as rank FROM " + TABLE_COMM_ANALYZER_MATRIX + " t"
-                      " LEFT JOIN " + TABLE_COMM_GROUP + " m ON m.group_name = t.group_name";
-
-    return ExecuteGetGroups(iterationId, groupList, sql);
+    // 兼容老数据，直接导入db场景的cluster_analysis_output场景下，可能会没有pg_name这个字段
+    std::string pgNameSelect = "pg_name";
+    if (!HasColumn(TABLE_COMM_GROUP, "pg_name")) {
+        pgNameSelect = " '' as pg_name ";
+    }
+    std::string sql = "SELECT rank_set as rank, group_name as group_id_hash," + pgNameSelect + " FROM " + TABLE_COMM_GROUP;
+    return ExecuteGetGroups(groupList, sql);
 }
 
 bool DbClusterDataBase::QueryMatrixList(Protocol::MatrixBandwidthParam &param,
@@ -109,8 +112,7 @@ bool DbClusterDataBase::QueryMatrixList(Protocol::MatrixBandwidthParam &param,
                       "ROUND(bandwidth, 4) as bandwidth ,"
                       "hccl_op_name as opName "
                       "FROM " + TABLE_COMM_ANALYZER_MATRIX + " t"
-                      " LEFT JOIN " + TABLE_COMM_GROUP + " m ON m.group_name = t.group_name"
-                      " WHERE m.rank_set = ? AND step = ? AND hccl_op_name = ? ";
+                      " WHERE group_name = ? AND step = ? AND hccl_op_name = ? ";
     param.iterationId = "step" + param.iterationId;
     return ExecuteQueryMatrixList(param, matrixInfoDoList, sql);
 }
@@ -166,27 +168,23 @@ bool DbClusterDataBase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
         "ROUND(wait_time / (wait_time + transit_time), 4) END AS waitTimeRatio, "
         "bw.sdma_bw as sdmaBw, bw.rdma_bw as rdmaBw "
         "FROM " + TABLE_COMM_ANALYZER_TIME + " t "
-        "LEFT JOIN " + TABLE_COMM_GROUP + " m ON t.group_name = m.group_name "
         "LEFT JOIN ( "
         "    SELECT hccl_op_name, "
         "    MAX(CASE WHEN band_type = 'SDMA' THEN bandwidth ELSE 0 END) AS sdma_bw, "
         "    MAX(CASE WHEN band_type = 'RDMA' THEN bandwidth ELSE 0 END) AS rdma_bw "
         "    FROM " + TABLE_COMM_ANALYZER_BANDWIDTH  + " b"
-        "    LEFT JOIN " + TABLE_COMM_GROUP + " map ON b.group_name = map.group_name"
-        "    WHERE b.step = ? AND b.rank_id = ? AND map.rank_set = ? AND hccl_op_name != 'Total Op Info'"
+        "    WHERE b.step = ? AND b.rank_id = ? AND b.group_name = ? AND hccl_op_name != 'Total Op Info'"
         "    GROUP BY hccl_op_name "
         ") bw ON t.hccl_op_name = bw.hccl_op_name "
-        "WHERE t.step = ? AND t.rank_id = ? AND m.rank_set = ? AND t.hccl_op_name != 'Total Op Info'";
+        "WHERE t.step = ? AND t.rank_id = ? AND t.group_name = ? AND t.hccl_op_name != 'Total Op Info'";
     return ExecuteQueryAllOperators(param, resBody, sql, startTime);
 }
 
 bool DbClusterDataBase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
-    std::string sql = "SELECT op_name, count(*) AS nums from (select hccl_op_name as op_name, rank_id, step as "
-                      "iteration_id, m.rank_set as stage_id from " + TABLE_COMM_ANALYZER_TIME + " t "
-                      "LEFT JOIN " + TABLE_COMM_GROUP + " m ON m.group_name = t.group_name )"
-                      "where 1=1 ";
+    std::string sql = "SELECT count(*), step as iteration_id, group_name as op_suffix FROM " + TABLE_COMM_ANALYZER_TIME
+        + " WHERE hccl_op_name != 'Total Op Info' ";
     param.iterationId = "step" + param.iterationId;
     return ExecuteQueryOperatorsCount(param, resBody, sql);
 }
@@ -199,8 +197,7 @@ bool DbClusterDataBase::QueryBandwidthData(Protocol::BandwidthDataParam &param, 
                       "ROUND(large_packet_ratio, 4)  as large_packet_ratio from "
                       "(SELECT*,ROW_NUMBER() OVER (PARTITION BY band_type) AS rn FROM (SELECT * "
                       "FROM " + TABLE_COMM_ANALYZER_BANDWIDTH + " t"
-                      " LEFT JOIN " + TABLE_COMM_GROUP + " m ON m.group_name = t.group_name"
-                      " WHERE step = ? AND rank_id = ? AND m.rank_set = ? AND hccl_op_name = ?))t "
+                      " WHERE step = ? AND rank_id = ? AND group_name = ? AND hccl_op_name = ?))t "
                       "WHERE rn = 1";
     param.iterationId = "step" + param.iterationId;
     return ExecuteQueryBandwidthData(param, resBody, sql);
@@ -211,10 +208,9 @@ bool DbClusterDataBase::QueryDistributionData(Protocol::DistributionDataParam &p
 {
     std::string sql = "SELECT package_size, count, total_duration FROM "
                       + TABLE_COMM_ANALYZER_BANDWIDTH + " t"
-                      " LEFT JOIN " + TABLE_COMM_GROUP + " m ON m.group_name = t.group_name"
                       " WHERE step = ? "
                       "AND rank_id = ? "
-                      "AND m.rank_set = ? "
+                      "AND group_name = ? "
                       "AND hccl_op_name = ? "
                       "AND band_type = ? ;";
     param.iterationId = "step" + param.iterationId;
@@ -226,7 +222,7 @@ bool DbClusterDataBase::QueryDistributionData(Protocol::DistributionDataParam &p
     }
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, index++, param.stage.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, index++, param.groupIdHash.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, index++, param.operatorName.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, index, param.transportType.c_str(), -1, SQLITE_STATIC);
     std::string distribution = "{";
@@ -280,14 +276,14 @@ bool DbClusterDataBase::QueryOperatorNames(Protocol::OperatorNamesParams &reques
         sql = "SELECT DISTINCT hccl_op_name FROM (SELECT hccl_op_name FROM " + TABLE_COMM_ANALYZER_TIME + " t"
               " LEFT JOIN " + TABLE_COMM_GROUP + " m ON m.group_name = t.group_name"
               " WHERE step = ?" +
-              " AND m.rank_set = ?" +
+              " AND m.group_name = ?" +
               " ORDER BY hccl_op_name)";
     } else {
         std::string ranks = GetRanksSql(rankList);
         sql = "SELECT DISTINCT hccl_op_name FROM (SELECT hccl_op_name FROM " + TABLE_COMM_ANALYZER_TIME + " t"
               " LEFT JOIN " + TABLE_COMM_GROUP + " m ON m.group_name = t.group_name"
               " WHERE step = ?" +
-              " AND m.rank_set = ?" +
+              " AND m.group_name = ?" +
               " AND rank_id IN " + ranks + " ORDER BY hccl_op_name)";
     }
     requestParams.iterationId = "step" + requestParams.iterationId;
@@ -350,10 +346,10 @@ bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestP
         "    MAX(CASE WHEN band_type = 'RDMA' THEN transit_time ELSE 0 END) AS rdma_time "
         "    FROM " + TABLE_COMM_ANALYZER_BANDWIDTH + " b"
         "    LEFT JOIN " + TABLE_COMM_GROUP + " m ON m.group_name = b.group_name"
-        "    WHERE step = ? AND m.rank_set = ? AND hccl_op_name = ? " + rankSql +
+        "    WHERE step = ? AND m.group_name = ? AND hccl_op_name = ? " + rankSql +
         "    GROUP BY rank_id "
         ") bw ON t.rank_id = bw.rank_id "
-        " WHERE t.step = ? AND map.rank_set = ? AND t.hccl_op_name = ? " + rankSqlTime;
+        " WHERE t.step = ? AND map.group_name = ? AND t.hccl_op_name = ? " + rankSqlTime;
     requestParams.iterationId = "step" + requestParams.iterationId;
     return ExecuteQueryDurationList(requestParams, durationDoList, sql, startTime);
 }
@@ -366,7 +362,7 @@ bool DbClusterDataBase::QueryOperatorList(Protocol::DurationListParams &requestP
         " CASE WHEN start_timestamp = 0 THEN 0 ELSE (start_timestamp - ?/1000.0)*1000.0 END as start_time, "
         " (elapsed_time * 1000000) as elapse_time From " + TABLE_COMM_ANALYZER_TIME + " t"
         " LEFT JOIN " + TABLE_COMM_GROUP + " m ON m.group_name = t.group_name"
-        " WHERE step = ? AND m.rank_set = ? AND hccl_op_name <> 'Total Op Info'";
+        " WHERE step = ? AND m.group_name = ? AND hccl_op_name <> 'Total Op Info'";
     std::vector<std::string> rankList = requestParams.rankList;
     if (!rankList.empty()) {
         std::string ranks = GetRanksSql(rankList);
@@ -385,8 +381,7 @@ bool DbClusterDataBase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &re
     std::vector<Protocol::OperatorNamesObject> &responseBody)
 {
     std::string sql = "SELECT DISTINCT t.hccl_op_name  FROM " + TABLE_COMM_ANALYZER_MATRIX + " t"
-                      " LEFT JOIN " + TABLE_COMM_GROUP + " m ON m.group_name = t.group_name"
-                      " WHERE t.step = ? AND m.rank_set = ?" +
+                      " WHERE t.step = ? AND t.group_name = ?" +
                       " ORDER BY t.hccl_op_name";
     requestParams.iterationId = "step" + requestParams.iterationId;
     return ExecuteQueryMatrixSortOpNames(requestParams, responseBody, sql);
@@ -584,17 +579,17 @@ bool DbClusterDataBase::QuerySlowOpByCommDuration(const Protocol::DurationListPa
         "    fast.elapseTime AS elapseTimeOfFast, fast.startTime as startTimeOfFast"
         " from ( "
         "    select t.rank_id as rankId, t.hccl_op_name AS opName, "
-        "    ROUND(t.elapsed_time * 1000, 3) AS elapseTime, g.rank_set AS rankSet, "
+        "    ROUND(t.elapsed_time * 1000, 3) AS elapseTime, "
         "    CASE WHEN start_timestamp = 0 THEN 0 ELSE ROUND((start_timestamp - ?/1000.0), 3) END as startTime from "
-        + TABLE_COMM_ANALYZER_TIME + " t left join " + TABLE_COMM_GROUP + " g on t.group_name = g.group_name "
-        "    where t.rank_id = ? and step = 'step' || ? and rankSet = ? and opName != 'Total Op Info' "
+        + TABLE_COMM_ANALYZER_TIME + " t "
+        "    where t.rank_id = ? and step = 'step' || ? and t.group_name = ? and opName != 'Total Op Info' "
         " ) fast "
         " join ( "
         "    select t.rank_id as rankId, t.hccl_op_name AS opName, "
-        "    ROUND(t.elapsed_time * 1000, 3) AS elapseTime, g.rank_set AS rankSet, "
+        "    ROUND(t.elapsed_time * 1000, 3) AS elapseTime, "
         "    CASE WHEN start_timestamp = 0 THEN 0 ELSE ROUND((start_timestamp - ?/1000.0), 3) END as startTime from "
-        + TABLE_COMM_ANALYZER_TIME + " t left join " + TABLE_COMM_GROUP + " g on t.group_name = g.group_name "
-        "    where t.rank_id = ? and step = 'step' || ? and rankSet = ? and opName != 'Total Op Info' "
+        + TABLE_COMM_ANALYZER_TIME + " t "
+        "    where t.rank_id = ? and step = 'step' || ? and t.group_name = ? and opName != 'Total Op Info' "
         " ) slow "
         " on fast.opName = slow.opName ORDER BY diffElapseTime DESC;";
     return ExecuteQuerySlowOpByCommDuration(sql, params, fastestRankId, slowRank);
@@ -605,12 +600,14 @@ std::vector<CommInfoUnderRank> DbClusterDataBase::GetCommTimeForRankDim(const st
     std::string sql;
     if (stepId.empty() || stepId == "All") {
         sql = "SELECT t.rank_id as rankId, ROUND(sum(t.elapsed_time) * 1000, 3) as commTime, g.rank_set as rankSet "
-            "FROM "+ TABLE_COMM_ANALYZER_TIME + " as t LEFT JOIN " + TABLE_COMM_GROUP + " as g ON t.group_name = "
+            "FROM "+ TABLE_COMM_ANALYZER_TIME + " as t LEFT JOIN (SELECT rank_set, group_name FROM "
+            + TABLE_COMM_GROUP + " group by group_name) as g ON t.group_name = "
             "g.group_name WHERE hccl_op_name = 'Total Op Info' group by t.rank_id, g.rank_set";
     } else {
-        sql = "SELECT t.rank_id as rankId, ROUND(t.elapsed_time * 1000, 3) as commTime, g.rank_set as rankSet FROM "
-            + TABLE_COMM_ANALYZER_TIME + " as t LEFT JOIN " + TABLE_COMM_GROUP + " as g ON t.group_name = g.group_name"
-            " WHERE step = ? AND hccl_op_name = 'Total Op Info'";
+        sql = "SELECT t.rank_id as rankId, ROUND(sum(t.elapsed_time) * 1000, 3) as commTime, g.rank_set as rankSet"
+            " FROM " + TABLE_COMM_ANALYZER_TIME + " as t LEFT JOIN (SELECT rank_set, group_name FROM "
+            + TABLE_COMM_GROUP + " group by group_name) as g ON t.group_name = "
+            "g.group_name WHERE step = ? AND hccl_op_name = 'Total Op Info' group by t.rank_id, g.rank_set";
     }
     std::string stepAfterDeal = stepId.empty() || stepId == "All" ? stepId : "step" + stepId;
     return ExecuteGetCommTimeForRankDim(sql, stepAfterDeal);
@@ -644,6 +641,15 @@ bool DbClusterDataBase::QueryRetransmissionAnalyzerData(std::vector<Retransmissi
         " t1.group_name = t3.group_name WHERE band_type = 'RDMA' AND t1.hccl_op_name != 'Total Op Info' "
         " GROUP BY t1.step, t3.rank_set, t1.hccl_op_name";
     return ExecuteQueryRetransmissionAnalyzerData(data, sql);
+}
+
+std::vector<OpTypeStatistics> DbClusterDataBase::GetOpStatByStepId(const std::string &stepId)
+{
+    std::string sql = "SELECT count(*) as cnt, op_type, group_name FROM (SELECT " +
+        GenerateReplaceSql("hccl_op_name", replaceCharList) + " as op_type, "
+        "group_name  FROM ClusterCommunicationTime WHERE hccl_op_name != 'Total Op Info' AND step = ?) "
+        "GROUP BY op_type, group_name";
+    return ExecuteGetOpStatByStepId("step" + stepId, sql);
 }
 }
 }

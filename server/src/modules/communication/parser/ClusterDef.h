@@ -30,6 +30,11 @@ struct CommunicationTimeInfo {
     double waitTime = 0;
     double idleTime = 0;
 };
+
+struct PackageInfo {
+    double packageNumber;
+    double packageTime;
+};
 struct CommunicationBandWidth {
     std::string iterationId;
     std::string rankId;
@@ -43,6 +48,8 @@ struct CommunicationBandWidth {
     std::string sizeDistribution;
     double transitSize = 0;
     double transitTime = 0;
+    // the key is the size of package
+    std::unordered_map<std::string, PackageInfo> packageMap;
 };
 struct StepStatistic {
     std::string rankId;

@@ -24,8 +24,14 @@ public:
     static bool AnalyzeCommunicationSlowRanks(const Protocol::DurationListParams &params,
         CommunicationSlowRankAnalysisResponseBody &body);
 private:
-    static std::vector<Protocol::GroupInfo> MergeGroupInfo(std::vector<std::string> &compareGroupList,
-                                                           std::vector<std::string> &baselineGroupList);
+    static std::vector<Protocol::GroupInfo> MergeGroupInfoWithPgName(
+        std::map<std::string, GroupInfoDo> &compareGroupMap, std::map<std::string, GroupInfoDo> &baselineGroupMap);
+    static std::map<std::string, GroupInfoDo> GetRankSetAndOpTypeToGroupInfoMap(
+        const std::vector<OpTypeStatistics> &StatsList, const std::vector<GroupInfoDo> &groupList);
+    static std::vector<Protocol::GroupInfo> MergeGroupInfo(const Protocol::MatrixGroupRequest &request,
+        std::vector<GroupInfoDo> &compareGroupList, std::vector<GroupInfoDo> &baselineGroupList);
+    static std::vector<OpTypeStatistics> GetOpTypeStatByStepId(const std::string &stepId,
+                                                               const std::string &clusterPath);
     static void MergeMatrixInfo(Protocol::MatrixListResponseBody &body, const std::vector<MatrixInfoDo> &compare,
                                 const std::vector<MatrixInfoDo> &baseline);
     static void MergeOperatorList(Protocol::OperatorListsResponseBody &body, const std::vector<OperatorTimeDo> &compare,
@@ -42,6 +48,7 @@ private:
     static void FindSlowRankByCommDuration(const std::shared_ptr<VirtualClusterDatabase> &database,
         const Protocol::DurationListParams &params, RankDetailsForSlowRank &fastestRank,
         CommunicationSlowRankAnalysisResponseBody &body);
+    static bool IsHavePgName(const std::vector<GroupInfoDo> &groupList);
     const static inline std::string underline = "_";
     // 矩阵端点数量，从起始卡到目标卡，固定为2
     const static inline int matrixPointNumber = 2;

@@ -36,7 +36,7 @@ public:
     virtual std::vector<CommInfoUnderRank> GetCommTimeForRankDim(const std::string &stepId) = 0;
     virtual bool QuerySlowOpByCommDuration(const Protocol::DurationListParams &params, const std::string &fastestRankId,
                                            Protocol::RankDetailsForSlowRank &slowRank) = 0;
-    virtual bool GetGroups(const std::string &iterationId, std::vector<std::string> &groupList) = 0;
+    virtual bool GetGroups(std::vector<GroupInfoDo> &groupList) = 0;
     virtual bool QueryMatrixList(Protocol::MatrixBandwidthParam &param,
                                  std::vector<MatrixInfoDo> &matrixInfoDoList) = 0;
     virtual bool QueryAllOperators(Protocol::OperatorDetailsParam &param,
@@ -73,6 +73,7 @@ public:
     virtual bool QueryBandwidthContentionAnalyzerData(std::vector<BandwidthContentionSDMAInfo> &res,
         const std::string &rankId) = 0;
     virtual bool QueryRetransmissionAnalyzerData(std::vector<RetransmissionClassificationInfo> &data) = 0;
+    virtual std::vector<OpTypeStatistics> GetOpStatByStepId(const std::string &stepId) = 0;
     bool BatchInsertExpertHotspotData(const std::vector<ExpertHotspotStruct> &expertHotspotInfos);
     bool BatchInsertExpertDeployment(const std::vector<ExpertDeploymentStruct> &expertDeploymentInfos);
     void InsertExpertHotspotDataForCache(const ExpertHotspotStruct &info);
@@ -97,6 +98,7 @@ protected:
         " CREATE TABLE IF NOT EXISTS " + TABLE_EXPERT_DEPLOYMENT_INFO + " (id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " modelStage TEXT, rankId INTEGER, layer INTEGER, expertList TEXT, version TEXT);"
         " CREATE INDEX IF NOT EXISTS idx_ms ON " + TABLE_EXPERT_DEPLOYMENT_INFO + "(modelStage, version)";
+    const std::vector<std::string> replaceCharList = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "_"};
     sqlite3_stmt *insertHotspotStmt = nullptr;
     sqlite3_stmt *insertDeploymentStmt = nullptr;
     std::vector<ExpertHotspotStruct> expertHotspotCache;
@@ -112,7 +114,7 @@ protected:
     bool ExecuteQuerySlowOpByCommDuration(const std::string &sql, const Protocol::DurationListParams &params,
         const std::string &fastestRankId, Protocol::RankDetailsForSlowRank &slowRank);
     std::vector<CommInfoUnderRank> ExecuteGetCommTimeForRankDim(std::string &sql, const std::string &step);
-    bool ExecuteGetGroups(const std::string &iterationId, std::vector<std::string> &groupList, std::string sql);
+    bool ExecuteGetGroups(std::vector<GroupInfoDo> &groupList, const std::string &sql);
     bool ExecuteQueryMatrixList(Protocol::MatrixBandwidthParam &param, std::vector<MatrixInfoDo> &matrixInfoDoList,
         const std::string &sql);
     bool ExecuteQueryAllOperators(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody,
@@ -153,6 +155,8 @@ protected:
     bool ExecuteQueryRetransmissionAnalyzerData(
         std::vector<RetransmissionClassificationInfo> &data, const std::string &sql);
     bool ExecuteUpdateCollectTimeInfo(const Protocol::SummaryBaseInfo &baseInfo, const std::string& sql);
+    std::string GenerateReplaceSql(const std::string &columnName, const std::vector<std::string> &replaceList);
+    std::vector<OpTypeStatistics> ExecuteGetOpStatByStepId(const std::string &stepId, const std::string &sql);
 
     sqlite3_stmt *GetExpertHotspotInsertStmt(uint64_t paramLen);
     sqlite3_stmt *InitExpertHotspotInsertStmt(uint64_t paramLen);

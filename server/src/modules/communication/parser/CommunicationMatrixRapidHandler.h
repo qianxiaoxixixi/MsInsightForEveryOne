@@ -11,13 +11,14 @@
 #include "document.h"
 #include "VirtualClusterDatabase.h"
 #include "GlobalDefs.h"
+#include "CommonRapidHandler.h"
 #include "DataBaseManager.h"
 
 namespace Dic {
 namespace Module {
 namespace Timeline {
 class CommunicationMatrixRapidHandler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>,
-        CommunicationMatrixRapidHandler> {
+        CommunicationMatrixRapidHandler>, public CommonRapidHandler {
 public:
     explicit CommunicationMatrixRapidHandler(std::shared_ptr<TextClusterDatabase> database,
                                              const std::string &uniqueKey);
@@ -46,14 +47,16 @@ private:
     std::string iterationId;
     std::string tempOpName;
     std::string tempRank;
-    std::unordered_map<std::string, int64_t> groupIdsMap;
     uint32_t groupDepth = 1;
     uint32_t stepDepth = 2;
     uint32_t opNameDepth = 3;
     uint32_t ranksDepth = 4;
     uint32_t stepSubLen = 4;
-    std::shared_ptr<TextClusterDatabase> database;
     std::string uniqueKey;
+    std::unordered_map<std::string, CommunicationMatrixInfo> matrixTotalOpInfoMap;
+
+    void StatTotalOpInfo(const CommunicationMatrixInfo &matrixInfo);
+    std::string GenerateMatrixKey(const CommunicationMatrixInfo &matrixInfo);
 };
 
 } // end of namespace Timeline

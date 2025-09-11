@@ -132,20 +132,25 @@ bool VirtualClusterDatabase::ExecuteInsertDuplicateUpdateBaseInfo(const std::map
     return result == SQLITE_DONE;
 }
 
-bool VirtualClusterDatabase::ExecuteGetGroups(const std::string &iterationId,
-    std::vector<std::string> &groupList, std::string sql)
+bool VirtualClusterDatabase::ExecuteGetGroups(std::vector<GroupInfoDo> &groupList, const std::string &sql)
 {
     sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare get groups statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_text(stmt, index, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        std::string res = sqlite3_column_string(stmt, col++);
-        groupList.emplace_back(res);
+        std::string rankSet = sqlite3_column_string(stmt, col++);
+        if (rankSet == "p2p") {
+            continue;
+        }
+        // rank set标准化处理：1.根据rank set数字从小到大排序；2.输出标准化格式“(1, 2, 3)”，统一“,”后面有空格
+        std::vector<std::string> rankList = StringUtil::SplitStringWithParenthesesByComma(rankSet);
+        rankSet = StringUtil::JoinNumberStrWithParenthesesByOrder(rankList);
+        std::string groupIdHash = sqlite3_column_string(stmt, col++);
+        std::string pgName = sqlite3_column_string(stmt, col++);
+        groupList.push_back({rankSet, groupIdHash, pgName});
     }
     sqlite3_finalize(stmt);
     return true;
@@ -160,7 +165,7 @@ bool VirtualClusterDatabase::ExecuteQueryMatrixList(Protocol::MatrixBandwidthPar
         ServerLog::Error("Failed to prepare query matrix list statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_text(stmt, index++, param.stage.c_str(), param.stage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, param.groupIdHash.c_str(), param.groupIdHash.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index, param.operatorName.c_str(), param.operatorName.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -251,10 +256,10 @@ bool VirtualClusterDatabase::ExecuteQueryAllOperators(Protocol::OperatorDetailsP
     sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, static_cast<uint64_t>(INT64_MAX)));
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.rankId.c_str(), param.rankId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.stage.c_str(), param.stage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, param.groupIdHash.c_str(), param.groupIdHash.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.rankId.c_str(), param.rankId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.stage.c_str(), param.stage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, param.groupIdHash.c_str(), param.groupIdHash.length(), SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, index++, (param.currentPage - 1) * param.pageSize);
     sqlite3_bind_int(stmt, index, param.pageSize);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -288,10 +293,9 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorsCount(Protocol::OperatorDetail
     if (!param.rankId.empty()) {
         sql.append(" AND rank_id = ? ");
     }
-    if (!param.stage.empty()) {
-        sql.append(" AND stage_id = ? ");
+    if (!param.groupIdHash.empty()) {
+        sql.append(" AND op_suffix = ? ");
     }
-    sql.append(" group by op_name");
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare query operators count statement. error:", sqlite3_errmsg(db));
         return false;
@@ -302,20 +306,15 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorsCount(Protocol::OperatorDetail
     if (!param.rankId.empty()) {
         sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_TRANSIENT);
     }
-    if (!param.stage.empty()) {
-        sqlite3_bind_text(stmt, index, param.stage.c_str(), -1, SQLITE_TRANSIENT);
+    if (!param.groupIdHash.empty()) {
+        sqlite3_bind_text(stmt, index, param.groupIdHash.c_str(), -1, SQLITE_TRANSIENT);
     }
-    int count = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        std::string opName = sqlite3_column_string(stmt, col++);
-        if (opName != "Total Op Info") {
-            count = count + sqlite3_column_int(stmt, col);
-        }
+    bool res = (sqlite3_step(stmt) == SQLITE_ROW);
+    if (res) {
+        resBody.count = sqlite3_column_int(stmt, resultStartIndex);
     }
-    resBody.count = count;
     sqlite3_finalize(stmt);
-    return true;
+    return res;
 }
 
 bool VirtualClusterDatabase::ExecuteQueryBandwidthData(Protocol::BandwidthDataParam &param,
@@ -329,7 +328,7 @@ bool VirtualClusterDatabase::ExecuteQueryBandwidthData(Protocol::BandwidthDataPa
     }
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.stage.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, param.groupIdHash.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index, param.operatorName.c_str(), -1, SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
@@ -356,7 +355,7 @@ bool VirtualClusterDatabase::ExecuteQueryDistributionData(Protocol::Distribution
     }
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, index++, param.stage.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, index++, param.groupIdHash.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, index++, param.operatorName.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, index, param.transportType.c_str(), -1, SQLITE_STATIC);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -395,14 +394,14 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorNames(Protocol::OperatorNamesPa
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     std::string iterationId = requestParams.iterationId;
-    std::string stage = requestParams.stage;
+    std::string groupIdHash = requestParams.groupIdHash;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare query operator names statement. error:", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, groupIdHash.c_str(), groupIdHash.length(), SQLITE_TRANSIENT);
     bool flag = false;
     Protocol::OperatorNamesObject totalOpInfo;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -454,9 +453,8 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
-    std::vector<std::string> rankList = requestParams.rankList;
     std::string iterationId = requestParams.iterationId;
-    std::string stage = requestParams.stage;
+    std::string groupIdHash = requestParams.groupIdHash;
     std::string operatorName = requestParams.operatorName;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -465,10 +463,10 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
     }
     sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, static_cast<uint64_t>(INT64_MAX)));
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, groupIdHash.c_str(), groupIdHash.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, groupIdHash.c_str(), groupIdHash.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
     std::vector<Protocol::BandwidthStatistic> bwStat = {{"SDMA", 0, 0, DBL_MAX, 0, 0}, {"RDMA", 0, 0, DBL_MAX, 0, 0}};
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -499,7 +497,7 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListPara
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     std::string iterationId = requestParams.iterationId;
-    std::string stage = requestParams.stage;
+    std::string groupIdHash = requestParams.groupIdHash;
     std::string operatorName = requestParams.operatorName;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -508,7 +506,7 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListPara
     }
     sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, static_cast<uint64_t>(INT64_MAX)));
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, groupIdHash.c_str(), groupIdHash.length(), SQLITE_TRANSIENT);
     if (requestParams.operatorName != totalOpInfo) {
         sqlite3_bind_text(stmt, index, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
     }
@@ -557,14 +555,14 @@ bool VirtualClusterDatabase::ExecuteQueryMatrixSortOpNames(Protocol::OperatorNam
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     std::string iterationId = requestParams.iterationId;
-    std::string stage = requestParams.stage;
+    std::string groupIdHash = requestParams.groupIdHash;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare Query Matrix Sort OpNames statement. error: ", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, groupIdHash.c_str(), groupIdHash.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::OperatorNamesObject object;
@@ -796,8 +794,8 @@ bool VirtualClusterDatabase::ExecuteQuerySlowOpByCommDuration(const std::string 
         ServerLog::Error("Failed to prepare sql for query slow operator by communication duration.");
         return false;
     }
-    stmt->BindParams(startTime, fastestRankId, params.iterationId, params.stage,
-                     startTime, slowRank.rankId, params.iterationId, params.stage);
+    stmt->BindParams(startTime, fastestRankId, params.iterationId, params.groupIdHash,
+                     startTime, slowRank.rankId, params.iterationId, params.groupIdHash);
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result for query slow operator by communication duration.");
@@ -1229,6 +1227,42 @@ bool VirtualClusterDatabase::ExecuteUpdateCollectTimeInfo(const Protocol::Summar
     }
     sqlite3_finalize(stmt);
     return true;
+}
+
+std::string VirtualClusterDatabase::GenerateReplaceSql(const std::string &columnName,
+                                                       const std::vector<std::string> &replaceList)
+{
+    if (replaceList.empty()) {
+        return columnName;
+    }
+    std::string res = columnName;
+    for (const auto &item: replaceList) {
+        res = StringUtil::FormatString("REPLACE({}, '{}', '')", res, item);
+    }
+    return res;
+}
+
+std::vector<OpTypeStatistics> VirtualClusterDatabase::ExecuteGetOpStatByStepId(const std::string &stepId,
+                                                                               const std::string &sql)
+{
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql for get op stat by step id. Error:", sqlite3_errmsg(db));
+        return {};
+    }
+    int index = bindStartIndex;
+    sqlite3_bind_text(stmt, index++, stepId.c_str(), stepId.length(), SQLITE_TRANSIENT);
+    std::vector<OpTypeStatistics> res;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        OpTypeStatistics info;
+        int col = resultStartIndex;
+        info.count = sqlite3_column_int(stmt, col++);
+        info.opType = sqlite3_column_string(stmt, col++);
+        info.groupIdHash = sqlite3_column_string(stmt, col++);
+        res.push_back(info);
+    }
+    sqlite3_finalize(stmt);
+    return res;
 }
 }
 }
