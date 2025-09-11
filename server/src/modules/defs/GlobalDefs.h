@@ -96,6 +96,8 @@ static inline ParserType coverProjectTypeToParserType(ProjectTypeEnum projectTyp
             return ParserType::DB;
         case ProjectTypeEnum::DB:
             return ParserType::DB;
+        case ProjectTypeEnum::DB_NPUMONITOR:
+            return ParserType::DB_NPUMONITOR;
         case ProjectTypeEnum::BIN:
             return ParserType::BIN;
         case ProjectTypeEnum::IPYNB:
