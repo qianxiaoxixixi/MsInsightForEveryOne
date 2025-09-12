@@ -290,7 +290,14 @@ export const drawOnMove = ({
     if (session.mKeyRender) {
         return;
     }
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    // 获取元素
+    const chartDev = document.getElementById('chartInteractor');
+
+    // 获取宽度和高度
+    const offsetWidth = chartDev?.offsetWidth ?? ctx.canvas.width;
+    const offsetHeight = chartDev?.offsetHeight ?? ctx.canvas.height;
+    ctx.clearRect(0, 0, offsetWidth, offsetHeight);
 
     // draw mask
     // 因为拖动结束时normal canvas也会绘制mask，避免绘制双层mask，这里限制只有在拖动过程中才hover canvas才绘制mask
