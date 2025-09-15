@@ -497,6 +497,7 @@ bool ClusterService::CheckOpNameList(const Protocol::DurationListParams &params,
     queryOpNameParams.iterationId = params.iterationId;
     queryOpNameParams.stage = params.stage;
     queryOpNameParams.pgName = params.pgName;
+    queryOpNameParams.groupIdHash = params.groupIdHash;
     std::vector<OperatorNamesObject> opNameList;
     if (!database->QueryOperatorNames(queryOpNameParams, opNameList)) {
         ServerLog::Error("Failed to query operator names for analyze communication slow rank list.");

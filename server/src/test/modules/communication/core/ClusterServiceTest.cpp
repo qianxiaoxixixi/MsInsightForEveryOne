@@ -15,7 +15,6 @@ using namespace Dic::Module::Communication;
 const int NUMBER_ZERO = 0;
 const int NUMBER_ONE = 1;
 const int NUMBER_TWO = 2;
-const int NUMBER_TWENTY_EIGHT = 28;
 
 class ClusterServiceTest : public ::testing::Test {
 protected:
@@ -234,7 +233,8 @@ TEST_F(ClusterServiceTest, QueryDurationListFailWithoutDb)
     EXPECT_EQ(body.durationList.size(), NUMBER_ZERO);
 }
 
-TEST_F(ClusterServiceTest, AnalyzeCommunicationSlowRanksCheckOpNameListFalse)
+ // operatorName不为Total Op Info时，无专家建议
+TEST_F(ClusterServiceTest, AnalyzeCommunicationSlowRanksCheckOperatorNameFalse)
 {
     Clear();
     InitParser(filePath, Dic::COMPARE);
@@ -243,6 +243,24 @@ TEST_F(ClusterServiceTest, AnalyzeCommunicationSlowRanksCheckOpNameListFalse)
     params.iterationId = "2";
     params.groupIdHash = "9350434047717501483";
     params.isCompare = false;
+    params.clusterPath = Dic::COMPARE;
+    Dic::Protocol::CommunicationSlowRankAnalysisResponseBody body;
+    auto res = ClusterService::AnalyzeCommunicationSlowRanks(params, body);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(body.hasAdvice, false);
+}
+
+ // pgName为pp时，无专家建议
+TEST_F(ClusterServiceTest, AnalyzeCommunicationSlowRanksCheckPgNameFalse)
+{
+    Clear();
+    InitParser(filePath, Dic::COMPARE);
+    Dic::Protocol::DurationListParams params;
+    params.operatorName = "Total Op Info";
+    params.iterationId = "2";
+    params.groupIdHash = "9350434047717501483";
+    params.isCompare = false;
+    params.pgName = "pp";
     params.clusterPath = Dic::COMPARE;
     Dic::Protocol::CommunicationSlowRankAnalysisResponseBody body;
     auto res = ClusterService::AnalyzeCommunicationSlowRanks(params, body);
