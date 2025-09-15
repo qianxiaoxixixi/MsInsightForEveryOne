@@ -1,5 +1,5 @@
 {
-  "name": "mindstudio_insight_jupyterlab",
+  "name": "@MindStudio/mindstudio_insight_jupyterlab",
   "version": "7.0.802",
   "description": "A JupyterLab extension for MindStudio Insight.",
   "keywords": [
