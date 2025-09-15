@@ -290,7 +290,11 @@ export const drawOnMove = ({
     if (session.mKeyRender) {
         return;
     }
+
+    ctx.save();
+    ctx.resetTransform();
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.restore();
 
     // draw mask
     // 因为拖动结束时normal canvas也会绘制mask，避免绘制双层mask，这里限制只有在拖动过程中才hover canvas才绘制mask
