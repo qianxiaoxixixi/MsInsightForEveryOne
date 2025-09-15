@@ -821,6 +821,7 @@ void FileUtil::CollectMatchdFiles(const std::regex &fileRegex, std::vector<std::
     }
 }
 
+// 这个函数主要复用了FindFilesWithFilter的逻辑，不能直接使用的原因是FindFilesWithFilter对于多个匹配的文件只会找最新的一个
 std::vector<std::string> FileUtil::FindNPUMonitorFiles(const std::string &path)
 {
     std::vector<std::string> matchedFiles;
@@ -831,15 +832,36 @@ std::vector<std::string> FileUtil::FindNPUMonitorFiles(const std::string &path)
         }
         return matchedFiles;
     }
-    std::vector<std::string> folders;
-    std::vector<std::string> files;
-    if (!FileUtil::FindFolders(path, folders, files)) {
-        return {};
-    }
-    for (const auto &file : files) {
-        if (std::regex_match(file, fileRegex)) {
-            matchedFiles.emplace_back(SplicePath(path, file));
+
+    std::string error;
+    std::function<void(const std::string &, int)> find = [&find, &matchedFiles, &fileRegex,
+            &error](const std::string &path, int depth) {
+        if (!std::empty(error)) {
+            return;
         }
+        if (!IsWithinRecursionLimit(matchedFiles, depth, error)) {
+            return;
+        }
+        std::vector<std::string> folders;
+        std::vector<std::string> files;
+        if (!FileUtil::FindFolders(path, folders, files)) {
+            return;
+        }
+
+        for (const auto &folder: folders) {
+            std::string tmpPath = FileUtil::SplicePath(path, folder);
+            find(tmpPath, depth + 1);
+        }
+        for (const auto &file : files) {
+            if (std::regex_match(file, fileRegex)) {
+                matchedFiles.emplace_back(SplicePath(path, file));
+            }
+        }
+    };
+    find(path, 0);
+    if (!std::empty(error)) {
+        Server::ServerLog::Warn("There is a warning message when finding npumonitor files, path is: ",
+            StringUtil::GetPrintAbleString(path), " warning message is: ", error);
     }
     return matchedFiles;
 }
