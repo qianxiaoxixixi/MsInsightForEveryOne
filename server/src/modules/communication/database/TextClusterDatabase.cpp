@@ -642,7 +642,7 @@ std::vector<CommGroupParallelInfo> TextClusterDatabase::GetAllGroupInfo()
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         CommGroupParallelInfo info;
-        info.id = sqlite3_column_int64(stmt, col++);
+        info.id = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         info.rankSetStr = sqlite3_column_string(stmt, col++);
         info.type = sqlite3_column_string(stmt, col++);
         info.groupIdHash = sqlite3_column_string(stmt, col++);

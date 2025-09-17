@@ -1256,7 +1256,7 @@ std::vector<OpTypeStatistics> VirtualClusterDatabase::ExecuteGetOpStatByStepId(c
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         OpTypeStatistics info;
         int col = resultStartIndex;
-        info.count = sqlite3_column_int(stmt, col++);
+        info.count = NumberUtil::Int64ToUint64(sqlite3_column_int(stmt, col++));
         info.opType = sqlite3_column_string(stmt, col++);
         info.groupIdHash = sqlite3_column_string(stmt, col++);
         res.push_back(info);
