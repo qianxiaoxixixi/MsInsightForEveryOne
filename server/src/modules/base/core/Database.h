@@ -85,6 +85,7 @@ protected:
     virtual bool SetConfig();
     static std::string CheckSqlString(const std::string &src);
     static std::string sqlite3_column_string(sqlite3_stmt *stmt, int iCol);
+    void FastGetString(sqlite3_stmt *stmt, int iCol, std::string &output);
     static std::string Sqlite3ColumnConvertStr(int colType, sqlite3_stmt *stmt, int iCol);
     std::string Sqlite3ColumnConvertStrReturnNull(int colType, sqlite3_stmt *stmt, int iCol);
     std::string GetLastError();

@@ -152,6 +152,15 @@ std::string Database::CheckSqlString(const std::string &src)
     return res;
 }
 
+void Database::FastGetString(sqlite3_stmt *stmt, int iCol, std::string &output)
+{
+    const unsigned char* text = sqlite3_column_text(stmt, iCol);
+    int len = sqlite3_column_bytes(stmt, iCol);
+    if (text) {
+        output.assign(reinterpret_cast<const char*>(text), len);
+    }
+}
+
 std::string Database::sqlite3_column_string(sqlite3_stmt *stmt, int iCol)
 {
     if (stmt == nullptr) {
