@@ -185,6 +185,15 @@ std::string Database::Sqlite3ColumnConvertStr(int colType, sqlite3_stmt *stmt, i
     return oss.str();
 }
 
+std::string Database::Sqlite3ColumnConvertStrReturnNull(int colType, sqlite3_stmt *stmt, int iCol)
+{
+    int type = sqlite3_column_type(stmt, iCol);
+    if (type == SQLITE_NULL) {
+        return "NULL";
+    }
+    return Sqlite3ColumnConvertStr(colType, stmt, iCol);
+}
+
 bool Database::StartTransaction()
 {
     return isOpen && ExecSql("BEGIN;");

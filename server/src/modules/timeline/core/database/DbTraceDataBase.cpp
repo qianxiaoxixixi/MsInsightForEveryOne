@@ -643,16 +643,8 @@ std::vector<OVERLAP_INFO> BuildOverlapInfoList(const std::vector<OVERLAP_INFO> &
     }
     return overlapInfoList;
 }
-void DbTraceDataBase::GenerateOverlapAnalysis()
+bool DbTraceDataBase::GenerateOverlapAnalysis()
 {
-    if (!CheckTableExist(TABLE_OVERLAP_ANALYSIS)) {
-        Server::ServerLog::Error("Generate overlap analysis:Table OVERLAP_ANALYSIS is not exist.");
-        return;
-    }
-    if (CheckValueFromStatusInfoTable(OVERLAP_ANALYSIS_STATUS, FINISH_STATUS)) {
-        Server::ServerLog::Info("Generate overlap analysis already finish. skip");
-        return;
-    }
     {
         std::unique_lock<std::recursive_mutex> lockGuard(mutex);
         ExecSql("delete from OVERLAP_ANALYSIS where 1 = 1");
@@ -671,12 +663,13 @@ void DbTraceDataBase::GenerateOverlapAnalysis()
         const std::vector<OVERLAP_INFO> overlapInfoList = BuildOverlapInfoList(timeInfoList);
         if (InsertOverlapAnalysisInfo(timeInfoList, deviceId) && InsertOverlapAnalysisInfo(overlapInfoList, deviceId)) {
             Server::ServerLog::Info("Generate overlap analysis success for device: ", deviceId);
+            return true;
         } else {
             Server::ServerLog::Error("Generate overlap analysis fail");
-            return;
+            return false;
         }
     }
-    UpdateValueIntoStatusInfoTable(OVERLAP_ANALYSIS_STATUS, FINISH_STATUS);
+    return true;
 }
 
 bool DbTraceDataBase::InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> &overlapInfoList,
@@ -762,14 +755,6 @@ void DbTraceDataBase::QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_IN
 
 void DbTraceDataBase::UpdateWaitTime()
 {
-    if (!CheckTableExist(TABLE_COMPUTE_TASK_INFO) || !CheckTableExist(TABLE_COMMUNICATION_OP) ||
-        !CheckTableDataInvalid(TABLE_TASK)) {
-        Server::ServerLog::Error("Update wait time:Table is not exist.");
-        return;
-    }
-    if (CheckValueFromStatusInfoTable(WAIT_TIME_STATUS, FINISH_STATUS)) { // 已更新数据，跳过更新
-        return;
-    }
     auto stmt = CreatPreparedStatement(FULL_DB_UPDATE_TIME); // 查询数据
     auto updateComputeStmt = CreatPreparedStatement("UPDATE COMPUTE_TASK_INFO SET waitNs = ? WHERE ROWID = ?;");
     auto updateCommunicationStmt = CreatPreparedStatement("UPDATE COMMUNICATION_OP SET waitNs = ? WHERE ROWID = ?;");
@@ -809,7 +794,6 @@ void DbTraceDataBase::UpdateWaitTime()
         ServerLog::Error("Update wait time. Failed to update last data.");
         return;
     }
-    UpdateValueIntoStatusInfoTable(WAIT_TIME_STATUS, FINISH_STATUS);
 }
 
 bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &updateComputeStmt,
@@ -1130,14 +1114,9 @@ std::string DbTraceDataBase::GetHostPath(const std::string &filePath)
     return "";
 }
 
-void DbTraceDataBase::InitConnectionCats()
+bool DbTraceDataBase::InitConnectionCats()
 {
-    if (CheckValueFromStatusInfoTable(CONNECTION_STATUS, FINISH_STATUS)) { // 已更新数据，跳过更新
-        return;
-    }
-    if (ExecSql(DbSqlDefs::GetConnectionCatSql())) {
-        UpdateValueIntoStatusInfoTable(CONNECTION_STATUS, FINISH_STATUS);
-    }
+    return ExecSql(DbSqlDefs::GetConnectionCatSql());
 }
 
 std::string DbTraceDataBase::GetStringCacheValue(const std::string& path, const std::string& key)

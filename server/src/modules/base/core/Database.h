@@ -77,6 +77,8 @@ public:
     virtual std::vector<std::map<std::string, std::string>> QueryDataByPage(const PageQuery& query,
                                                                             const std::vector<ColumnAtt>& columns);
     std::vector<LinkInfo> QueryTableNameAndCol(const std::string &linkName);
+    bool CheckValueFromStatusInfoTable(const std::string &key, const std::string &refValue);
+    bool UpdateValueIntoStatusInfoTable(const std::string &key, const std::string &value);
 
 protected:
     bool CheckTableContainData(const std::string& tableName);
@@ -84,6 +86,7 @@ protected:
     static std::string CheckSqlString(const std::string &src);
     static std::string sqlite3_column_string(sqlite3_stmt *stmt, int iCol);
     static std::string Sqlite3ColumnConvertStr(int colType, sqlite3_stmt *stmt, int iCol);
+    std::string Sqlite3ColumnConvertStrReturnNull(int colType, sqlite3_stmt *stmt, int iCol);
     std::string GetLastError();
     static std::string GetDataBaseVersion();
     sqlite3 *db = nullptr;
@@ -102,8 +105,6 @@ protected:
     std::string GetValueFromMetaDataTable(const std::string& name);
     bool CreateStatusInfoTable(); // 创建表时未加锁，需要在调用处加锁
     std::string GetValueFromStatusInfoTable(const std::string& key);
-    bool CheckValueFromStatusInfoTable(const std::string &key, const std::string &refValue);
-    bool UpdateValueIntoStatusInfoTable(const std::string &key, const std::string &value);
     bool CheckAndResetDatabaseOnVersionChange();
     template <typename... Args> static inline std::unique_ptr<SqliteResultSet> ExecuteQuery(
             std::unique_ptr<SqlitePreparedStatement> &stmt, const std::string &sql, Args&&... args)
