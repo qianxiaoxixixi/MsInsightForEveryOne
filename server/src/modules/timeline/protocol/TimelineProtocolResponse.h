@@ -77,6 +77,7 @@ struct UnitThreadTracesBody {
     uint64_t maxDepth = 0;
     uint64_t currentMaxDepth = 0;
     bool havePythonFunction = false;
+    bool isLoading = false;
     std::vector<std::vector<ThreadTraces>> data;
 };
 
@@ -428,6 +429,7 @@ struct SystemViewOverallResponse : public Response {
     SystemViewOverallResponse() : Response(REQ_RES_SYSTEM_VIEW_OVERALL) {}
     std::vector<SystemViewOverallRes> details;
     PageParam pageParam;
+    bool isLoading = false;
 };
 
 class EventDetail {

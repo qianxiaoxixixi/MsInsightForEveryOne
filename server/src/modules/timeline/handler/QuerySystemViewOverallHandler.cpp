@@ -17,7 +17,16 @@ bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     std::unique_ptr<SystemViewOverallResponse> responsePtr = std::make_unique<SystemViewOverallResponse>();
     SystemViewOverallResponse &response = *responsePtr;
     SetBaseResponse(request, response);
-
+    auto database = DataBaseManager::Instance().GetTraceDatabaseByFileId(request.fileId);
+    if (database == nullptr) {
+        SendResponse(std::move(responsePtr), false, "Failed to get connection for system view overall statistics.");
+        return false;
+    }
+    if (!database->CheckValueFromStatusInfoTable(OVERLAP_ANALYSIS_UNIT, FINISH_STATUS)) {
+        response.isLoading = true;
+        SendResponse(std::move(responsePtr), true, "The overlap analysis data is not parse finish.");
+        return true;
+    }
     std::string error;
     request.params.page.Check(error);
     if (!std::empty(error)) {
@@ -29,7 +38,7 @@ bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Requ
         SystemViewOverallCacheManager::Instance().GetOverallData(request.fileId);
     if (!overallDetails.empty()) {
         response.details = overallDetails;
-    } else if (CalOverallData(request, response, error)) {
+    } else if (CalOverallData(request, response, error, database)) {
         SystemViewOverallCacheManager::Instance().SetOverallData(request.fileId, response.details);
     } else {
         SendResponse(std::move(responsePtr), false, error);
@@ -44,13 +53,8 @@ bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Requ
 }
 
 bool QuerySystemViewOverallHandler::CalOverallData(SystemViewOverallRequest &request,
-                                                   SystemViewOverallResponse &response, std::string &error)
+    SystemViewOverallResponse &response, std::string &error, const std::shared_ptr<VirtualTraceDatabase> &database)
 {
-    auto database = DataBaseManager::Instance().GetTraceDatabaseByFileId(request.fileId);
-    if (database == nullptr) {
-        error = "Failed to get connection for system view overall statistics.";
-        return false;
-    }
     SystemViewOverallHelper overallHelper;
     std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
     if (deviceId.empty()) {
