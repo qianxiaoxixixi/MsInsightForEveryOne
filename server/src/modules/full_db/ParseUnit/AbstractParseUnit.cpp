@@ -2,9 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 #include "AbstractParseUnit.h"
-#include "DataBaseManager.h"
 #include <thread>
-#include <chrono>
+#include "DataBaseManager.h"
 
 namespace Dic::Module::FullDb {
 bool AbstractParseUnit::Handle(const ParseUnitParams &params)

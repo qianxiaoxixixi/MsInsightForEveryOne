@@ -1,6 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
+#ifndef PROFILER_SERVER_CURVECONTAINER_H
+#define PROFILER_SERVER_CURVECONTAINER_H
 #include <vector>
 #include <string>
 #include <climits>
@@ -9,8 +11,6 @@
 #include <memory>
 #include <mutex>
 #include <algorithm>
-#ifndef PROFILER_SERVER_CURVECONTAINER_H
-#define PROFILER_SERVER_CURVECONTAINER_H
 namespace Dic::Module::Memory {
 struct CurveView {
     std::vector<std::string> legends;
