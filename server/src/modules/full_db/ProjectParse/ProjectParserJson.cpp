@@ -795,8 +795,7 @@ std::string ProjectParserJson::GetFileIdWithDb(const std::string &filePath)
     }
 
     std::string rankId = FileUtil::GetProfilerFileId(FileUtil::SplicePath(filePath, "mindstudio_data.db"));
-    std::string dbPath;
-    dbPath = FileUtil::SplicePath(filePath, "mindstudio_data.db");
+    std::string dbPath = FileUtil::SplicePath(filePath, "mindstudio_data.db");
     return FileUtil::GetDbPath(dbPath, rankId);
 }
 
