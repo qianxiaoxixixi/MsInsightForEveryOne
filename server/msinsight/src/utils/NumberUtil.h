@@ -196,7 +196,9 @@ public:
     {
         us.erase(0, us.find_first_not_of(" \t\n\r"));
         us.erase(us.find_last_not_of(" \t\n\r") + 1);
-        if (us.empty()) return 0;
+        if (us.empty()) {
+            return 0;
+        }
         size_t dotPos = us.find('.');
         std::string integerPart;
         std::string decimalPart;

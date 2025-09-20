@@ -38,7 +38,7 @@ CurveView CurveContainer::ComputeCurve(double xMin, double xMax, const std::stri
         GetAllPoint(res, indices);
         return res;
     }
-    uint64_t bucketSize = ceil(static_cast<double>(m) / numBuckets);
+    uint64_t bucketSize = static_cast<uint64_t>(ceil(static_cast<double>(m) / numBuckets));
     for (int b = 0; b < numBuckets; b++) {
         std::vector<int> indexRes = ComputeDataIndex(indices, m, bucketSize, b);
         AddCompeteData(res, indexRes);
@@ -73,7 +73,7 @@ void CurveContainer::Clear()
 std::vector<int> CurveContainer::ComputeDataIndex(const std::vector<size_t>& indices, size_t m, uint64_t bucketSize,
                                                   int b)
 {
-    uint64_t start = b * bucketSize;
+    uint64_t start = static_cast<size_t>(b) * bucketSize;
     uint64_t tempM = m;
     uint64_t end = std::min(tempM, start + bucketSize);
     std::vector<int> indexRes;
@@ -89,11 +89,11 @@ std::vector<int> CurveContainer::ComputeDataIndex(const std::vector<size_t>& ind
                 continue;
             if (val < minVal) {
                 minVal = val;
-                minIdx = i;
+                minIdx = static_cast<int>(i);
             }
             if (val > maxVal) {
                 maxVal = val;
-                maxIdx = i;
+                maxIdx = static_cast<int>(i);
             }
         }
         if (minIdx > maxIdx) {
