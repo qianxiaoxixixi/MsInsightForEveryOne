@@ -45,17 +45,20 @@ export const getOverallMetrics = async (params: GetOverallMetricsParams): Promis
         });
     };
 
-    if (res.data.length === 0) {
-        return new Promise((resolve) => {
-            connector.addListener('OverallMetrics', async () => {
-                const result = await window.requestData('systemView/overall', params, 'timeline');
-                addCatField(result.data);
-                resolve(result);
-            });
-        });
+    if (res.data.length !== 0) {
+        addCatField(res.data);
+        return res;
     }
-    addCatField(res.data);
-    return res;
+    return new Promise((resolve) => {
+        connector.addListener('OverallMetrics', async (e) => {
+            if (e?.data?.body?.data?.dbId !== params.dbPath) {
+                return;
+            }
+            const result = await window.requestData('systemView/overall', params, 'timeline');
+            addCatField(result.data);
+            resolve(result);
+        });
+    });
 };
 
 // 获取system view综合指标详细算子列表

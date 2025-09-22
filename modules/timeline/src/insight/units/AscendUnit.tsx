@@ -552,7 +552,10 @@ async function createSummaryChart<T extends ProcessMetaData | LabelMetaData>(
 
         if (requestParam.processId === 'OVERLAP_ANALYSIS' && request === undefined) {
             return new Promise((resolve) => {
-                connector.addListener('updateAnalysisData', async () => {
+                connector.addListener('updateAnalysisData', async (e) => {
+                    if (e?.data?.body?.data?.dbId !== requestParam.dbPath) {
+                        return;
+                    }
                     const result = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, { ...requestParam, aaa: 1 });
                     return resolve(resProcess(result));
                 });
