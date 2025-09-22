@@ -199,11 +199,9 @@ const initUnitSessionInfo = (session: Session, result: ImportResult, dataSource:
     session.isMultiDevice = result.isMultiDevice;
 };
 
-const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSource: DataSource): void => {
+const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSource: DataSource, isNeedResetRankId: boolean): void => {
     if (!session) { return; }
-    if (result.reset as boolean) {
-        resetPage({ dataSource });
-    }
+    if (result.reset as boolean) { resetPage({ dataSource }); }
     initUnitSessionInfo(session, result, dataSource);
     const hostInfo = groupBy(result.result, (item: ImportCardInfo) => item.host ?? '');
     forEach(hostInfo, (cards, host) => {
@@ -239,7 +237,9 @@ const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSo
             }
             cardUnits.push(cardUnit);
             session.units = session.units.concat([cardUnit]);
-            session.rankCardInfoMap.clear();
+            if (isNeedResetRankId) {
+                session.rankCardInfoMap.clear();
+            }
         });
         if (unit) {
             unit.isExpanded = cardUnits.length > 0 ? cardUnits[0].isExpanded : false;
@@ -361,13 +361,15 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
         const result = getPropFromData(data, 'importResult') as ImportResult;
+        const isNeedResetRankId = getPropFromData(data, 'switchProject') as boolean;
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
         if (!session) {
             return;
         }
+        session.isNeedResetRankId = isNeedResetRankId;
         runInAction(() => {
-            initUnitInfo(session, result, dataSource);
+            initUnitInfo(session, result, dataSource, isNeedResetRankId);
         });
         sendSessionUpdate(result, session);
         connector.send({
@@ -472,7 +474,9 @@ const clearUnits = (session: Session, data?: Record<string, unknown>): void => {
         session.units = [];
         session.pinnedUnits = [];
     }
-    session.rankCardInfoMap.clear();
+    if (session.isNeedResetRankId) {
+        session.rankCardInfoMap.clear();
+    }
 };
 
 const resetPage = (data?: Record<string, unknown>): void => {
