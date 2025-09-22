@@ -1789,9 +1789,8 @@ bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThread
         pidList.emplace_back(trackInfo.processId);
         tidList.emplace_back(trackInfo.threadId);
     }
-    std::string orderBy = " ORDER BY " + requestParams.orderBy;
-    orderBy.append(requestParams.order == "descend" ? " DESC " : " ASC ");
-    std::string orderByAndPage = orderBy + " limit ? offset ?";
+    std::string orderByAndPage = " ORDER BY " + requestParams.orderBy +
+            (requestParams.order == "descend" ? " DESC " : " ASC ") + " limit ? offset ?";
     auto stmt = CreatPreparedStatement();
     std::unique_ptr <SqliteResultSet> resultSet;
     try {
@@ -1799,6 +1798,9 @@ bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThread
             { GetDeviceId(requestParams.rankId), minTimestamp, orderByAndPage, pidList, tidList });
     } catch (DatabaseException &e) {
         ServerLog::Error("Query thread same operators details fail, ", e.What());
+        return false;
+    }
+    if (resultSet == nullptr) {
         return false;
     }
     while (resultSet->Next()) {
