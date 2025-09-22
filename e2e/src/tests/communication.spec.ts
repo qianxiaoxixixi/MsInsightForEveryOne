@@ -205,7 +205,7 @@ test.describe('Communication', () => {
         await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
         const tableLocator = communicationFrame.getByTestId('dataAnalysisTable').locator('.ant-table-container > .ant-table-content > table');
         const dataAnalysisTable = new TableHelpers(page, tableLocator, communicationFrame);
-        await dataAnalysisTable.sortTableHead('Elapse Time(ms)');
+        await dataAnalysisTable.sortTableHead('Elapsed Time(ms)');
         await page.mouse.move(0, 0);
         await expect(tableLocator).toHaveScreenshot('data-analysis-table-sort.png');
     });
@@ -251,10 +251,10 @@ test.describe('Communication', () => {
         const expandTable = new TableHelpers(page, expandTableLocator, communicationFrame);
         // 表格滚动到可视区域并点击表头排序
         const secondRequest = waitForResponse(await ws, (res) => res?.command === 'communication/operatorDetails');
-        await expandTable.sortTableHead('Elapse Time(ms)');
+        await expandTable.sortTableHead('Elapsed Time(ms)');
         await secondRequest;
         await page.mouse.move(0, 0);
-        await expect(expandTableLocator).toHaveScreenshot('data-analysis-subtable-sort.png', { maxDiffPixels: 500 });
+        await expect(expandTableLocator).toHaveScreenshot('data-analysis-subtable-sort.png', { maxDiffPixels: 100 });
     });
 
     // 【case】点击“带宽分析”列的查看更多可以跳转至所选rank的对应算子带宽分析页
