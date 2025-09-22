@@ -8,6 +8,7 @@
 #include "ParserStatusManager.h"
 #include "TraceTime.h"
 #include "CacheManager.h"
+#include "ProjectParserFactory.h"
 #include "TraceFileSimulationParser.h"
 
 namespace Dic {
@@ -163,6 +164,9 @@ void TraceFileSimulationParser::EndParseTask(const std::string &rankId,
     CacheManager::Instance().ClearCacheByRankId(rankId);
     ServerLog::Info("Update depth completed. ID:", rankId);
     ParseEndCallBack(rankId, fileId, true, "");
+    // update flow status
+    database->UpdateValueIntoStatusInfoTable(CONNECTION_UNIT, FINISH_STATUS);
+    ProjectParserBase::SendUnitFinishNotify(fileId, true, CONNECTION_UNIT);
 }
 
 void TraceFileSimulationParser::ParseEndCallBack(const std::string &rankId,
