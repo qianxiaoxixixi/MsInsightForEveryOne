@@ -101,6 +101,11 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr,
         Timeline::TraceTime::Instance().UpdateCardTimeDuration(rankId, min, max);
         ParseEndCallBack(rankId, fileId, true, "");
         ParserStatusManager::Instance().SetFinishStatus(rankId);
+        std::vector<std::string> taskStatusList = {CONNECTION_UNIT, WAIT_TIME_UNIT, OVERLAP_ANALYSIS_UNIT};
+        for (const auto &item: taskStatusList) {
+            database->UpdateValueIntoStatusInfoTable(item, FINISH_STATUS);
+            ProjectParserBase::SendUnitFinishNotify(fileId, true, item);
+        }
         return true;
     }
     if (!database->DropTable() || !database->CreateTable() || !database->UpdateParseStatus(NOT_FINISH_STATUS)) {
@@ -207,8 +212,10 @@ void TraceFileParser::EndParseTask(const std::string &rankId, const std::vector<
     std::string statusInfo = ComputeStatusInfoFromPathArr(filePathArr);
     database->UpdateParseStatus(statusInfo);
     std::vector<std::string> taskStatusList = {CONNECTION_UNIT, WAIT_TIME_UNIT, OVERLAP_ANALYSIS_UNIT};
+    std::string fileId = DataBaseManager::Instance().GetFileIdByRankId(rankId);
     for (const auto &item: taskStatusList) {
         database->UpdateValueIntoStatusInfoTable(item, FINISH_STATUS);
+        ProjectParserBase::SendUnitFinishNotify(fileId, true, item);
     }
     ServerLog::Info("Update depth completed. ID:", rankId);
     ParseEndCallBack(rankId, database->GetDbPath(), true, "");

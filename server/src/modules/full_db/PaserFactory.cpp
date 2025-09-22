@@ -522,6 +522,19 @@ bool ProjectParserBase::IsMindFormsRankData(const std::vector<std::string> &pare
     return RegexUtil::RegexSearch(FileUtil::GetFileName(parentFolders.back()), "^rank_[0-9]+$").has_value();
 }
 
+void ProjectParserBase::SendUnitFinishNotify(const std::string &fileId, bool res, const std::string &unitName,
+                                             const std::string &error)
+{
+    auto event = std::make_unique<ParseUnitCompletedEvent>();
+    event->body.parseResult = res;
+    event->body.unitName = unitName;
+    event->body.errorMsg = error;
+    event->body.dbId = fileId;
+    event->moduleName = MODULE_TIMELINE;
+    event->result = true;
+    SendEvent(std::move(event));
+}
+
 std::vector<std::string> ProjectParserBase::ParseDeviceInfo(Dic::Module::Global::ProjectExplorerInfo &info, const std::string &searchPath)
 {
     if (info.projectType == static_cast<int64_t>(ProjectTypeEnum::DB_CLUSTER) ||

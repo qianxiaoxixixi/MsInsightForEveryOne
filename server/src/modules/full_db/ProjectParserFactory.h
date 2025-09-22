@@ -93,6 +93,9 @@ public:
     std::string GetRankIdFromPath(const std::string &filePath, const std::string &importPath);
     static std::string GetDbPath(const std::string &filePath, const int index);
 
+    static void SendUnitFinishNotify(const std::string &fileId, bool res, const std::string &unitName,
+                                     const std::string &error = "");
+
 protected:
     std::string curScene;
     std::map<std::string, std::vector<std::string>> dataPathToDbMap;

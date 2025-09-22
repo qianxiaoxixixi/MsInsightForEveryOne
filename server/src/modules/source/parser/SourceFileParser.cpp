@@ -20,6 +20,7 @@
 #include "BinFileParseUtil.h"
 #include "DetailsMemoryParser.h"
 #include "GlobalProtocolEvent.h"
+#include "ProjectParserFactory.h"
 #include "NumberSafeUtil.h"
 
 namespace Dic {
@@ -250,6 +251,8 @@ void SourceFileParser::EndParseTask(const std::string &rankId,
     CacheManager::Instance().ClearCacheByRankId(rankId);
     ServerLog::Info("Update depth completed. ID:", rankId);
     ParseEndCallBack(rankId, true, "", fileId);
+    database->UpdateValueIntoStatusInfoTable(CONNECTION_UNIT, FINISH_STATUS);
+    ProjectParserBase::SendUnitFinishNotify(fileId, true, CONNECTION_UNIT);
 }
 
 void SourceFileParser::ParseTask(const std::string &rankId,
