@@ -23,6 +23,8 @@ import { updateRankMap } from '@/utils/Rank';
 import { transformFile, updateProject } from '@/utils/Project';
 import { closeLoading } from '@/utils/useLoading';
 import { updateDataScene } from '@/components/TabPane/Index';
+import { Session } from '@/entity/session';
+
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
 const getConnectionMapKey = (host: ConnectHost): string => {
@@ -44,7 +46,7 @@ export const isExistedRemote = function(host: ConnectHost): boolean {
     return CONNECTION_MAP.has(getConnectionMapKey(host));
 };
 
-export const addDataPath = async function(project: Project, action: ProjectAction, isConflict: boolean): Promise<boolean> {
+export const addDataPath = async function(project: Project, action: ProjectAction, isConflict: boolean, session: Session): Promise<boolean> {
     if (!isExistedRemote(GLOBAL_HOST)) {
         const connected = await connectRemote(GLOBAL_HOST);
         if (!connected) {
@@ -72,9 +74,16 @@ export const addDataPath = async function(project: Project, action: ProjectActio
             connector.send({ event: 'remote/reset', body: {}, target: 'plugin' }); // 由于发送时页签应该只有 时间线、内存、算子 存在，所以这个事件只能被这三个页签收到
             return false;
         }
+        // 时间线需要判断是整体添加还是在项目内添加
+        const { activeDataSource } = session;
+
+        // 是否切换项目
+        const switchProject = params?.projectAction !== ProjectAction.ADD_FILE || activeDataSource?.projectName !== params?.projectName;
+
+        // 添加参数告诉是否为点击的添加
         connector.send({
             event: 'remote/import',
-            body: { dataSource: transformTimelineDataSource(project), importResult: result as ImportResultBody },
+            body: { dataSource: transformTimelineDataSource(project), importResult: result as ImportResultBody, switchProject },
             target: 'plugin',
         }); // 由于发送时页签应该只有 时间线、内存、算子 存在，所以这个事件只能被这三个页签收到
         afterImportProject(params, result as ImportResultBody);
