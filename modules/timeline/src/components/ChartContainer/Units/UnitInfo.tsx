@@ -509,7 +509,10 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
     if (unit.metadata.processName === 'Overlap Analysis' && unit.metadata.threadName === '' && isOverlapAnalysisLoading) {
         setExpandable(false);
         setLoading(true);
-        connector.addListener('updateAnalysisLoading', () => {
+        connector.addListener('updateAnalysisLoading', (e: any) => {
+            if (e?.data?.body?.data?.dbId !== unit.metadata.dbPath) {
+                return;
+            }
             setExpandable(true);
             setLoading(false);
             unit.isOverlapAnalysisLoading = false;
