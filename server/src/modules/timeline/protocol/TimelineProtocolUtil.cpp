@@ -182,7 +182,8 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadsResponse>(const 
             processesJson.PushBack(processJson, allocator);
         }
         JsonUtil::AddMember(threadsJson, "processes", processesJson, allocator);
-        JsonUtil::AddMember(threadsJson, "metaType", sliceGroupItem.metaType, allocator);
+        std::vector<std::string> metaTypeList(sliceGroupItem.metaTypeList.begin(), sliceGroupItem.metaTypeList.end());
+        JsonUtil::AddMember(threadsJson, "metaTypeList", metaTypeList, allocator);
         data.PushBack(threadsJson, allocator);
     }
     JsonUtil::AddMember(body, "data", data, allocator);
