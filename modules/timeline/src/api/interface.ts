@@ -159,6 +159,7 @@ export interface EventViewParams {
     threadIdList?: string[];
     threadName: string;
     order: string;
+    filterCondition: string[];
 }
 
 export interface QueryAllSameOperatorsDurationParams {

@@ -23,5 +23,17 @@ void KernelDetailsParams::Check(std::string &error) const
         }
     }
 }
+
+bool EventsViewParams::CheckParams(std::string &warnMsg) const
+{
+    CheckUnsignPageValid(pageSize, currentPage, warnMsg);
+    for (const auto &filter : filters) {
+        if (!StringUtil::CheckSqlValid(filter.second)) {
+            warnMsg = "filters exist invalid string value";
+            return false;
+        }
+    }
+    return true;
+}
 } // namespace Protocol
 } // namespace Dic

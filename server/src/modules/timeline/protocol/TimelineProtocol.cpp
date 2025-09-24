@@ -460,6 +460,22 @@ std::unique_ptr<Request> TimelineProtocol::ToEventsViewRequest(const Dic::json_t
     JsonUtil::SetByJsonKeyValue(reqPtr->params.tid, json["params"], "tid");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.threadName, json["params"], "threadName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
+    if (json["params"].HasMember("filterCondition") && json["params"]["filterCondition"].IsArray()) {
+        for (const auto &filter : json["params"]["filterCondition"].GetArray()) {
+            if (!filter.IsString()) {
+                continue;
+            }
+            auto fil = JsonUtil::TryParse(filter.GetString(), error);
+            if (!fil) {
+                error = "Failed to set request base info because invalid filter json, command is: " + reqPtr->command;
+                continue;
+            }
+            std::pair<std::string, std::string> pFilter("", "");
+            pFilter.first = JsonUtil::GetString(fil->GetObj(), "columnName");
+            pFilter.second = JsonUtil::GetString(fil->GetObj(), "value");
+            reqPtr->params.filters.emplace_back(pFilter);
+        }
+    }
     return reqPtr;
 }
 
@@ -479,13 +495,18 @@ std::unique_ptr<Request> TimelineProtocol::ToKernelDetailRequest(const json_t &j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "searchName");
     if (json["params"].HasMember("filterCondition") && json["params"]["filterCondition"].IsArray()) {
         for (const auto &filter : json["params"]["filterCondition"].GetArray()) {
-            if (filter.IsString()) {
-                std::pair<std::string, std::string> pFilter("", "");
-                auto fil = JsonUtil::TryParse(filter.GetString(), error);
-                pFilter.first = JsonUtil::GetString(fil->GetObj(), "columnName");
-                pFilter.second = JsonUtil::GetString(fil->GetObj(), "value");
-                reqPtr->params.filters.emplace_back(pFilter);
+            if (!filter.IsString()) {
+                continue;
             }
+            auto fil = JsonUtil::TryParse(filter.GetString(), error);
+            if (!fil) {
+                error = "Failed to set request base info because invalid filter json, command is: " + reqPtr->command;
+                continue;
+            }
+            std::pair<std::string, std::string> pFilter("", "");
+            pFilter.first = JsonUtil::GetString(fil->GetObj(), "columnName");
+            pFilter.second = JsonUtil::GetString(fil->GetObj(), "value");
+            reqPtr->params.filters.emplace_back(pFilter);
         }
     }
     return reqPtr;

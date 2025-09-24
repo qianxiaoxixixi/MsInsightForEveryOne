@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import { eventViewData, getDefaultColumData, getPageData, queryOneKernel } from './Common';
-import { ResizeTable } from 'ascend-resize';
+import { ResizeTable, fetchColumnFilterProps } from 'ascend-resize';
 import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 import type { ThreadMetaData } from '../../entity/data';
 import { Button } from 'ascend-components';
@@ -42,6 +42,7 @@ export interface EventTableColumn {
 interface UpdateDatas {
     pages: { current: number; pageSize: number; total: number };
     sorters: { field: string; order: string };
+    filters: any;
     props: any;
     setLoading: React.Dispatch<React.SetStateAction<boolean>>;
     setDataSource: React.Dispatch<React.SetStateAction<any[]>>;
@@ -54,6 +55,8 @@ const getColumns = (tableColumns: EventTableColumn[]): any => {
     for (const tableColumn of tableColumns) {
         if (tableColumn.key === 'rankId') {
             result.push({ title: i18n.t(`timeline:tableHead.${tableColumn.name}`), dataIndex: tableColumn.key });
+        } else if (tableColumn.key === 'name') {
+            result.push({ title: i18n.t(`timeline:tableHead.${tableColumn.name}`), dataIndex: tableColumn.key, ...getDefaultColumData(tableColumn.key), ...fetchColumnFilterProps('name', 'Name') });
         } else if (tableColumn.key === 'start') {
             result.push({ title: i18n.t(`timeline:tableHead.${tableColumn.name}`), dataIndex: 'startTime', ...getDefaultColumData('startTime') });
         } else {
@@ -63,23 +66,27 @@ const getColumns = (tableColumns: EventTableColumn[]): any => {
     return result;
 };
 
+const filterColumn = ['name'];
+
 const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: 'duration', order: 'descend' };
+const defaultFilters = { name: [] };
 export const EventDetail = observer((props: SelectContentViewProps & { request: any }) => {
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
+    const [filters, setFilters] = useState(defaultFilters);
     const [isLoading, setLoading] = useState(false);
     const [eventColum, setEventColum] = useState<string[]>([]);
     const [rowData, setRowData] = useState<any>({});
-    const [allCondition, setAllCondition] = useState({ showEvent: props.session.showEvent, page, sorter });
+    const [allCondition, setAllCondition] = useState({ showEvent: props.session.showEvent, page, sorter, filters });
     const { t } = useTranslation();
 
     useEffect(() => {
-        setAllCondition({ ...allCondition, page, sorter });
-    }, [sorter, page.current, page.pageSize]);
+        setAllCondition({ ...allCondition, page, sorter, filters });
+    }, [sorter, filters, page.current, page.pageSize]);
     useEffect(() => {
-        setAllCondition({ ...allCondition, showEvent: props.session.showEvent, page: defaultPage, sorter: defaultSorter });
+        setAllCondition({ ...allCondition, showEvent: props.session.showEvent, page: defaultPage, sorter: defaultSorter, filters: defaultFilters });
     }, [props.session.showEvent]);
 
     useEffect(() => {
@@ -87,13 +94,14 @@ export const EventDetail = observer((props: SelectContentViewProps & { request: 
             setDataSource([]);
             setPage(defaultPage);
             setSorter(defaultSorter);
+            setFilters(defaultFilters);
             setEventColum([]);
-            setAllCondition({ ...allCondition, page: defaultPage, sorter: defaultSorter });
+            setAllCondition({ ...allCondition, page: defaultPage, sorter: defaultSorter, filters: defaultFilters });
             return;
         }
-        updateData({ pages: allCondition.page, sorters: allCondition.sorter, props, setLoading, setDataSource, setPage, setEventColum });
+        updateData({ pages: allCondition.page, sorters: allCondition.sorter, filters: allCondition.filters, props, setLoading, setDataSource, setPage, setEventColum });
     }, [allCondition.showEvent, allCondition.page.current, allCondition.page.pageSize,
-        allCondition.sorter.field, allCondition.sorter.order, props.session.doReset, t]);
+        allCondition.sorter.field, allCondition.sorter.order, allCondition.filters, props.session.doReset, t]);
 
     useEffect(() => {
         if (rowData.name !== null && rowData.name !== undefined) {
@@ -106,9 +114,12 @@ export const EventDetail = observer((props: SelectContentViewProps & { request: 
     return (
         <div style={{ height: '100%' }}>
             <ResizeTable
-                onChange={(pagination: unknown, filters: unknown, newsorter: unknown, extra: {action: string}): void => {
+                onChange={(pagination: unknown, newFilters: unknown, newsorter: unknown, extra: {action: string}): void => {
                     if (extra.action === 'sort') {
                         setSorter(newsorter as typeof sorter);
+                    }
+                    if (extra.action === 'filter') {
+                        setFilters(newFilters as typeof filters);
                     }
                 }}
                 pagination={getPageData(page, setPage)} dataSource={dataSource} columns={eventColumns} size="small" loading={isLoading}
@@ -124,14 +135,24 @@ export const EventDetail = observer((props: SelectContentViewProps & { request: 
 const updateData = async ({
     pages,
     sorters,
+    filters,
     props,
     setLoading,
     setDataSource,
     setPage,
     setEventColum,
 }: UpdateDatas): Promise<void> => {
+    const filterTypes: string[] = [];
+    Object.keys(filters).forEach(key => {
+        const filterValue = filters[key];
+        if (filterColumn.includes(key) && filterValue != null) {
+            if (Array.isArray((filterValue)) && filterValue.length > 0) {
+                filterTypes.push(JSON.stringify({ columnName: key, value: filterValue[0] }));
+            }
+        }
+    });
     setLoading(true);
-    const res = await searchData(pages, sorters, props).finally(() => setLoading(false));
+    const res = await searchData(pages, sorters, filterTypes, props).finally(() => setLoading(false));
     const requestData = props.session.eventUnits?.[0]?.metadata as ThreadMetaData;
     const timestampoffset = getTimeOffset(props.session, requestData);
     const data = res.eventDetails.map((item: any) => {
@@ -188,7 +209,7 @@ const handleSelected = async(rowData: any, props: SelectContentViewProps): Promi
     });
 };
 
-const searchData = async(pages: any, sorters: {field: string;order: string}, prop: any): Promise<EventTableData> => {
+const searchData = async(pages: any, sorters: {field: string;order: string}, filters: string[], prop: any): Promise<EventTableData> => {
     const requestData = prop.session.eventUnits?.[0]?.metadata as ThreadMetaData;
     return await eventViewData({
         rankId: requestData.cardId as string,
@@ -203,6 +224,7 @@ const searchData = async(pages: any, sorters: {field: string;order: string}, pro
         threadName: requestData.threadName,
         processName: requestData.processName as string,
         metaType: requestData.metaType as string,
+        filterCondition: filters,
     });
 };
 

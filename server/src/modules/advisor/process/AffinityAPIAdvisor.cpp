@@ -22,13 +22,12 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
         return false;
     }
     uint64_t start = params.pageSize * (params.currentPage - 1);
-    auto dbType = Timeline::DataBaseManager::Instance().GetDataType();
     for (uint64_t i = start; i < start + params.pageSize && i < results.size(); ++i) {
-        auto item = results.at(i);
+        auto item = results[i];
         Protocol::AffinityAPIData one{};
         one.name = item.name;
         one.baseInfo.id = item.id;
-        one.baseInfo.rankId = dbType == Timeline::DataType::TEXT ? params.rankId : database->GetDbPath();
+        one.baseInfo.rankId = params.rankId;
         one.baseInfo.pid = item.pid;
         one.baseInfo.tid = item.tid;
         one.baseInfo.startTime = item.timestamp;

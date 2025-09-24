@@ -428,10 +428,8 @@ struct EventsViewParams {
     std::string threadName;
     std::string metaType;
     std::vector<std::string> threadIdList;
-    bool CheckParams(std::string &warnMsg) const
-    {
-        return CheckUnsignPageValid(pageSize, currentPage, warnMsg);
-    }
+    std::vector<std::pair<std::string, std::string>> filters;
+    bool CheckParams(std::string &warnMsg) const;
 };
 
 struct EventsViewRequest : public Request {

@@ -102,8 +102,7 @@ public:
     virtual bool QueryFuseableOpData(const Protocol::KernelDetailsParams &params, const Timeline::FuseableOpRule &rule,
         std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp) = 0;
     virtual bool QueryOperatorDispatchData(const Protocol::KernelDetailsParams &params,
-        std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp,
-        uint64_t threshold, const std::string filePath) = 0;
+        std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp, uint64_t threshold) = 0;
     virtual bool QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
         uint64_t minTimestamp) = 0;
     virtual std::string QueryHostInfo() = 0;
