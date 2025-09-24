@@ -56,9 +56,18 @@ bool DbTraceDataBase::QueryUnitsMetadata(const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     QueryHostMetadata(fileId, metaData);
+    bool existOverlapAnalysis = false;
     if (CheckTableExist(TABLE_TASK)) {
         QueryAscendHardwareOperatorMetadata(fileId, metaData);
+        existOverlapAnalysis = true;
+    }
+    // 通信大算子支持独立展示，不依赖COMMUNICATION_TASK_INFO表和TASK表
+    if (CheckTableExist(TABLE_COMMUNICATION_OP)) {
         QueryHCCLOperatorMetadata(fileId, metaData);
+        existOverlapAnalysis = true;
+    }
+    // 只要TASK表或者COMMUNICATION_OP表存在，展示覆盖分析，TASK表反映计算信息，COMMUNICATION_OP表反映通信信息
+    if (existOverlapAnalysis) {
         GenerateOverlapAnalysisMetadata(fileId, metaData);
     }
     QueryCounterMetadata(fileId, metaData);
@@ -1236,6 +1245,9 @@ void DbTraceDataBase::AddHelperColumnsAndSetStatus()
         } else {
             ExecSql("update " + TABLE_TASK + " set depth = NULL;");
         }
+    }
+    // 只要TASK表或者COMMUNICATION_OP表存在，展示覆盖分析，TASK表反映计算信息，COMMUNICATION_OP表反映通信信息
+    if (isExistTask || isExistCommOp) {
         ExecSql(" create table if not exists OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 " deviceId integer, startNs integer, endNs integer, type integer);");
     }
@@ -1269,31 +1281,41 @@ bool DbTraceDataBase::InitStmt()
     if (initStmt) {
         return true;
     }
-    initStmt = true;
     std::string sql;
-    bool prepareUpdateStmtSuccess = true;
     if (CheckTableExist(TABLE_TASK)) {
         sql = "UPDATE " + TABLE_TASK + " set depth = ? where ROWID = ?";
         updateTaskDepthStmt = CreatPreparedStatement(sql);
+        if (updateTaskDepthStmt == nullptr) {
+            ServerLog::Error("Failed to prepare update task depth statement.");
+            return false;
+        }
+    }
+    // 只要TASK表或者COMMUNICATION_OP表存在，展示覆盖分析，TASK表反映计算信息，COMMUNICATION_OP表反映通信信息
+    if (CheckTableExist(TABLE_TASK) || CheckTableExist(TABLE_COMMUNICATION_OP)) {
         sql = "INSERT INTO " + TABLE_OVERLAP_ANALYSIS + " (deviceId, startNs, endNs, type) VALUES (?,?,?,?)";
         insertOverlapStmt = CreatPreparedStatement(sql);
-        prepareUpdateStmtSuccess = prepareUpdateStmtSuccess && updateTaskDepthStmt != nullptr &&
-                insertOverlapStmt != nullptr;
+        if (insertOverlapStmt == nullptr) {
+            ServerLog::Error("Failed to prepare insert overlap statement.");
+            return false;
+        }
     }
     if (CheckTableExist(TABLE_API)) {
         sql = "UPDATE " + TABLE_API + " set depth = ? where ROWID = ?";
         updateApiDepthStmt = CreatPreparedStatement(sql);
-        prepareUpdateStmtSuccess = prepareUpdateStmtSuccess && updateApiDepthStmt != nullptr;
+        if (updateApiDepthStmt == nullptr) {
+            ServerLog::Error("Failed to prepare update api depth statement.");
+            return false;
+        }
     }
     if (CheckTableExist(TABLE_CANN_API)) {
         sql = "UPDATE " + TABLE_CANN_API + " set depth = ? where ROWID = ?";
         updateCannApiDepthStmt = CreatPreparedStatement(sql);
-        prepareUpdateStmtSuccess = prepareUpdateStmtSuccess && updateCannApiDepthStmt != nullptr;
+        if (updateCannApiDepthStmt == nullptr) {
+            ServerLog::Error("Failed to prepare update cann api depth statement.");
+            return false;
+        }
     }
-    if (!prepareUpdateStmtSuccess) {
-        ServerLog::Error("Failed to prepare update statement.");
-        return false;
-    }
+    initStmt = true;
     return true;
 }
 
