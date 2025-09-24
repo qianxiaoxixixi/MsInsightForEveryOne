@@ -112,7 +112,7 @@ TEST_F(SystemViewOverallDbRepoTest, QueryOverlapAnalysisDataForOverallMetricTest
     ASSERT_EQ(overlapInfos.size(), 3);  // 3
     const double toleranceThreshold = 0.01;
     const std::vector<std::string> EXPECT_OVERLAP_NAME = {"Communication(Not Overlapped)", "Computing", "Free"};
-    const std::vector<double> EXPECT_OVERLAP_TINE = {98071.95, 8903.43, 25258.14};
+    const std::vector<double> EXPECT_OVERLAP_TINE = {98071.95, 8903.43, 30943.92};
     for (size_t index = 0; index < EXPECT_OVERLAP_TINE.size(); index++) {
         ASSERT_FALSE(overlapInfos[index].categoryList.empty());
         EXPECT_EQ(overlapInfos[index].categoryList[0], EXPECT_OVERLAP_NAME[index]);

@@ -613,9 +613,17 @@ void DbTraceDataBase::UpdateStartTime(const std::string &fileId)
     sqlite3_finalize(stmt);
 }
 
-std::vector<OVERLAP_INFO> BuildOverlapInfoList(const std::vector<OVERLAP_INFO> &timeInfoList)
+std::vector<OVERLAP_INFO> DbTraceDataBase::BuildOverlapInfoList(const std::vector<OVERLAP_INFO> &timeInfoList,
+                                                                const std::string &deviceId)
 {
     std::vector<OVERLAP_INFO> overlapInfoList;
+
+    // 客户要求Free的跨度从TASK表的最早开始时间到TASK表的最晚结束时间，这样TASK表开始和结束时非计算或通信的算子也显示为Free时间
+    std::pair<int64_t, int64_t> taskEarliestTimeAndLatestTime;
+    bool isQuerySuccess = QueryTaskEarliestAndLatestTimeExcludingCertainEvent(taskEarliestTimeAndLatestTime, deviceId);
+    if (isQuerySuccess && taskEarliestTimeAndLatestTime.first < timeInfoList.begin()->startNs) {
+        overlapInfoList.emplace_back(taskEarliestTimeAndLatestTime.first, timeInfoList.begin()->startNs, 3); // Free = 3
+    }
     // 记录当前最大截结束时间对应的覆盖区块
     // 此处为了添加第一块数据
     OVERLAP_INFO curBlock = OVERLAP_INFO(timeInfoList.begin()->startNs, timeInfoList.begin()->startNs,
@@ -641,8 +649,50 @@ std::vector<OVERLAP_INFO> BuildOverlapInfoList(const std::vector<OVERLAP_INFO> &
         overlapInfoList.emplace_back(curBlock.startNs,  // Communication(Not Overlapped) = 2
                                      curBlock.endNs, 2);
     }
+
+    if (isQuerySuccess && curBlock.endNs < taskEarliestTimeAndLatestTime.second) {
+        overlapInfoList.emplace_back(curBlock.endNs, taskEarliestTimeAndLatestTime.second, 3); // Free = 3
+    }
     return overlapInfoList;
 }
+
+bool DbTraceDataBase::QueryTaskEarliestAndLatestTimeExcludingCertainEvent(std::pair<int64_t, int64_t> &time,
+                                                                          const std::string &deviceId)
+{
+    // 查询TASK表的最早开始时间和最晚结束时间会排除特定类型事件，text和db保持一致，text由profiling保证
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "SELECT min(main.startNs), max(main.endNs) FROM " + TABLE_TASK + " AS main INNER JOIN " +
+        TABLE_STRING_IDS + " AS si ON main.taskType = si.id "
+        "WHERE si.value NOT IN ('PROFILING_ENABLE', 'PROFILING_DISABLE', "
+        "'FFTS_PLUS', 'KERNEL_AICORE', 'KERNEL_AIVEC', 'KERNEL_MIX_AIC', 'KERNEL_MIX_AIV') AND main.deviceId = ?";
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        Server::ServerLog::Error("Failed to query task earliest and latest time excluding certain event. Msg: ",
+            sqlite3_errmsg(db), " ", result);
+        sqlite3_finalize(stmt);
+        return false;
+    }
+    int index = bindStartIndex;
+    sqlite3_bind_text(stmt, index, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
+    int64_t earliestTime = 0;
+    int64_t latestTime = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        earliestTime = sqlite3_column_int64(stmt, col++);
+        latestTime = sqlite3_column_int64(stmt, col++);
+        if (earliestTime < 0 || latestTime < 0) {
+            Server::ServerLog::Error(
+                "Failed to query task earliest and latest time excluding certain event due to invalid time.");
+            sqlite3_finalize(stmt);
+            return false;
+        }
+    }
+    time.first = earliestTime;
+    time.second = latestTime;
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 bool DbTraceDataBase::GenerateOverlapAnalysis()
 {
     {
@@ -660,7 +710,7 @@ bool DbTraceDataBase::GenerateOverlapAnalysis()
             continue;
         }
         std::sort(timeInfoList.begin(), timeInfoList.end(), std::less<OVERLAP_INFO>());
-        const std::vector<OVERLAP_INFO> overlapInfoList = BuildOverlapInfoList(timeInfoList);
+        const std::vector<OVERLAP_INFO> overlapInfoList = BuildOverlapInfoList(timeInfoList, deviceId);
         if (InsertOverlapAnalysisInfo(timeInfoList, deviceId) && InsertOverlapAnalysisInfo(overlapInfoList, deviceId)) {
             Server::ServerLog::Info("Generate overlap analysis success for device: ", deviceId);
             return true;
