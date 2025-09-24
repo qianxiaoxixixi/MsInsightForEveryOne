@@ -1696,3 +1696,30 @@ TEST_F(DbDatabaseTest2, TestGetHostPath)
 #endif
     EXPECT_EQ(result4, "");
 }
+
+TEST_F(DbDatabaseTest2, TestBuildOverlapInfoListWithFreeTimeAfterComputingAndCommunication)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    std::string taskTableInsert =
+        "INSERT INTO TASK (startNs, endNs, deviceId, connectionId, globalTaskId, "
+        "globalPid, taskType, contextId, streamId, taskId, modelId, depth) VALUES "
+        "(20, 30, 7, 4294967295, 82550, 511284, 221, 4294967295, 2, 40, 4294967295, "
+        "0);";
+    std::string stringIdsTableInsert =
+        "INSERT INTO STRING_IDS(id, value) VALUES (221, 'MsTx')";
+    DatabaseTestCaseMockUtil::InsertData(db, taskTableInsert);
+    DatabaseTestCaseMockUtil::InsertData(db, stringIdsTableInsert);
+
+    std::vector<OVERLAP_INFO> timeInfoList{{10, 20, 0}};
+    std::vector<OVERLAP_INFO> overlapInfoList = database.BuildOverlapInfoList(timeInfoList, "7"); // deviceId = 7
+    ASSERT_EQ(overlapInfoList.size(), 1);
+    EXPECT_EQ(overlapInfoList[0].startNs, 20); // 20
+    EXPECT_EQ(overlapInfoList[0].endNs, 30); // 30
+    EXPECT_EQ(overlapInfoList[0].type, 3); // 3
+}

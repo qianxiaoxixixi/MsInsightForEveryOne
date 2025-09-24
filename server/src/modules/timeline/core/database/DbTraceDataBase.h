@@ -146,6 +146,10 @@ public:
     bool InitConnectionCats();
     void UpdateWaitTime();
     bool GenerateOverlapAnalysis();
+    std::vector<OVERLAP_INFO> BuildOverlapInfoList(const std::vector<OVERLAP_INFO> &timeInfoList,
+        const std::string &deviceId);
+    bool QueryTaskEarliestAndLatestTimeExcludingCertainEvent(std::pair<int64_t, int64_t> &time,
+        const std::string &deviceId);
     static void Reset();
     bool QueryFwdBwdDataByFlow(const std::string &rankId, uint64_t offset, const Protocol::ExtremumTimestamp &range,
         std::vector<Protocol::ThreadTraces> &fwdBwdData) override;
