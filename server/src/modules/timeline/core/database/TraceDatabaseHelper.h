@@ -82,8 +82,7 @@ static bool QueryFusibleOpDataForDB(const KernelDetailsParams &params,
                                     std::unique_ptr<SqlitePreparedStatement> &stmt, const FuseableOpRule &rule,
                                     std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp);
 static bool QueryOpDispatchDataForDB(std::unique_ptr<SqlitePreparedStatement> &stmt, uint64_t minTimestamp,
-                                     uint64_t threshold, std::vector<Protocol::KernelBaseInfo> &data,
-                                     const std::string filePath);
+                                     uint64_t threshold, std::vector<Protocol::KernelBaseInfo> &data);
 
 static std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(const std::string& rankId, uint64_t minTimestamp,
     std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams);
@@ -298,6 +297,8 @@ private:
     }
 
     static std::string GetOrderByCondition(const EventsViewParams &params);
+    static std::string GetTextEventViewSql(const Protocol::EventsViewParams &params, const std::string &orderBy);
+    static std::string GetSql4QueryEventsViewDetailsInText(const Protocol::EventsViewParams &params);
     static std::string GetSystemViewSqlByLayer(const std::string &layer, const std::string &rankId);
     static std::string GetQueryThreadSameOperatorsDetailsHeadSql(const QUERY_THREAD_SAME_OPERATORS_PARAMS &params,
         bool uniqueDevice, int overlapType, PROCESS_TYPE type);

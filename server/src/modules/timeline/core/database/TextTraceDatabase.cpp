@@ -1956,7 +1956,7 @@ bool TextTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, c
 }
 
 bool TextTraceDatabase::QueryOperatorDispatchData(const Protocol::KernelDetailsParams &params,
-    std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp, uint64_t threshold, const std::string filePath)
+    std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp, uint64_t threshold)
 {
     auto stmt = CreatPreparedStatement(TextSqlConstant::GenerateOperatorDispatchQueryTextSql(params));
     if (stmt == nullptr) {
@@ -1976,7 +1976,6 @@ bool TextTraceDatabase::QueryOperatorDispatchData(const Protocol::KernelDetailsP
         one.duration = resultSet->GetUint64("duration");
         one.pid = resultSet->GetString("pid");
         one.tid = resultSet->GetString("tid");
-        one.rankId = params.rankId;
         data.emplace_back(one);
     }
     if (data.size() < threshold) {

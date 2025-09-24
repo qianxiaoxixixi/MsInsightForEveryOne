@@ -151,13 +151,18 @@ namespace Dic::Protocol {
         };
         if (json["params"].HasMember("filters") && json["params"]["filters"].IsArray()) {
             for (const auto &filter : json["params"]["filters"].GetArray()) {
-                if (filter.IsString()) {
-                    std::pair<std::string, std::string> pFilter("", "");
-                    auto fil = JsonUtil::TryParse(filter.GetString(), error);
-                    pFilter.first = colNameMap[JsonUtil::GetString(fil->GetObj(), "columnName")];
-                    pFilter.second = JsonUtil::GetString(fil->GetObj(), "value");
-                    reqPtr->params.filters.emplace_back(pFilter);
+                if (!filter.IsString()) {
+                    continue;
                 }
+                auto fil = JsonUtil::TryParse(filter.GetString(), error);
+                if (!fil) {
+                    error = "Failed to set request base info because invalid filter json, command is: " + reqPtr->command;
+                    continue;
+                }
+                std::pair<std::string, std::string> pFilter("", "");
+                pFilter.first = JsonUtil::GetString(fil->GetObj(), "columnName");
+                pFilter.second = JsonUtil::GetString(fil->GetObj(), "value");
+                reqPtr->params.filters.emplace_back(pFilter);
             }
         }
     }

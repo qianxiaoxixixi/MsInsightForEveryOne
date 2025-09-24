@@ -96,7 +96,7 @@ TEST_F(TestSuit, QueryOperatorDispatchAdvisorSuccessOnText)
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
     Protocol::KernelDetailsParams params = {"duration", "DESC", 1, 10}; // 1是第1页，10是每页10条数据
     std::vector<Protocol::KernelBaseInfo> data{};
-    auto result = db->QueryOperatorDispatchData(params, data, startTime, OPERATOR_COMPILE_CNT_THRESHOLD, "");
+    auto result = db->QueryOperatorDispatchData(params, data, startTime, OPERATOR_COMPILE_CNT_THRESHOLD);
     EXPECT_TRUE(result);
     EXPECT_EQ(data.size(), 529); // The size of data is 529
 }

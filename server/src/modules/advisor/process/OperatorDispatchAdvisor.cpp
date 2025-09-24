@@ -28,8 +28,7 @@ bool OperatorDispatchAdvisor::Process(const Protocol::APITypeParams &params, Pro
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::string filePath = Timeline::DataBaseManager::Instance().GetDbPathByRankId(params.rankId);
     std::vector<Protocol::KernelBaseInfo> data{};
-    if (!database->QueryOperatorDispatchData(param, data, startTime,
-                                             OPERATOR_COMPILE_CNT_THRESHOLD, filePath)) {
+    if (!database->QueryOperatorDispatchData(param, data, startTime, OPERATOR_COMPILE_CNT_THRESHOLD)) {
         ServerLog::Error("Failed to Query Operator Dispatch data.");
         return false;
     }
@@ -38,7 +37,7 @@ bool OperatorDispatchAdvisor::Process(const Protocol::APITypeParams &params, Pro
         auto item = data.at(i);
         Protocol::OperatorDispatchData one{};
         one.baseInfo.id = item.id;
-        one.baseInfo.rankId = item.rankId;
+        one.baseInfo.rankId = params.rankId;
         one.baseInfo.startTime = item.startTime;
         one.baseInfo.duration = item.duration;
         one.baseInfo.pid = item.pid;

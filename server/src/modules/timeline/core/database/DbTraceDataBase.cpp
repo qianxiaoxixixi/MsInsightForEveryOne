@@ -1909,14 +1909,14 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
 }
 
 bool DbTraceDataBase::QueryOperatorDispatchData(const Protocol::KernelDetailsParams &params,
-    std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp, uint64_t threshold, const std::string filePath)
+    std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp, uint64_t threshold)
 {
     auto stmt = CreatPreparedStatement(TraceDatabaseSqlConst::GenerateOperatorDispatchQueryDbSql(params));
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for Operator Dispatch data.");
         return false;
     }
-    return TraceDatabaseHelper::QueryOpDispatchDataForDB(stmt, minTimestamp, threshold, data, filePath);
+    return TraceDatabaseHelper::QueryOpDispatchDataForDB(stmt, minTimestamp, threshold, data);
 }
 
 // LCOV_EXCL_BR_STOP
