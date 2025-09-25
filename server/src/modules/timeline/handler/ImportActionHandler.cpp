@@ -9,6 +9,7 @@
 #include "ClusterFileParser.h"
 #include "ProjectParserFactory.h"
 #include "ProjectAnalyze.h"
+#include "BaselineManagerService.h"
 #include "ImportActionHandler.h"
 
 
@@ -31,7 +32,8 @@ bool ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         session.OnResponse(std::move(responsePtr));
         return false;
     }
-
+    // 清理当前的基线缓存
+    BaselineManagerService::ResetBaseline();
     if (request.params.projectAction == ProjectActionEnum::ADD_FILE) {
         // ConvertToRealPath 调用 FileUtil::ConvertToRealPath 方法，其中 FileUtil::CheckDirValid 已做软链接检查
         if (!request.params.ConvertToRealPath(warnMsg)) {
