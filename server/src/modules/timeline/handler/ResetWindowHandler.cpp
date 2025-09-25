@@ -11,6 +11,7 @@
 #include "SourceFileParser.h"
 #include "ServitizationOpenApi.h"
 #include "ResetWindowHandler.h"
+#include "BaselineManagerService.h"
 
 namespace Dic {
 namespace Module {
@@ -34,6 +35,7 @@ bool ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     } else {
         FullDb::FullDbParser::Instance().Reset();
     }
+    BaselineManagerService::ResetBaseline();
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
