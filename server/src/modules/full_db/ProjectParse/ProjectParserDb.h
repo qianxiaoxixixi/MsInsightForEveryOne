@@ -28,7 +28,8 @@ public:
     static std::string GetFileIdWithDb(const std::string& filePath);
 
 protected:
-    std::map<std::string, HostInfo> GetReportFiles(const std::vector<ProjectExplorerInfo> &projectInfos);
+    std::map<std::string, HostInfo> GetReportFiles(const std::vector<ProjectExplorerInfo> &projectInfos,
+                                                   std::optional<std::string> parseFilePathFilter = std::nullopt);
     void GetReportFilesOneFile(const Dic::Module::Global::ProjectExplorerInfo &project,
                                std::map<std::string, HostInfo> &hostMap,
                                std::shared_ptr<ParseFileInfo> file);

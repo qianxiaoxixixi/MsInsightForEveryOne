@@ -60,8 +60,8 @@ void ProjectParserDbNPUMonitor::ParserBaseline(const Global::ProjectExplorerInfo
 
     DataBaseManager::Instance().SetBaselineFileType(FileType::PYTORCH);
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB);
-
-    auto hostInfoMap = GetReportFiles({ projectInfo });
+    bool isParsed = Timeline::DataBaseManager::Instance().IsContainDatabasePath(baselineInfo.parsedFilePath);
+    auto hostInfoMap = GetReportFiles({projectInfo}, baselineInfo.parsedFilePath);
     if (std::empty(hostInfoMap)) {
         Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
         baselineInfo.errorMessage = "NPU monitor db get host info failed!";
@@ -83,7 +83,7 @@ void ProjectParserDbNPUMonitor::ParserBaseline(const Global::ProjectExplorerInfo
     if (!Timeline::DataBaseManager::Instance().CreateTraceConnectionPool(baselineInfo.rankId, baselineInfo.parsedFilePath)) {
         ServerLog::Error("Failed to create baseline connection pool for NPU monitor. ");
     }
-    if (Timeline::DataBaseManager::Instance().IsContainDatabasePath(baselineInfo.parsedFilePath)) {
+    if (isParsed) {
         ServerLog::Warn("Baseline has been parsed.");
         return;
     }

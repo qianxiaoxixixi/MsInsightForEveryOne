@@ -124,11 +124,15 @@ void ProjectParserDb::ClusterProcess(std::shared_ptr<ParseFileInfo> clusterInfo,
 }
 // LCOV_EXCL_BR_STOP
 
-std::map<std::string, HostInfo> ProjectParserDb::GetReportFiles(const std::vector<ProjectExplorerInfo> &projectInfos)
+std::map<std::string, HostInfo> ProjectParserDb::GetReportFiles(const std::vector<ProjectExplorerInfo> &projectInfos,
+                                                                std::optional<std::string> parseFilePathFilter)
 {
     std::map<std::string, HostInfo> hostMap;
     for (const auto& project : projectInfos) {
         for (const auto& file : project.subParseFileInfo) {
+            if (parseFilePathFilter.has_value() && file->parseFilePath != parseFilePathFilter.value()) {
+                continue;
+            }
             GetReportFilesOneFile(project, hostMap, file);
         }
     }
@@ -300,7 +304,8 @@ void ProjectParserDb::ParserBaseline(const Global::ProjectExplorerInfo &projectI
         return;
     }
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB);
-    auto hostInfoMap = GetReportFiles({ projectInfo });
+    bool isParsed = Timeline::DataBaseManager::Instance().IsContainDatabasePath(file);
+    auto hostInfoMap = GetReportFiles({projectInfo}, parseFilePath);
     if (std::empty(hostInfoMap)) {
         Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
         baselineInfo.errorMessage = "Db get host info failed!";
@@ -322,7 +327,7 @@ void ProjectParserDb::ParserBaseline(const Global::ProjectExplorerInfo &projectI
     if (!Timeline::DataBaseManager::Instance().CreateTraceConnectionPool(baselineInfo.rankId, file)) {
         ServerLog::Error("Failed to create baseline connection pool. ");
     }
-    if (DataBaseManager::Instance().IsContainDatabasePath(file)) {
+    if (isParsed) {
         ServerLog::Info("Baseline has parsed.");
         return;
     }
@@ -522,7 +527,7 @@ std::string ProjectParserDb::GetBaselineDbFile(const std::string &path)
         DataBaseManager::Instance().SetBaselineFileType(FileType::MS_PROF);
         file = msprofFiles[0];
     }
-    return "";
+    return file;
 }
 
 ProjectAnalyzeRegister<ProjectParserDb>  pRegDB(ParserType::DB);

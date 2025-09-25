@@ -128,6 +128,8 @@ protected:
     static std::string ComputeDataPageSql(const PageQuery &query, std::vector<std::string> &columnName) ;
 
     static std::string ComputeConditionSql(const PageQuery &query, std::vector<std::string> &columnName);
+private:
+    size_t maxDbFileSize = 50ULL * 1024 * 1024 * 1024;
 };
 } // end of namespace Module
 } // end of namespace Dic
