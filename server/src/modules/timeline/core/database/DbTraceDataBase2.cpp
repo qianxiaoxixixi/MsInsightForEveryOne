@@ -9,6 +9,21 @@
 namespace Dic::Module::FullDb {
 using namespace Server;
 
+std::vector<std::string> DbTraceDataBase::GetIdListByFuzzNameFromCache(const std::string &path,
+                                                                       const std::string &fuzzName)
+{
+    if (stringsCache.count(path) == 0) {
+        return {};
+    }
+    std::vector<std::string> res;
+    for (const auto &item: stringsCache.at(path)) {
+        if (StringUtil::Contains(item.second, fuzzName)) {
+            res.push_back(item.first);
+        }
+    }
+    return res;
+}
+
 bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
                                        std::vector<Protocol::UnitCounterData> &dataList)
 {
