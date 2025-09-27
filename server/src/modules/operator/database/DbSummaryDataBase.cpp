@@ -274,7 +274,7 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
     } else {
         std::string group = operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ?
             "opType, accCore" :
-            R"(name, input_shapes, accCore)";
+            "opName, input_shapes, accCore";
         if (!reqParams.deviceId.empty()) {
             sql = GenStatSqlWithDeviceId(group);
         } else {
@@ -299,7 +299,7 @@ std::string DbSummaryDataBase::GenStatSqlWithCommunication()
 {
     return " SELECT * FROM (SELECT "
         " COMMUNICATION_OP.opType as opType, "
-        " COMMUNICATION_OP.opName as name,"
+        " COMMUNICATION_OP.opName as opName,"
         " NULL AS input_shapes,"
         " NULL as accCore,"
         " ROUND(SUM(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs) / 1000.0, 2) as total_time, COUNT(0) as cnt,"
@@ -319,7 +319,7 @@ std::string DbSummaryDataBase::GenStatSqlWithDeviceId(const std::string group)
     return " SELECT * FROM ("
         "     SELECT "
         "     COMPUTE_TASK_INFO.opType as opType,"
-        "     COMPUTE_TASK_INFO.name AS name,"
+        "     COMPUTE_TASK_INFO.name AS opName,"
         "     COMPUTE_TASK_INFO.inputShapes AS input_shapes,"
         "     COMPUTE_TASK_INFO.taskType as accCore, "
         "     ROUND(SUM(TASK.endNs - TASK.startNs) / 1000.0, 2) as total_time, COUNT(0) as cnt,"
@@ -337,7 +337,7 @@ std::string DbSummaryDataBase::GenStatSql(const std::string group)
 {
     return " SELECT * FROM ("
         "     COMPUTE_TASK_INFO.opType as opType,"
-        "     COMPUTE_TASK_INFO.name AS name,"
+        "     COMPUTE_TASK_INFO.name AS opName,"
         "     COMPUTE_TASK_INFO.inputShapes AS input_shapes,"
         "     COMPUTE_TASK_INFO.taskType as accCore, "
         "     ROUND(SUM(TASK.endNs - TASK.startNs) / 1000.0, 2) as total_time, COUNT(0) as cnt,"
@@ -358,12 +358,12 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
         sql = GenStatSqlWithCommunication();
     } else {
         std::string group = operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ?
-            "opType, accCore" : "name, inputShapes, accCore";
+            "opType, accCore" : "opName, inputShapes, accCore";
         sql = " SELECT COUNT(*) as nums"
             " FROM ( "
             "     SELECT deviceId, startNs, endNs,"
             "     COMPUTE_TASK_INFO.taskType AS accCore, "
-            "     COMPUTE_TASK_INFO.opType AS opType, COMPUTE_TASK_INFO.name AS name FROM COMPUTE_TASK_INFO"
+            "     COMPUTE_TASK_INFO.opType AS opType, COMPUTE_TASK_INFO.name AS opName FROM COMPUTE_TASK_INFO"
             "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
             "     WHERE TASK.deviceId = ? "
             "     GROUP by " + group +
