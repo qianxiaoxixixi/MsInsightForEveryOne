@@ -84,6 +84,8 @@
       "Occurrences": "发生次数",
       "Wall Duration": "持续时间",
       "Average Wall Duration": "平均持续时间",
+      "Max Wall Duration": "最大持续时间",
+      "Min Wall Duration": "最小持续时间",
       "Self Time": "自用时间",
       "Index": "索引",
       "Timestamp": "时间戳",
