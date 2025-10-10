@@ -1355,7 +1355,7 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<Protocol::SimpleSlice> 
             sliceGroupItem.avgWallDuration = cur.duration;
             sliceGroupItem.maxWallDuration = cur.duration;
             sliceGroupItem.minWallDuration = cur.duration;
-            if (cur.name.empty()) {
+            if (cur.name.empty() || selfTimeKeyValue.find(cur.name) == selfTimeKeyValue.end()) {
                 continue;
             } else {
                 sliceGroupItem.selfTime = selfTimeKeyValue.at(cur.name);
@@ -1404,6 +1404,9 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<CompeteSliceDomain> &ro
             sliceGroupItem.avgWallDuration = cur.duration;
             sliceGroupItem.maxWallDuration = cur.duration;
             sliceGroupItem.minWallDuration = cur.duration;
+            if (selfTimeKeyValue.find(cur.name) == selfTimeKeyValue.end()) {
+                continue;
+            }
             sliceGroupItem.selfTime = selfTimeKeyValue.at(cur.name);
             sliceGroupItem.processMap[cur.pid] = { cur.tid };
             sliceGroupItem.metaTypeList.insert(cur.metaType);
@@ -1511,7 +1514,7 @@ std::string TraceDatabaseHelper::GetLockRangeSql(const SearchAllSliceParams &par
 
 std::string TraceDatabaseHelper::GetSingleLockRangeSql(const TrackQuery &item)
 {
-    PROCESS_TYPE type = STR_TO_ENUM<PROCESS_TYPE>(item.metaType).value();
+    PROCESS_TYPE type = STR_TO_ENUM<PROCESS_TYPE>(item.metaType).value_or(PROCESS_TYPE::NONE);
     std::string tempSql;
     if (type == PROCESS_TYPE::API) {
         tempSql = " SELECT api.ROWID as id, 'pytorch' as tid, api.globalTid as pid, api.startNs as timestamp, "
