@@ -44,11 +44,13 @@ export const slicesListDetail = detail<AscendMultiSliceList, any, any, ThreadMet
             return getSliceTimeDisplay(totalB === 0 ? totalA : totalA / totalB);
         }],
         ['Max Wall Duration', (dataSource) => {
-            const maxDuration = dataSource.reduce((max, { wallDuration }) => Math.max(max, wallDuration ?? 0), 0);
+            const durations = dataSource.map(({ maxWallDuration }) => maxWallDuration).filter((d): d is number => Number.isFinite(d));
+            const maxDuration = durations.length > 0 ? Math.max(...durations) : 0;
             return getSliceTimeDisplay(maxDuration);
         }],
         ['Min Wall Duration', (dataSource) => {
-            const minDuration = dataSource.reduce((min, { wallDuration }) => Math.min(min, wallDuration ?? 0), 0);
+            const durations = dataSource.map(({ minWallDuration }) => minWallDuration).filter((d): d is number => Number.isFinite(d));
+            const minDuration = durations.length > 0 ? Math.min(...durations) : 0;
             return getSliceTimeDisplay(minDuration);
         }],
         ['Occurrences', (dataSource) => `${dataSource.reduce((acc, { occurrences }) => acc + (occurrences ?? 0), 0)}`],
