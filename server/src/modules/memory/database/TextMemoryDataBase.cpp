@@ -149,6 +149,7 @@ void TextMemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &e
         return;
     }
     int idx = bindStartIndex;
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     for (const auto &event : eventList) {
         sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
         sqlite3_bind_double(stmt, idx++, event.size);
@@ -166,7 +167,6 @@ void TextMemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &e
         sqlite3_bind_text(stmt, idx++, event.streamId.c_str(), event.streamId.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.deviceType.c_str(), event.deviceType.length(), SQLITE_TRANSIENT);
     }
-    std::unique_lock<std::recursive_mutex> lock(mutex);
     auto result = sqlite3_step(stmt);
     if (eventList.size() != cacheSize) {
         sqlite3_finalize(stmt);

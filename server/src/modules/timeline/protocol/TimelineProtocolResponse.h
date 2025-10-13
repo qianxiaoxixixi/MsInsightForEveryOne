@@ -136,6 +136,7 @@ struct UnitThreadsResponse : public Response {
 struct ThreadDetail {
     uint64_t selfTime = 0;
     uint64_t duration = 0;
+    uint64_t rawTimestamp = 0;
     std::string args;
     std::string title;
     std::string cat;
