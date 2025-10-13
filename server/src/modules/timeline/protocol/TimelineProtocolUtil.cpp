@@ -204,6 +204,7 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadDetailResponse>(c
     JsonUtil::AddMember(data, "selfTime", response.body.data.selfTime, allocator);
     JsonUtil::AddMember(data, "args", response.body.data.args, allocator);
     JsonUtil::AddMember(data, "title", response.body.data.title, allocator);
+    JsonUtil::AddMember(data, "rawStartTime", response.body.data.rawTimestamp, allocator);
     JsonUtil::AddMember(data, "duration", response.body.data.duration, allocator);
     JsonUtil::AddMember(data, "cat", response.body.data.cat, allocator);
     JsonUtil::AddMember(data, "inputShapes", response.body.data.inputShapes, allocator);

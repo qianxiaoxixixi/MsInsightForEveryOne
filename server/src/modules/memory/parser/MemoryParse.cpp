@@ -58,6 +58,10 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
     ServerLog::Info("Start parsing Operator Memory: ", filePath, ", FileId: ", rankId);
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(rankId));
+    if (!memoryDatabase) {
+        ServerLog::Error("Failed cast pointer to text memory db.");
+        return false;
+    }
     std::ifstream file = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
@@ -231,35 +235,67 @@ Component MemoryParse::mapperToComponentDetail(std::map<std::string, size_t> dat
     return component;
 }
 
+/***
+ * 处理csv的header行
+ * @param headerRow header行元素列表
+ * @param requiredHeaders 必须要存在的header
+ * @param dataMap 待构造的header索引映射表
+ * @return
+ */
+bool MemoryParse::CheckRequiredColumnsAndBuildDataMapFromHeaderRow(const std::vector<std::string> &headerRow,
+                                                                   const std::vector<std::string> &requiredHeaders,
+                                                                   std::map<std::string, size_t> &dataMap)
+{
+    if (headerRow.empty()) {
+        ServerLog::Error("The header line is empty.");
+        return false;
+    }
+    for (size_t i = 0; i < headerRow.size(); i++) {
+        dataMap[headerRow[i]] = i;
+    }
+    if (!GetMapValid(requiredHeaders, dataMap)) {
+        ServerLog::Error("The required columns is missing.");
+        return false;
+    }
+    return true;
+}
+
+bool MemoryParse::NeedInterrupt(const std::string &fileId)
+{
+    return Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId)
+           != Timeline::ParserStatus::RUNNING;
+}
+
 bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &fileId)
 {
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Start parsing Memory Record: ", filePath, ", FileId: ", fileId);
     auto database = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(fileId));
+    if (!database) {
+        ServerLog::Error("Failed cast pointer to text memory db.");
+        return false;
+    }
     std::ifstream file = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
     bool isHeader = true;
     while (getline(file, line)) {
-        if (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) !=
-            Timeline::ParserStatus::RUNNING) {
+        if (NeedInterrupt(fileId)) {
             ServerLog::Error("Parsing process of memory_record.csv is interrupted.");
             file.close();
             return false;
         }
         std::vector<std::string> row = StringUtil::StringSplit(line);
+        if (row.empty() && isHeader) {
+            ServerLog::Error("Parse failed: The header line of memory_record.csv is invalid.");
+            file.close();
+            return false;
+        }
         if (isHeader) {
-            if (row.empty()) {
-                ServerLog::Error("The first line of memory_record.csv is not header.");
-                file.close();
-                return false;
-            }
-            for (size_t i = 0; i < row.size(); i++) {
-                dataMap[row[i]] = i;
-            }
-            bool columnExist = GetMapValid((row[0] == Dic::COMPONENT ? RECORD_CSV : RECORD_CSV_MSPROF), dataMap);
-            if (!columnExist) {
+            auto requiredHeaders = row[0] == Dic::COMPONENT ? RECORD_CSV : RECORD_CSV_MSPROF;
+            if (!CheckRequiredColumnsAndBuildDataMapFromHeaderRow(row, requiredHeaders, dataMap)) {
+                ServerLog::Error("Failed to parse memory_record: header row parse error.");
                 file.close();
                 return false;
             }
@@ -290,29 +326,29 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
     ServerLog::Info("Start parsing Memory Static Operator: ", filePath, ", FileId: ", fileId);
     auto database = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(fileId));
+    if (!database) {
+        ServerLog::Error("Failed cast pointer to text memory db.");
+        return false;
+    }
     std::ifstream file = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
     bool isHeader = true;
     while (getline(file, line)) {
-        if (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) !=
-            Timeline::ParserStatus::RUNNING) {
+        if (NeedInterrupt(fileId)) {
             ServerLog::Error("Parsing process of static_op_mem.csv is interrupted.");
             file.close();
             return false;
         }
         std::vector<std::string> row = StringUtil::StringSplit(line);
+        if (row.empty() && isHeader) {
+            ServerLog::Error("Parse failed: The header line of static_op.csv is invalid.");
+            file.close();
+            return false;
+        }
         if (isHeader) {
-            if (row.empty()) {
-                ServerLog::Error("The first line of static_op_mem.csv is not header.");
-                file.close();
-                return false;
-            }
-            for (size_t i = 0; i < row.size(); i++) {
-                dataMap[row[i]] = i;
-            }
-            bool columnExist = GetMapValid(STATIC_OP_MEM_CSV, dataMap);
-            if (!columnExist) {
+            if (!CheckRequiredColumnsAndBuildDataMapFromHeaderRow(row, STATIC_OP_MEM_CSV, dataMap)) {
+                ServerLog::Error("Failed to parse static_op: header row parse error.");
                 file.close();
                 return false;
             }
