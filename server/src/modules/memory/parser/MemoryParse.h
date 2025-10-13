@@ -38,6 +38,12 @@ public:
     bool StaticOpParse(const std::string &filePath, const std::string &fileId);
     bool ComponentParse(const std::string &filePath, const std::string &fileId);
 
+    static bool CheckRequiredColumnsAndBuildDataMapFromHeaderRow(const std::vector<std::string> &headerRow,
+                                                                 const std::vector<std::string> &requiredHeaders,
+                                                                 std::map<std::string, size_t> &dataMap);
+
+    static bool NeedInterrupt(const std::string &fileId);
+
     static bool ParseOperatorHeaderLine(std::map<std::string, size_t>& dataMap, const std::vector<std::string>& row);
 
     static Operator ParseOperatorDataLine(std::map<std::string, size_t>& dataMap, std::vector<std::string> &row);
