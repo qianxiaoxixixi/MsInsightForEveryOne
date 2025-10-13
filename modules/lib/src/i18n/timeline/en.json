@@ -58,6 +58,7 @@
       "Slice Detail": "Slice Detail",
       "Title": "Title",
       "Start": "Start",
+      "Raw Start": "Start(Raw Timestamp)",
       "Wall Duration": "Wall Duration",
       "Self Time": "Self Time",
       "Args": "Args",
