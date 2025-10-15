@@ -561,7 +561,7 @@ async function createSummaryChart<T extends ProcessMetaData | LabelMetaData>(
                     if (e?.data?.body?.data?.dbId !== requestParam.dbPath) {
                         return;
                     }
-                    const result = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, { ...requestParam, aaa: 1 });
+                    const result = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, { ...requestParam });
                     return resolve(resProcess(result));
                 });
             });
