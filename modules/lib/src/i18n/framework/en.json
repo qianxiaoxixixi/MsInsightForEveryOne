@@ -50,6 +50,7 @@
     "Open a Project as Comparison Data": "Please open a Project as Comparison Data first",
     "tabs": {
       "Timeline": "Timeline",
+      "ZoomEcharts": "Movable/Resizable Chart",
       "Memory": "Memory",
       "Operator": "Operator",
       "Summary": "Summary",
@@ -79,6 +80,7 @@
     "shortcuts": {
       "Zoom in": "Zoom in",
       "Zoom out": "Zoom out",
+      "Zoom in/out": "Zoom in/out",
       "Undo zoom": "Undo zoom",
       "Reset zoom": "Reset zoom",
       "Zoom into selection": "Zoom into selection",
@@ -95,6 +97,9 @@
       "L align": "Align the selected operator's start time with the benchmark operator's start time",
       "R align": "Align the selected operator's end time with the benchmark operator's end time",
       "drag": "drag",
+      "ScrollUp": "Scroll Up",
+      "ScrollDown": "Scroll Down",
+      "Scorll": "Mouse Scroll",
       "click": "click",
       "double-click": "double-click",
       "Find in source code": "Find in source code"
