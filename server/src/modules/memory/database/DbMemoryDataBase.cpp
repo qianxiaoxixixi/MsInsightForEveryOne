@@ -21,7 +21,7 @@ std::map<std::string, Protocol::MemorySuccess> FullDb::DbMemoryDataBase::ranks =
 bool DbMemoryDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
     auto result = Database::OpenDb(dbPath, clearAllTable) && QueryMetaVersion();
-    deviceIdColumnName = isLowCamel ? "deviceId" : "device_id";
+    deviceIdColumnName = "deviceId";
     return result;
 }
 
@@ -44,24 +44,23 @@ std::string DbMemoryDataBase::BuildOperatorDetailSql(
     // 在 db 情况下 allocation_time release_time 不可能为 0，不用再判断
     sql += "NAME.value AS realName, "
         "ROUND(size / 1024.0, 2) as size, "
-        "CASE WHEN allocation_time IS NULL THEN 'NA' "
-        "ELSE ROUND((allocation_time - " + startTimeString +
+        "CASE WHEN allocationTime IS NULL THEN 'NA' "
+        "ELSE ROUND((allocationTime - " + startTimeString +
             " - " + offsetTimeString + ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
-        "CASE WHEN release_time IS NULL THEN 'NA' "
-        "ELSE ROUND((release_time - " + startTimeString +
+        "CASE WHEN releaseTime IS NULL THEN 'NA' "
+        "ELSE ROUND((releaseTime - " + startTimeString +
             " - " + offsetTimeString + ") / (1000.0 * 1000.0), 3) END AS releaseTimestamp, "
         "ROUND(duration / (1000.0 * 1000.0), 3) as duration, "
-        "CASE WHEN active_release_time IS NULL THEN 'NA' "
-        "ELSE ROUND((active_release_time - " + startTimeString +
+        "CASE WHEN activeReleaseTime IS NULL THEN 'NA' "
+        "ELSE ROUND((activeReleaseTime - " + startTimeString +
             " - " + offsetTimeString + ") / (1000.0 * 1000.0), 3) END AS activeReleaseTime, "
-        "ROUND(active_duration / (1000.0 * 1000.0), 3) as active_duration, "
-        "ROUND(allocation_total_allocated / (1024.0 * 1024.0), 2) as allocation_allocated, "
-        "ROUND(allocation_total_reserved / (1024.0 * 1024.0), 2) as allocation_reserve, "
-        "ROUND(allocation_total_active / (1024.0 * 1024.0), 2) as allocation_active, "
-        "ROUND(release_total_allocated / (1024.0 * 1024.0), 2) as release_allocated, "
-        "ROUND(release_total_reserved / (1024.0 * 1024.0), 2) as release_reserve, "
-        "ROUND(release_total_active / (1024.0 * 1024.0), 2) as release_active, stream_ptr as stream FROM ";
-    sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
+        "ROUND(activeDuration / (1000.0 * 1000.0), 3) as activeDuration, "
+        "ROUND(allocationTotalAllocated / (1024.0 * 1024.0), 2) as allocationAllocated, "
+        "ROUND(allocationTotalReserved / (1024.0 * 1024.0), 2) as allocationReserve, "
+        "ROUND(allocationTotalActive / (1024.0 * 1024.0), 2) as allocationActive, "
+        "ROUND(releaseTotalAllocated / (1024.0 * 1024.0), 2) as releaseAllocated, "
+        "ROUND(releaseTotalReserved / (1024.0 * 1024.0), 2) as releaseReserve, "
+        "ROUND(releaseTotalActive / (1024.0 * 1024.0), 2) as releaseActive, streamPtr as stream FROM ";
     sql += TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name"
         " WHERE " + deviceIdColumnName + " = ? AND realName LIKE ? ";
     return tempSql + sql;
@@ -111,24 +110,24 @@ bool DbMemoryDataBase::QueryEntireOperatorTable(Protocol::MemoryOperatorParams &
     std::string sql = "";
     FileType type = DataBaseManager::Instance().GetFileType();
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    std::string startTimeStr = std::to_string(startTime);
+    std::string offsetTimeStr = std::to_string(offsetTime);
     if (type == FileType::PYTORCH) {
         sql += "SELECT NAME.value AS realName, ROUND(size / 1024.0, 2) as size, "
-               " CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
-            "ROUND((allocation_time - " + std::to_string(startTime) + " - " + std::to_string(offsetTime) +
+               " CASE WHEN allocationTime == 0 THEN 'NA' ELSE "
+            "ROUND((allocationTime - " + startTimeStr + " - " + offsetTimeStr +
             ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
-            "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " + std::to_string(startTime) +
-            " - " + std::to_string(offsetTime) +
+            "CASE WHEN releaseTime == 0 THEN 'NA' ELSE ROUND((releaseTime - " + startTimeStr + " - " + offsetTimeStr +
             ") / (1000.0 * 1000.0), 3) END AS releaseTimestamp, ROUND(duration / (1000.0 * 1000.0), 3) as duration, "
-            "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
-            std::to_string(startTime) + " - " + std::to_string(offsetTime) + ") / (1000.0 * 1000.0), 3) "
-            "END AS activeReleaseTime, ROUND(active_duration / (1000.0 * 1000.0), 3) as active_duration, "
-            "ROUND(allocation_total_allocated / (1024.0 * 1024.0), 2) as allocation_allocated, "
-            " ROUND(allocation_total_reserved / (1024.0 * 1024.0), 2) as allocation_reserve, "
-            "ROUND(allocation_total_active / (1024.0 * 1024.0), 2) as allocation_active, "
-            " ROUND(release_total_allocated / (1024.0 * 1024.0), 2) as release_allocated, "
-            "ROUND(release_total_reserved / (1024.0 * 1024.0), 2) as release_reserve, "
-            "ROUND(release_total_active / (1024.0 * 1024.0), 2) as release_active, stream_ptr as stream FROM ";
-        sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
+            "CASE WHEN activeReleaseTime == 0 THEN 'NA' ELSE ROUND((activeReleaseTime - " +
+            startTimeStr + " - " + offsetTimeStr + ") / (1000.0 * 1000.0), 3) "
+            "END AS activeReleaseTime, ROUND(activeDuration / (1000.0 * 1000.0), 3) as activeDuration, "
+            "ROUND(allocationTotalAllocated / (1024.0 * 1024.0), 2) as allocationAllocated, "
+            " ROUND(allocationTotalReserved / (1024.0 * 1024.0), 2) as allocationReserve, "
+            "ROUND(allocationTotalActive / (1024.0 * 1024.0), 2) as allocationActive, "
+            " ROUND(releaseTotalAllocated / (1024.0 * 1024.0), 2) as releaseAllocated, "
+            "ROUND(releaseTotalReserved / (1024.0 * 1024.0), 2) as releaseReserve, "
+            "ROUND(releaseTotalActive / (1024.0 * 1024.0), 2) as releaseActive, streamPtr as stream FROM ";
         sql += TABLE_OPERATOR_MEMORY +
             " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name WHERE " + deviceIdColumnName + " = ? ";
     } else {
@@ -208,19 +207,17 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestParams
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     if (type == FileType::PYTORCH) {
         sql += "select * from ( ";
-        sql += "SELECT NAME.value AS component, ROUND((time_stamp - " +
-            std::to_string(startTime) +
-            " - " + std::to_string(offsetTime) +
+        sql += "SELECT NAME.value AS component, ROUND((timestamp - " +
+            std::to_string(startTime) + " - " + std::to_string(offsetTime) +
             ") / (1000.0 * 1000.0), 3) as timestamp, "
-            "ROUND(total_allocated / (1024.0 * 1024.0), 2) as total_allocated, "
-            " ROUND(total_reserved / (1024.0 * 1024.0), 2) as total_reserve, "
-            "ROUND(total_active / (1024.0 * 1024.0), 2) as total_active, stream_ptr as stream, " +
+            "ROUND(totalAllocated / (1024.0 * 1024.0), 2) as totalAllocated, "
+            " ROUND(totalReserved / (1024.0 * 1024.0), 2) as totalReserve, "
+            "ROUND(totalActive / (1024.0 * 1024.0), 2) as totalActive, streamPtr as stream, " +
             deviceIdColumnName + " FROM ";
-        sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
         sql += TABLE_MEMORY_RECORD + " JOIN STRING_IDS AS NAME ON NAME.id = MEMORY_RECORD.component ";
         sql += " UNION ALL select 'APP' as component, ROUND((timestampNs - " + std::to_string(startTime) +
-                " ) / (1000.0 * 1000.0), 2) as timestampNs, "
-               " 0 as total_allocated,  ROUND((hbm + ddr) / (1024.0 * 1024.0), 2) as total_reserve, "
+               " ) / (1000.0 * 1000.0), 2) as timestampNs, "
+               " 0 as totalAllocated,  ROUND((hbm + ddr) / (1024.0 * 1024.0), 2) as totalReserve, "
                " 0 as totalActive, '' as stream, deviceId from NPU_MEM join STRING_IDS as ids on ids.id = type "
                " where value = 'app' ";
         sql += " ) WHERE " + deviceIdColumnName + " = ? ";
@@ -244,8 +241,7 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
         sql = "SELECT count(*) as nums FROM "
             " ("
             "   SELECT NAME.value as name, ";
-        sql.append(isLowCamel ? "streamPtr, allocationTime, releaseTime," :
-            "stream_ptr, allocation_time, release_time,");
+        sql.append("streamPtr, allocationTime, releaseTime,");
         sql.append(" ROUND(size / 1024.0, 2) as size, size as realSize, OP_MEMORY." + deviceIdColumnName +
             " FROM OP_MEMORY JOIN STRING_IDS AS NAME ON "
             "   NAME.id = OP_MEMORY.name"
@@ -257,11 +253,11 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
     }
 
     if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
-        sql.append(isLowCamel ? " AND streamPtr <> ''" : " AND stream_ptr <> ''");
+        sql.append(" AND streamPtr <> ''");
     }
     if (requestParams.startTime != -1 && requestParams.endTime != -1) {
-        const std::string ALLOCATION_TIME_KEY = isLowCamel ? "allocationTime" : "allocation_time";
-        const std::string RELEASE_TIME_KEY = isLowCamel ? "releaseTime" : "release_time";
+        const std::string ALLOCATION_TIME_KEY = "allocationTime";
+        const std::string RELEASE_TIME_KEY = "releaseTime";
         if (requestParams.isOnlyShowAllocatedOrReleasedWithinInterval) {
             /*
              * 只显示在时间区间内分配或释放内存的数据

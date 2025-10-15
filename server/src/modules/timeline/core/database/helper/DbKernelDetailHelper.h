@@ -12,11 +12,10 @@ namespace Dic::Module::FullDb {
 using namespace Dic::Module::Timeline;
 class DbKernelDetailHelper {
 public:
-    static std::string GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams, bool isLowCamel);
+    static std::string GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams);
 private:
     static std::string GetKernelDetailSqlWithHCCL(const Protocol::KernelDetailsParams &requestParams);
-    static std::string GetKernelDetailSqlWithoutHCCL(const Protocol::KernelDetailsParams &requestParams,
-        bool isLowCamel);
+    static std::string GetKernelDetailSqlWithoutHCCL(const Protocol::KernelDetailsParams &requestParams);
     static std::string GetKernelDetailFilterSqlWithHCCL(const Protocol::KernelDetailsParams &requestParams);
     static std::string GetKernelDetailFilterSqlWithoutHCCL(const Protocol::KernelDetailsParams &requestParams);
 };

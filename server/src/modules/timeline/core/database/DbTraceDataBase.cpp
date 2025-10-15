@@ -354,7 +354,7 @@ bool DbTraceDataBase::QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICore
 bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
     Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp)
 {
-    std::string sql = DbKernelDetailHelper::GetKernelDetailSql(requestParams, isLowCamel);
+    std::string sql = DbKernelDetailHelper::GetKernelDetailSql(requestParams);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         Server::ServerLog::Error("Fail to prepare sql to query kernel detail data.");
