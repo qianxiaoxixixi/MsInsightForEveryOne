@@ -10,7 +10,6 @@ import { ResizeTable } from 'ascend-resize';
 import { SlowRankListItem, SlowRankOpListItem } from '../../utils/interface';
 import { useTranslation } from 'react-i18next';
 import eventBus from '../../utils/eventBus';
-import { Decimal } from 'ascend-utils';
 
 interface DiffTimeTableProps {
     fastTotalElapseTime: number;
@@ -25,7 +24,7 @@ interface ExpandedDataType extends SlowRankOpListItem {
 }
 
 const usToMs = (value: number): string => {
-    return Decimal.div(value, 1000);
+    return (value / 1000).toFixed(6);
 };
 
 const StyledAlert = styled.div`
