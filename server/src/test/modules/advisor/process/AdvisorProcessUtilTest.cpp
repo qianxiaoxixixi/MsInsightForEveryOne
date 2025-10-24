@@ -52,7 +52,7 @@ TEST_F(AdvisorProcessUtilTest, SortFlowLocationDataTestOrderByDuration)
     param.order = "asc";
     AdvisorProcessUtil::SortFlowLocationData(data, param);
     EXPECT_EQ(data.at(0).name, "1");
-    EXPECT_EQ(data.at(data.size() - 1).name, "A");
+    EXPECT_EQ(data.at(data.size() - 1).name, "a");
 }
 
 TEST_F(AdvisorProcessUtilTest, SortFlowLocationDataTestOrderByPid)
@@ -107,10 +107,10 @@ TEST_F(AdvisorProcessUtilTest, SortFlowLocationDataTestOrderByDefault)
     param.order = "ASC";
     AdvisorProcessUtil::SortFlowLocationData(data, param);
     EXPECT_EQ(data.at(0).name, "1");
-    EXPECT_EQ(data.at(data.size() - 1).name, "A");
+    EXPECT_EQ(data.at(data.size() - 1).name, "a");
 
     param.order = "asc";
     AdvisorProcessUtil::SortFlowLocationData(data, param);
     EXPECT_EQ(data.at(0).name, "1");
-    EXPECT_EQ(data.at(data.size() - 1).name, "A");
+    EXPECT_EQ(data.at(data.size() - 1).name, "a");
 }
