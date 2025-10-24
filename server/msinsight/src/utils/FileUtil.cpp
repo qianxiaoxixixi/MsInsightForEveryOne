@@ -685,6 +685,26 @@ bool FileUtil::CheckWritableByOther(const std::string &filePath)
 #endif
 }
 
+bool FileUtil::CheckWritableByOtherOrGroup(const std::string &filePath)
+{
+#ifdef _WIN32
+    return true;
+#else
+    struct stat fileStat{};
+    if (stat(filePath.c_str(), &fileStat) != 0) {
+        Server::ServerLog::Warn("Get file info failed when check owner");
+        return false;
+    }
+    if (geteuid() == 0) {
+        return true;
+    }
+    if (fileStat.st_mode & S_IWOTH || fileStat.st_mode & S_IWGRP) {
+        return false;
+    }
+    return true;
+#endif
+}
+
 bool FileUtil::CheckPathOwner(const std::string &filePath)
 {
 #ifdef _WIN32
