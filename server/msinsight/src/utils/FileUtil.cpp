@@ -698,7 +698,7 @@ bool FileUtil::CheckWritableByOtherOrGroup(const std::string &filePath)
     if (geteuid() == 0) {
         return true;
     }
-    if (fileStat.st_mode & S_IWOTH || fileStat.st_mode & S_IWGRP) {
+    if ((fileStat.st_mode & S_IWOTH) || (fileStat.st_mode & S_IWGRP)) {
         return false;
     }
     return true;
