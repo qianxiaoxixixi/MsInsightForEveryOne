@@ -259,9 +259,9 @@ std::unordered_map<std::string, std::vector<CommInfoUnderRank>> SummaryService::
     }
     // 按rank划分数据
     for (auto &item: commTimeForRankDim) {
-        // 兼容老数据，pgName不存在时使用groupIdHash进行替换
+        // pgName不存在时不返回按通信域拆解通信时间
         if (item.pgName.empty()) {
-            item.pgName = item.groupIdHash;
+            continue;
         }
         commInTpDimension[item.rankId].push_back(item);
     }

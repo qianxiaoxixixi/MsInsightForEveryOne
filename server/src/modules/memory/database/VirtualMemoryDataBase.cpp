@@ -23,8 +23,8 @@ std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string devic
     } else if (type == DataType::DB) {
         FileType fileType = DataBaseManager::Instance().GetFileType();
         if (fileType == FileType::PYTORCH) {
-            std::string streamPtrColumnName = isLowCamel ? "streamPtr" : "stream_ptr";
-            std::string timeColumnName = isLowCamel ? "timestamp" : "time_stamp";
+            std::string streamPtrColumnName = "streamPtr";
+            std::string timeColumnName = "timestamp";
             sql += "SELECT " + streamPtrColumnName + " FROM " + TABLE_MEMORY_RECORD +
                 " WHERE " + deviceIdColumnName + " = ? AND " + streamPtrColumnName + " <> ''"
                 " Group BY " + streamPtrColumnName + " ORDER BY " + timeColumnName + " ASC";

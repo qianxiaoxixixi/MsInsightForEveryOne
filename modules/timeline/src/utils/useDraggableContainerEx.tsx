@@ -201,6 +201,7 @@ const ContainerTop = styled(ContainerBase)`
         width: 100%;
         height: ${(p): string => p.draggableWH};
         position: relative;
+        min-height: ${(p): string => p.draggableWH !== '0px' ? '80px' : ''};
 
         & > .dragContainer {
             display: flex;

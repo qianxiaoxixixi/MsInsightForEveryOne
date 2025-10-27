@@ -45,7 +45,7 @@ export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
     // 新增Summary(Totals)行
     const summary = (): React.ReactNode => generateSummary(state, dataSource);
     return <ResizeTable {...state} summary={summary} dataSource={dataSource} allowCopy
-        scroll={{ y: height - TABLE_HEAD_HEIGHT - TABLE_SUMMARY_HEIGHT, x: TABLE_MIN_WIDTH }} virtual
+        scroll={dataSource?.length && height > 0 ? { y: height - TABLE_HEAD_HEIGHT - TABLE_SUMMARY_HEIGHT, x: TABLE_MIN_WIDTH } : undefined} virtual
         rowClassName={(row): string => {
             return selectedKey !== null && selectedKey === getAutoKey(row) ? 'selected-row' : 'click-able';
         }}
