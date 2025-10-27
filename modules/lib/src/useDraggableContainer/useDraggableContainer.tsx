@@ -449,7 +449,9 @@ const handleMouseUp = ({ container, draggable, movingState, dragDirection, minDr
 // 主容器宽高未确定时,初始化为设定的px值,主容器挂载结束后,后续宽高设置为百分比
 const pxConvert = (px: number, container: [number, number], dragDirection: DragDirection, sizeMethod?: SizeMethod): string => {
     let tempPx = px;
-    if (container[0] === 0 || container[1] === 0 || sizeMethod === SizeMethod.NUMBER) { return `${tempPx}px`; }
+    if (container[0] === 0 || container[1] === 0 || sizeMethod === SizeMethod.NUMBER || tempPx <= 40) {
+        return `${tempPx}px`;
+    }
     if (dragDirection <= 1) {
         if (dragDirection === 1) { tempPx += 4; } // bottom面板需要加上分割线的宽度
         return `${tempPx / container[1] * 100}%`;

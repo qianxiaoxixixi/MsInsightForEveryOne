@@ -50,6 +50,7 @@
     "Open a Project as Comparison Data": "请先打开任一工程作为对比数据",
     "tabs": {
       "Timeline": "时间线",
+      "ZoomEcharts": "可移动/可缩放图表",
       "Memory": "内存",
       "Operator": "算子",
       "Summary": "概览",
@@ -79,6 +80,7 @@
     "shortcuts": {
       "Zoom in": "放大时间轴",
       "Zoom out": "缩小时间轴",
+      "Zoom in/out": "放大/缩小时间轴",
       "Undo zoom": "撤销一次缩放时间轴",
       "Reset zoom": "重置时间轴",
       "Zoom into selection": "将框选区域放大至屏幕",
@@ -86,8 +88,6 @@
       "Pan right": "右移",
       "Scroll up": "页面向上滚动",
       "Scroll down": "页面向下滚动",
-      "Scroll Left": "图表向左滚动",
-      "Scroll Right": "图表向右滚动",
       "Toggle bottom drawer": "收起/展开底部面板",
       "Create Flag Mark": "创建旗帜标记",
       "M selection": "根据当前选中的算子设置或取消框选区域",
@@ -95,6 +95,9 @@
       "L align": "选中算子的开始时间与基准算子的开始时间对齐",
       "R align": "选中算子的结束时间与基准算子的结束时间对齐",
       "drag": "拖动",
+      "ScrollUp": "鼠标向上滚动",
+      "ScrollDown": "鼠标向下滚动",
+      "Scorll":"鼠标滚动",
       "click": "点击",
       "double-click": "双击",
       "Find in source code": "在源码中查找"

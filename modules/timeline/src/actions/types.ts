@@ -67,4 +67,5 @@ export interface Action {
         event: React.KeyboardEvent | KeyboardEvent,
     ) => boolean;
     once?: boolean;
+    checked?: (session: Session) => boolean;
 }

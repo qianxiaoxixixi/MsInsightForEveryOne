@@ -17,7 +17,7 @@ export { actionShowInEventsView } from './actionShowInEventsView';
 export { actionShowPythonCallStack, actionHidePythonCallStack } from './actionShowPythonCallStack';
 export { actionCollapseAllUnits, actionExpandAllUnits } from './actionExpandUnits';
 export { actionShowFlagEvents, actionHideFlagEvents } from './actionShowFlagEvents';
-export { actionEnableAutoUnitHeight, actionDisableAutoUnitHeight } from './actionToggleAutoUnitHeight';
+export { actionEnableAutoUnitHeight } from './actionToggleAutoUnitHeight';
 export { actionRecoverDefaultOffset } from './actionRecoverDefaultOffset';
 export {
     actionClearBenchmarkSlice,

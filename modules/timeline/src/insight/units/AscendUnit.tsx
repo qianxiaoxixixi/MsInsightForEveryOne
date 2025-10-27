@@ -78,6 +78,22 @@ const nsToMs = (ns: number): number => {
 };
 
 const nsToNs = (ns: string | bigint): string => {
+    if (typeof BigInt === 'undefined') {
+        const nsNumber = Number(ns);
+        if (Number.isNaN(nsNumber)) {
+            return '-';
+        }
+        const ms = Math.floor(nsNumber / 1000000);
+        const us = Math.floor((nsNumber - (ms * 1000000)) / 1000);
+        const nsRemainder = nsNumber - (ms * 1000000) - (us * 1000);
+        if (ms === 0 && us === 0) {
+            return `${nsRemainder}ns`;
+        }
+        if (ms === 0) {
+            return `${us}us${nsRemainder}ns`;
+        }
+        return `${ms}ms${us}us${nsRemainder}ns`;
+    }
     let nsBig: bigint;
     if (typeof ns === 'bigint') {
         // 已经是纳秒
@@ -98,8 +114,8 @@ const nsToNs = (ns: string | bigint): string => {
         }
     }
 
-    const MS = 1_000_000n; // 1 ms = 1,000,000 ns
-    const US = 1_000n; // 1 us = 1,000 ns
+    const MS = BigInt(1_000_000); // 1 ms = 1,000,000 ns
+    const US = BigInt(1_000); // 1 us = 1,000 ns
 
     const ms = nsBig / MS;
     const nsAfterMs = nsBig % MS;
@@ -107,10 +123,10 @@ const nsToNs = (ns: string | bigint): string => {
     const us = nsAfterMs / US;
     const nsRemainder = nsAfterMs % US;
 
-    if (ms === 0n && us === 0n) {
+    if (ms === BigInt(0) && us === BigInt(0)) {
         return `${nsRemainder}ns`;
     }
-    if (ms === 0n) {
+    if (ms === BigInt(0)) {
         return `${us}us${nsRemainder}ns`;
     }
     return `${ms}ms${us}us${nsRemainder}ns`;
@@ -143,7 +159,7 @@ const singleSliceDetail = singleData({
     renderFields: [
         ['Title', (data): string => data.title === undefined ? '' : `${data.title}`, isHiddenTitle],
         ['Start', (data: AscendSliceDetail): string => getDetailTimeDisplay(data.startTime ?? 0), isHiddenStartTime],
-        ['Raw Start', (data: AscendSliceDetail): string => `${(data.rawStartTime ?? 0).toString()}ns`, isHiddenRawStartTime],
+        ['Raw Start', (data: AscendSliceDetail): string => `${Number(data.rawStartTime ?? 0)}ns`, isHiddenRawStartTime],
         ['Wall Duration', (data): string => getDetailTimeDisplay(data.duration as number), isHiddenDuration],
         ['Self Time', (data): string => getDetailTimeDisplay(data.selfTime as number), isHiddenSelfTime],
         ['Input Shapes', (data: AscendSliceDetail): string => getDisplay(data.inputShapes), (data: AscendSliceDetail): boolean => isHidden(data.inputShapes)],
@@ -561,7 +577,7 @@ async function createSummaryChart<T extends ProcessMetaData | LabelMetaData>(
                     if (e?.data?.body?.data?.dbId !== requestParam.dbPath) {
                         return;
                     }
-                    const result = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, { ...requestParam, aaa: 1 });
+                    const result = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, { ...requestParam });
                     return resolve(resProcess(result));
                 });
             });
