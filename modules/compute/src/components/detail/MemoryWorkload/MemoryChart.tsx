@@ -83,10 +83,11 @@ const chart = observer(({ condition, session }: {condition: Icondition;session: 
             return;
         }
         const res = await queryMemoryGraph(condition);
+        // 获取echarts数据
         const newData = (res?.coreMemory?.[0] ?? defaultData) as ImemoryData;
         setData(newData);
     };
-
+    //  监听刷新功能
     useEffect(() => {
         if (!session.parseStatus) {
             setData(defaultData);
@@ -94,8 +95,10 @@ const chart = observer(({ condition, session }: {condition: Icondition;session: 
         }
         updateData();
     }, [condition, session.parseStatus]);
+
     useEffect(() => {
         const svg = d3.select(`#${chartId}>svg`);
+        // 画图其中的功能
         drawFlowChart(svg, { ...data, ...condition, theme: session.theme }, tDetails);
     }, [data, condition, session.theme, tDetails]);
     useEffect(() => {
@@ -110,6 +113,16 @@ const chart = observer(({ condition, session }: {condition: Icondition;session: 
                 newStyle = { height: '420px' };
                 break;
         }
+        if (chipType === '910A5') {
+            switch (blockType) {
+                case 'mix':
+                    newStyle = { height: '670px' };
+                    break;
+                default:
+                    newStyle = { height: '420px' };
+                    break;
+            }
+        }
         setStyle(newStyle);
     }, [data]);
 
@@ -119,7 +132,7 @@ const chart = observer(({ condition, session }: {condition: Icondition;session: 
         });
     }, [data.advice]);
     return <div>
-        <div id={chartId} style={{ ...style, width: '1250px', margin: '10px auto' }}>
+        <div id={chartId} style={{ ...style, width: '1550px', margin: '10px auto' }}>
             <svg width={'100%'} height={'100%'}></svg>
             <FormulaTip session={session}/>
         </div>
