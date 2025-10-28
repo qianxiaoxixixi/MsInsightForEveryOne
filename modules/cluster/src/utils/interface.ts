@@ -143,6 +143,11 @@ export interface ClickOperatorItem {
     duration: number;
 }
 
+export interface ChartZoomData {
+    start: number;
+    end: number;
+}
+
 export interface CompareData<T> {
     compare: T;
     baseline: T;
