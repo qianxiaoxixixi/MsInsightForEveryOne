@@ -246,6 +246,9 @@ export const getFormatNum = (str?: string | number): number | string => {
         decimal = decimal >= 0 ? 0 : -decimal;
         return Number(num.toFixed(2 + decimal));
     }
+    if (num === 0) {
+        return '0';
+    }
     return str ?? '';
 };
 
