@@ -15,17 +15,8 @@ const toggleAutoUnitHeight = (session: Session): void => {
 
 export const actionEnableAutoUnitHeight = register({
     name: 'enableAutoUnitHeight',
-    label: 'timeline:contextMenu.Enable auto unit height',
-    visible: (session) => !session.autoAdjustUnitHeight,
-    perform: (session): void => {
-        toggleAutoUnitHeight(session);
-    },
-});
-
-export const actionDisableAutoUnitHeight = register({
-    name: 'disableAutoUnitHeight',
-    label: 'timeline:contextMenu.Disable auto unit height',
-    visible: (session) => session.autoAdjustUnitHeight,
+    label: 'timeline:contextMenu.Auto Fit Unit Height',
+    checked: (session) => session.autoAdjustUnitHeight,
     perform: (session): void => {
         toggleAutoUnitHeight(session);
     },

@@ -243,10 +243,16 @@ export class Session {
 
     // 数据源管理
     deleteDataSource(projectIndex: number): void {
+        if (projectIndex < 0 || projectIndex >= this._dataSources.length) {
+            throw new RangeError('projectIndex out of range');
+        }
         this.dataSources = this._dataSources.filter((dataSource, index) => index !== projectIndex);
     }
 
     deleteDataPath(projectIndex: number, dataPath: string): DataSource {
+        if (projectIndex < 0 || projectIndex >= this._dataSources.length) {
+            throw new RangeError('projectIndex out of range');
+        }
         const dataSources = JSON.parse(JSON.stringify(this._dataSources));
         deleteProjectDataPath(dataSources[projectIndex], dataPath);
         this.dataSources = dataSources;

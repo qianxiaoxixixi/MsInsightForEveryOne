@@ -7,7 +7,7 @@ import {
     communicatorContainerData,
     RankDyeingData,
 } from '../components/communicatorContainer/ContainerUtils';
-import { ClickOperatorItem, IndicatorsItem, PerformanceDataItem } from '../utils/interface';
+import type { ChartZoomData, ClickOperatorItem, IndicatorsItem, PerformanceDataItem } from '../utils/interface';
 
 export type PerformanceDataMap = Map<number, PerformanceDataItem>;
 
@@ -53,6 +53,7 @@ export class Session {
     isCompare: boolean = false;
     // 右键选中的算子
     targetOperator: ClickOperatorItem | undefined = undefined;
+    communicationChartZoomData?: ChartZoomData; // start 图表缩放的起始位置百分比, end 图表缩放的结束位置百分比
     profilingExpertDataParsed: boolean | null = null; // 专家热力图数据解析结果
     private _clusterList: ClusterInfo[] = [];
 

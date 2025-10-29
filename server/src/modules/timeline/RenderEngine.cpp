@@ -223,6 +223,7 @@ void RenderEngine::QueryThreadDetail(const ThreadDetailParams &requestParams, Un
     responseBody.data.args = competeSliceDomain.args;
     responseBody.data.title = competeSliceDomain.name;
     responseBody.data.duration = competeSliceDomain.endTime - competeSliceDomain.timestamp; // 保证 endTime >= timestamp
+    responseBody.data.rawTimestamp = competeSliceDomain.timestamp;
     responseBody.data.inputShapes = competeSliceDomain.sliceShape.inputShapes;
     responseBody.data.inputDataTypes = competeSliceDomain.sliceShape.inputDataTypes;
     responseBody.data.inputFormats = competeSliceDomain.sliceShape.inputFormats;

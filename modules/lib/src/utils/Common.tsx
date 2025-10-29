@@ -49,12 +49,16 @@ export const StyledEmpty = ({ descriptor, style }:
     );
 };
 
+const StyleDiv = styled.div`
+display: flex;
+align-items: flex-start;
+`;
+
 const StyledAdvice = styled.div`
     color: ${(p): string => p.theme.textColorPrimary};
     background-color: ${(p): string => p.theme.bgColorLight};
-    line-height: 36px;
     font-size: 14px;
-    padding: 0 15px;
+    padding: 8px 16px;
     margin-bottom: 5px;
     display: flex;
     flex-direction: row;
@@ -62,7 +66,7 @@ const StyledAdvice = styled.div`
         flex: 0 0 auto;
         vertical-align: top;
         & > span,div {
-            margin-right: 8px;
+            margin-right: 5px;
             font-weight: bold;
         }
     }
@@ -85,15 +89,29 @@ export function Hit(props: IHitProps): JSX.Element {
         if (typeof str !== 'string') {
             return str;
         }
-        const list = str.split(BREAK_LINE_REGEXP);
-        return list.map((item, index) => (<div key={index}>{item}</div>));
+        const list = str.split(BREAK_LINE_REGEXP).filter(v => v !== '');
+        return list.map((item) =>
+            <>
+                { item } <br/>
+            </>);
     };
     return <StyledAdvice style={style} {...restProps}>
         <div>
-            {icon}
-            {(title !== undefined && title !== null) ? (<span>{title}</span>) : <></>}
+            <StyleDiv>
+                { icon }
+                { (title !== undefined && title !== null)
+                    ? (
+                        <span className={'lh-20'}>{ title }</span>)
+                    : <></> }
+            </StyleDiv>
         </div>
-        <div>{Array.isArray(text) ? text.map((item, index) => (<div key={index}>{splitText(item)}</div>)) : splitText(text)}</div>
+        <div>{ Array.isArray(text)
+            ? text.map((item, index) =>
+                <div className={'lh-20'} key={ index }>{ splitText(item) }</div>)
+            : <div className={'lh-20'}>
+                {splitText(text)}
+            </div> }
+        </div>
     </StyledAdvice>;
 }
 export function Advice(props: IHitProps): JSX.Element {
