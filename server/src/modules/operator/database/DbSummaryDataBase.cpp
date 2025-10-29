@@ -20,7 +20,7 @@ bool DbSummaryDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
     auto result = Database::OpenDb(dbPath, clearAllTable) && QueryMetaVersion()
                   && AddCommunicationOpTableOpTypeIfNotExists();
-    blockDimColumnName = isLowCamel ? "blockDim" : "block_dim";
+    blockDimColumnName = "blockDim";
     return result;
 }
 

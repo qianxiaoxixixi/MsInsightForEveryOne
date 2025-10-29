@@ -7,14 +7,13 @@
 
 namespace Dic::Module::FullDb {
 using namespace Server;
-std::string DbKernelDetailHelper::GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams,
-    const bool isLowCamel)
+std::string DbKernelDetailHelper::GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams)
 {
     try {
         std::ostringstream sqlStream;
         sqlStream << "with nameIds as (select id, value as realName from STRING_IDS),\n"
                   << GetKernelDetailSqlWithHCCL(requestParams) << ",\n" // 第一次绑定 filter.second
-                  << GetKernelDetailSqlWithoutHCCL(requestParams, isLowCamel) << ",\n" // 第二次绑定 filter.second
+                  << GetKernelDetailSqlWithoutHCCL(requestParams) << ",\n" // 第二次绑定 filter.second
                   << "main as (select * from main_hccl UNION ALL select * from main_other), "
                   << "  total as (select count(*) as num from main )\n"
                   << "SELECT ROWID as id, total.num, name, type, acceleratorCore, startTime,\n"
@@ -97,10 +96,9 @@ std::string DbKernelDetailHelper::GetKernelDetailSqlWithHCCL(const Protocol::Ker
 }
 
 // throw DatabaseException
-std::string DbKernelDetailHelper::GetKernelDetailSqlWithoutHCCL(const Protocol::KernelDetailsParams &requestParams,
-    const bool isLowCamel)
+std::string DbKernelDetailHelper::GetKernelDetailSqlWithoutHCCL(const Protocol::KernelDetailsParams &requestParams)
 {
-    const std::string blockDimColumnName = isLowCamel ? "blockDim" : "block_dim";
+    const std::string blockDimColumnName = "blockDim";
     const std::string filterSql = GetKernelDetailFilterSqlWithoutHCCL(requestParams); // 绑定 filter.second
     // 前置已有 with nameIds as (select id, value as realName from STRING_IDS)
     return " main_other_tmp as ("

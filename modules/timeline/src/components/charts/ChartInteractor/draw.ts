@@ -19,6 +19,7 @@ import { colorPalette } from '../../../insight/units/utils';
 import { handlerEmptyString } from '../../../utils/string';
 import { forEach, groupBy, isNil, keys } from 'lodash';
 import { calculateLinkLines, LinkLineData } from './calculateLinkLines';
+
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
 export const MIN_BRUSH_SIZE = 2;
@@ -241,7 +242,11 @@ const drawMaskRange = ({
     const unitLength = session.selectedRangeIsLock ? session.lockUnitCount : session.selectedUnits.length;
     if (maskRange !== undefined) {
         maskRange.sort((a, b) => a - b);
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        if (theme.mode === 'dark') {
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        } else {
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        }
         if (unitLength !== 0) {
             ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, width, height);
             if (elements.length !== 0) {

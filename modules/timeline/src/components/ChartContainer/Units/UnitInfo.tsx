@@ -51,7 +51,6 @@ const DefaultInfoContainer = styled.div`
         padding-left: 6px;
         min-width: 0;
         flex: 1;
-        height: 100%;
 
         .insight-lane-info-name {
             overflow: hidden;
@@ -96,7 +95,7 @@ const DefaultInfoContainer = styled.div`
 const TagDiv = styled.div`
     overflow: hidden;
     white-space: nowrap;
-    padding: 0px 5px;
+    padding: 0 5px;
 
     .tag-content {
         margin-left: 6px;
@@ -503,7 +502,7 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
     const [isHovered, setIsHovered] = React.useState(false);
     const isClickDownRef = React.useRef<boolean>(false);
     const selectUnit = useSelectUnit(session);
-    const [expandable, setExpandable] = React.useState(hasExpandIcon && (Boolean(unit.children) || (Boolean(unit.collapsible) && Boolean(unit.collapseAction))));
+    const expandable = hasExpandIcon && (Boolean(unit.children) || (Boolean(unit.collapsible) && Boolean(unit.collapseAction)));
     const [isLoading, setLoading] = React.useState(false);
     const dbPath: string = unit.metadata.dbPath as string;
 
@@ -516,13 +515,11 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         session.asyncDataLoadingList[dbPath] &&
         // 如果 Overlap Analysis 正在加载中
         !session.asyncDataLoadingList[dbPath].OVERLAP_ANALYSIS) {
-        setExpandable(false);
         setLoading(true);
         connector.addListener('updateAnalysisLoading', (e: any) => {
             if (e?.data?.body?.data?.dbId !== unit.metadata.dbPath) {
                 return;
             }
-            setExpandable(true);
             setLoading(false);
         });
     }
@@ -606,7 +603,8 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
     >
         <UnitInfoBody offset={0}>
             {/* position: 'absolute' 将 ExpandIcon 从文档流移出，不影响 UnitInfoContent 宽度显示 */}
-            {expandable && <div style={{ position: 'absolute' }}><ExpandIcon unit={unit} /></div>} {/* ExpandIcon(14px) */}
+            {!isLoading && expandable &&
+                <div style={{ position: 'absolute' }}><ExpandIcon unit={unit}/></div>} {/* ExpandIcon(14px) */}
             {isLoading && <div style={{ position: 'absolute' }} className={'in-time-line-load'}></div>} {/* ExpandIcon(14px) */}
             {/* paddingLeft: '14px' 为 ExpandIcon 的显示留出空间 */}
             <div style={{ paddingLeft: '14px', width: '100%' }}>

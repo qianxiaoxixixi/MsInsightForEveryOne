@@ -10,13 +10,13 @@ import styled from '@emotion/styled';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import type { Session } from '../entity/session';
+import { EyeCloseOtuLine } from 'ascend-icon';
 import type { ChartInteractorHandles, InteractorMouseState } from './charts/ChartInteractor/ChartInteractor';
 import { unit } from '../entity/insight';
 
 import {
     actionClearBenchmarkSlice,
     actionCollapseAllUnits,
-    actionDisableAutoUnitHeight,
     actionEnableAutoUnitHeight,
     actionExpandAllUnits,
     actionFindInCommunication,
@@ -80,7 +80,7 @@ const MenuItem = styled.div`
     display: grid;
     grid-template-columns: 1fr 0.2fr;
     align-items: center;
-    padding: 4px 16px;
+    padding: 4px 16px 4px 20px;
     color: ${(props): string => props.theme.textColorPrimary};
 
     &:not(.disabled):hover{
@@ -89,6 +89,13 @@ const MenuItem = styled.div`
     }
     &.disabled{
         color: ${(props): string => props.theme.textColorDisabled};
+    }
+
+    &.checkmark::before {
+        position: absolute;
+        left: 6px;
+        margin-bottom: 1px;
+        content: "√";
     }
 
     .menu-item__label {
@@ -128,9 +135,18 @@ export const EmptyUnit = unit<EmptyMetaData>({
     name: 'Empty',
     pinType: 'copied',
     renderInfo: (session: Session, metadata: { count: number}) =>
-        <span style={{ marginLeft: 3, overflow: 'hidden', fontSize: 14, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {metadata.count}{' units hidden'}
-        </span>,
+        <div>
+            <EyeCloseOtuLine style={{ width: '15px', height: '15px', top: '3px', position: 'relative' }}/>
+            <span style={{
+                marginLeft: 3,
+                overflow: 'hidden',
+                fontSize: 14,
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+            }}>
+                {metadata.count}{' unit'}{metadata.count > 1 ? 's' : ''}{' hidden'}
+            </span>
+        </div>,
 });
 
 function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
@@ -196,7 +212,6 @@ const contextMenuItems: ContextMenuItem[] = [
     CONTEXT_MENU_SEPARATOR,
     // 高度自适应
     actionEnableAutoUnitHeight,
-    actionDisableAutoUnitHeight,
     CONTEXT_MENU_SEPARATOR,
     // 在 Events View 中显示
     actionShowInEventsView,
@@ -238,7 +253,7 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
                 }
 
                 return <MenuItem
-                    className={`menu-item ${disabled ? 'disabled' : ''}`}
+                    className={`menu-item ${disabled ? 'disabled' : ''} ${item.checked?.(session) ? 'checkmark' : ''}`}
                     key={item.name}
                     title={label}
                     onClick={(e): void => {

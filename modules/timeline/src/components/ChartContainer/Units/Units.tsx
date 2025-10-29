@@ -43,7 +43,7 @@ const Lane = styled.div<{ laneHeight: number; className: string; top: number; zI
     transform: ${(props): string => props.isDragging ? 'scale(1.01)' : 'scale(1)'};
     transition: transform .2s, box-shadow .2s;
     .unit-info {
-        background-color: ${(props): string => props.className.includes(UNIT_SELECTED) ? props.theme.selectedChartBackgroundColor : props.theme.contentBackgroundColor};
+        background-color: ${(props): string => getUnitBackgroundColor(props)};
         div svg g use {
             fill: ${(props): string => props.theme.fontColor};
         }
@@ -57,12 +57,25 @@ const VIRTUAL_SCROLL_THRESHOLD = 30;
 const MOUSE_STOPPED_THRESHOLD = 50;
 const UNIT_SELECTED = 'unit-selected';
 const UNIT_VISIBLE = 'unit-visible';
+const UNIT_EMPTY = 'empty';
 export const UNIT_WRAPPER_SCROLLER_ID = 'unitWrapperScroller';
 export const PINNED_UNIT_WRAPPER_SCROLLER_ID = 'pinnedUnitWrapperScroller';
 const UP = 'up';
 const DOWN = 'down';
 let scrollDirection = '';
 let moveDirectionHasChange = false;
+
+const getUnitBackgroundColor = (props: any): string => {
+    if (props.className.includes(UNIT_SELECTED)) {
+        return props.theme.selectedChartBackgroundColor;
+    }
+
+    if (props.children.length > 0 && props.children[0].props.className.includes(UNIT_EMPTY)) {
+        return props.theme.bgColorLight;
+    }
+
+    return props.theme.contentBackgroundColor;
+};
 
 const Splitter = styled.div`
     width: 100%;

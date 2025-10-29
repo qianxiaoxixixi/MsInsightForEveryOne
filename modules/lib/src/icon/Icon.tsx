@@ -26,6 +26,8 @@ import { ReactComponent as ResetLightIcon } from './img/reset_light.svg';
 import { ReactComponent as BulbSvg } from './img/bulb.svg';
 import { ReactComponent as ArrowDownDarkSvg } from './img/arrow_down_dark.svg';
 import { ReactComponent as ArrowDownLightSvg } from './img/arrow_down_light.svg';
+import { ReactComponent as EyeCloseOtuLineDarkSvg } from './img/eye_close_outlined_dark.svg';
+import { ReactComponent as EyeCloseOtuLineLightSvg } from './img/eye_close_outlined_light.svg';
 import { ReactComponent as ArrowUpDarkSvg } from './img/arrow_up_dark.svg';
 import { ReactComponent as ArrowUpLightSvg } from './img/arrow_up_light.svg';
 import { ReactComponent as ColumnFilterSvg } from './img/column_filter.svg';
@@ -115,6 +117,7 @@ const iconMap: Record<string, any> = {
         dataManager: DataManagerDarkSvg,
         case: CaseDarkSvg,
         fullText: FullTextDarkSvg,
+        eyeCloseOtuLine: EyeCloseOtuLineDarkSvg,
     },
     light: {
         help: HelpLightSvg,
@@ -132,6 +135,7 @@ const iconMap: Record<string, any> = {
         dataManager: DataManagerLightSvg,
         case: CaseLightSvg,
         fullText: FullTextLightSvg,
+        eyeCloseOtuLine: EyeCloseOtuLineLightSvg,
     },
 };
 
@@ -336,4 +340,8 @@ export function CaseIcon(props: ISVGProps): JSX.Element {
 export function FullTextIcon(props: ISVGProps): JSX.Element {
     const { active, ...restProps } = props;
     return <Icon type={`fullText${active ? 'Active' : ''}`} {...restProps}/>;
+}
+
+export function EyeCloseOtuLine(props: ISVGProps): JSX.Element {
+    return <Icon type={'eyeCloseOtuLine'} {...props }/>;
 }

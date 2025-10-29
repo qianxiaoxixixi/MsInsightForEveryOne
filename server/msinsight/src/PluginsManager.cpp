@@ -75,7 +75,8 @@ void PluginsManager::LoadPlugins()
         }
         for (auto &file : fs::directory_iterator(dir)) {
             std::string filePath = StringUtil::ToLocalStr(file.path().string());
-            if (is_directory(file) || file.path().extension().string() != EXT || !FileUtil::CheckFilePath(filePath)) {
+            if (is_directory(file) || file.path().extension().string() != EXT || !FileUtil::CheckFilePath(filePath) ||
+                !FileUtil::CheckWritableByOtherOrGroup(filePath)) {
                 continue;
             }
             AddPathEnv(dirPath);

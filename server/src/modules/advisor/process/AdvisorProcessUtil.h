@@ -95,12 +95,12 @@ static bool CompareFlowLocationByTimestampDesc(const Protocol::FlowLocation &a, 
 
 static bool CompareFlowLocationByDurationAsc(const Protocol::FlowLocation &a, const Protocol::FlowLocation &b)
 {
-    return a.duration < b.duration;
+    return NumberSafe::Sub(a.duration, a.timestamp) < NumberSafe::Sub(b.duration, b.timestamp);
 }
 
 static bool CompareFlowLocationByDurationDesc(const Protocol::FlowLocation &a, const Protocol::FlowLocation &b)
 {
-    return a.duration > b.duration;
+    return NumberSafe::Sub(a.duration, a.timestamp) > NumberSafe::Sub(b.duration, b.timestamp);
 }
 };
 } // Dic::Module::Advisor

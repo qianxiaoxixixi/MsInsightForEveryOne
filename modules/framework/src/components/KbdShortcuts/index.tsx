@@ -210,11 +210,11 @@ export const ShortcutsModal = ({ open, onClose }: {open: boolean;onClose: () => 
             <ShortcutModule caption={t('tabs.Timeline')}>
                 <Shortcut
                     label={t('shortcuts.Zoom in')}
-                    shortcuts={[KEYS.W]}
+                    shortcuts={[KEYS.W, `${getShortcutKey('CtrlOrCmd')}${DELIMITER}${t('shortcuts.ScrollUp')}`]}
                 />
                 <Shortcut
                     label={t('shortcuts.Zoom out')}
-                    shortcuts={[KEYS.S]}
+                    shortcuts={[KEYS.S, `${getShortcutKey('CtrlOrCmd')}${DELIMITER}${t('shortcuts.ScrollDown')}`]}
                 />
                 <Shortcut
                     label={t('shortcuts.Undo zoom')}
@@ -245,14 +245,6 @@ export const ShortcutsModal = ({ open, onClose }: {open: boolean;onClose: () => 
                     shortcuts={['↓']}
                 />
                 <Shortcut
-                    label={t('shortcuts.Scroll Left')}
-                    shortcuts={[`${getShortcutKey('Shift+↑')}`]}
-                />
-                <Shortcut
-                    label={t('shortcuts.Scroll Right')}
-                    shortcuts={[`${getShortcutKey('Shift+↓')}`]}
-                />
-                <Shortcut
                     label={t('shortcuts.Toggle bottom drawer')}
                     shortcuts={[KEYS.Q]}
                 />
@@ -277,11 +269,22 @@ export const ShortcutsModal = ({ open, onClose }: {open: boolean;onClose: () => 
                     shortcuts={[KEYS.R]}
                 />
             </ShortcutModule>
+            <ShortcutModule caption={t('tabs.ZoomEcharts')}>
+                <Shortcut
+                    label={`${t('shortcuts.Pan left')}/${t('shortcuts.Pan right')}`}
+                    shortcuts={[`${getShortcutKey('Shift')}${DELIMITER}${t('shortcuts.Scorll')}`]}
+                />
+                <Shortcut
+                    label={t('shortcuts.Zoom in/out')}
+                    shortcuts={[`${getShortcutKey('CtrlOrCmd')}${DELIMITER}${t('shortcuts.Scorll')}`]}
+                />
+            </ShortcutModule>
             <ShortcutModule caption={t('tabs.Source')}>
                 <Shortcut
                     label={t('shortcuts.Find in source code')}
                     shortcuts={[`${getShortcutKey('CtrlOrCmd')}${DELIMITER}F`]}
                 />
+
             </ShortcutModule>
         </Section>
     </StyledModal>;

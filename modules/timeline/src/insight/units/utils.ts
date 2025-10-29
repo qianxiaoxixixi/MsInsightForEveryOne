@@ -55,9 +55,9 @@ function parseDecimal(str: string): {
     int: string;
     frac: string;
 } {
-    let sign = 1n;
+    let sign = BigInt(1);
     if (str.startsWith('-')) {
-        sign = -1n;
+        sign = BigInt(-1);
         str = str.slice(1);
     } else if (str.startsWith('+')) {
         str = str.slice(1);
@@ -67,6 +67,9 @@ function parseDecimal(str: string): {
 }
 
 export function bigSubtract(a: number | string, b: number | string): string {
+    if (typeof BigInt === 'undefined') {
+        return '-';
+    }
     // 转为字符串，避免 number 精度丢失
     const aStr = String(a);
     const bStr = String(b);
