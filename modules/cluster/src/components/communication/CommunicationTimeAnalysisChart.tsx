@@ -16,9 +16,10 @@ import i18n from 'ascend-i18n';
 import { themeInstance } from 'ascend-theme';
 import { type Theme } from '@emotion/react';
 import { disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions, safeStr } from 'ascend-utils';
-import { ClickOperatorItem, CompareData, type ErrorInfo, FormatterParams } from '../../utils/interface';
+import { ChartZoomData, ClickOperatorItem, CompareData, type ErrorInfo, FormatterParams } from '../../utils/interface';
 import { queryTimelineUnitKernelDetail } from '../../utils/RequestUtils';
 import { useEventBus } from '../../utils/eventBus';
+import type { ECharts, InsideDataZoomComponentOption } from 'echarts';
 
 interface OnClickSlowRankOpCallbackParams {
     startValue: number;
@@ -40,7 +41,7 @@ const INITINAL_MAX_VISIBLE_RANK_NUMBER = 516;
 // Communication 缩略图初始化最大可见算子数
 const MAX_VISIBLE_OPERATOR_NUMBER = 10000;
 
-function initDataZoom(totalNum: number, dataLength: number): void {
+function initDataZoom(totalNum: number, dataLength: number, communicationChartZoomData?: ChartZoomData): void {
     if (dataLength <= 0 || totalNum <= 0 || option.dataZoom.length <= 1) {
         return;
     }
@@ -58,11 +59,11 @@ function initDataZoom(totalNum: number, dataLength: number): void {
     // 显示区间为[0, 范围]
     if (totalNum > MAX_VISIBLE_OPERATOR_NUMBER) {
         const xPercentage = Math.ceil(MAX_VISIBLE_OPERATOR_NUMBER / totalNum * 100);
-        option.dataZoom[0].start = 0;
-        option.dataZoom[0].end = xPercentage;
+        option.dataZoom[0].start = communicationChartZoomData?.start ?? 0;
+        option.dataZoom[0].end = communicationChartZoomData?.end ?? xPercentage;
     } else {
-        option.dataZoom[0].start = 0;
-        option.dataZoom[0].end = 100;
+        option.dataZoom[0].start = communicationChartZoomData?.start ?? 0;
+        option.dataZoom[0].end = communicationChartZoomData?.end ?? 100;
     }
 }
 enum compareSource {
@@ -70,7 +71,7 @@ enum compareSource {
     BASELINE = 1,
 }
 const sourceIndex = 4;
-function wrapData(dataSource: AnalysisChartData, isCompare: boolean): any {
+function wrapData(dataSource: AnalysisChartData, isCompare: boolean, communicationChartZoomData?: ChartZoomData): any {
     const data: any = [];
     const yAxisData: string[] = [];
     const dataLength = Math.max(dataSource?.data?.length, 0);
@@ -95,7 +96,7 @@ function wrapData(dataSource: AnalysisChartData, isCompare: boolean): any {
     const dataHeight = calculateDataHeight(dataSource);
     option.grid.height = dataHeight;
     option.dataZoom[0].top = dataHeight - DEFAULT_INNER_CHART_HEIGHT + DEFAULT_CHART_ZOOM_HEIGHT;
-    initDataZoom(totalNumber, dataLength);
+    initDataZoom(totalNumber, dataLength, communicationChartZoomData);
     option.series = getSeries({ data, isCompare });
     option.tooltip = getTooltip({ isCompare });
     return option;
@@ -315,7 +316,7 @@ function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDown
         };
     });
     if (dataSource !== undefined) {
-        myChart.setOption(wrapData(dataSource, session.isCompare));
+        myChart.setOption(wrapData(dataSource, session.isCompare, session.communicationChartZoomData));
     }
 
     return myChart;
@@ -385,7 +386,16 @@ const findInTimelineLoad = (isLoading: boolean): void => {
     }
 };
 
-const useMenuItems = (session: Session, setDropDownVisible: (_: boolean) => void): MenuProps['items'] => {
+const getZoomData = (chartInstance: ECharts | null): ChartZoomData => {
+    const currentOption = chartInstance?.getOption();
+    const { start = 0, end = 100 } = (currentOption?.dataZoom as InsideDataZoomComponentOption[])?.[0] || [];
+    return {
+        start,
+        end,
+    };
+};
+
+const useMenuItems = (session: Session, setDropDownVisible: (_: boolean) => void, chartInstance: ECharts | null): MenuProps['items'] => {
     const { t } = useTranslation('communication');
     const findInTimeline = {
         label: t('Find in Timeline'),
@@ -408,6 +418,7 @@ const useMenuItems = (session: Session, setDropDownVisible: (_: boolean) => void
             if (selectedOpDetail === null) {
                 return;
             }
+            session.communicationChartZoomData = getZoomData(chartInstance);
             session.targetOperator = selectedOpDetail as ClickOperatorItem;
         },
     };
@@ -416,6 +427,7 @@ const useMenuItems = (session: Session, setDropDownVisible: (_: boolean) => void
         key: 'restoreDefaultState',
         disabled: false,
         onClick: (): void => {
+            session.communicationChartZoomData = getZoomData(chartInstance);
             session.targetOperator = undefined;
         },
     };
@@ -435,10 +447,10 @@ const useMenuItems = (session: Session, setDropDownVisible: (_: boolean) => void
 const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading }: { dataSource: AnalysisChartData; session: Session; loading: boolean}) => {
     const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT);
     const [dropDownVisible, setDropDownVisible] = useState(false);
-    const menuItems = useMenuItems(session, setDropDownVisible);
     const chartRef = useRef<HTMLDivElement>(null);
     const scrollContainer = document.querySelector('.mi-page-content');
     const chartInst = useRef<echarts.ECharts | null>(null);
+    const menuItems = useMenuItems(session, setDropDownVisible, chartInst.current);
 
     // 修复echarts的dataZoom开启鼠标滚轮缩放时，页面不滚动的问题
     const syncScroll = (e: WheelEvent): void => {
@@ -456,6 +468,7 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading 
             setChartHeight(getChartHeight(dataSource));
             chartInst.current = InitCharts(dataSource, session, setDropDownVisible);
             chartRef.current?.addEventListener('wheel', syncScroll, true);
+            session.communicationChartZoomData = undefined;
         });
 
         return (): void => {
