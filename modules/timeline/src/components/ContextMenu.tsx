@@ -10,6 +10,7 @@ import styled from '@emotion/styled';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import type { Session } from '../entity/session';
+import { EyeCloseOtuLine } from 'ascend-icon';
 import type { ChartInteractorHandles, InteractorMouseState } from './charts/ChartInteractor/ChartInteractor';
 import { unit } from '../entity/insight';
 
@@ -134,9 +135,18 @@ export const EmptyUnit = unit<EmptyMetaData>({
     name: 'Empty',
     pinType: 'copied',
     renderInfo: (session: Session, metadata: { count: number}) =>
-        <span style={{ marginLeft: 3, overflow: 'hidden', fontSize: 14, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {metadata.count}{' units hidden'}
-        </span>,
+        <div>
+            <EyeCloseOtuLine style={{ width: '15px', height: '15px', top: '3px', position: 'relative' }}/>
+            <span style={{
+                marginLeft: 3,
+                overflow: 'hidden',
+                fontSize: 14,
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+            }}>
+                {metadata.count}{' unit'}{metadata.count > 1 ? 's' : ''}{' hidden'}
+            </span>
+        </div>,
 });
 
 function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {

@@ -3,18 +3,16 @@
  */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip, Select, Tabs } from 'ascend-components';
+import { Tooltip, Select } from 'ascend-components';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FilterIcon, HelpIcon } from 'ascend-icon';
 import type { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
 import type { InsightUnit } from '../entity/insight';
 import type { CardMetaData, ProcessMetaData, ThreadMetaData } from '../entity/data';
 import { useTranslation } from 'react-i18next';
-
-const DEFAULT_FILTER_KEY = 'Card';
 
 const CustomDiv = styled.div`
     display: flex;
@@ -97,14 +95,10 @@ const CustomDiv = styled.div`
     }
 `;
 
-const TabsWrapper = styled.div`
-    position: relative;
-`;
-
 const FixedTooltipWrapper = styled.div`
     position: absolute;
-    top: 6px;
-    right: 40px;
+    top: 15px;
+    right: 24px;
 `;
 
 interface CompleteOptionProps {
@@ -269,38 +263,16 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
     return { cardNames, unitNames };
 };
 
-type UseAutoCompleteHandlesReturnType = [
-    setSelectValue: React.Dispatch<React.SetStateAction<string | null>>,
-    completeOptions: CompleteOptionProps[],
-    handleSearch: (value: string, label?: string | null) => void,
-    cardSelection: string[],
-    unitSelection: string[],
-    setCardSelection: React.Dispatch<React.SetStateAction<string[]>>,
-    setUnitSelection: React.Dispatch<React.SetStateAction<string[]>>,
-];
-const useAutoCompleteHandles = (session: Session): UseAutoCompleteHandlesReturnType => {
-    const [selectValue, setSelectValue] = useState<string | null>(null);
+const CategorySearchContent = (session: Session): JSX.Element => {
+    const theme = useTheme();
     const { cardNames, unitNames } = useUnitsNameSet(session);
-    const [completeOptions, setCompleteOptions] = useState<CompleteOptionProps[]>([]);
+    const [completeCardOptions, setCompleteCardOptions] = useState<CompleteOptionProps[]>([]);
+    const [completeUnitOptions, setCompleteUnitOptions] = useState<CompleteOptionProps[]>([]);
     const [cardSelection, setCardSelection] = useState<string[]>([]);
     const [unitSelection, setUnitSelection] = useState<string[]>([]);
+    const { t } = useTranslation();
 
-    // 切换项目时 session.projectName 改变，触发 selectValue 重置
-    useEffect(() => {
-        setSelectValue(null);
-        setCardSelection([]);
-        setUnitSelection([]);
-    }, [session.projectName]);
-
-    useEffect(() => {
-        handleSearch('');
-    }, [selectValue]);
-
-    useEffect(() => {
-        startFilter(session, cardSelection, unitSelection);
-    }, [cardSelection, unitSelection]);
-
-    const handleSearch = (value: string, key = selectValue): void => {
+    const handleSearch = (value: string, key = 'Card'): void => {
         const result: CompleteOptionProps[] = [];
         let targetSet = new Set<string>();
         if (key === 'Unit') {
@@ -314,88 +286,71 @@ const useAutoCompleteHandles = (session: Session): UseAutoCompleteHandlesReturnT
                 result.push({ label: cardName, value: cardName });
             }
         });
-        setCompleteOptions(result);
-    };
-
-    return [setSelectValue, completeOptions, handleSearch, cardSelection, unitSelection, setCardSelection, setUnitSelection];
-};
-
-const CategorySearchContent = (session: Session): JSX.Element => {
-    const theme = useTheme();
-    const [setSelectValue, completeOptions, handleSearch, cardSelection, unitSelection, setCardSelection, setUnitSelection] = useAutoCompleteHandles(session);
-    const [activeTabKey, setActiveTabKey] = useState<string>(DEFAULT_FILTER_KEY);
-    const { t } = useTranslation();
-
-    useEffect(() => {
-        setActiveTabKey(DEFAULT_FILTER_KEY);
-        handleTabChange(DEFAULT_FILTER_KEY);
-    }, [session.projectName]);
-
-    const filterTabItems = useMemo(() => [
-        {
-            label: t('Card Filter', { ns: 'timeline' }),
-            key: 'Card',
-            children: (
-                <Select
-                    id={'select-card-filter-content'}
-                    mode="multiple"
-                    allowClear
-                    placeholder={t('Please select card', { ns: 'timeline' })}
-                    options={completeOptions}
-                    width={280}
-                    value={cardSelection}
-                    onChange={(val: string[]) => setCardSelection(val)}
-                >
-                </Select>
-            ),
-        },
-        {
-            label: t('Units Filter', { ns: 'timeline' }),
-            key: 'Unit',
-            children: (
-                <Select
-                    id={'select-unit-filter-content'}
-                    mode="multiple"
-                    allowClear
-                    placeholder={t('Please select unit', { ns: 'timeline' })}
-                    options={completeOptions}
-                    width={280}
-                    value={unitSelection}
-                    onChange={(val: string[]) => setUnitSelection(val)}
-                >
-                </Select>
-            ),
-        },
-    ], [completeOptions, cardSelection, unitSelection, t]);
-
-    const handleTabChange = (activeKey: string): void => {
-        setActiveTabKey(activeKey);
-        const tab = filterTabItems.find(item => item.key === activeKey);
-        if (tab) {
-            const key = String(tab.key);
-            setSelectValue(key);
-            handleSearch('', key);
+        if (key === 'Unit') {
+            setCompleteUnitOptions(result);
+        }
+        if (key === 'Card') {
+            setCompleteCardOptions(result);
         }
     };
 
+    // 切换项目时 session.projectName 改变，触发 selectValue 重置
+    useEffect(() => {
+        setCompleteUnitOptions([]);
+        setCompleteCardOptions([]);
+        setCardSelection([]);
+        setUnitSelection([]);
+    }, [session.projectName]);
+
+    useEffect(() => {
+        startFilter(session, cardSelection, unitSelection);
+    }, [cardSelection, unitSelection]);
+
+    useEffect(() => {
+        startFilter(session, cardSelection, unitSelection);
+    }, [cardSelection, unitSelection]);
+
+    if (completeCardOptions.length === 0 && cardNames.size > 0) {
+        handleSearch('', 'Card');
+    }
+    if (completeUnitOptions.length === 0 && unitNames.size > 0) {
+        handleSearch('', 'Unit');
+    }
+
     return (
         <CustomDiv theme={theme}>
-            <TabsWrapper>
-                <Tabs
-                    type="card"
-                    size="small"
-                    tabBarGutter={4}
-                    activeKey={activeTabKey}
-                    onChange={handleTabChange}
-                    items={filterTabItems}
+            <div style={ { margin: '8px' } }>
+                <div style={ { marginBottom: '8px' } }>{ t('Card Filter', { ns: 'timeline' }) }</div>
+                <Select
+                    id={ 'select-card-filter-content' }
+                    mode="multiple"
+                    allowClear
+                    placeholder={ t('Please select card', { ns: 'timeline' }) }
+                    options={ completeCardOptions }
+                    width={ 280 }
+                    value={ cardSelection }
+                    onChange={ (val: string[]) => setCardSelection(val) }
                 >
-                </Tabs>
-                <FixedTooltipWrapper>
-                    <Tooltip placement="bottom" title={t('Filter ToolTip', { ns: 'timeline' })}>
-                        <HelpIcon style={{ cursor: 'pointer' }} height={20} width={20} />
-                    </Tooltip>
-                </FixedTooltipWrapper>
-            </TabsWrapper>
+                </Select>
+                <div
+                    style={ { marginBottom: '8px', marginTop: '16px' } }>{ t('Units Filter', { ns: 'timeline' }) }</div>
+                <Select
+                    id={ 'select-unit-filter-content' }
+                    mode="multiple"
+                    allowClear
+                    placeholder={ t('Please select unit', { ns: 'timeline' }) }
+                    options={ completeUnitOptions }
+                    width={ 280 }
+                    value={ unitSelection }
+                    onChange={ (val: string[]) => setUnitSelection(val) }
+                >
+                </Select>
+            </div>
+            <FixedTooltipWrapper>
+                <Tooltip placement="bottom" title={t('Filter ToolTip', { ns: 'timeline' })}>
+                    <HelpIcon style={{ cursor: 'pointer' }} height={20} width={20} />
+                </Tooltip>
+            </FixedTooltipWrapper>
         </CustomDiv>
     );
 };
