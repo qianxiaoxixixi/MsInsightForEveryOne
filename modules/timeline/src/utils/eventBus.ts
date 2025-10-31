@@ -4,7 +4,6 @@
 
 import { pull } from 'lodash';
 import { useEffect } from 'react';
-
 export type EventHandler<T> = (arg?: T) => void;
 
 export enum EventType {
@@ -16,7 +15,7 @@ export enum EventType {
 
 class EventBus<T> {
     private readonly _events: Map<string, Array<EventHandler<T>>>;
-    private readonly _maxListeners: number = 100; // 设立监听上限
+    private readonly _maxListeners: number = 1000; // 设立监听上限
 
     constructor() {
         this._events = new Map(); // 储存事件/回调键值对
