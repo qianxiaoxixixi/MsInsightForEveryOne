@@ -191,7 +191,11 @@ bool FileUtil::CheckDirValid(const std::string &path)
         return false;
     }
     if (!CheckPathOwner(dir)) {
-        Server::ServerLog::Error("The path is writable by any other users. path: %.", dir);
+        Server::ServerLog::Error("The path's owner is not current user. path: %.", dir);
+        return false;
+    }
+    if (!CheckWritableByOther(dir)) {
+        Server::ServerLog::Error("The path is writeable by other user.path: %", dir);
         return false;
     }
     return true;
