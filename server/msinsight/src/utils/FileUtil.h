@@ -132,7 +132,7 @@ public:
 
 #ifdef _WIN32
     static inline bool FindFolders(const std::string &path,
-        std::vector<std::string> &folders, std::vector<std::string> &files)
+        std::vector<std::string> &folders, std::vector<std::string> &files, bool strict = true)
     {
         // long type will crash when use wingw11 compile in windows11
         long long hFile = 0;
@@ -171,9 +171,11 @@ public:
 #else
     static inline bool FindFolders(const std::string &path,
                                    std::vector<std::string> &folders,
-                                   std::vector<std::string> &files)
+                                   std::vector<std::string> &files,
+                                   bool strict = true)
     {
         if (path.empty()) {
+            Server::ServerLog::Error("path empty");
             return false;
         }
         DIR *pDir = nullptr;
@@ -182,6 +184,7 @@ public:
         std::string tmpPath(path);
         pDir = opendir(tmpPath.c_str());
         if (pDir == nullptr) {
+            Server::ServerLog::Error("open dir failed");
             return false;
         }
         const uint64_t fileCountLimit = 100000;
@@ -193,12 +196,15 @@ public:
             if (stat(fullPath.c_str(), &pathStat) != 0) {
                 continue;
             }
-            if (!CheckDirValid(fullPath)) {
+            if (strict && !CheckDirValid(fullPath)) {
+                continue;
+            }
+            if (!strict && S_ISLNK(pathStat.st_mode)) {
                 continue;
             }
             if (S_ISDIR(pathStat.st_mode)) {
                 folders.emplace_back(pDirent->d_name);
-            } else if (S_ISREG(pathStat.st_mode)) {
+            } else if (!strict || S_ISREG(pathStat.st_mode)) {
                 files.emplace_back(pDirent->d_name);
             } else {
                 Server::ServerLog::Info("Other type : [", pathStat.st_mode, "] : [", pDirent->d_name);
