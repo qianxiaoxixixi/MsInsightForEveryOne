@@ -401,6 +401,10 @@ bool FileUtil::ConvertToRealPath(std::string &errorMsg, std::string &path)
         errorMsg = path + "is invalid path";
         return false;
     }
+    if (!FileUtil::IsFolder(path) && !FileUtil::CheckFileValid(path)) {
+        errorMsg = path + "is invalid path";
+        return false;
+    }
     std::string realPath = GetRealPath(path);
     if (realPath.empty()) {
         errorMsg = "The conversion of the " + path +

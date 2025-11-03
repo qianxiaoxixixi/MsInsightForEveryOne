@@ -49,7 +49,7 @@ struct FilesGetResBody {
     std::string path;
     std::vector<std::unique_ptr<Folder>> childrenFolders;
     std::vector<std::unique_ptr<File>> childrenFiles;
-    bool exist = false;
+    bool exist = true;
 };
 
 struct FilesGetResponse : public Response {

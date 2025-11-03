@@ -39,7 +39,7 @@ TEST_F(FileSelectorTest, TestContainFolder)
     std::vector<std::unique_ptr<Folder>> childrenFolders;
     std::vector<std::unique_ptr<Folder>> realChildrenFolders;
     std::vector<std::unique_ptr<File>> childrenFiles;
-    bool exist = false;
+    bool exist = true;
     std::vector<std::string> folders = {"normal", "slice"};
     for (const auto &folder : folders) {
         auto folderPtr = std::make_unique<Folder>();
@@ -65,7 +65,7 @@ TEST_F(FileSelectorTest, TestContainFiles)
     std::vector<std::unique_ptr<Folder>> childrenFolders;
     std::vector<std::unique_ptr<File>> childrenFiles;
     std::vector<std::unique_ptr<File>> realChildrenFiles;
-    bool exist = false;
+    bool exist = true;
     std::vector<std::string> files = {"ascend_pytorch_profiler.db", "cluster_analysis.db",
                                       "leaks_dump_20250806.dat", "msprof_0.db"};
     for (const auto &file : files) {
@@ -91,7 +91,7 @@ TEST_F(FileSelectorTest, TestContainFolderandFiles)
     std::vector<std::unique_ptr<Folder>> realChildrenFolders;
     std::vector<std::unique_ptr<File>> childrenFiles;
     std::vector<std::unique_ptr<File>> realChildrenFiles;
-    bool exist = false;
+    bool exist = true;
     std::vector<std::string> folders = {"ASCEND_PROFILER_OUTPUT"};
     for (const auto &folder : folders) {
         auto folderPtr = std::make_unique<Folder>();
