@@ -87,6 +87,25 @@ function isAvailable(moduleConfig: ModuleConfig, scene: Scene, dataCompose: Reco
     return Boolean(moduleConfig[`is${scene}`]);
 }
 
+// 校验插件地址
+function isAllowedIframeSrc(src: string | undefined | null): boolean {
+    if (!src) return false;
+
+    const cleanSrc = src.trim();
+
+    // 禁止外部域名 / 协议跳转
+    if (/^(https?:)?\/\//i.test(cleanSrc)) return false;
+
+    // 禁止危险协议
+    if (/^(javascript|data|vbscript|file|mailto):/i.test(cleanSrc)) return false;
+
+    // 禁止目录穿越
+    if (cleanSrc.includes('..')) return false;
+
+    // 匹配白名单路径前缀
+    return cleanSrc.startsWith('./plugins/');
+}
+
 const Index = observer(({ session }: {session: Session}) => {
     const { t } = useTranslation('framework', { keyPrefix: 'tabs' });
     const [scene, setScene] = useState<Scene>('Default');
@@ -134,7 +153,7 @@ const Index = observer(({ session }: {session: Session}) => {
                 (configs as string[]).forEach(item => {
                     const config: ModuleConfig = { name: '', requestName: '', attributes: {} };
                     Object.assign(config, safeJSONParse(item));
-                    if ((config.attributes.src != null) && config.attributes.src !== '' && !config.attributes.src.startsWith('http')) {
+                    if (isAllowedIframeSrc(config.attributes.src)) {
                         pluginModulesConfig.push(config);
                     }
                 });
