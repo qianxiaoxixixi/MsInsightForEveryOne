@@ -11,6 +11,10 @@ namespace Dic {
 namespace Module {
 namespace Summary {
 
+// pmu数据表头仅允许字母  数字  '-'  '_'
+// 为防止出现连续--(sql中为注释)导致sql注入, 增加负向前瞻
+const std::string PMU_HEADER_WHITE_LIST_REG = R"(^(?!.*--)[a-zA-Z0-9\s\-_]+$)";
+
 struct Kernel {
     std::string rankId;
     std::string stepId;
