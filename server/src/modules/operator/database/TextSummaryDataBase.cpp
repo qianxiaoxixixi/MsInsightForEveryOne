@@ -751,7 +751,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             std::string colName = sqlite3_column_string(stmt, 0);
             // 表头只能是字母、数字、下划线、短线、空格，不匹配不要跳过，直接返回空
-            if (!RegexUtil::RegexMatch(colName, R"(^[a-zA-Z0-9\s\-_]+$)")) {
+            if (!RegexUtil::RegexMatch(colName, PMU_HEADER_WHITE_LIST_REG)) {
                 ServerLog::Error("There is an SQL injection attack on this parameter. error param: %", colName);
                 sqlite3_finalize(stmt);
                 return {};

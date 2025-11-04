@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include "pch.h"
+#include "SummaryDef.h"
 #include "OperatorProtocolRequest.h"
 #include "OperatorGroupConverter.h"
 #include "OperatorProtocolResponse.h"
@@ -849,7 +850,7 @@ std::set<std::string> DbSummaryDataBase::FetchPmuColumnNames()
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         std::string colName = sqlite3_column_string(stmt, 0);
         // 表头只能是字母、数字、下划线、短线、空格
-        if (!RegexUtil::RegexMatch(colName, R"(^[a-zA-Z0-9\s\-_]+$)")) {
+        if (!RegexUtil::RegexMatch(colName, Summary::PMU_HEADER_WHITE_LIST_REG)) {
             sqlite3_finalize(stmt);
             ServerLog::Error("There is an SQL injection attack on colName. error colName: %", colName);
             return {};

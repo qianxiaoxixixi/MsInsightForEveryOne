@@ -227,9 +227,10 @@ bool KernelParse::GetUtilizationColumns(const std::vector<std::string> &rowVecto
             }
         }
         // 表头只能是字母、数字、下划线、短线、空格
-        if (!RegexUtil::RegexMatch(origin, R"(^[a-zA-Z0-9\s\-_]+$)")) {
+        if (!RegexUtil::RegexMatch(origin, PMU_HEADER_WHITE_LIST_REG)) {
+            ServerLog::Error("Invalid pmu header %", origin);
             columns.clear();
-            return true;
+            return false;
         }
         columns.push_back(origin);
     }
