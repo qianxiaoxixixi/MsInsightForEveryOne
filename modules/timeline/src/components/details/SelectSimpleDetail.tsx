@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { Table } from 'antd';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
@@ -39,13 +39,20 @@ export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
     const unit = session.selectedUnits[0];
     const [dataSource, setDataSource] = useState(state.dataSource);
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
+    const scrollY = useMemo(() => {
+        let val = height - TABLE_HEAD_HEIGHT;
+        if (dataSource?.length) {
+            val = val - TABLE_SUMMARY_HEIGHT;
+        }
+        return val;
+    }, [height, dataSource?.length]);
     useEffect(() => {
         setDataSource(state.dataSource);
     }, [state.dataSource]);
     // 新增Summary(Totals)行
-    const summary = (): React.ReactNode => generateSummary(state, dataSource);
-    return <ResizeTable {...state} summary={summary} dataSource={dataSource} allowCopy
-        scroll={dataSource?.length && height > 0 ? { y: height - TABLE_HEAD_HEIGHT - TABLE_SUMMARY_HEIGHT, x: TABLE_MIN_WIDTH } : undefined} virtual
+    const summary = (): React.ReactNode => dataSource?.length ? generateSummary(state, dataSource) : undefined;
+    return <ResizeTable className={'table-slice-list'} {...state} summary={summary} dataSource={dataSource} allowCopy
+        scroll={{ y: scrollY, x: TABLE_MIN_WIDTH }} virtual
         rowClassName={(row): string => {
             return selectedKey !== null && selectedKey === getAutoKey(row) ? 'selected-row' : 'click-able';
         }}

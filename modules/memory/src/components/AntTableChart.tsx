@@ -175,8 +175,6 @@ async function redirectToTimeline(record: OperatorDetail, card: CardInfo): Promi
 
 // eslint-disable-next-line max-lines-per-function
 export const AntTableChart: React.FC<IProps> = (props) => {
-    // 开发环境防止antd4 table组件报ResizeObserver loop错误，但会在没有数据时也显示有1条，生产环境不会报错也会正常显示
-    const defaultDataSource = (process.env.NODE_ENV === 'development' ? [{}] : []) as OperatorDetail[];
     const { t } = useTranslation('memory');
     const {
         tableData, onRowSelected, current, pageSize,
@@ -260,7 +258,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
                 <ResizeTable
                     columns={columns as TableColumnsType<OperatorDetail>}
                     allowCopy
-                    dataSource={tableData.rows.length === 0 ? defaultDataSource : tableData.rows.map((item, index) => ({ ...item, key: `${item.name}_${index}` }))}
+                    dataSource={tableData.rows.map((item, index) => ({ ...item, key: `${item.name}_${index}` }))}
                     onChange={onTableChange}
                     scroll={{
                         x: 150 * columns.length,
