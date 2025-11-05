@@ -13,6 +13,7 @@ public:
     QueryParallelismArrangementHandler()
     {
         command = Protocol::REQ_RES_PARALLELISM_ARRANGEMENT_ALL;
+        async = false;
     }
     ~QueryParallelismArrangementHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
