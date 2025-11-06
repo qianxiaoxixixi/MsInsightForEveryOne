@@ -27,6 +27,7 @@
 #include "RLMstxConfigManager.h"
 #include "RenderEngine.h"
 #include "TrackInfoManager.h"
+#include "JsonParseMemPool.h"
 namespace Dic::Module {
 using namespace Dic;
 using namespace Dic::Server;
@@ -377,7 +378,7 @@ void ProjectParserBase::SendAllParseSuccess()
         event->body.cardOffsets.emplace_back(cardOffset);
     }
     event->body.minTime = TraceTime::Instance().GetStartTime();
-    TraceFileParser::Instance().Clear();
+    Dic::Module::JsonParseMemPool::Instance().Clear();
     SendEvent(std::move(event));
 }
 
