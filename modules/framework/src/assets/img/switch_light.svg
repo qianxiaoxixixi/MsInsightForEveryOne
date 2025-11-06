@@ -1,0 +1,45 @@
+<svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="10.000000"
+     height="10.000000" fill="none" customFrame="#000000">
+    <g id="light">
+        <g id="编组 3">
+            <circle id="椭圆形" cx="5" cy="5" r="3" fill="rgb(195,206,223)"/>
+            <circle id="椭圆形" cx="5" cy="5" r="2.5" stroke="rgb(151,151,151)" stroke-opacity="0" stroke-width="1"/>
+            <rect id="矩形" width="1.000000" height="1.500000" x="4.500000" y="0.000000" rx="0.500000"
+                  fill="rgb(195,206,223)"/>
+            <rect id="矩形" width="0.000000" height="0.500000" x="5.000000" y="0.500000" rx="0.500000"
+                  stroke="rgb(151,151,151)" stroke-opacity="0" stroke-width="1"/>
+            <rect id="矩形备份 9" width="1.000000" height="1.500000" x="4.500000" y="8.500000" rx="0.500000"
+                  fill="rgb(195,206,223)"/>
+            <rect id="矩形备份 9" width="0.000000" height="0.500000" x="5.000000" y="9.000000" rx="0.500000"
+                  stroke="rgb(151,151,151)" stroke-opacity="0" stroke-width="1"/>
+            <rect id="矩形" width="1.000000" height="1.500000" x="0.000000" y="0.000000" rx="0.500000"
+                  fill="rgb(195,206,223)" transform="matrix(0,-1,1,0,0,5.5)"/>
+            <rect id="矩形" width="0.000000" height="0.500000" x="0.500000" y="0.500000" rx="0.500000"
+                  stroke="rgb(151,151,151)" stroke-opacity="0" stroke-width="1" transform="matrix(0,-1,1,0,0,5.5)"/>
+            <rect id="矩形备份 9" width="1.000000" height="1.500000" x="0.000000" y="0.000000" rx="0.500000"
+                  fill="rgb(195,206,223)" transform="matrix(0,-1,1,0,8.5,5.5)"/>
+            <rect id="矩形备份 9" width="0.000000" height="0.500000" x="0.500000" y="0.500000" rx="0.500000"
+                  stroke="rgb(151,151,151)" stroke-opacity="0" stroke-width="1" transform="matrix(0,-1,1,0,8.5,5.5)"/>
+            <rect id="矩形" width="1.000000" height="1.500000" x="0.000000" y="0.000000" rx="0.500000"
+                  fill="rgb(195,206,223)" transform="matrix(0.707107,-0.707107,0.707107,0.707107,1.11084,1.81802)"/>
+            <rect id="矩形" width="0.000000" height="0.500000" x="0.500000" y="0.500000" rx="0.500000"
+                  stroke="rgb(151,151,151)" stroke-opacity="0" stroke-width="1"
+                  transform="matrix(0.707107,-0.707107,0.707107,0.707107,1.11084,1.81802)"/>
+            <rect id="矩形备份 9" width="1.000000" height="1.500000" x="0.000000" y="0.000000" rx="0.500000"
+                  fill="rgb(195,206,223)" transform="matrix(0.707107,-0.707107,0.707107,0.707107,7.12134,7.82843)"/>
+            <rect id="矩形备份 9" width="0.000000" height="0.500000" x="0.500000" y="0.500000" rx="0.500000"
+                  stroke="rgb(151,151,151)" stroke-opacity="0" stroke-width="1"
+                  transform="matrix(0.707107,-0.707107,0.707107,0.707107,7.12134,7.82843)"/>
+            <rect id="矩形" width="1.000000" height="1.500000" x="0.000000" y="0.000000" rx="0.500000"
+                  fill="rgb(195,206,223)" transform="matrix(-0.707107,-0.707107,0.707107,-0.707107,1.81787,8.8891)"/>
+            <rect id="矩形" width="0.000000" height="0.500000" x="0.500000" y="0.500000" rx="0.500000"
+                  stroke="rgb(151,151,151)" stroke-opacity="0" stroke-width="1"
+                  transform="matrix(-0.707107,-0.707107,0.707107,-0.707107,1.81787,8.8891)"/>
+            <rect id="矩形备份 9" width="1.000000" height="1.500000" x="0.000000" y="0.000000" rx="0.500000"
+                  fill="rgb(195,206,223)" transform="matrix(-0.707107,-0.707107,0.707107,-0.707107,7.82837,2.87869)"/>
+            <rect id="矩形备份 9" width="0.000000" height="0.500000" x="0.500000" y="0.500000" rx="0.500000"
+                  stroke="rgb(151,151,151)" stroke-opacity="0" stroke-width="1"
+                  transform="matrix(-0.707107,-0.707107,0.707107,-0.707107,7.82837,2.87869)"/>
+        </g>
+    </g>
+</svg>

@@ -32,3 +32,26 @@
 .spin-global > .ant-spin-container {
   height:100%;
 }
+
+.switch-theme-dark .ant-switch-handle {
+    background: #FFF;
+    border-radius: 12px;
+}
+
+.switch-theme-dark .ant-switch-handle::before {
+    background: center no-repeat url("./assets/img/switch_dark.svg");
+    border-radius: 12px;
+}
+
+.switch-theme-light {
+    background: #C3CEDF;
+}
+
+.switch-theme-light .ant-switch-handle {
+    background: #FFF;
+    border-radius: 12px;
+}
+
+.switch-theme-light .ant-switch-handle::before {
+    background: center no-repeat url("./assets/img/switch_light.svg");
+}
