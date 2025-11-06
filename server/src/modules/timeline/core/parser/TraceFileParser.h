@@ -33,11 +33,6 @@ public:
 
     int64_t GetTrackId(const std::string &fileId, const std::string &pid, const std::string &tid);
 
-    /**
-    * 清理线程池，释放json解析时占用的内存池
-    */
-    void Clear();
-
 private:
     TraceFileParser();
     ~TraceFileParser() override;
