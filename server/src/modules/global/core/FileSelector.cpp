@@ -42,7 +42,7 @@ void FileSelector::GetFoldersAndFiles(const std::string &path,
         exist = false;
         return;
     } else if (tempPath == filepath) {
-        exist = FileUtil::FindFolders(path, folders, files) || FileUtil::CheckFilePath(tempPath);
+        FileUtil::FindFolders(path, folders, files, false);
     }
     if (!folders.empty()) {
         std::sort(folders.begin(), folders.end(), CompareStrIgnoreCase);

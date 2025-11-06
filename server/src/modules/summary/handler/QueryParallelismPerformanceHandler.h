@@ -13,6 +13,7 @@ public:
     QueryParallelismPerformanceHandler()
     {
         command = Protocol::REQ_RES_PARALLELISM_PERFORMANCE_DATA;
+        async = false;
     }
     ~QueryParallelismPerformanceHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;

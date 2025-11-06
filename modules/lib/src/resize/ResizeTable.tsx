@@ -378,7 +378,7 @@ export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): Emotio
         className, locale, allowCopy = false, ...restProps
     } = prop;
     const [columns, setColumns] = useState<ColumnsType<T>>([]);
-    const marginTop = scroll?.y ? (scroll.y - EMPTY_VIEW_HEIGHT) / 2 : 50;
+    const marginY = scroll?.y ? (scroll.y - EMPTY_VIEW_HEIGHT) / 2 : 50;
 
     // ============================ Resize ============================
     useEffect(() => {
@@ -429,7 +429,7 @@ export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): Emotio
                 pagination={virtual ? false : fullPagination} expandable={fullExpandable} rowHoverable={rowHoverable} scroll={scroll}
                 dataSource={virtual ? renderList : dataSource} components={{ header: { cell: resizableTitle } }}
                 className={`${className ?? ''} ${variableTotalWidth ? 'variableTotalWidth' : ''}`} columns={mergeColumns}
-                locale={{ emptyText: () => prop.loading ? null : <StyledEmpty style={{ marginTop }}></StyledEmpty>, ...(locale ?? {}) }}
+                locale={{ emptyText: () => prop.loading ? null : <StyledEmpty style={{ marginTop: marginY, marginBottom: marginY }}></StyledEmpty>, ...(locale ?? {}) }}
             />
         </ResizeTableContainer>
     );
