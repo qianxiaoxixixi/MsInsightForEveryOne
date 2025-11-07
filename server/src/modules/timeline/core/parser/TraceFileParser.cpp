@@ -304,12 +304,6 @@ void TraceFileParser::DeleteParseFiles(const std::vector<std::string> &fileIds)
         CacheManager::Instance().ClearCacheByRankId(fileId);
     }
 }
-void TraceFileParser::Clear()
-{
-    threadPool->WaitForAllTasks();
-    threadPool->ShutDown();
-    InitThreadPool();
-}
 
 void TraceFileParser::InitThreadPool()
 {

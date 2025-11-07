@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "playwright test",
-    "jointTest": "npx playwright test tests/jointTest",
+    "test": "playwright test tests/full-test",
+    "jointTest": "npx playwright test tests/joint-test",
     "lint": "eslint . --ext .js,.ts,.cjs,.mts --fix --ignore-path .gitignore",
     "format": "prettier --write e2e/"
   },

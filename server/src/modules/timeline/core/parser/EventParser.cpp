@@ -8,6 +8,7 @@
 #include "ParserStatusManager.h"
 #include "SimulationSliceCacheManager.h"
 #include "FileReader.h"
+#include "JsonParseMemPool.h"
 #include "EventParser.h"
 
 namespace Dic {
@@ -53,8 +54,8 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
     }
     // 通过静态线程级的内存池,预分配5M的大小,获得线程相关的线程性能提升，更大的内存池略微提高性能，但是会带来较大的内存占用
     // 这里包含一个隐藏逻辑，当前json切片为50M，当前线程在解析过较大切片后，不用再重新申请内存池，后续优化下这块内存
-    thread_local static MemoryPoolAllocator<CrtAllocator> allocator(5 * 1024 * 1024);
-    thread_local static document_t doc(&allocator);
+    auto allocator = Dic::Module::JsonParseMemPool::Instance().GetMemBuff(std::this_thread::get_id());
+    document_t doc(allocator.get());
     doc.SetMaxLeafNum(JsonUtil::MAX_JSON_LEAF_NUMBER);
     doc.Parse<kParseNumbersAsStringsFlag | kParseJsonVerifyFlag>(buffer.data());
     if (doc.HasParseError()) {
