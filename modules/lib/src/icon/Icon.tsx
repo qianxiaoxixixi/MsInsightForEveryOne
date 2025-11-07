@@ -290,7 +290,7 @@ export function DataManagerIcon(props: ISVGProps): JSX.Element {
         dark: '#595959',
         light: '#8D98AA',
     }];
-    return <DrawIcon svgElement={DataManagerSvg} iconChangeList={iconChangeList} width={92} {...props }/>;
+    return <DrawIcon svgElement={DataManagerSvg} iconChangeList={iconChangeList} {...props }/>;
 }
 
 export function LangZhIcon(props: ISVGProps): JSX.Element {

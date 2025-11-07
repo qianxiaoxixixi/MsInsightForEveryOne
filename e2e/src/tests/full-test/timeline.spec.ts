@@ -255,14 +255,10 @@ test.describe('Timeline', () => {
 
     // 工具栏 - 泳道(card)过滤
     test('test_cardFilter', async ({ page, timelinePage }) => {
-        const { filterBtn, timelineFrame, cardFilterTab, selectCardFilterContent } = timelinePage;
+        const { filterBtn, timelineFrame, selectCardFilterContent } = timelinePage;
         const filterContentSelector = new SelectHelpers(page, selectCardFilterContent, timelineFrame);
 
         await filterBtn.click();
-        await page.mouse.move(0, 0);
-
-        await cardFilterTab.click();
-
         await filterContentSelector.open();
         await filterContentSelector.selectOption('0');
         await filterBtn.click();
@@ -273,14 +269,10 @@ test.describe('Timeline', () => {
     // 工具栏 - 泳道(unit)过滤
     test('test_unitFilter', async ({ page, timelinePage }) => {
         await allPagesSuccessRes;
-        const { filterBtn, timelineFrame, unitFilterTab, selectUnitFilterContent } = timelinePage;
+        const { filterBtn, timelineFrame, selectUnitFilterContent } = timelinePage;
         const filterContentSelector = new SelectHelpers(page, selectUnitFilterContent, timelineFrame);
 
         await filterBtn.click();
-        await page.mouse.move(0, 0);
-
-        await unitFilterTab.click();
-
         await filterContentSelector.open();
         await filterContentSelector.selectOption('Ascend Hardware');
         await filterBtn.click();
