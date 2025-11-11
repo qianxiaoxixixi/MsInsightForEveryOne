@@ -37,9 +37,9 @@ test.describe('Reinforcement-learning', () => {
     });
 
     // 算子调优-图形化窗格-框选
-    test('test_compute_reinforcement_learning_timeline', async ({ rLPage, page }) => {
-        const { rLFrame } = rLPage;
+    test('test_compute_reinforcement_learning_timeline', async ({ page, rLPage }) => {
+        const { taskTraceTimelineContent } = rLPage;
         await page.waitForTimeout(100); // 模拟人类操作停顿
-        await expect(rLFrame.locator('#task-trace-timeline')).toHaveScreenshot('select-units-range.png', { maxDiffPixels: 100 });
+        await expect(taskTraceTimelineContent).toHaveScreenshot('select-units-range.png', { maxDiffPixels: 100 });
     });
 });

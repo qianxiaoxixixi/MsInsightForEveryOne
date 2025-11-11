@@ -12,12 +12,13 @@ export class RLPage {
     constructor(page: Page) {
         this.page = page;
         this.rLFrame = page.frameLocator('#RL');
+        this.taskTraceTimelineContent = this.rLFrame.getByTestId('task-trace-timeline');
         this.taskExecutionTimeline = this.rLFrame.locator('#select-host');
     }
 
     async goto(val): Promise<void> {
         const frameworkPage = new FrameworkPage(this.page);
-        if(val !== 'RL'){
+        if(val !== 'RL') {
             await frameworkPage.goto();
         }
         await frameworkPage.clickTab(val);
