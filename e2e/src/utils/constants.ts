@@ -33,6 +33,8 @@ export enum FilePath {
     MS_RANK_0 = 'D:\\GUI_TEST_DATA 路徑测试\\mindspore\\profile\\test123_3028773_20250617091627998_ascend_ms',
     // Summary专家建议 集群数据
     EXPERT_ADVICE = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\db场景-专家建议',
+    // 强化学习
+    REINFORCEMENT_LEARNING = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\actor_compute_log_prob\\localhost.localdomain_62775_20250626085022355_ascend_pt',
 
     //联合冒烟数据
     JOINT_DATA = '/home/profiler_performance/task'
