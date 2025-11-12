@@ -1,4 +1,5 @@
-import { getDuration, getTimestamp } from '../humanReadable';
+import { getDuration, getReadableMem, getTimestamp, toLocalTimeString } from '../humanReadable';
+import type { TimeOptions } from '../adaptTimeForLength';
 
 describe('getDuration test', () => {
     it('basic integer test group', () => {
@@ -133,5 +134,49 @@ describe('getTimestamp', () => {
 
         // all parameterts test case
         expect(getTimestamp(Number.MAX_VALUE, { precision: 'min', segments: 10, maxChars: 0 })).toBe('2.9961552247705265e+306:08');
+    });
+
+    it('when segment is undifine return 000.001', () => {
+        const option: TimeOptions = { maxChars: 0 };
+        expect(getTimestamp(1, option)).toBe('000.001');
+    });
+});
+
+describe('getReadableMem', () => {
+    it('when input is empty then return 0kb', () => {
+        const input: number[] = [];
+        const output = getReadableMem(input);
+        expect(output.unit).toBe('KB');
+        expect(output.value[0]).toBe(0);
+    });
+    it('when input is two normal then return max', () => {
+        const input: number[] = [];
+        input.push(204800); // 204800
+        input.push(104800); // 104800
+        const output = getReadableMem(input);
+        expect(output.unit).toBe('MB');
+        expect(output.value[0]).toBe(200);
+    });
+    it('when input is one normal then return one', () => {
+        const input: number[] = [];
+        input.push(204800); // 204800
+        const output = getReadableMem(input);
+        expect(output.unit).toBe('MB');
+        expect(output.value[0]).toBe(200);
+    });
+    it('when input is small one normal then return kb', () => {
+        const input: number[] = [];
+        input.push(22); // 204800
+        const output = getReadableMem(input);
+        expect(output.unit).toBe('KB');
+        expect(output.value[0]).toBe(22);
+    });
+});
+
+describe('toLocalTimeString', () => {
+    it('when timestamp is normal', () => {
+        const input: number = 111111111111111;
+        const output = toLocalTimeString(input);
+        expect(output).toBe('5490-12-21 13:31:51');
     });
 });
