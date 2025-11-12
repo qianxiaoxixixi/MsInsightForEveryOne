@@ -27,5 +27,3 @@ product
 
 /opensource/
 /modules/framework/public/plugins
-/modules/lib/src/**/*.js
-/modules/lib/src/**/*.d.ts
