@@ -229,6 +229,9 @@ private:
     bool ExcecuteQueryKernelDetailData(std::unique_ptr<SqlitePreparedStatement> &stmt,
         const Protocol::KernelDetailsParams &requestParams, Protocol::KernelDetailsBody &responseBody,
         uint64_t minTimestamp);
+    void ExecuteQueryDbThreadSameOperatorsDetails(const std::unique_ptr<SqliteResultSet>& resultSet,
+        const Protocol::UnitThreadsOperatorsParams &requestParams, Protocol::UnitThreadsOperatorsBody &responseBody,
+        const std::vector<std::string> tidList);
 
     void UpdataCommucationThreadName(const PROCESS_TYPE &type, std::unique_ptr<Protocol::UnitTrack> &process) const;
     void ExecuteQueryUnitFlowsForTable(const std::pair<std::string, std::string> &tableAndSql,

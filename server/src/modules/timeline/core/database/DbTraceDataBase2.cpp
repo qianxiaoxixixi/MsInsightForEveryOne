@@ -3,6 +3,7 @@
  */
 
 #include "DbTraceDataBase.h"
+#include "TrackInfoManager.h"
 #include "TraceDatabaseHelper.h"
 #include "CounterEventHelper.h"
 
@@ -312,5 +313,75 @@ void DbTraceDataBase::QueryDeviceIdInStepTraceTime(std::set<std::string> &device
         deviceIds.insert(deviceId);
     }
     sqlite3_finalize(stmt);
+}
+
+bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
+    Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp,
+    const std::vector<uint64_t> &trackIdList)
+{
+    std::vector<std::string> pidList;
+    std::vector<std::string> tidList;
+    for (const auto& trackId : trackIdList) {
+        TrackInfo trackInfo;
+        TrackInfoManager::Instance().GetTrackInfo(trackId, trackInfo);
+        if (!StringUtil::CheckSqlValid(trackInfo.threadId)) {
+            ServerLog::Error("There is an SQL injection attack in track id. Error param: % ", trackInfo.threadId);
+            return false;
+        }
+        pidList.emplace_back(trackInfo.processId);
+        tidList.emplace_back(trackInfo.threadId);
+    }
+    std::string orderByAndPage = " ORDER BY " + requestParams.orderBy +
+                                 (requestParams.order == "descend" ? " DESC " : " ASC ");
+    auto stmt = CreatPreparedStatement();
+    std::unique_ptr <SqliteResultSet> resultSet;
+    try {
+        resultSet = TraceDatabaseHelper::QueryThreadSameOperatorsDetails(stmt, requestParams,
+            { GetDeviceId(requestParams.rankId), minTimestamp, orderByAndPage, pidList, tidList });
+    } catch (DatabaseException &e) {
+        ServerLog::Error("Query thread same operators details fail, ", e.What());
+        return false;
+    }
+    if (resultSet == nullptr) {
+        return false;
+    }
+    ExecuteQueryDbThreadSameOperatorsDetails(resultSet, requestParams, responseBody, tidList);
+    responseBody.currentPage = requestParams.current;
+    responseBody.pageSize = requestParams.pageSize;
+    return true;
+}
+
+void DbTraceDataBase::ExecuteQueryDbThreadSameOperatorsDetails(const std::unique_ptr<SqliteResultSet> &resultSet,
+    const Protocol::UnitThreadsOperatorsParams &requestParams, Protocol::UnitThreadsOperatorsBody &responseBody,
+    const std::vector<std::string> tidList)
+{
+    uint64_t offset = (requestParams.current - 1) > UINT64_MAX / requestParams.pageSize ? 0 :
+                      (requestParams.current - 1) * requestParams.pageSize;
+    uint64_t count = 0;
+    while (resultSet->Next()) {
+        int col = resultStartIndex;
+        Protocol::SameOperatorsDetails sameOperatorsDetail{};
+        sameOperatorsDetail.timestamp = resultSet->GetUint64(col++);
+        sameOperatorsDetail.duration = resultSet->GetUint64(col++);
+        sameOperatorsDetail.depth = resultSet->GetUint64(col++);
+        sameOperatorsDetail.id = resultSet->GetString(col++);
+        sameOperatorsDetail.tid = resultSet->GetString(col++);
+        if (sameOperatorsDetail.tid.empty()) {  // some process not have tid, use request.tid[0], ex:pytorch
+            sameOperatorsDetail.tid = tidList[0];
+        }
+        sameOperatorsDetail.pid = resultSet->GetString(col++);
+        if (!requestParams.startDepth.empty() && !requestParams.endDepth.empty() &&
+            !(sameOperatorsDetail.depth >= NumberUtil::StringToUint32(requestParams.startDepth) &&
+              sameOperatorsDetail.depth <= NumberUtil::StringToUint32(requestParams.endDepth))) {
+            continue;
+        }
+        if (++count <= offset) {
+            continue;
+        }
+        if (count > offset + requestParams.pageSize) {
+            break;
+        }
+        responseBody.sameOperatorsDetails.emplace_back(sameOperatorsDetail);
+    }
 }
 }

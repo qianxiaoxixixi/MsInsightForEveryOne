@@ -1,6 +1,5 @@
 // Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 #include "DbTraceDataBase.h"
-#include "TrackInfoManager.h"
 #include "pch.h"
 #include "TraceTime.h"
 #include "TableDefs.h"
@@ -1841,60 +1840,6 @@ bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsPa
         one.outputType = resultSet->GetString("output");
         data.emplace_back(one);
     }
-    return true;
-}
-
-bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
-    Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp,
-    const std::vector<uint64_t> &trackIdList)
-{
-    if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack in request parameter orderBy. Error param: % ",
-                         requestParams.orderBy);
-        return false;
-    }
-    std::vector<std::string> pidList;
-    std::vector<std::string> tidList;
-    for (const auto& trackId : trackIdList) {
-        TrackInfo trackInfo;
-        TrackInfoManager::Instance().GetTrackInfo(trackId, trackInfo);
-        if (!StringUtil::CheckSqlValid(trackInfo.threadId)) {
-            ServerLog::Error("There is an SQL injection attack in track id. Error param: % ", trackInfo.threadId);
-            return false;
-        }
-        pidList.emplace_back(trackInfo.processId);
-        tidList.emplace_back(trackInfo.threadId);
-    }
-    std::string orderByAndPage = " ORDER BY " + requestParams.orderBy +
-            (requestParams.order == "descend" ? " DESC " : " ASC ") + " limit ? offset ?";
-    auto stmt = CreatPreparedStatement();
-    std::unique_ptr <SqliteResultSet> resultSet;
-    try {
-        resultSet = TraceDatabaseHelper::QueryThreadSameOperatorsDetails(stmt, requestParams,
-            { GetDeviceId(requestParams.rankId), minTimestamp, orderByAndPage, pidList, tidList });
-    } catch (DatabaseException &e) {
-        ServerLog::Error("Query thread same operators details fail, ", e.What());
-        return false;
-    }
-    if (resultSet == nullptr) {
-        return false;
-    }
-    while (resultSet->Next()) {
-        int col = resultStartIndex;
-        Protocol::SameOperatorsDetails sameOperatorsDetail{};
-        sameOperatorsDetail.timestamp = resultSet->GetUint64(col++);
-        sameOperatorsDetail.duration = resultSet->GetUint64(col++);
-        sameOperatorsDetail.depth = resultSet->GetUint64(col++);
-        sameOperatorsDetail.id = resultSet->GetString(col++);
-        sameOperatorsDetail.tid = resultSet->GetString(col++);
-        if (sameOperatorsDetail.tid.empty()) {  // some process not have tid, use request.tid[0], ex:pytorch
-            sameOperatorsDetail.tid = tidList[0];
-        }
-        sameOperatorsDetail.pid = resultSet->GetString(col++);
-        responseBody.sameOperatorsDetails.emplace_back(sameOperatorsDetail);
-    }
-    responseBody.currentPage = requestParams.current;
-    responseBody.pageSize = requestParams.pageSize;
     return true;
 }
 

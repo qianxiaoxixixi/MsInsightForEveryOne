@@ -286,7 +286,7 @@ public:
         std::string trackIdPlaceholders = StringUtil::join(trackIdList, ", ");
         std::string sql = "SELECT timestamp, duration, id, coalesce(depth, 0) as depth, track_id FROM " + SLICE_TABLE +
             " WHERE name = ? AND track_id in (" + trackIdPlaceholders + ") AND timestamp <= ? AND timestamp "
-            " + duration >= ? " + orderBy + " limit ? offset ?";
+            " + duration >= ? " + orderBy;
         return sql;
     }
 

@@ -573,7 +573,7 @@ bool TextTraceDatabase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestP
         item.tid = threadInfo[item.trackId].second;
         flowPointMap[item.flowId].emplace_back(item);
     }
-    AssembleUnitFlowsBody(responseBody, minTimestamp, flowPointMap);
+    TextTraceDatabaseHelper::AssembleUnitFlowsBody(responseBody, minTimestamp, flowPointMap);
     return true;
 }
 
@@ -594,38 +594,6 @@ std::string TextTraceDatabase::QueryCardAlias()
         return "";
     }
     return cardAlias;
-}
-
-void TextTraceDatabase::AssembleUnitFlowsBody(UnitFlowsBody &responseBody, uint64_t minTimestamp,
-    std::unordered_map<std::string, std::vector<FlowPoint>> &flowPointMap)
-{
-    std::map<std::string, std::vector<UnitSingleFlow>> flowMap;
-    for (auto &item : flowPointMap) {
-        const static int FLOW_COUNT = 2; // from + to
-        if (item.second.size() < FLOW_COUNT) {
-            continue;
-        }
-        std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> flowDetailList;
-        FlowAnalyzer::SortByFlowIdAndTimestampASC(item.second);
-        FlowAnalyzer::ComputeUintFlows(item.second, item.second[0].cat, flowDetailList);
-        std::vector<UnitCatFlows> unitAllFlow;
-        for (const auto &singleFlow: flowDetailList) {
-            if (singleFlow->from.timestamp < minTimestamp || singleFlow->to.timestamp < minTimestamp) {
-                continue;
-            }
-            singleFlow->from.timestamp -= minTimestamp;
-            singleFlow->to.timestamp -= minTimestamp;
-            flowMap[singleFlow->cat].emplace_back(*singleFlow);
-        }
-    }
-    std::vector<UnitCatFlows> unitAllFlow;
-    for (const auto &item : flowMap) {
-        UnitCatFlows unitCatFlows;
-        unitCatFlows.cat = item.first;
-        unitCatFlows.flows = item.second;
-        unitAllFlow.emplace_back(unitCatFlows);
-    }
-    responseBody.unitAllFlows = unitAllFlow;
 }
 
 void TextTraceDatabase::QuerySimulationUintFlows(const UnitFlowsParams &requestParams, UnitFlowsBody &responseBody,
@@ -1576,19 +1544,14 @@ bool TextTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
 {
     uint64_t startTime = requestParams.startTime + minTimestamp;
     uint64_t endTime = requestParams.endTime + minTimestamp;
-    if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack in request parameter orderBy.");
-        return false;
-    }
     std::string sql = TextSqlConstant::GetThreadSameOperatorsDetailsSql(requestParams.order, requestParams.orderBy,
                                                                         trackIdList);
-    uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query thread same operators details. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(requestParams.name, endTime, startTime, requestParams.pageSize, offset);
+    auto resultSet = stmt->ExecuteQuery(requestParams.name, endTime, startTime);
     if (resultSet == nullptr) {
         ServerLog::Error("Query thread same operators details. Failed to get result set.", stmt->GetErrorMessage());
         return false;
@@ -1604,6 +1567,9 @@ void TextTraceDatabase::ExecuteQueryThreadSameOperatorsDetails(const std::unique
     uint64_t minTimestamp, const Protocol::UnitThreadsOperatorsParams &requestParams,
     Protocol::UnitThreadsOperatorsBody &responseBody)
 {
+    uint64_t offset = (requestParams.current - 1) > UINT64_MAX / requestParams.pageSize ? 0 :
+                      (requestParams.current - 1) * requestParams.pageSize;
+    uint64_t count = 0;
     while (resultSet->Next()) {
         int col = resultStartIndex;
         Protocol::SameOperatorsDetails sameOperatorsDetail{};
@@ -1625,6 +1591,17 @@ void TextTraceDatabase::ExecuteQueryThreadSameOperatorsDetails(const std::unique
         std::unordered_map<uint64_t, uint32_t> depthCache;
         sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
         sameOperatorsDetail.depth = depthCache[NumberUtil::StringToLongLong(sameOperatorsDetail.id)];
+        if (!requestParams.startDepth.empty() && !requestParams.endDepth.empty() &&
+            !(sameOperatorsDetail.depth >= NumberUtil::StringToUint32(requestParams.startDepth) &&
+            sameOperatorsDetail.depth <= NumberUtil::StringToUint32(requestParams.endDepth))) {
+            continue;
+        }
+        if (++count <= offset) {
+            continue;
+        }
+        if (count > offset + requestParams.pageSize) {
+            break;
+        }
         responseBody.sameOperatorsDetails.emplace_back(sameOperatorsDetail);
     }
 }
