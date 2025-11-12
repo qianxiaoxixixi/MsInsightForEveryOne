@@ -261,8 +261,6 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
     const auto minTimestamp = params.minTimestamp;
     const auto orderBy = params.orderBy;
     std::string sql;
-    uint64_t offset = (requestParams.current - 1) > UINT64_MAX / requestParams.pageSize ? 0 :
-        (requestParams.current - 1) * requestParams.pageSize;
     std::string withHeadSql = "with params as (SELECT ? as rankId, ? as minTime, ? as startTime, ? as endTime), "
         "  nameIds as (select id from STRING_IDS where value = ?) ";
     const bool uniqueDevice = IsDeviceIdUnique(requestParams.rankId);
@@ -283,7 +281,7 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
         " SELECT * FROM (" + StringUtil::join(mainSqlList, " UNION ") + ")";
     Prepare(stmt, sameOperatorsDetailsSql + orderBy)->BindParams(rankId, minTimestamp,
         requestParams.startTime, requestParams.endTime, requestParams.name);
-    return Execute(stmt, requestParams.pageSize, offset);
+    return Execute(stmt);
 }
 
 std::string TraceDatabaseHelper::GetQueryThreadSameOperatorsDetailsHeadSql(

@@ -618,6 +618,8 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsOperatorsRequest(const D
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startDepth, json["params"], "startDepth");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endDepth, json["params"], "endDepth");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.name, json["params"], "name");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");

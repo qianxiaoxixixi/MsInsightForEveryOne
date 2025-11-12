@@ -497,28 +497,9 @@ struct UnitThreadsOperatorsParams {
     std::string order;
     uint64_t current = 0;
     uint64_t pageSize = 0;
-    bool CheckParams(uint64_t minTime, std::string &warnMsg) const
-    {
-        if (startTime > endTime) {
-            warnMsg = "unit threads operators start time is bigger than end time";
-            return false;
-        }
-        if (endTime > UINT64_MAX - minTime) {
-            warnMsg = "unit threads operators end time is invalid";
-            return false;
-        }
-        if (processes.empty()) {
-            warnMsg = "Failed to query threads same operator. process list is empty.";
-            return false;
-        }
-        for (const auto& process : processes) {
-            if (process.pid.empty() || process.tidList.empty()) {
-                warnMsg = "Failed to query threads same operator. process list is invalid.";
-                return false;
-            }
-        }
-        return CheckUnsignPageValid(pageSize, current, warnMsg);
-    }
+    std::string startDepth;
+    std::string endDepth;
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const;
 };
 
 struct UnitThreadsOperatorsRequest : public Request {

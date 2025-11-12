@@ -56,5 +56,46 @@ bool UnitThreadsParams::CheckParams(uint64_t minTime, std::string &warnMsg) cons
     }
     return true;
 }
+
+bool UnitThreadsOperatorsParams::CheckParams(uint64_t minTime, std::string &warnMsg) const
+{
+    if (!StringUtil::CheckSqlValid(orderBy)) {
+        warnMsg = "There is an SQL injection attack in request parameter orderBy in unit threads operators. ";
+        return false;
+    }
+    if (startTime > endTime) {
+        warnMsg = "unit threads operators start time is bigger than end time";
+        return false;
+    }
+    if (endTime > UINT64_MAX - minTime) {
+        warnMsg = "unit threads operators end time is invalid";
+        return false;
+    }
+    if (!CheckStrParamValidEmptyAllowed(startDepth, warnMsg)) {
+        warnMsg = "unit threads operators start depth is invalid";
+        return false;
+    }
+    if (!CheckStrParamValidEmptyAllowed(endDepth, warnMsg)) {
+        warnMsg = "unit threads operators end depth is invalid";
+        return false;
+    }
+    if (!startDepth.empty() && !endDepth.empty()) {
+        if (NumberUtil::StringToUint32(startDepth) > NumberUtil::StringToUint32(endDepth)) {
+            warnMsg = "unit threads operators start depth is bigger than end depth";
+            return false;
+        }
+    }
+    if (processes.empty()) {
+        warnMsg = "Failed to query threads same operator. process list is empty.";
+        return false;
+    }
+    for (const auto& process : processes) {
+        if (process.pid.empty() || process.tidList.empty()) {
+            warnMsg = "Failed to query threads same operator. process list is invalid.";
+            return false;
+        }
+    }
+    return CheckUnsignPageValid(pageSize, current, warnMsg);
+}
 } // namespace Protocol
 } // namespace Dic
