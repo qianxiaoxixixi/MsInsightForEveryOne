@@ -155,7 +155,7 @@ struct StaticOperatorListParams {
             return false;
         }
         if (!orderBy.empty() && std::find(staticOperatorTableColumn.begin(), staticOperatorTableColumn.end(),
-            orderBy) == operatorTableColumn.end()) {
+            orderBy) == staticOperatorTableColumn.end()) {
             errorMsg = "Order By parameter is not legal.";
             return false;
         }
