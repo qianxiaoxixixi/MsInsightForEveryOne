@@ -1138,6 +1138,9 @@ bool TraceDatabaseHelper::QueryEventsViewData4Text(std::unique_ptr <SqlitePrepar
                 stmt->BindParams("%" + filter.second + "%");
             }
             resultSet = stmt->ExecuteQuery();
+            if (resultSet == nullptr) {
+                throw DatabaseException("Failed to ExecuteQuery.");
+            }
         } else {
             for (const auto &item: params.threadIdList) {
                 stmt->BindParams(item);
