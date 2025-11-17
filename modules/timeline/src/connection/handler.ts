@@ -778,20 +778,6 @@ export const locateUnitHandler: NotificationHandler = (data): void => {
     });
 };
 
-export const jupyterCompletedHandler: NotificationHandler = (data): void => {
-    const isIpynb = data?.parseResult === 'ok';
-    const session = store.sessionStore.activeSession as Session;
-    session.isIpynb = isIpynb;
-    session.ipynbUrl = data.url as string;
-    connector.send({
-        event: 'updateSession',
-        body: { isIpynb, ipynbUrl: data.url as string },
-    });
-    if (!isIpynb) {
-        message.error('Jupyter launch error!');
-    }
-};
-
 export const switchLanguageHandler: NotificationHandler = (data): void => {
     const session = store.sessionStore.activeSession;
     const lang = data.lang as 'zhCN' | 'enUS';
