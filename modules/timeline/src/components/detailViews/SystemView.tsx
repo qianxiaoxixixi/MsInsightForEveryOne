@@ -275,14 +275,22 @@ const SelectList = observer((props: { session: Session; viewOption: number; sele
     useEffect(() => {
         switch (props.viewOption) {
             case 0: {
-                queryTableDataNameList(params).then((res) => {
-                    // 获取服务视图名称和描述数据
-                    const layers = res.layers as SystemViewItem[];
-                    const merged = Array.from(
-                        new Map([...statsSystemViewItems, ...layers].map(item => [item.name, item])).values(),
-                    );
-                    setSystemViewItems(merged);
-                });
+                if (params.rankId !== undefined && params.rankId !== '') {
+                    queryTableDataNameList(params).then((res) => {
+                        // 获取服务视图名称和描述数据
+                        const layers = res.layers as SystemViewItem[];
+                        if (layers !== undefined && layers.length > 0) {
+                            const merged = Array.from(
+                                new Map([...statsSystemViewItems, ...layers].map(item => [item.name, item])).values(),
+                            );
+                            setSystemViewItems(merged);
+                        } else {
+                            setSystemViewItems(statsSystemViewItems);
+                        }
+                    });
+                } else {
+                    setSystemViewItems(statsSystemViewItems);
+                }
                 break;
             }
             case 1:
@@ -295,32 +303,40 @@ const SelectList = observer((props: { session: Session; viewOption: number; sele
                 break;
         }
     }, [props.viewOption, params, props.session.language]);
-    return (<AsideSelectList>
-        {
-            systemViewItems.map((item, index) =>
-                (index <= statsSystemViewItems.length - 1
-                    ? <div
-                        className={`aside-select-item ${selectedKey === index ? 'selected' : ''}`}
-                        key={index}
-                        onClick={(): void => handleClick(index)}
-                    >
-                        <div>{t(item.name)}</div>
-                        {
-                            item.tips !== undefined &&
-                                <Tooltip title={t(item.tips)}>
-                                    <HelpIcon style={{ cursor: 'pointer', marginLeft: 4 }} height={20} width={20} />
-                                </Tooltip>
-                        }
-                    </div>
-                    : <div
-                        className={`aside-select-item ${selectedKey === index ? 'selected' : ''}`}
-                        key={index}
-                        onClick={(): void => handleClick(index)}
+    if (systemViewItems.length > statsSystemViewItems.length) {
+        return (<AsideSelectList>
+            {
+                systemViewItems.slice(statsSystemViewItems.length).map((item, index) =>
+                    (<div
+                        className={`aside-select-item ${selectedKey === index + statsSystemViewItems.length ? 'selected' : ''}`}
+                        key={index + statsSystemViewItems.length}
+                        onClick={(): void => handleClick(index + statsSystemViewItems.length)}
                     >
                         <Tooltip title={item.description}>
                             <div>{item.name}</div>
                         </Tooltip>
                     </div>
+                    ),
+                )
+            }
+        </AsideSelectList>);
+    }
+    return (<AsideSelectList>
+        {
+            systemViewItems.map((item, index) =>
+                (<div
+                    className={`aside-select-item ${selectedKey === index ? 'selected' : ''}`}
+                    key={index}
+                    onClick={(): void => handleClick(index)}
+                >
+                    <div>{t(item.name)}</div>
+                    {
+                        item.tips !== undefined &&
+                                <Tooltip title={t(item.tips)}>
+                                    <HelpIcon style={{ cursor: 'pointer', marginLeft: 4 }} height={20} width={20} />
+                                </Tooltip>
+                    }
+                </div>
                 ),
             )
         }
