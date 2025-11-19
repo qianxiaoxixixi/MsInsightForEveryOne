@@ -1600,7 +1600,7 @@ void TextTraceDatabase::ExecuteQueryThreadSameOperatorsDetails(const std::unique
         sameOperatorsDetail.id = resultSet->GetString(col++);
         uint64_t trackId = resultSet->GetUint64("track_id");
         TrackInfo trackInfo;
-        TrackInfoManager::Instance().GetTrackInfo(trackId, trackInfo);
+        TrackInfoManager::Instance().GetTrackInfo(trackId, trackInfo, requestParams.rankId);
         sameOperatorsDetail.tid = trackInfo.threadId;
         sameOperatorsDetail.pid = trackInfo.processId;
         SliceQuery sliceQuery;

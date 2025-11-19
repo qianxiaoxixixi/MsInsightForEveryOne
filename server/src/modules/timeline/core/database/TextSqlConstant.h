@@ -57,9 +57,9 @@ const std::string CREATE_TABLE_SQL = "CREATE TABLE " + SLICE_TABLE +
     " track_id INTEGER, timestamp INTEGER, type TEXT);" + "CREATE TABLE " + COUNTER_TABLE +
     " (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, pid TEXT," + "timestamp INTEGER, cat TEXT, args TEXT);";
 
-const std::string CREATE_INDEX_SQL = "CREATE INDEX " + TRACKID_TIME_INDEX + " ON " + SLICE_TABLE +
-    " (timestamp, end_time, track_id);" + "CREATE INDEX " + TRACKID_CAT_INDEX + " ON " + SLICE_TABLE +
-    " (track_id, cat);" + "CREATE INDEX " + FLOW_INDEX + " ON " + FLOW_TABLE + " (cat, type);";
+const std::string CREATE_INDEX_SQL = "CREATE INDEX IF NOT EXISTS " + TRACKID_TIME_INDEX + " ON " + SLICE_TABLE +
+    " (timestamp, end_time, track_id);" + "CREATE INDEX IF NOT EXISTS " + TRACKID_CAT_INDEX + " ON " + SLICE_TABLE +
+    " (track_id, cat);" + "CREATE INDEX IF NOT EXISTS " + FLOW_INDEX + " ON " + FLOW_TABLE + " (cat, type);";
 const std::string QUERY_FLOW_BY_FLOWID_SQL = "SELECT name, cat, flow_id as flowId, timestamp, type, track_id as trackId"
     " FROM " + FLOW_TABLE + " WHERE flow_id = ?";
 const std::string QUERY_ALL_THREAD_SQL = "SELECT track_id as trackId, tid, pid FROM " + THREAD_TABLE + " ;";
