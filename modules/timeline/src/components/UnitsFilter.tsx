@@ -240,7 +240,7 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
         }
         if (unit.name === 'Process' || unit.name === 'Label') {
             const metaDataName = (unit.metadata as ProcessMetaData).processName;
-            if (!metaDataName.toLowerCase().includes('process') && !metaDataName.toLowerCase().includes('thread')) {
+            if (metaDataName === 'Process Scheduling' || (!metaDataName.toLowerCase().includes('process') && !metaDataName.toLowerCase().includes('thread'))) {
                 unitNames.add(metaDataName.replace(/\(\d{0,12}\)/, '').trim());
             }
         }
