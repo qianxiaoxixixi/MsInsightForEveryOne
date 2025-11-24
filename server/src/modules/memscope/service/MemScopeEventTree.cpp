@@ -4,22 +4,22 @@
 #include "MemScopeEventTree.h"
 
 namespace Dic::Module::MemScope {
-void LeaksMemoryDetailTreeNode::InsertSubNode(const std::string &subNodeName, uint64_t subNodeSize,
-                                              const std::string &subNodeTag)
+void MemScopeMemoryDetailTreeNode::InsertSubNode(const std::string &subNodeName, uint64_t subNodeSize,
+                                                 const std::string &subNodeTag)
 {
     subNodes.emplace(subNodeName, subNodeSize, subNodeTag);
 }
 
-bool LeaksMemoryDetailTreeNode::IsValidOwnerTag(const std::string &tag)
+bool MemScopeMemoryDetailTreeNode::IsValidOwnerTag(const std::string &tag)
 {
     if (tag.empty()) {
         return false;
     }
-    auto it = LEAKS_MEMORY_ALLOC_OWNER_FIXED_TAGS.find(tag);
-    if (it != LEAKS_MEMORY_ALLOC_OWNER_FIXED_TAGS.end()) {
+    auto it = MEM_SCOPE_ALLOC_OWNER_FIXED_TAGS.find(tag);
+    if (it != MEM_SCOPE_ALLOC_OWNER_FIXED_TAGS.end()) {
         return true;
     }
-    for (const auto &baseTag : LEAKS_MEMORY_ALLOC_OWNER_FIXED_TAGS) {
+    for (const auto &baseTag : MEM_SCOPE_ALLOC_OWNER_FIXED_TAGS) {
         if (tag.compare(0, baseTag.size(), baseTag) == 0) {
             return true;
         }
@@ -30,19 +30,19 @@ bool LeaksMemoryDetailTreeNode::IsValidOwnerTag(const std::string &tag)
     return false;
 }
 
-void LeaksMemoryDetailTreeNode::InsertSubNode(LeaksMemoryDetailTreeNode &subNode)
+void MemScopeMemoryDetailTreeNode::InsertSubNode(MemScopeMemoryDetailTreeNode &subNode)
 {
     subNodes.insert(subNode);
 }
 
-std::string LeaksMemoryDetailTreeNode::GetNodeNameByOwnerTag(const std::string &tag)
+std::string MemScopeMemoryDetailTreeNode::GetNodeNameByOwnerTag(const std::string &tag)
 {
-    if (LEAKS_MEMORY_ALLOC_OWNER_NAME_MAP.find(tag) != LEAKS_MEMORY_ALLOC_OWNER_NAME_MAP.end()) {
-        return LEAKS_MEMORY_ALLOC_OWNER_NAME_MAP.at(tag);
+    if (MEM_SCOPE_ALLOC_OWNER_NAME_MAP.find(tag) != MEM_SCOPE_ALLOC_OWNER_NAME_MAP.end()) {
+        return MEM_SCOPE_ALLOC_OWNER_NAME_MAP.at(tag);
     }
     std::string lcpOwnerTag;
     std::string resultName;
-    for (auto &baseTag : LEAKS_MEMORY_ALLOC_OWNER_FIXED_TAGS) {
+    for (auto &baseTag : MEM_SCOPE_ALLOC_OWNER_FIXED_TAGS) {
         std::string tempLCP = StringUtil::FindLCP(tag, baseTag);
         if (tempLCP.size() > lcpOwnerTag.size()) {
             lcpOwnerTag = tempLCP;
@@ -50,7 +50,7 @@ std::string LeaksMemoryDetailTreeNode::GetNodeNameByOwnerTag(const std::string &
         }
     }
     if (resultName.empty()) {
-        resultName = LEAKS_MEMORY_ALLOC_OWNER_DEFAULT_NAME;
+        resultName = MEM_SCOPE_ALLOC_OWNER_DEFAULT_NAME;
     }
     return resultName;
 }

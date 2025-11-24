@@ -6,12 +6,12 @@ namespace Dic::Module::MemScope {
 // [PYTHON_TRACE]
 static uint32_t SMALL_RATIO = 10000;
 static std::string DEFAULT_MERGED_SEP = " -> ";
-bool LeaksMemoryPythonTrace::Empty() const
+bool MemScopePythonTrace::Empty() const
 {
     return slices.empty();
 }
 
-void LeaksMemoryPythonTrace::Trim(const PythonTrimCompressStrategy& strategy)
+void MemScopePythonTrace::Trim(const PythonTrimCompressStrategy& strategy)
 {
     if (maxTimestamp <= minTimestamp) {
         Server::ServerLog::Warn("Failed to compress python trace, the minTimestamp is greater than maxTimestamp.");
@@ -40,7 +40,7 @@ void LeaksMemoryPythonTrace::Trim(const PythonTrimCompressStrategy& strategy)
     }
 }
 
-bool LeaksMemoryPythonTrace::IsSmallSlice(const PythonTraceSlice& slice) const
+bool MemScopePythonTrace::IsSmallSlice(const PythonTraceSlice& slice) const
 {
     if (slice.endTimestamp < slice.startTimestamp) {
         return true;
@@ -50,7 +50,7 @@ bool LeaksMemoryPythonTrace::IsSmallSlice(const PythonTraceSlice& slice) const
     return duration  < (maxTimestamp - minTimestamp) / SMALL_RATIO;
 }
 
-void LeaksMemoryPythonTrace::DoCompress(std::vector<PythonTraceSlice> &waitForCompressSlices, const bool filterOutSmallFunc)
+void MemScopePythonTrace::DoCompress(std::vector<PythonTraceSlice> &waitForCompressSlices, const bool filterOutSmallFunc)
 {
     // 1. 按照开始时间进行排序
     std::sort(waitForCompressSlices.begin(), waitForCompressSlices.end(), [](const PythonTraceSlice &a, const PythonTraceSlice &b) {
@@ -70,7 +70,7 @@ void LeaksMemoryPythonTrace::DoCompress(std::vector<PythonTraceSlice> &waitForCo
     }
 }
 
-void LeaksMemoryPythonTrace::DoCompressByDepth(std::vector<PythonTraceSlice>& depthSlices, const bool filterOutSmallFunc)
+void MemScopePythonTrace::DoCompressByDepth(std::vector<PythonTraceSlice>& depthSlices, const bool filterOutSmallFunc)
 {
     // 遍历当前深度的调用序列, 尝试合并
     for (size_t i = 0; i < depthSlices.size();) {
@@ -134,14 +134,14 @@ void AccessEventAttrs::SetByJson(const json_t& json)
     shape = JsonUtil::GetString(json, ACCESS_EVENT_ATTR_SHAPE);
 }
 
-EventGroup::EventGroup(std::vector<MemoryEvent>& sortedEvents)
+EventGroup::EventGroup(std::vector<MemScopeEvent>& sortedEvents)
 {
     for (auto &event : sortedEvents) {
         AddEvent(event);
     }
 }
 
-void EventGroup::AddEvent(const MemoryEvent& event)
+void EventGroup::AddEvent(const MemScopeEvent& event)
 {
     if (mallocEvent.has_value() && event.ptr != mallocEvent->ptr) {
         Server::ServerLog::Warn("The event with empty ptr will be discarded: eventId=%, processId=%",
@@ -149,7 +149,7 @@ void EventGroup::AddEvent(const MemoryEvent& event)
         return;
     }
 
-    if (event.event == LEAKS_DUMP_EVENT::MALLOC) {
+    if (event.event == MEM_SCOPE_DUMP_EVENT::MALLOC) {
         if (mallocEvent.has_value()) {
             Server::ServerLog::Warn("Duplicated malloc events in the same group.");
             return;
@@ -157,7 +157,7 @@ void EventGroup::AddEvent(const MemoryEvent& event)
         mallocEvent = std::make_optional(event);
         return;
     }
-    if (event.event == LEAKS_DUMP_EVENT::FREE) {
+    if (event.event == MEM_SCOPE_DUMP_EVENT::FREE) {
         if (freeEvent.has_value()) {
             Server::ServerLog::Warn("Duplicated free events in the same group.");
             return;
@@ -165,7 +165,7 @@ void EventGroup::AddEvent(const MemoryEvent& event)
         freeEvent = std::make_optional(event);
         return;
     }
-    if (event.event == LEAKS_DUMP_EVENT::ACCESS) {
+    if (event.event == MEM_SCOPE_DUMP_EVENT::ACCESS) {
         if (accessEvents.empty() || event.timestamp > accessEvents.back().timestamp) {
             accessEvents.push_back(event);
         }

@@ -15,41 +15,48 @@ using namespace Dic::Module::Timeline;
 using namespace Dic::Module::Memory;
 namespace BLOCK = Dic::Module::MemScope::MemoryBlockTableColumn;
 namespace ALLOCATION = Dic::Module::MemScope::MemoryAllocationTableColumn;
-namespace EVENT = Dic::Module::MemScope::MemoryEventTableColumn;
-namespace TRACE = Dic::Module::MemScope::MemoryPythonTraceTableColumn;
+namespace EVENT = Dic::Module::MemScope::EventTableColumn;
+namespace TRACE = Dic::Module::MemScope::PythonTraceTableColumn;
 void MemScopeDatabase::Reset()
 {
-    ServerLog::Info("[Leaks] Leaks db reset.");
-    auto databaseList = Timeline::DataBaseManager::Instance().GetAllLeaksMemoryDatabase();
+    ServerLog::Info("[MemScope] MemScope db reset.");
+    auto databaseList = Timeline::DataBaseManager::Instance().GetAllMemScopeDatabase();
     for (auto &db : databaseList) {
         auto database = dynamic_cast<MemScopeDatabase*>(db);
         if (database != nullptr) {
             database->CloseDb();
         }
     }
-    Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::LEAKS);
+    Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::MEM_SCOPE);
 }
+
 bool MemScopeDatabase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
     if (!Database::OpenDb(dbPath, clearAllTable)) {
-        ServerLog::Error("[Leaks] Failed to open leaks memory db with path: %.", dbPath);
+        ServerLog::Error("[MemScope] Failed to open MemScope memory db with path: %.", dbPath);
         return false;
+    }
+    // 确认DB是旧数据(leaks_dump)还是新数据(memscope_dump)并设置表名, 新旧皆有以新表为优先
+    if (CheckTableExist(TABLE_MEM_SCOPE_DUMP)) {
+        memScopeDumpTable = TABLE_MEM_SCOPE_DUMP;
+    } else {
+        memScopeDumpTable = TABLE_LEAKS_DUMP;
     }
     // 查看CallStack列是否存在
     if (!SetCallStackExistsFlagByCheckColumn()) {
-        ServerLog::Error("[Leaks] Failed to check callstack columns. Db error.");
+        ServerLog::Error("[MemScope] Failed to check callstack columns. Db error.");
         CloseDb();
         return false;
     }
     // 为python_trace表添加depth列(如果不存在)
     if (!AppendDepthColumnForPythonTraceTables()) {
-        ServerLog::Error("[Leaks] Failed to add column depth for python trace table.");
+        ServerLog::Error("[MemScope] Failed to add column depth for python trace table.");
         CloseDb();
         return false;
     }
     // 设置db的全局最大最小时间
     if (!QueryAndSetGlobalExtremumTimestamp() || !CheckGlobalExtremumTimestampValid()) {
-        ServerLog::Error("[Leaks] Failed to query and set global extremum timestamp or timestamp invalid.");
+        ServerLog::Error("[MemScope] Failed to query and set global extremum timestamp or timestamp invalid.");
         CloseDb();
         return false;
     }
@@ -59,12 +66,12 @@ bool MemScopeDatabase::OpenDb(const std::string &dbPath, bool clearAllTable)
     ServerLog::Info("The database version has changed, the table structure and data will be reset.");
     // Create 方法中的建表Sql会在表存在时删除
     if (!CreateMemoryAllocationAndBlockTable()) {
-        ServerLog::Error("[Leaks] Failed to drop and create allocation and block table.");
+        ServerLog::Error("[MemScope] Failed to drop and create allocation and block table.");
         CloseDb();
         return false;
     }
     if (!UpdateParseStatus(NOT_FINISH_STATUS)) {
-        ServerLog::Warn("[Leaks] Failed to update leaks parse status.");
+        ServerLog::Warn("[MemScope] Failed to update MemScope parse status.");
         CloseDb();
         return false;
     }
@@ -138,17 +145,17 @@ std::string MemScopeDatabase::GetCreateMemoryBlockTableSql()
 bool MemScopeDatabase::CreateMemoryAllocationAndBlockTable()
 {
     if (!isOpen) {
-        ServerLog::Error("[LeaksMemory] Failed to create table memory_block/memory_allocation. Database is not open.");
+        ServerLog::Error("[MemScope] Failed to create table memory_block/memory_allocation. Database is not open.");
         return false;
     }
     std::string createAllocationSql = GetCreateMemoryAllocationTableSql();
     if (createAllocationSql.empty()) {
-        ServerLog::Error("[LeaksMemory] Failed to create table memory_allocation: build creation sql failed.");
+        ServerLog::Error("[MemScope] Failed to create table memory_allocation: build creation sql failed.");
         return false;
     }
     std::string createBlockSql = GetCreateMemoryBlockTableSql();
     if (createBlockSql.empty()) {
-        ServerLog::Error("[LeaksMemory] Failed to create table memory_block: build creation sql failed.");
+        ServerLog::Error("[MemScope] Failed to create table memory_block: build creation sql failed.");
         return false;
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
@@ -157,16 +164,16 @@ bool MemScopeDatabase::CreateMemoryAllocationAndBlockTable()
 
 bool MemScopeDatabase::HasFinishedParseLastTime()
 {
-    return CheckValueFromStatusInfoTable(leaksMemoryParseStatus, FINISH_STATUS);
+    return CheckValueFromStatusInfoTable(memScopeParseStatus, FINISH_STATUS);
 }
 
 bool MemScopeDatabase::UpdateParseStatus(const std::string &status)
 {
-    return UpdateValueIntoStatusInfoTable(leaksMemoryParseStatus, status);
+    return UpdateValueIntoStatusInfoTable(memScopeParseStatus, status);
 }
 
 // 当withExtraCountCol = true时, 要求sql必须将COUNT(*) OVER()作为首列
-int64_t MemScopeDatabase::QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vector<MemoryEvent>& events,
+int64_t MemScopeDatabase::QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vector<MemScopeEvent>& events,
                                                   const bool withExtraCountCol)
 {
     if (stmt == nullptr) {
@@ -176,7 +183,7 @@ int64_t MemScopeDatabase::QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vecto
     int64_t count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        MemoryEvent event{};
+        MemScopeEvent event{};
         if (withExtraCountCol) {
             count = sqlite3_column_int64(stmt, col++);
         }
@@ -202,7 +209,7 @@ int64_t MemScopeDatabase::QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vecto
 }
 
 bool MemScopeDatabase::QueryMemoryPythonTracesByStep(sqlite3_stmt *stmt,
-                                                     LeaksMemoryPythonTrace &trace)
+                                                     MemScopePythonTrace &trace)
 {
     if (stmt == nullptr) {
         ServerLog::Error("Query memory python trace by step failed: stmt ptr is null.");
@@ -236,10 +243,10 @@ bool MemScopeDatabase::QueryMemoryPythonTracesByStep(sqlite3_stmt *stmt,
     return true;
 }
 
-bool MemScopeDatabase::QueryEntireEventsTable(std::vector<MemoryEvent> &eventDetails)
+bool MemScopeDatabase::QueryEntireEventsTable(std::vector<MemScopeEvent> &eventDetails)
 {
     std::string sql = "select * from {} where {} not in ('N/A', '', 'host') order by {};";
-    sql = StringUtil::FormatString(sql, TABLE_LEAKS_DUMP,
+    sql = StringUtil::FormatString(sql, memScopeDumpTable,
                                    EVENT::DEVICE_ID,
                                    EVENT::TIMESTAMP);
     if (sql.empty()) {
@@ -535,7 +542,8 @@ sqlite3_stmt* MemScopeDatabase::GetInsertBlocksStmt(uint64_t blocksLen)
 
 bool MemScopeDatabase::CheckTablesExist()
 {
-    return Database::CheckTablesExist({memoryBlockTable, memoryAllocationTable, pythonTraceTablePrefix});
+    return Database::CheckTablesExist({memScopeDumpTable, memoryBlockTable,
+                                       memoryAllocationTable, pythonTraceTablePrefix});
 }
 
 void MemScopeDatabase::FlushMemoryBlocksCache()
@@ -602,7 +610,7 @@ int64_t MemScopeDatabase::QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::vecto
     }
     return count;
 }
-int64_t MemScopeDatabase::QueryMemoryBlocks(const LeaksMemoryBlockParams &queryParams,
+int64_t MemScopeDatabase::QueryMemoryBlocks(const MemScopeMemoryBlockParams &queryParams,
                                             const bool isTable,
                                             std::vector<MemoryBlock> &blocks)
 {
@@ -638,7 +646,7 @@ bool MemScopeDatabase::QueryMemoryAllocationsByStep(sqlite3_stmt *stmt,
     return true;
 }
 
-void MemScopeDatabase::QueryMemoryAllocations(const LeaksMemoryAllocationParams &queryParams,
+void MemScopeDatabase::QueryMemoryAllocations(const MemScopeMemoryAllocationParams &queryParams,
                                               std::vector<MemoryAllocation> &allocations)
 {
     sqlite3_stmt *stmt;
@@ -684,7 +692,7 @@ void MemScopeDatabase::QueryDeviceIds(std::set<std::string> &deviceIdSet)
     std::string sql;
     std::string errMsg;
     sql = StringUtil::FormatString("SELECT DISTINCT({}) FROM {} WHERE {} NOT IN ('N/A', '', 'host')",
-                                   EVENT::DEVICE_ID, TABLE_LEAKS_DUMP, EVENT::DEVICE_ID);
+                                   EVENT::DEVICE_ID, memScopeDumpTable, EVENT::DEVICE_ID);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -703,7 +711,7 @@ using array_map = std::unordered_map<std::string, std::vector<std::string>>;
 void MemScopeDatabase::QueryMallocOrFreeEventTypeWithDeviceId(array_map &resultMap)
 {
     std::string sql = "SELECT DISTINCT {}, {} FROM {} WHERE {} in ('MALLOC', 'FREE') AND {} NOT IN ('N/A', '', 'host')";
-    sql = StringUtil::FormatString(sql, EVENT::DEVICE_ID, EVENT::EVENT_TYPE, TABLE_LEAKS_DUMP,
+    sql = StringUtil::FormatString(sql, EVENT::DEVICE_ID, EVENT::EVENT_TYPE, memScopeDumpTable,
                                    EVENT::EVENT, EVENT::DEVICE_ID);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -732,7 +740,7 @@ void MemScopeDatabase::QueryThreadIds(std::vector<uint64_t> &threadIds)
     }
 }
 
-std::string MemScopeDatabase::BuildQueryEventsConditionSqlByParams(const LeaksMemoryEventParams &queryParams,
+std::string MemScopeDatabase::BuildQueryEventsConditionSqlByParams(const MemScopeEventParams &queryParams,
                                                                    bool &timeCondition,
                                                                    bool &filtersCondition)
 {
@@ -781,7 +789,7 @@ std::string MemScopeDatabase::BuildQueryRangeFiltersConditionSqlByParams(const R
  * @param filtersCondition 添加了字段过滤查询条件的flag
  * @return
  */
-std::string MemScopeDatabase::BuildQueryBlocksConditionSqlByParams(const LeaksMemoryBlockParams& queryParams,
+std::string MemScopeDatabase::BuildQueryBlocksConditionSqlByParams(const MemScopeMemoryBlockParams& queryParams,
                                                                    const bool onlyAllocOrFreeInTimeRange,
                                                                    bool& timeCondition,
                                                                    bool& filtersCondition)
@@ -821,13 +829,13 @@ std::string MemScopeDatabase::BuildQueryBlocksConditionSqlByParams(const LeaksMe
 }
 
 sqlite3_stmt* MemScopeDatabase::BuildQueryEventsByQueryParamsAndBindParam(std::string &selectColumns,
-                                                                          const LeaksMemoryEventParams &queryParams)
+                                                                          const MemScopeEventParams &queryParams)
 {
     bool timeCondition = false;
     bool filtersCondition = false;
     std::string conditionSql = BuildQueryEventsConditionSqlByParams(queryParams, timeCondition, filtersCondition);
     std::string sql = StringUtil::FormatString("select {} from {} {} ",
-                                               selectColumns, TABLE_LEAKS_DUMP, conditionSql);
+                                               selectColumns, memScopeDumpTable, conditionSql);
     sqlite3_stmt *stmt = nullptr;
     int result  = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -853,7 +861,7 @@ sqlite3_stmt* MemScopeDatabase::BuildQueryEventsByQueryParamsAndBindParam(std::s
 }
 
 sqlite3_stmt* MemScopeDatabase::BuildQueryBlocksByQueryParamsAndBindParam(const std::string& selectColumns,
-                                                                          const LeaksMemoryBlockParams& queryParams,
+                                                                          const MemScopeMemoryBlockParams& queryParams,
                                                                           const bool isTable)
 {
     bool timeCondition = false;
@@ -903,8 +911,8 @@ sqlite3_stmt* MemScopeDatabase::BuildQueryBlocksByQueryParamsAndBindParam(const 
     return stmt;
 }
 
-int64_t MemScopeDatabase::QueryEventsByRequestParams(const LeaksMemoryEventParams &queryParams,
-                                                     std::vector<MemoryEvent>& events)
+int64_t MemScopeDatabase::QueryEventsByRequestParams(const MemScopeEventParams &queryParams,
+                                                     std::vector<MemScopeEvent>& events)
 {
     sqlite3_stmt* stmt = nullptr;
     std::string queryCountColumns = GetSelectEventsFullColumns(queryParams.relativeTime);
@@ -991,7 +999,7 @@ void MemScopeDatabase::QueryMemoryBlocksOwnersReleasedAfterTimestamp(const std::
                                    BLOCK::START_TIMESTAMP, BLOCK::END_TIMESTAMP,
                                    BLOCK::DEVICE_ID, BLOCK::EVENT_TYPE);
     if (sql.empty()) {
-        ServerLog::Error("[LeaksMemory] Failed to query block owners, error: ", errMsg);
+        ServerLog::Error("[MemScope] Failed to query block owners, error: ", errMsg);
         return;
     }
     if (timestamp > INT64_MAX) {
@@ -1031,7 +1039,7 @@ uint64_t MemScopeDatabase::QueryTotalSizeUntilTimestampUsingOwner(const std::str
                                    BLOCK::SIZE, memoryBlockTable, BLOCK::START_TIMESTAMP,
                                    BLOCK::END_TIMESTAMP, BLOCK::DEVICE_ID, BLOCK::OWNER, BLOCK::OWNER);
     if (sql.empty()) {
-        ServerLog::Error("[LeaksMemory] Failed to query block total size, error: ", errMsg);
+        ServerLog::Error("[MemScope] Failed to query block total size, error: ", errMsg);
         return 0;
     }
     sqlite3_stmt *stmt = nullptr;
@@ -1056,7 +1064,7 @@ uint64_t MemScopeDatabase::QueryTotalSizeUntilTimestampUsingOwner(const std::str
     return totalSize;
 }
 void BuildTimeConditionForQueryPythonTraces(std::string &timeCondition,
-                                            const LeaksMemoryThreadPythonTraceParams &queryParams)
+                                            const MemScopeThreadPythonTraceParams &queryParams)
 {
     if (queryParams.startTimestamp > 0) {
         timeCondition.append(" END <= ").append(std::to_string(queryParams.startTimestamp));
@@ -1073,8 +1081,8 @@ void BuildTimeConditionForQueryPythonTraces(std::string &timeCondition,
 }
 
 void MemScopeDatabase::QueryPythonTracesUsingTableName(const std::string &traceTableName,
-                                                       const LeaksMemoryThreadPythonTraceParams &queryParams,
-                                                       LeaksMemoryPythonTrace &trace)
+                                                       const MemScopeThreadPythonTraceParams &queryParams,
+                                                       MemScopePythonTrace &trace)
 {
     std::string errMsg;
     std::string COL_START_TIME(TRACE::START_TIME);
@@ -1088,7 +1096,7 @@ void MemScopeDatabase::QueryPythonTracesUsingTableName(const std::string &traceT
                                                COL_END_TIME, TRACE::THREAD_ID, TRACE::PROCESS_ID, TRACE::DEPTH,
                                                traceTableName, timeCondition, TRACE::THREAD_ID, COL_START_TIME);
     if (sql.empty()) {
-        ServerLog::Error("[LeaksMemory] Failed to query python trace, error: ", errMsg);
+        ServerLog::Error("[MemScope] Failed to query python trace, error: ", errMsg);
         return;
     }
     sqlite3_stmt *stmt = nullptr;
@@ -1105,8 +1113,8 @@ void MemScopeDatabase::QueryPythonTracesUsingTableName(const std::string &traceT
     sqlite3_finalize(stmt);
 }
 
-void MemScopeDatabase::QueryPythonTrace(const LeaksMemoryThreadPythonTraceParams &queryParams,
-    LeaksMemoryPythonTrace &trace)
+void MemScopeDatabase::QueryPythonTrace(const MemScopeThreadPythonTraceParams &queryParams,
+                                        MemScopePythonTrace &trace)
 {
     std::vector<std::string> traceTableNames = GetPythonTraceTables();
     if (traceTableNames.empty()) {
@@ -1228,10 +1236,10 @@ void MemScopeDatabase::CommonBindPaginationParams(const PaginationParam& queryPa
 }
 
 void MemScopeDatabase::QueryEventsByGroupId(const uint64_t groupId, const std::string &deviceId,
-                                            const bool relativeTime, std::vector<MemoryEvent>& events)
+                                            const bool relativeTime, std::vector<MemScopeEvent>& events)
 {
     std::string sql = StringUtil::FormatString("SELECT {} FROM {} WHERE {} like ? ORDER BY {}",
-                                               GetSelectEventsFullColumns(relativeTime), TABLE_LEAKS_DUMP,
+                                               GetSelectEventsFullColumns(relativeTime), memScopeDumpTable,
                                                EVENT::ATTR, EVENT::TIMESTAMP);
     std::string groupIdPattern = StringUtil::FormatString(R"(%"{}":"{}"%)", BLOCK_EVENT_ATTR_GROUP_ID_FIELD,
                                                           std::to_string(groupId));
@@ -1251,7 +1259,7 @@ void MemScopeDatabase::QueryAllDeviceExtremumTimestamp(
     std::unordered_map<std::string, std::pair<uint64_t, uint64_t>> &extreTsMap)
 {
     std::string sql = StringUtil::FormatString("SELECT {},MIN({}),MAX({}) FROM {} WHERE {} NOT IN ('N/A','host') GROUP BY {}",
-                                               EVENT::DEVICE_ID, EVENT::TIMESTAMP, EVENT::TIMESTAMP, TABLE_LEAKS_DUMP,
+                                               EVENT::DEVICE_ID, EVENT::TIMESTAMP, EVENT::TIMESTAMP, memScopeDumpTable,
                                                EVENT::DEVICE_ID, EVENT::DEVICE_ID);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -1273,7 +1281,7 @@ void MemScopeDatabase::QueryAllDeviceExtremumTimestamp(
 bool MemScopeDatabase::SetCallStackExistsFlagByCheckColumn()
 {
     std::string sql = StringUtil::FormatString("SELECT DISTINCT name FROM pragma_table_info('{}') "
-                                               "WHERE name LIKE ?", TABLE_LEAKS_DUMP);
+                                               "WHERE name LIKE ?", memScopeDumpTable);
     sqlite3_stmt* stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -1307,7 +1315,7 @@ uint64_t MemScopeDatabase::GetProcessIdByPythonTraceTableName(const std::string&
 bool MemScopeDatabase::AppendDepthColumnForPythonTraceTables()
 {
     if (!isOpen) {
-        ServerLog::Error("[LeaksMemory] Failed to add depth for python trace. Database is not open.");
+        ServerLog::Error("[MemScope] Failed to add depth for python trace. Database is not open.");
         return false;
     }
     std::vector<std::string> sqlList = GetAlterPythonTraceTablesAddDepthColumnSql();
@@ -1352,7 +1360,7 @@ bool MemScopeDatabase::QueryAndSetGlobalExtremumTimestamp()
 {
     std::string queryEventExTSSql = StringUtil::FormatString("SELECT MIN({}), MAX({}) FROM {} WHERE {} != 'N/A';",
                                                              EVENT::TIMESTAMP, EVENT::TIMESTAMP,
-                                                             TABLE_LEAKS_DUMP, EVENT::TIMESTAMP);
+                                                             memScopeDumpTable, EVENT::TIMESTAMP);
     if (!ExecuteQueryAndSetGlobalExtremumTimestamp(queryEventExTSSql)) {
         ServerLog::Error("Failed to query event extremum timestamp");
         return false;
@@ -1511,7 +1519,7 @@ static std::string BuildLongIdleThresholdColumn(const Threshold &threshold)
 }
 
 std::string MemScopeDatabase::AppendInefficientBlockColumnSql(const std::string& selectColumn,
-                                                              const LeaksMemoryBlockParams& queryParams)
+                                                              const MemScopeMemoryBlockParams& queryParams)
 {
     std::string res = selectColumn;
     std::string inefficientColPattern = ", {} AS {}";

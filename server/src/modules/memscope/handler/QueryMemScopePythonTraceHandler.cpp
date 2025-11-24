@@ -10,8 +10,8 @@ namespace Module {
 namespace MemScope {
 bool QueryMemScopePythonTraceHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    auto &request = dynamic_cast<LeaksMemoryTraceRequest &>(*requestPtr);
-    std::unique_ptr<LeaksMemoryTracesResponse> responsePtr = std::make_unique<LeaksMemoryTracesResponse>();
+    auto &request = dynamic_cast<MemScopePythonTraceRequest &>(*requestPtr);
+    std::unique_ptr<MemScopePythonTracesResponse> responsePtr = std::make_unique<MemScopePythonTracesResponse>();
     auto &response = *responsePtr;
     SetBaseResponse(request, response);
     std::string errorMsg;
@@ -19,15 +19,15 @@ bool QueryMemScopePythonTraceHandler::HandleRequest(std::unique_ptr<Protocol::Re
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+    auto database = Timeline::DataBaseManager::Instance().GetMemScopeDatabase("");
     if (database == nullptr) {
-        errorMsg = "Get leaks memory database failed when querying python traces.";
+        errorMsg = "Get memscope database failed when querying python traces.";
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
     database->QueryPythonTrace(request.params, response.trace);
     if (response.trace.Empty()) {
-        Server::ServerLog::Warn("Query memory traces: empty data.");
+        Server::ServerLog::Warn("Query memscope python traces: empty data.");
         SendResponse(std::move(responsePtr), true);
         return true;
     }

@@ -10,7 +10,7 @@
 namespace Dic::Module::MemScope {
 class QueryMemScopeMemoryDetailHandler : public MemScopeRequestHandler {
 public:
-    QueryMemScopeMemoryDetailHandler() { command = Protocol::REQ_RES_LEAKS_MEMORY_DETAILS; }
+    QueryMemScopeMemoryDetailHandler() { command = Protocol::REQ_RES_MEM_SCOPE_MEMORY_DETAILS; }
     ~QueryMemScopeMemoryDetailHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };

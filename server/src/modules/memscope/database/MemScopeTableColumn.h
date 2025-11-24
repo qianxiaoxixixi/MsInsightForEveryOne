@@ -8,8 +8,7 @@
 #include "CommonRequests.h"
 
 namespace Dic::Module::MemScope {
-using namespace Dic::Protocol;
-namespace MemoryEventTableColumn {
+namespace EventTableColumn {
     constexpr std::string_view ID = "ID";
     constexpr std::string_view EVENT = "Event";
     constexpr std::string_view EVENT_TYPE = "`Event Type`";
@@ -23,7 +22,7 @@ namespace MemoryEventTableColumn {
     // 可能存在的列
     constexpr std::string_view CALL_STACK_PYTHON = "`Call Stack(Python)`";
     constexpr std::string_view CALL_STACK_C = "`Call Stack(C)`";
-    inline const std::vector<TableViewColumn> FIELD_FULL_COLUMNS = {
+    inline const std::vector<Dic::Protocol::TableViewColumn> FIELD_FULL_COLUMNS = {
         {ID, "id", true, true, false, false}, // ID, 事件ID
         {EVENT, "event", true, false, true, false}, // Event, 事件类型
         {EVENT_TYPE, "eventType", true, true, true, false}, // Event Type, 事件子类型
@@ -74,7 +73,7 @@ namespace MemoryBlockTableColumn {
                                                             ATTR, PROCESS_ID, THREAD_ID,
                                                             FIRST_ACCESS_TIMESTAMP, LAST_ACCESS_TIMESTAMP,
                                                             MAX_ACCESS_INTERVAL};
-    inline const std::vector<TableViewColumn>  FIELD_FULL_COLUMNS = {
+    inline const std::vector<Dic::Protocol::TableViewColumn>  FIELD_FULL_COLUMNS = {
         {ID, "id", true, true, false, false}, // ID, 内存块ID
         {DEVICE_ID, "deviceId"},
         {ADDR, "addr", true, true, true, false}, // Addr, 内存地址
@@ -94,7 +93,7 @@ namespace MemoryBlockTableColumn {
         START_TIMESTAMP, END_TIMESTAMP, FIRST_ACCESS_TIMESTAMP, LAST_ACCESS_TIMESTAMP
     };
 }
-namespace MemoryPythonTraceTableColumn {
+namespace PythonTraceTableColumn {
     constexpr std::string_view ID = "ROWID"; // 表中无该列, 为sqlite表的隐藏列, 用于标识唯一一行
     constexpr std::string_view FUNC_INFO = "FuncInfo";
     constexpr std::string_view START_TIME = "`StartTime(ns)`";

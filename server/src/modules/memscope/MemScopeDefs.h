@@ -13,7 +13,7 @@
 namespace Dic::Module::MemScope {
 const char OWNER_STRING_DELIMITER = '@';
 // 内存事件
-struct LEAKS_DUMP_EVENT {
+struct MEM_SCOPE_DUMP_EVENT {
     inline const static std::string MALLOC = "MALLOC"; // 内存申请事件
     inline const static std::string FREE = "FREE"; // 内存释放事件
     inline const static std::string ACCESS = "ACCESS"; // 内存访问
@@ -22,7 +22,7 @@ struct LEAKS_DUMP_EVENT {
     inline const static std::string SYSTEM = "SYSTEM"; // 系统事件
 };
 // 内存事件类型
-struct LEAKS_DUMP_EVENT_TYPE {
+struct MEM_SCOPE_DUMP_EVENT_TYPE {
     // 内存申请/释放事件 子类型
     inline const static std::string MALLOC_FREE_PTA = "PTA"; // PTA内存池分配(从PTA内存池申请)
     inline const static std::string MALLOC_FREE_MINDSPORE = "MINDSPORE"; // MINDSPORE内存池分配(从MINDSPORE内存池申请)
@@ -45,28 +45,28 @@ struct LEAKS_DUMP_EVENT_TYPE {
 };
 // 内存事件 - 类型映射表
 const std::unordered_map<std::string, std::set<std::string>> EVENT_TYPE_MAP = {
-    {LEAKS_DUMP_EVENT::MALLOC, {LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_PTA,
-                                LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_MINDSPORE,
-                                LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_ATB,
-                                LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_HAL,
-                                LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_PTA_WORKSPACE}},
-    {LEAKS_DUMP_EVENT::FREE, {LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_PTA,
-                              LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_MINDSPORE,
-                              LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_ATB,
-                              LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_HAL,
-                              LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_PTA_WORKSPACE}},
-    {LEAKS_DUMP_EVENT::ACCESS, {LEAKS_DUMP_EVENT_TYPE::ACCESS_READ,
-                                LEAKS_DUMP_EVENT_TYPE::ACCESS_WRITE}},
-    {LEAKS_DUMP_EVENT::OP_LAUNCH, {LEAKS_DUMP_EVENT_TYPE::OP_LAUNCH_ATEN_START,
-                                   LEAKS_DUMP_EVENT_TYPE::OP_LAUNCH_ATEN_END}},
-    {LEAKS_DUMP_EVENT::KERNEL_LAUNCH, {LEAKS_DUMP_EVENT_TYPE::KERNEL_LAUNCH,
-                                       LEAKS_DUMP_EVENT_TYPE::KERNEL_LAUNCH_START,
-                                       LEAKS_DUMP_EVENT_TYPE::KERNEL_LAUNCH_END}},
-    {LEAKS_DUMP_EVENT::SYSTEM, {LEAKS_DUMP_EVENT_TYPE::SYSTEM_ACL_INIT,
-                                LEAKS_DUMP_EVENT_TYPE::SYSTEM_ACL_FINI}}
+    {MEM_SCOPE_DUMP_EVENT::MALLOC, {MEM_SCOPE_DUMP_EVENT_TYPE::MALLOC_FREE_PTA,
+                                    MEM_SCOPE_DUMP_EVENT_TYPE::MALLOC_FREE_MINDSPORE,
+                                    MEM_SCOPE_DUMP_EVENT_TYPE::MALLOC_FREE_ATB,
+                                    MEM_SCOPE_DUMP_EVENT_TYPE::MALLOC_FREE_HAL,
+                                    MEM_SCOPE_DUMP_EVENT_TYPE::MALLOC_FREE_PTA_WORKSPACE}},
+    {MEM_SCOPE_DUMP_EVENT::FREE, {MEM_SCOPE_DUMP_EVENT_TYPE::MALLOC_FREE_PTA,
+                                  MEM_SCOPE_DUMP_EVENT_TYPE::MALLOC_FREE_MINDSPORE,
+                                  MEM_SCOPE_DUMP_EVENT_TYPE::MALLOC_FREE_ATB,
+                                  MEM_SCOPE_DUMP_EVENT_TYPE::MALLOC_FREE_HAL,
+                                  MEM_SCOPE_DUMP_EVENT_TYPE::MALLOC_FREE_PTA_WORKSPACE}},
+    {MEM_SCOPE_DUMP_EVENT::ACCESS, {MEM_SCOPE_DUMP_EVENT_TYPE::ACCESS_READ,
+                                    MEM_SCOPE_DUMP_EVENT_TYPE::ACCESS_WRITE}},
+    {MEM_SCOPE_DUMP_EVENT::OP_LAUNCH, {MEM_SCOPE_DUMP_EVENT_TYPE::OP_LAUNCH_ATEN_START,
+                                       MEM_SCOPE_DUMP_EVENT_TYPE::OP_LAUNCH_ATEN_END}},
+    {MEM_SCOPE_DUMP_EVENT::KERNEL_LAUNCH, {MEM_SCOPE_DUMP_EVENT_TYPE::KERNEL_LAUNCH,
+                                           MEM_SCOPE_DUMP_EVENT_TYPE::KERNEL_LAUNCH_START,
+                                           MEM_SCOPE_DUMP_EVENT_TYPE::KERNEL_LAUNCH_END}},
+    {MEM_SCOPE_DUMP_EVENT::SYSTEM, {MEM_SCOPE_DUMP_EVENT_TYPE::SYSTEM_ACL_INIT,
+                                    MEM_SCOPE_DUMP_EVENT_TYPE::SYSTEM_ACL_FINI}}
 };
 
-struct MemoryEvent {
+struct MemScopeEvent {
     uint64_t id{0};
     std::string event;
     std::string eventType;

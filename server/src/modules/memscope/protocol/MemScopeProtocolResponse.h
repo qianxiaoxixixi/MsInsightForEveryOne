@@ -48,8 +48,8 @@ struct MemoryBlockItem : MemoryBlock {
     }
 };
 
-static document_t ToLeaksMemoryBlockJson(const std::shared_ptr<MemoryBlock>& blockPtr, const bool withPath,
-                                         Document::AllocatorType& allocator)
+static document_t ToMemScopeMemoryBlockJson(const std::shared_ptr<MemoryBlock>& blockPtr, const bool withPath,
+                                            Document::AllocatorType& allocator)
 {
     document_t json(kObjectType);
     JsonUtil::AddMember(json, "id", blockPtr->id, allocator);
@@ -85,8 +85,8 @@ static document_t ToLeaksMemoryBlockJson(const std::shared_ptr<MemoryBlock>& blo
     return json;
 }
 
-struct LeaksMemoryBlocksResponse : public JsonResponse {
-    LeaksMemoryBlocksResponse() : JsonResponse(REQ_RES_LEAKS_MEMORY_BLOCKS) {}
+struct MemScopeMemoryBlocksResponse : public JsonResponse {
+    MemScopeMemoryBlocksResponse() : JsonResponse(REQ_RES_MEM_SCOPE_MEMORY_BLOCKS) {}
     std::vector<std::shared_ptr<MemoryBlock>> blocks;
     uint64_t minTimestamp{};
     uint64_t maxTimestamp{};
@@ -114,7 +114,7 @@ struct LeaksMemoryBlocksResponse : public JsonResponse {
             }
         }
         for (const auto& block : blocks) {
-            auto blockJson = ToLeaksMemoryBlockJson(block, withPath, allocator);
+            auto blockJson = ToMemScopeMemoryBlockJson(block, withPath, allocator);
             jsonBlocks.PushBack(blockJson, allocator);
         }
         JsonUtil::AddMember(body, "blocks", jsonBlocks, allocator);
@@ -124,8 +124,8 @@ struct LeaksMemoryBlocksResponse : public JsonResponse {
     }
 };
 
-struct LeaksMemoryAllocationsResponse : public JsonResponse {
-    LeaksMemoryAllocationsResponse() : JsonResponse(REQ_RES_LEAKS_MEMORY_ALLOCATIONS) {}
+struct MemScopeMemoryAllocationsResponse : public JsonResponse {
+    MemScopeMemoryAllocationsResponse() : JsonResponse(REQ_RES_MEM_SCOPE_MEMORY_ALLOCATIONS) {}
     uint64_t minTimestamp{};
     uint64_t maxTimestamp{};
     std::vector<MemoryAllocation> allocations;
@@ -140,7 +140,7 @@ struct LeaksMemoryAllocationsResponse : public JsonResponse {
         JsonUtil::AddMember(body, "minTimestamp", minTimestamp, allocator);
         JsonUtil::AddMember(body, "maxTimestamp", maxTimestamp, allocator);
         for (const auto& allocation : allocations) {
-            auto allocationJson = ToLeaksMemoryAllocationJson(allocation, allocator);
+            auto allocationJson = ToMemScopeMemoryAllocationJson(allocation, allocator);
             if (allocationJson.has_value()) {
                 allocationsJson.PushBack(allocationJson.value(), allocator);
             }
@@ -150,8 +150,8 @@ struct LeaksMemoryAllocationsResponse : public JsonResponse {
         return std::optional<document_t>{std::move(json)};
     }
 
-    static std::optional<document_t> ToLeaksMemoryAllocationJson(const MemoryAllocation& allocation,
-                                                                 Document::AllocatorType& allocator)
+    static std::optional<document_t> ToMemScopeMemoryAllocationJson(const MemoryAllocation& allocation,
+                                                                    Document::AllocatorType& allocator)
     {
         document_t json(kObjectType);
         JsonUtil::AddMember(json, "id", allocation.id, allocator);
@@ -161,17 +161,17 @@ struct LeaksMemoryAllocationsResponse : public JsonResponse {
     }
 };
 
-struct LeaksMemoryDetailsResponse : public JsonResponse {
-    LeaksMemoryDetailsResponse() : JsonResponse(REQ_RES_LEAKS_MEMORY_DETAILS) {}
+struct MemScopeMemoryDetailsResponse : public JsonResponse {
+    MemScopeMemoryDetailsResponse() : JsonResponse(REQ_RES_MEM_SCOPE_MEMORY_DETAILS) {}
     uint64_t timestamp{};
-    LeaksMemoryDetailTreeNode detail;
+    MemScopeMemoryDetailTreeNode detail;
 
     [[nodiscard]] std::optional<document_t> ToJson() const override
     {
         document_t json(kObjectType);
         auto& allocator = json.GetAllocator();
         ProtocolUtil::SetResponseJsonBaseInfo(*this, json);
-        auto body_json = ToLeaksDetailTreeJson(detail, allocator);
+        auto body_json = ToMemScopeDetailTreeJson(detail, allocator);
         if (!body_json.has_value()) {
             body_json = document_t(kObjectType);
         }
@@ -180,8 +180,8 @@ struct LeaksMemoryDetailsResponse : public JsonResponse {
     }
 
     // 此处转json存在递归，但treeNode在构造时确保了层数不超过8
-    static std::optional<document_t> ToLeaksDetailTreeJson(const LeaksMemoryDetailTreeNode& treeNode,
-                                                           Document::AllocatorType& allocator)
+    static std::optional<document_t> ToMemScopeDetailTreeJson(const MemScopeMemoryDetailTreeNode& treeNode,
+                                                              Document::AllocatorType& allocator)
     {
         document_t json(kObjectType);
         JsonUtil::AddMember(json, "name", treeNode.name, allocator);
@@ -189,7 +189,7 @@ struct LeaksMemoryDetailsResponse : public JsonResponse {
         JsonUtil::AddMember(json, "size", treeNode.size, allocator);
         json_t subNodes(kArrayType);
         for (auto& subNode : treeNode.subNodes) {
-            auto subNodeJson = ToLeaksDetailTreeJson(subNode, allocator);
+            auto subNodeJson = ToMemScopeDetailTreeJson(subNode, allocator);
             if (subNodeJson.has_value()) {
                 subNodes.PushBack(subNodeJson.value(), allocator);
             }
@@ -199,16 +199,16 @@ struct LeaksMemoryDetailsResponse : public JsonResponse {
     }
 };
 
-struct LeaksMemoryTracesResponse : public JsonResponse {
-    LeaksMemoryTracesResponse() : JsonResponse(REQ_RES_LEAKS_MEMORY_TRACES) {}
-    LeaksMemoryPythonTrace trace;
+struct MemScopePythonTracesResponse : public JsonResponse {
+    MemScopePythonTracesResponse() : JsonResponse(REQ_RES_MEM_SCOPE_PYTHON_TRACES) {}
+    MemScopePythonTrace trace;
     [[nodiscard]] std::optional<document_t> ToJson() const override
     {
         document_t json(kObjectType);
         auto& allocator = json.GetAllocator();
         ProtocolUtil::SetResponseJsonBaseInfo(*this, json);
         document_t body(kObjectType);
-        auto tracesJson = ToLeaksTracesJson(trace.slices, allocator);
+        auto tracesJson = ToMemScopePythonTracesJson(trace.slices, allocator);
         if (!tracesJson.has_value()) {
             tracesJson = document_t(kObjectType);
         }
@@ -221,8 +221,8 @@ struct LeaksMemoryTracesResponse : public JsonResponse {
         return std::optional<document_t>{std::move(json)};
     }
 
-    static std::optional<document_t> ToLeaksTracesJson(const std::vector<PythonTraceSlice>& slices,
-                                                       Document::AllocatorType& allocator)
+    static std::optional<document_t> ToMemScopePythonTracesJson(const std::vector<PythonTraceSlice>& slices,
+                                                                Document::AllocatorType& allocator)
     {
         document_t json(kArrayType);
         for (auto& slice : slices) {
@@ -237,11 +237,11 @@ struct LeaksMemoryTracesResponse : public JsonResponse {
     }
 };
 
-struct LeaksMemoryEventResponse : public JsonResponse {
-    LeaksMemoryEventResponse() : JsonResponse(REQ_RES_LEAKS_MEMORY_TRACES) {}
+struct MemScopeEventResponse : public JsonResponse {
+    MemScopeEventResponse() : JsonResponse(REQ_RES_MEM_SCOPE_EVENTS) {}
     int64_t total{};
     // 注意此处会将events转换为扁平data数组后返回给前端
-    std::vector<MemoryEvent> events;
+    std::vector<MemScopeEvent> events;
     bool withCallStackC = false;
     bool withCallStackPython = false;
 
@@ -254,10 +254,10 @@ struct LeaksMemoryEventResponse : public JsonResponse {
         json_t headers(kArrayType);
         for (auto const &header : EVENT_TABLE::FIELD_FULL_COLUMNS) {
             bool needed = true;
-            if (header.name == MemoryEventTableColumn::CALL_STACK_C) {
+            if (header.name == EVENT_TABLE::CALL_STACK_C) {
                 needed = withCallStackC;
             }
-            if (header.name == MemoryEventTableColumn::CALL_STACK_PYTHON) {
+            if (header.name == EVENT_TABLE::CALL_STACK_PYTHON) {
                 needed = withCallStackPython;
             }
             if (header.visible && needed) {

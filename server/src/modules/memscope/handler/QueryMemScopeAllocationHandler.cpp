@@ -10,18 +10,18 @@ namespace Module {
 namespace MemScope {
 bool QueryMemScopeAllocationHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    auto &request = dynamic_cast<LeaksMemoryAllocationRequest &>(*requestPtr.get());
-    std::unique_ptr<LeaksMemoryAllocationsResponse> responsePtr = std::make_unique<LeaksMemoryAllocationsResponse>();
-    LeaksMemoryAllocationsResponse &response = *responsePtr.get();
+    auto &request = dynamic_cast<MemScopeMemoryAllocationRequest &>(*requestPtr.get());
+    std::unique_ptr<MemScopeMemoryAllocationsResponse> responsePtr = std::make_unique<MemScopeMemoryAllocationsResponse>();
+    MemScopeMemoryAllocationsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg)) {
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemScopeDatabase("");
     if (memoryDatabase == nullptr) {
-        errorMsg = "Get leaks memory database failed when querying allocations.";
+        errorMsg = "Get memscope memory database failed when querying allocations.";
         Server::ServerLog::Error(errorMsg);
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
@@ -43,11 +43,12 @@ bool QueryMemScopeAllocationHandler::HandleRequest(std::unique_ptr<Protocol::Req
     return true;
 }
 
-void QueryMemScopeAllocationHandler::PaddingAllocations(std::vector<MemoryAllocation> &allocations, const LeaksMemoryAllocationParams &queryParams)
+void QueryMemScopeAllocationHandler::PaddingAllocations(std::vector<MemoryAllocation> &allocations,
+                                                        const MemScopeMemoryAllocationParams &queryParams)
 {
-    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemScopeDatabase("");
     if (memoryDatabase == nullptr) {
-        Server::ServerLog::Error("Get leaks memory database failed when padding allocations.");
+        Server::ServerLog::Error("Get memscope memory database failed when padding allocations.");
         return;
     }
     uint64_t minTimestamp = 0;

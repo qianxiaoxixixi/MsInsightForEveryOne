@@ -14,10 +14,10 @@ namespace Dic::Protocol {
 using namespace Dic::Module::MemScope;
 namespace BLOCK_TABLE = Dic::Module::MemScope::MemoryBlockTableColumn;
 namespace ALLOCATION_TABLE = Dic::Module::MemScope::MemoryAllocationTableColumn;
-namespace EVENT_TABLE = Dic::Module::MemScope::MemoryEventTableColumn;
-namespace TRACE_TABLE = Dic::Module::MemScope::MemoryPythonTraceTableColumn;
+namespace EVENT_TABLE = Dic::Module::MemScope::EventTableColumn;
+namespace TRACE_TABLE = Dic::Module::MemScope::PythonTraceTableColumn;
 
-const uint64_t MAX_LEAKS_MEMORY_BLOCK_SIZE = 1 * 1024 * 1024 * 1024;
+const uint64_t MAX_MEM_SCOPE_MEMORY_BLOCK_SIZE = 1 * 1024 * 1024 * 1024;
 const int64_t COMMON_RANGE_VALUE_MAX = 1000000000000;
 const int64_t COMMON_RANGE_VALUE_MIN = 0;
 
@@ -43,7 +43,7 @@ public:
     }
 };
 
-struct LeaksMemoryBlockParams : PaginationParam, FiltersParam, OrderByParam, RangeFiltersParam {
+struct MemScopeMemoryBlockParams : PaginationParam, FiltersParam, OrderByParam, RangeFiltersParam {
     uint64_t startTimestamp;
     uint64_t endTimestamp;
     uint64_t minSize;
@@ -59,7 +59,7 @@ struct LeaksMemoryBlockParams : PaginationParam, FiltersParam, OrderByParam, Ran
     // 仅展示低效内存
     bool onlyInefficient{false};
 
-    LeaksMemoryBlockParams() : startTimestamp(0), endTimestamp(0), minSize(0), maxSize(0), relativeTime(false) {}
+    MemScopeMemoryBlockParams() : startTimestamp(0), endTimestamp(0), minSize(0), maxSize(0), relativeTime(false) {}
 
     bool CommonCheck(std::string& errorMsg) const
     {
@@ -67,9 +67,9 @@ struct LeaksMemoryBlockParams : PaginationParam, FiltersParam, OrderByParam, Ran
             errorMsg = "[minSize] must be less than [maxSize].";
             return false;
         }
-        if (maxSize > MAX_LEAKS_MEMORY_BLOCK_SIZE) {
+        if (maxSize > MAX_MEM_SCOPE_MEMORY_BLOCK_SIZE) {
             errorMsg = "The maximum size (maxSize = " + std::to_string(maxSize) + ") exceeds " +
-                       std::to_string(MAX_LEAKS_MEMORY_BLOCK_SIZE) + ".";
+                       std::to_string(MAX_MEM_SCOPE_MEMORY_BLOCK_SIZE) + ".";
             return false;
         }
         if (startTimestamp > endTimestamp) {
@@ -104,7 +104,7 @@ struct LeaksMemoryBlockParams : PaginationParam, FiltersParam, OrderByParam, Ran
     }
 };
 
-struct LeaksMemoryAllocationParams {
+struct MemScopeMemoryAllocationParams {
     uint64_t startTimestamp;
     uint64_t endTimestamp;
     std::string deviceId;
@@ -112,7 +112,7 @@ struct LeaksMemoryAllocationParams {
     bool optimized;
     bool relativeTime;
 
-    LeaksMemoryAllocationParams() : startTimestamp(0), endTimestamp(0), optimized(false), relativeTime(false) {}
+    MemScopeMemoryAllocationParams() : startTimestamp(0), endTimestamp(0), optimized(false), relativeTime(false) {}
 
     bool CommonCheck(std::string& errorMsg) const
     {
@@ -136,13 +136,13 @@ struct LeaksMemoryAllocationParams {
     }
 };
 
-struct LeaksMemoryDetailParams {
+struct MemScopeMemoryDetailParams {
     uint64_t timestamp;
     bool relativeTime;
     std::string deviceId;
     std::string eventType;
 
-    LeaksMemoryDetailParams() : timestamp(0), relativeTime(false) {}
+    MemScopeMemoryDetailParams() : timestamp(0), relativeTime(false) {}
 
     bool CommonCheck(std::string& errorMsg) const
     {
@@ -162,14 +162,14 @@ struct LeaksMemoryDetailParams {
     }
 };
 
-struct LeaksMemoryThreadPythonTraceParams {
+struct MemScopeThreadPythonTraceParams {
     uint64_t startTimestamp;
     uint64_t endTimestamp;
     bool relativeTime;
     std::string deviceId;
     uint64_t threadId;
 
-    LeaksMemoryThreadPythonTraceParams() : startTimestamp(0), endTimestamp(0), relativeTime(false), threadId(0) {}
+    MemScopeThreadPythonTraceParams() : startTimestamp(0), endTimestamp(0), relativeTime(false), threadId(0) {}
 
     bool CommonCheck(std::string& errorMsg) const
     {
@@ -193,13 +193,13 @@ struct LeaksMemoryThreadPythonTraceParams {
     }
 };
 
-struct LeaksMemoryEventParams : public PaginationParam, FiltersParam, OrderByParam, RangeFiltersParam {
+struct MemScopeEventParams : public PaginationParam, FiltersParam, OrderByParam, RangeFiltersParam {
     std::string deviceId;
     uint64_t startTimestamp{};
     uint64_t endTimestamp{};
     bool relativeTime{};
 
-    LeaksMemoryEventParams() = default;
+    MemScopeEventParams() = default;
 
     bool CommonCheck(std::string& errorMsg) const
     {
@@ -234,9 +234,9 @@ struct LeaksMemoryEventParams : public PaginationParam, FiltersParam, OrderByPar
     }
 };
 
-struct LeaksMemoryBlockRequest : public Request {
-    LeaksMemoryBlockRequest() : Request(REQ_RES_LEAKS_MEMORY_BLOCKS) {};
-    LeaksMemoryBlockParams params;
+struct MemScopeMemoryBlockRequest : public Request {
+    MemScopeMemoryBlockRequest() : Request(REQ_RES_MEM_SCOPE_MEMORY_BLOCKS) {};
+    MemScopeMemoryBlockParams params;
     bool isTable{};
 
     void SetThresholdsFromJson(const json_t& json)
@@ -257,7 +257,7 @@ struct LeaksMemoryBlockRequest : public Request {
 
     static std::unique_ptr<Request> FromJson(const json_t& json, std::string& error)
     {
-        std::unique_ptr<LeaksMemoryBlockRequest> reqPtr = std::make_unique<LeaksMemoryBlockRequest>();
+        std::unique_ptr<MemScopeMemoryBlockRequest> reqPtr = std::make_unique<MemScopeMemoryBlockRequest>();
         if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
             error = "Failed to set request base info, command is: " + reqPtr->command;
             return nullptr;
@@ -301,13 +301,13 @@ struct LeaksMemoryBlockRequest : public Request {
     }
 };
 
-struct LeaksMemoryAllocationRequest : public Request {
-    LeaksMemoryAllocationRequest() : Request(REQ_RES_LEAKS_MEMORY_ALLOCATIONS) {};
-    LeaksMemoryAllocationParams params;
+struct MemScopeMemoryAllocationRequest : public Request {
+    MemScopeMemoryAllocationRequest() : Request(REQ_RES_MEM_SCOPE_MEMORY_ALLOCATIONS) {};
+    MemScopeMemoryAllocationParams params;
 
     static std::unique_ptr<Request> FromJson(const json_t& json, std::string& error)
     {
-        std::unique_ptr<LeaksMemoryAllocationRequest> reqPtr = std::make_unique<LeaksMemoryAllocationRequest>();
+        std::unique_ptr<MemScopeMemoryAllocationRequest> reqPtr = std::make_unique<MemScopeMemoryAllocationRequest>();
         if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
             error = "Failed to set request base info, command is: " + reqPtr->command;
             return nullptr;
@@ -329,13 +329,13 @@ struct LeaksMemoryAllocationRequest : public Request {
     }
 };
 
-struct LeaksMemoryDetailRequest : public Request {
-    LeaksMemoryDetailRequest() : Request(REQ_RES_LEAKS_MEMORY_DETAILS) {};
-    LeaksMemoryDetailParams params;
+struct MemScopeMemoryDetailRequest : public Request {
+    MemScopeMemoryDetailRequest() : Request(REQ_RES_MEM_SCOPE_MEMORY_DETAILS) {};
+    MemScopeMemoryDetailParams params;
 
     static std::unique_ptr<Request> FromJson(const json_t& json, std::string& error)
     {
-        std::unique_ptr<LeaksMemoryDetailRequest> reqPtr = std::make_unique<LeaksMemoryDetailRequest>();
+        std::unique_ptr<MemScopeMemoryDetailRequest> reqPtr = std::make_unique<MemScopeMemoryDetailRequest>();
         if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
             error = "Failed to set request base info, command is: " + reqPtr->command;
             return nullptr;
@@ -355,14 +355,14 @@ struct LeaksMemoryDetailRequest : public Request {
     }
 };
 
-struct LeaksMemoryTraceRequest : public Request {
-    LeaksMemoryTraceRequest() : Request(REQ_RES_LEAKS_MEMORY_TRACES) {};
-    LeaksMemoryThreadPythonTraceParams params;
+struct MemScopePythonTraceRequest : public Request {
+    MemScopePythonTraceRequest() : Request(REQ_RES_MEM_SCOPE_PYTHON_TRACES) {};
+    MemScopeThreadPythonTraceParams params;
     bool allowTrim{false};
 
     static std::unique_ptr<Request> FromJson(const json_t& json, std::string& error)
     {
-        std::unique_ptr<LeaksMemoryTraceRequest> reqPtr = std::make_unique<LeaksMemoryTraceRequest>();
+        std::unique_ptr<MemScopePythonTraceRequest> reqPtr = std::make_unique<MemScopePythonTraceRequest>();
         if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
             error = "Failed to set request base info, command is: " + reqPtr->command;
             return nullptr;
@@ -384,13 +384,13 @@ struct LeaksMemoryTraceRequest : public Request {
     }
 };
 
-struct LeaksMemoryEventRequest : public Request {
-    LeaksMemoryEventRequest() : Request(REQ_RES_LEAKS_MEMORY_EVENTS) {}
-    LeaksMemoryEventParams params;
+struct MemScopeEventRequest : public Request {
+    MemScopeEventRequest() : Request(REQ_RES_MEM_SCOPE_EVENTS) {}
+    MemScopeEventParams params;
 
     static std::unique_ptr<Request> FromJson(const json_t& json, std::string& error)
     {
-        std::unique_ptr<LeaksMemoryEventRequest> reqPtr = std::make_unique<LeaksMemoryEventRequest>();
+        std::unique_ptr<MemScopeEventRequest> reqPtr = std::make_unique<MemScopeEventRequest>();
         if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
             error = "Failed to set request base info, command is: " + reqPtr->command;
             return nullptr;

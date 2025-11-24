@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <stack>
 #include "DataBaseManager.h"
+#include "MemScopeProtocolEvent.h"
 #include "MemScopeService.h"
 
 namespace Dic {
@@ -14,26 +15,24 @@ void MemScopeService::ParserEnd(const std::string &rankId, bool result)
     if (!result) {
         return;
     }
-    Server::ServerLog::Info("[Memory]Leaks Dumps Parser ends, filepath: ", rankId);
+    Server::ServerLog::Info("[Memory]memscope Dumps Parser ends, filepath: ", rankId);
 }
 
 void MemScopeService::ParseCallBack(const std::string &fileId, bool result, const std::string &msg)
 {
+    auto event = std::make_unique<Protocol::MemScopeParseSuccessEvent>();
+    event->moduleName = Protocol::MODULE_MEM_SCOPE;
     if (fileId.empty()) {
-        auto event = std::make_unique<Protocol::LeaksParseSuccessEvent>();
-        event->moduleName = Protocol::MODULE_LEAKS;
         event->result = true;
         SendEvent(std::move(event));
     } else {
-        auto event = std::make_unique<Protocol::LeaksParseSuccessEvent>();
-        event->moduleName = Protocol::MODULE_LEAKS;
         event->result = result;
-        Protocol::LeaksParseSuccessEventBody body;
+        Protocol::MemScopeParseSuccessEventBody body;
         if (event->result) {
-            auto memoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+            auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemScopeDatabase("");
             if (memoryDatabase == nullptr) {
-                Server::ServerLog::Error("Cannot get leaks db connections from database manager");
-                event->errMsg = "Failed parse leaks dump data.";
+                Server::ServerLog::Error("Cannot get memscope db connections from database manager");
+                event->errMsg = "Failed parse memscope dump data.";
                 event->result = false;
                 SendEvent(std::move(event));
                 return;
@@ -53,13 +52,13 @@ void MemScopeService::ParseCallBack(const std::string &fileId, bool result, cons
 std::optional<ParseContext> MemScopeService::BuildContext(std::shared_ptr<FullDb::MemScopeDatabase>& db)
 {
     if (db == nullptr) {
-        Server::ServerLog::Error("Cannot get leaks db connections from database manager");
+        Server::ServerLog::Error("Cannot get memscope db connections from database manager");
         return std::nullopt;
     }
     ParseContext context;
     db->QueryEntireEventsTable(context.events);
     if (context.events.empty()) {
-        Server::ServerLog::Warn("No memory events could be found in leaks_db.");
+        Server::ServerLog::Warn("No memory events could be found in memscope_db.");
         return std::nullopt;
     }
     db->QueryDeviceIds(context.deviceIds);
@@ -67,11 +66,11 @@ std::optional<ParseContext> MemScopeService::BuildContext(std::shared_ptr<FullDb
     return context;
 }
 
-bool MemScopeService::ParseMemoryLeaksDumpEventsAndPythonTraces(const std::string &fileId)
+bool MemScopeService::ParseMemoryMemScopeDumpEventsAndPythonTraces(const std::string &fileId)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+    auto database = Timeline::DataBaseManager::Instance().GetMemScopeDatabase("");
     if (database == nullptr) {
-        Server::ServerLog::Error("Cannot get leaks db connections from database manager");
+        Server::ServerLog::Error("Cannot get memscope db connections from database manager");
         return false;
     }
     if (database->CheckTablesExist() && database->HasFinishedParseLastTime()) {
@@ -89,7 +88,7 @@ bool MemScopeService::ParseMemoryLeaksDumpEventsAndPythonTraces(const std::strin
         Server::ServerLog::Error("Parse failed: build parse context failed.");
         return false;
     }
-    // 解析leaks_dump中的内存事件，生成memory_block及memory_allocation
+    // 解析memscope_dump中的内存事件，生成memory_block及memory_allocation
     ParseEventsToBlockAndAllocations(*context);
     // 解析pythonTrace
     std::vector<uint64_t> threadIds;
@@ -99,10 +98,10 @@ bool MemScopeService::ParseMemoryLeaksDumpEventsAndPythonTraces(const std::strin
             Server::ServerLog::Warn("Parsing python trace skip invalid threadId: 0.");
             continue;
         }
-        LeaksMemoryThreadPythonTraceParams params;
+        MemScopeThreadPythonTraceParams params;
         params.threadId = threadId;
         params.relativeTime = true;
-        LeaksMemoryPythonTrace trace;
+        MemScopePythonTrace trace;
         database->QueryPythonTrace(params, trace);
         if (!ParseThreadPythonTrace(trace, *context)) {
             Server::ServerLog::Warn("Parsing python trace failed, threadId: ", threadId);
@@ -134,7 +133,7 @@ void MemScopeService::ParseRemainMallocEvents(ParseContext &context)
 {
     for (auto &devicePair : context.deviceMallocMap) {
         std::string deviceId = devicePair.first;
-        std::map<std::string, const MemoryEvent *> allocMap = devicePair.second;
+        std::map<std::string, const MemScopeEvent *> allocMap = devicePair.second;
         const std::uint64_t maxTimestamp = context.db->GetGlobalMaxTimestamp();
         for (auto &allocPair : allocMap) {
             auto &event = allocPair.second;
@@ -173,7 +172,7 @@ void MemScopeService::ParseEventsToBlockAndAllocations(ParseContext &context)
             context.eventGroupMap[eventAttrs->groupId].AddEvent(event);
         }
         if (!SingleDeviceEventParse(event, context)) continue;
-        if (event.event == LEAKS_DUMP_EVENT::FREE) {
+        if (event.event == MEM_SCOPE_DUMP_EVENT::FREE) {
             eventAttrs->size = -std::abs(eventAttrs->size);
         }
         context.deviceTotalSize[event.deviceId + event.eventType] =
@@ -189,10 +188,10 @@ void MemScopeService::ParseEventsToBlockAndAllocations(ParseContext &context)
     context.db->UpdateParseStatus(FINISH_STATUS);
 }
 
-bool MemScopeService::SingleDeviceEventParse(const MemoryEvent &event,
+bool MemScopeService::SingleDeviceEventParse(const MemScopeEvent &event,
                                              ParseContext &context)
 {
-    if (event.event != LEAKS_DUMP_EVENT::MALLOC && event.event != LEAKS_DUMP_EVENT::FREE) {
+    if (event.event != MEM_SCOPE_DUMP_EVENT::MALLOC && event.event != MEM_SCOPE_DUMP_EVENT::FREE) {
         return false;
     }
     auto &allocMap = context.deviceMallocMap[event.deviceId];
@@ -204,7 +203,7 @@ bool MemScopeService::SingleDeviceEventParse(const MemoryEvent &event,
         return false;
     }
     // 如果是分配事件
-    if (event.event == LEAKS_DUMP_EVENT::MALLOC) {
+    if (event.event == MEM_SCOPE_DUMP_EVENT::MALLOC) {
         // 已存在则忽略, 可能为重复申请
         if (allocMap.find(event.ptr + event.eventType) != allocMap.end()) {
             Server::ServerLog::Warn(StringUtil::FormatString("Invalid memory allocation event[{}]: the address "
@@ -215,7 +214,7 @@ bool MemScopeService::SingleDeviceEventParse(const MemoryEvent &event,
         allocMap[event.ptr + event.eventType] = &event;
     }
     // 如果是释放事件
-    if (event.event == LEAKS_DUMP_EVENT::FREE) {
+    if (event.event == MEM_SCOPE_DUMP_EVENT::FREE) {
         // 内存分配表中未找到匹配的分配事件，则忽略
         if (allocMap.find(event.ptr + event.eventType) == allocMap.end()) {
             Server::ServerLog::Warn(StringUtil::FormatString("Invalid memory free event[{}]: "
@@ -265,18 +264,18 @@ static bool CheckIfSubTagIsPrefixOfOwner(const std::vector<std::string> &subNode
 static std::vector<std::string> FindSubNodeTags(const std::string &tag, const std::set<std::string> &owners)
 {
     std::vector<std::string> subNodeTags;
-    if (!LeaksMemoryDetailTreeNode::IsValidOwnerTag(tag)) {
-        Server::ServerLog::Warn("[LeaksDetail]The tag of current node is invalid.");
+    if (!MemScopeMemoryDetailTreeNode::IsValidOwnerTag(tag)) {
+        Server::ServerLog::Warn("[MemScope]The tag of current node is invalid.");
         return subNodeTags;
     }
-    if (tag == LEAKS_MEMORY_ALLOC_OWNER_HAL_CANN) {
-        subNodeTags = std::vector<std::string>(LEAKS_MEMORY_ALLOC_OWNER_CANN_BASE_TAGS.begin(),
-                                               LEAKS_MEMORY_ALLOC_OWNER_CANN_BASE_TAGS.end());
+    if (tag == MEM_SCOPE_ALLOC_OWNER_HAL_CANN) {
+        subNodeTags = std::vector<std::string>(MEM_SCOPE_ALLOC_OWNER_CANN_BASE_TAGS.begin(),
+                                               MEM_SCOPE_ALLOC_OWNER_CANN_BASE_TAGS.end());
         return subNodeTags;
     }
-    if (tag == LEAKS_MEMORY_ALLOC_OWNER_HAL_FRAMEWORK) {
-        subNodeTags = std::vector<std::string>(LEAKS_MEMORY_ALLOC_OWNER_FRAMEWORK_BASE_TAGS.begin(),
-                                               LEAKS_MEMORY_ALLOC_OWNER_FRAMEWORK_BASE_TAGS.end());
+    if (tag == MEM_SCOPE_ALLOC_OWNER_HAL_FRAMEWORK) {
+        subNodeTags = std::vector<std::string>(MEM_SCOPE_ALLOC_OWNER_FRAMEWORK_BASE_TAGS.begin(),
+                                               MEM_SCOPE_ALLOC_OWNER_FRAMEWORK_BASE_TAGS.end());
         return subNodeTags;
     }
     long layer = std::count(tag.begin(), tag.end(), OWNER_STRING_DELIMITER);
@@ -298,27 +297,27 @@ static std::vector<std::string> FindSubNodeTags(const std::string &tag, const st
 // depth 从1开始
 void MemScopeService::BuildMemoryAllocDetailTreeNode(const std::string &deviceId, const uint64_t &timestamp,
                                                      const std::set<std::string> &owners,
-                                                     LeaksMemoryDetailTreeNode &curNode, int depth)
+                                                     MemScopeMemoryDetailTreeNode &curNode, int depth)
 {
     // 实际从框架层开始统计为第一层
     if (depth > MAX_TREE_DEPTH) {
-        Server::ServerLog::Warn("[LeaksDetail]The depth of current tree has exceeded 8.");
+        Server::ServerLog::Warn("[MemScope]The depth of current tree has exceeded 8.");
         return;
     }
     if (curNode.size == 0) {
         return;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+    auto database = Timeline::DataBaseManager::Instance().GetMemScopeDatabase("");
     if (database == nullptr) {
-        Server::ServerLog::Error("[LeaksDetail]Cannot get leaks db connections from database manager");
+        Server::ServerLog::Error("[MemScope]Cannot get memscope db connections from database manager");
         return;
     }
     std::vector<std::string> subNodeOwnerTags = FindSubNodeTags(curNode.tag, owners);
     for (auto &subNodeOwnerTag : subNodeOwnerTags) {
-        LeaksMemoryDetailTreeNode subNode;
+        MemScopeMemoryDetailTreeNode subNode;
         subNode.tag = subNodeOwnerTag;
         subNode.size = database->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp, subNodeOwnerTag);
-        subNode.name = LeaksMemoryDetailTreeNode::GetNodeNameByOwnerTag(subNodeOwnerTag);
+        subNode.name = MemScopeMemoryDetailTreeNode::GetNodeNameByOwnerTag(subNodeOwnerTag);
         if (subNode.size > 0) {
             // 递归构造子节点
             BuildMemoryAllocDetailTreeNode(deviceId, timestamp, owners, subNode, depth + 1);
@@ -330,12 +329,12 @@ void MemScopeService::BuildMemoryAllocDetailTreeNode(const std::string &deviceId
 bool MemScopeService::ParseMemoryAllocDetailTreeByTimestamp(const std::string &deviceId,
                                                             const uint64_t &timestamp,
                                                             const std::string &eventType,
-                                                            LeaksMemoryDetailTreeNode &detailTree,
+                                                            MemScopeMemoryDetailTreeNode &detailTree,
                                                             bool relativeTime)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+    auto database = Timeline::DataBaseManager::Instance().GetMemScopeDatabase("");
     if (database == nullptr) {
-        Server::ServerLog::Error("Cannot get leaks db connections from database manager");
+        Server::ServerLog::Error("Cannot get memscope db connections from database manager");
         return false;
     }
     uint64_t minTimestamp = database->GetGlobalMinTimestamp();
@@ -349,9 +348,8 @@ bool MemScopeService::ParseMemoryAllocDetailTreeByTimestamp(const std::string &d
         return false;
     }
     // 构造固定层顶层-进程占用, 来自HAL最后一次分配的总内存
-    auto latestHALAllocation = database->QueryLatestAllocationWithinTimestamp(deviceId,
-                                                                              LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_HAL,
-                                                                              realTimestamp);
+    auto latestHALAllocation =
+        database->QueryLatestAllocationWithinTimestamp(deviceId, MEM_SCOPE_DUMP_EVENT_TYPE::MALLOC_FREE_HAL, realTimestamp);
     if (!latestHALAllocation.has_value()) {
         Server::ServerLog::Error("Parse memory alloc details failed: empty HAL allocation data");
         return false;
@@ -361,13 +359,13 @@ bool MemScopeService::ParseMemoryAllocDetailTreeByTimestamp(const std::string &d
         Server::ServerLog::Warn("Parse memory alloc details: empty data.");
         return true;
     }
-    detailTree.name = LEAKS_MEMORY_ALLOC_OWNER_HAL_NAME;
-    if (eventType == LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_HAL) {
-        detailTree.tag = LEAKS_MEMORY_ALLOC_OWNER_HAL_CANN; // 构造CANN层 - ATB/MindSpore/PTA占用，所有owner前缀为带有PTA/ATB/MINDSPORE
+    detailTree.name = MEM_SCOPE_ALLOC_OWNER_HAL_NAME;
+    if (eventType == MEM_SCOPE_DUMP_EVENT_TYPE::MALLOC_FREE_HAL) {
+        detailTree.tag = MEM_SCOPE_ALLOC_OWNER_HAL_CANN; // 构造CANN层 - ATB/MindSpore/PTA占用，所有owner前缀为带有PTA/ATB/MINDSPORE
     } else {
-        detailTree.tag = LEAKS_MEMORY_ALLOC_OWNER_HAL_FRAMEWORK; // 构造框架层 - ATB/MindSpore/PTA占用，所有owner前缀为带有PTA/ATB/MINDSPORE
+        detailTree.tag = MEM_SCOPE_ALLOC_OWNER_HAL_FRAMEWORK; // 构造框架层 - ATB/MindSpore/PTA占用，所有owner前缀为带有PTA/ATB/MINDSPORE
     }
-    std::set<std::string> owners(LEAKS_MEMORY_ALLOC_OWNER_FIXED_TAGS);
+    std::set<std::string> owners(MEM_SCOPE_ALLOC_OWNER_FIXED_TAGS);
     database->QueryMemoryBlocksOwnersReleasedAfterTimestamp(deviceId, eventType, realTimestamp, owners);
     if (owners.empty()) {
         Server::ServerLog::Warn("Parse memory alloc details: empty data.");
@@ -378,7 +376,7 @@ bool MemScopeService::ParseMemoryAllocDetailTreeByTimestamp(const std::string &d
     return true;
 }
 
-bool MemScopeService::ParseThreadPythonTrace(LeaksMemoryPythonTrace &trace, ParseContext &context)
+bool MemScopeService::ParseThreadPythonTrace(MemScopePythonTrace &trace, ParseContext &context)
 {
     if (context.db == nullptr) {
         Server::ServerLog::Warn("Failed to parse thread python trace: cannot get db connection.");

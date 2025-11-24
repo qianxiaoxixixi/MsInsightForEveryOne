@@ -8,10 +8,10 @@
 
 
 namespace Dic::Protocol {
-class MemoryDetailProtocolUtil : public ProtocolUtil {
+class MemScopeProtocolUtil : public ProtocolUtil {
 public:
-    MemoryDetailProtocolUtil() = default;
-    ~MemoryDetailProtocolUtil() override = default;
+    MemScopeProtocolUtil() = default;
+    ~MemScopeProtocolUtil() override = default;
 
 private:
     void RegisterJsonToRequestFuncs() override;

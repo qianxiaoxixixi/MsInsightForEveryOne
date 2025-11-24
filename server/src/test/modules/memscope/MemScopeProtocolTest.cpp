@@ -7,13 +7,13 @@
 #include "MemScopeProtocolRequest.h"
 #include "MemScopeProtocolResponse.h"
 
-class LeaksMemoryProtocolTest : public ::testing::Test {
+class MemScopeProtocolTest : public ::testing::Test {
 public:
     static void SetUpTestSuite() {}
     static void TearDownTestSuite() {}
 };
 
-TEST_F(LeaksMemoryProtocolTest, BuildEventTableRequestFromJson)
+TEST_F(MemScopeProtocolTest, BuildEventTableRequestFromJson)
 {
     std::string jsonStr = "{"
                           "  \"id\": 37, "
@@ -47,9 +47,9 @@ TEST_F(LeaksMemoryProtocolTest, BuildEventTableRequestFromJson)
     EXPECT_TRUE(errMsg.empty());
     EXPECT_FALSE(json->HasParseError());
     EXPECT_TRUE(json.has_value());
-    auto requestPtr = LeaksMemoryEventRequest::FromJson(json.value(), errMsg);
+    auto requestPtr = MemScopeEventRequest::FromJson(json.value(), errMsg);
     EXPECT_TRUE(errMsg.empty());
-    auto &request = dynamic_cast<LeaksMemoryEventRequest &>(*requestPtr);
+    auto &request = dynamic_cast<MemScopeEventRequest &>(*requestPtr);
     EXPECT_TRUE(request.params.CommonCheck(errMsg));
     EXPECT_EQ(request.params.currentPage, 1);
     EXPECT_EQ(request.params.pageSize, 10);
@@ -58,7 +58,7 @@ TEST_F(LeaksMemoryProtocolTest, BuildEventTableRequestFromJson)
     EXPECT_EQ(request.params.rangeFilters.size(), 1);
 }
 
-TEST_F(LeaksMemoryProtocolTest, BuildBlockTableRequestFromJson)
+TEST_F(MemScopeProtocolTest, BuildBlockTableRequestFromJson)
 {
     std::string jsonStr = "{ "
                           "  \"id\": 21, "
@@ -88,9 +88,9 @@ TEST_F(LeaksMemoryProtocolTest, BuildBlockTableRequestFromJson)
     EXPECT_TRUE(errMsg.empty());
     EXPECT_FALSE(json->HasParseError());
     EXPECT_TRUE(json.has_value());
-    auto requestPtr = LeaksMemoryBlockRequest::FromJson(json.value(), errMsg);
+    auto requestPtr = MemScopeMemoryBlockRequest::FromJson(json.value(), errMsg);
     EXPECT_TRUE(errMsg.empty());
-    auto &request = dynamic_cast<LeaksMemoryBlockRequest &>(*requestPtr);
+    auto &request = dynamic_cast<MemScopeMemoryBlockRequest &>(*requestPtr);
     EXPECT_TRUE(request.params.CommonCheck(errMsg));
     EXPECT_EQ(request.params.currentPage, 1);
     EXPECT_EQ(request.params.pageSize, 10);
@@ -99,7 +99,7 @@ TEST_F(LeaksMemoryProtocolTest, BuildBlockTableRequestFromJson)
     EXPECT_EQ(request.params.rangeFilters.size(), 0);
 }
 
-TEST_F(LeaksMemoryProtocolTest, BuildDetailRequestFromJson)
+TEST_F(MemScopeProtocolTest, BuildDetailRequestFromJson)
 {
     std::string jsonStr = "{ "
                           "  \"id\": 39, "
@@ -120,9 +120,9 @@ TEST_F(LeaksMemoryProtocolTest, BuildDetailRequestFromJson)
     EXPECT_TRUE(errMsg.empty());
     EXPECT_FALSE(json->HasParseError());
     EXPECT_TRUE(json.has_value());
-    auto requestPtr = LeaksMemoryDetailRequest::FromJson(json.value(), errMsg);
+    auto requestPtr = MemScopeMemoryDetailRequest::FromJson(json.value(), errMsg);
     EXPECT_TRUE(errMsg.empty());
-    auto &request = dynamic_cast<LeaksMemoryDetailRequest &>(*requestPtr);
+    auto &request = dynamic_cast<MemScopeMemoryDetailRequest &>(*requestPtr);
     EXPECT_TRUE(request.params.CommonCheck(errMsg));
     EXPECT_EQ(request.params.deviceId, "1");
     const uint64_t expectTimestamp = 65215342604;
@@ -131,7 +131,7 @@ TEST_F(LeaksMemoryProtocolTest, BuildDetailRequestFromJson)
     EXPECT_TRUE(request.params.relativeTime);
 }
 
-TEST_F(LeaksMemoryProtocolTest, BuildAllocationRequestFromJson)
+TEST_F(MemScopeProtocolTest, BuildAllocationRequestFromJson)
 {
     std::string jsonStr = "{ "
                           "  \"id\": 47, "
@@ -153,9 +153,9 @@ TEST_F(LeaksMemoryProtocolTest, BuildAllocationRequestFromJson)
     EXPECT_TRUE(errMsg.empty());
     EXPECT_FALSE(json->HasParseError());
     EXPECT_TRUE(json.has_value());
-    auto requestPtr = LeaksMemoryAllocationRequest::FromJson(json.value(), errMsg);
+    auto requestPtr = MemScopeMemoryAllocationRequest::FromJson(json.value(), errMsg);
     EXPECT_TRUE(errMsg.empty());
-    auto &request = dynamic_cast<LeaksMemoryAllocationRequest &>(*requestPtr);
+    auto &request = dynamic_cast<MemScopeMemoryAllocationRequest &>(*requestPtr);
     EXPECT_TRUE(request.params.CommonCheck(errMsg));
     EXPECT_EQ(request.params.deviceId, "1");
     const uint64_t expectStartTimestamp = 45074528271;
@@ -166,7 +166,7 @@ TEST_F(LeaksMemoryProtocolTest, BuildAllocationRequestFromJson)
     EXPECT_TRUE(request.params.relativeTime);
 }
 
-TEST_F(LeaksMemoryProtocolTest, BuildTraceRequestFromJson)
+TEST_F(MemScopeProtocolTest, BuildTraceRequestFromJson)
 {
     std::string jsonStr = "{ "
                           "  \"id\": 45, "
@@ -188,9 +188,9 @@ TEST_F(LeaksMemoryProtocolTest, BuildTraceRequestFromJson)
     EXPECT_TRUE(errMsg.empty());
     EXPECT_FALSE(json->HasParseError());
     EXPECT_TRUE(json.has_value());
-    auto requestPtr = LeaksMemoryTraceRequest::FromJson(json.value(), errMsg);
+    auto requestPtr = MemScopePythonTraceRequest::FromJson(json.value(), errMsg);
     EXPECT_TRUE(errMsg.empty());
-    auto &request = dynamic_cast<LeaksMemoryTraceRequest &>(*requestPtr);
+    auto &request = dynamic_cast<MemScopePythonTraceRequest &>(*requestPtr);
     EXPECT_TRUE(request.params.CommonCheck(errMsg));
     EXPECT_EQ(request.params.deviceId, "1");
     const uint64_t expectStartTimestamp = 45074528271;
@@ -202,7 +202,7 @@ TEST_F(LeaksMemoryProtocolTest, BuildTraceRequestFromJson)
     EXPECT_TRUE(request.params.relativeTime);
 }
 
-TEST_F(LeaksMemoryProtocolTest, BuildBlockTableThresholdParamsFromJson)
+TEST_F(MemScopeProtocolTest, BuildBlockTableThresholdParamsFromJson)
 {
     std::string jsonStr = R"({"id": 11, "moduleName": "leaks", "type": "request", "command": "Memory/leaks/blocks",
                                 "params": {"deviceId": "1", "relativeTime": true, "eventType": "PTA", "isTable": true,
@@ -214,9 +214,9 @@ TEST_F(LeaksMemoryProtocolTest, BuildBlockTableThresholdParamsFromJson)
     EXPECT_TRUE(errMsg.empty());
     EXPECT_FALSE(json->HasParseError());
     EXPECT_TRUE(json.has_value());
-    auto requestPtr = LeaksMemoryBlockRequest::FromJson(json.value(), errMsg);
+    auto requestPtr = MemScopeMemoryBlockRequest::FromJson(json.value(), errMsg);
     EXPECT_TRUE(errMsg.empty());
-    auto &request = dynamic_cast<LeaksMemoryBlockRequest &>(*requestPtr);
+    auto &request = dynamic_cast<MemScopeMemoryBlockRequest &>(*requestPtr);
     EXPECT_TRUE(request.params.CommonCheck(errMsg));
     EXPECT_EQ(request.params.deviceId, "1");
     const uint64_t expectStartTimestamp = 7707721000;

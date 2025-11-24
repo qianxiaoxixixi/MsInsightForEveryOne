@@ -38,7 +38,7 @@ enum class PythonTrimCompressStrategy {
     COMPRESS_AND_FILTER_SMALL_FUNCTIONS
 };
 
-struct LeaksMemoryPythonTrace {
+struct MemScopePythonTrace {
     uint64_t maxTimestamp{};
     uint64_t minTimestamp{INT64_MAX};
     uint64_t threadId{};
@@ -144,9 +144,9 @@ struct MemoryBlockAttrs {
  * 内存事件组
  */
 struct EventGroup {
-    std::optional<MemoryEvent> mallocEvent{std::nullopt};
-    std::optional<MemoryEvent> freeEvent{std::nullopt};
-    std::vector<MemoryEvent> accessEvents;
+    std::optional<MemScopeEvent> mallocEvent{std::nullopt};
+    std::optional<MemScopeEvent> freeEvent{std::nullopt};
+    std::vector<MemScopeEvent> accessEvents;
     int64_t groupId{-1};
 
     EventGroup() = default;
@@ -154,9 +154,9 @@ struct EventGroup {
      * 通过events快速构建一个eventGroup, 注意需要events已根据timestamp升序排序
      * @param sortedEvents 事件数组，要求已经过排序
      */
-    explicit EventGroup(std::vector<MemoryEvent> &sortedEvents);
+    explicit EventGroup(std::vector<MemScopeEvent> &sortedEvents);
 
-    void AddEvent(const MemoryEvent &event);
+    void AddEvent(const MemScopeEvent &event);
 };
 // [EVENT]
 } // Dic::Module::MemScope

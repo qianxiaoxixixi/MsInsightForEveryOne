@@ -16,7 +16,7 @@ using namespace Dic::Module::FullDb;
 using namespace Dic::Module::MemScope;
 using namespace Dic;
 
-class LeaksMemoryServiceTest : public ::testing::Test {
+class MemScopeServiceTest : public ::testing::Test {
 public:
     const static uint64_t SECOND = 1000000000;
     static void SetUpTestSuite()
@@ -26,23 +26,23 @@ public:
         currPath = currPath.substr(0, index + 1);
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
         DataBaseManager::Instance().SetDataType(DataType::DB);
-        DataBaseManager::Instance().SetFileType(FileType::LEAKS);
+        DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE);
         std::string fullDbPath = StringUtil::StrJoin(currPath, dbPath3, "leaks_dump_20250806.dat");
-        auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+        auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
         ASSERT_TRUE(memoryDatabase->OpenDb(fullDbPath, false));
     }
     static void TearDownTestSuite()
     {
-        auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+        auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
         memoryDatabase->CloseDb();
         DataBaseManager::Instance().Clear();
     }
 };
 
-TEST_F(LeaksMemoryServiceTest, ParseEventsToAllocationsAndBlocks)
+TEST_F(MemScopeServiceTest, ParseEventsToAllocationsAndBlocks)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
-    std::vector<MemoryEvent> events;
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
+    std::vector<MemScopeEvent> events;
     memoryDatabase->QueryEntireEventsTable(events);
     const size_t expectEventsSize = 33882;
     EXPECT_EQ(events.size(), expectEventsSize);
@@ -54,14 +54,14 @@ TEST_F(LeaksMemoryServiceTest, ParseEventsToAllocationsAndBlocks)
     EXPECT_TRUE(context.has_value());
     MemScopeService::ParseEventsToBlockAndAllocations(*context);
     // 校验blocks
-    LeaksMemoryBlockParams blockParams;
+    MemScopeMemoryBlockParams blockParams;
     blockParams.deviceId = "1";
     blockParams.relativeTime = false;
     blockParams.eventType = "PTA";
     std::vector<MemoryBlock> blocks;
     memoryDatabase->QueryMemoryBlocks(blockParams, false, blocks);
     // 校验allocations
-    LeaksMemoryAllocationParams allocationParams;
+    MemScopeMemoryAllocationParams allocationParams;
     allocationParams.deviceId = "1";
     allocationParams.optimized = false;
     allocationParams.eventType = "PTA";
@@ -71,24 +71,24 @@ TEST_F(LeaksMemoryServiceTest, ParseEventsToAllocationsAndBlocks)
     EXPECT_EQ(allocations.size(), expectAllocationSize);
 }
 
-TEST_F(LeaksMemoryServiceTest, BuildBlockEventAttrFromEventWithEmptyAttr)
+TEST_F(MemScopeServiceTest, BuildBlockEventAttrFromEventWithEmptyAttr)
 {
-    MemoryEvent event;
+    MemScopeEvent event;
     auto attrs = BuildEventAttrsFromJson<MemoryEventBaseAttrs>("");
     EXPECT_FALSE(attrs.has_value());
 }
 
-TEST_F(LeaksMemoryServiceTest, BuildBlockEventAttrFromEventWithInvalidJsonAttr)
+TEST_F(MemScopeServiceTest, BuildBlockEventAttrFromEventWithInvalidJsonAttr)
 {
-    MemoryEvent event;
+    MemScopeEvent event;
     auto attrs = BuildEventAttrsFromJson<MemoryEventBaseAttrs>("{]");
     EXPECT_FALSE(attrs.has_value());
 }
 
-TEST_F(LeaksMemoryServiceTest, BuildBlockEventAttrFromEventWithValidJsonAttr)
+TEST_F(MemScopeServiceTest, BuildBlockEventAttrFromEventWithValidJsonAttr)
 {
-    MemoryEvent event;
-    event.event = LEAKS_DUMP_EVENT::MALLOC;
+    MemScopeEvent event;
+    event.event = MEM_SCOPE_DUMP_EVENT::MALLOC;
     auto eventAttr = BuildEventAttrsFromJson<MallocFreeEventAttrs>(
         R"({"addr": "20617055174656", "size": "7849984", "total": "132120576","used": "116313600", "owner": "PTA@init_model"})");
     ASSERT_TRUE(eventAttr.has_value());
@@ -97,45 +97,45 @@ TEST_F(LeaksMemoryServiceTest, BuildBlockEventAttrFromEventWithValidJsonAttr)
     EXPECT_EQ(eventAttr->owner, "PTA@init_model");
 }
 
-TEST_F(LeaksMemoryServiceTest, ParserEnd)
+TEST_F(MemScopeServiceTest, ParserEnd)
 {
     EXPECT_NO_THROW(MemScopeService::ParserEnd("0", false));
     EXPECT_NO_THROW(MemScopeService::ParserEnd("0", true));
 }
 
-TEST_F(LeaksMemoryServiceTest, ParseCallBack)
+TEST_F(MemScopeServiceTest, ParseCallBack)
 {
     EXPECT_NO_THROW(MemScopeService::ParseCallBack("", false, ""));
     EXPECT_NO_THROW(MemScopeService::ParseCallBack("0", false, ""));
     EXPECT_NO_THROW(MemScopeService::ParseCallBack("0", true, ""));
 }
 
-TEST_F(LeaksMemoryServiceTest, ParseLeaksDump)
+TEST_F(MemScopeServiceTest, ParseLeaksDump)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     EXPECT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
     EXPECT_TRUE(memoryDatabase->CreateMemoryAllocationAndBlockTable());
     memoryDatabase->UpdateParseStatus(NOT_FINISH_STATUS);
-    EXPECT_TRUE(MemScopeService::ParseMemoryLeaksDumpEventsAndPythonTraces("0"));
+    EXPECT_TRUE(MemScopeService::ParseMemoryMemScopeDumpEventsAndPythonTraces("0"));
     std::vector<string> traceTables = memoryDatabase->GetPythonTraceTables();
     EXPECT_EQ(traceTables.size(), 1);
     std::string traceTable = traceTables[0];
     std::vector<uint64_t> threadIds;
     memoryDatabase->QueryThreadIds(threadIds);
     EXPECT_FALSE(threadIds.empty());
-    LeaksMemoryThreadPythonTraceParams params;
+    MemScopeThreadPythonTraceParams params;
     params.threadId = threadIds[0];
-    LeaksMemoryPythonTrace trace;
+    MemScopePythonTrace trace;
     memoryDatabase->QueryPythonTracesUsingTableName(traceTable, params, trace);
     EXPECT_FALSE(trace.slices.empty());
     EXPECT_EQ(trace.slices.front().depth, 0);
 }
 
-TEST_F(LeaksMemoryServiceTest, ParseMemoryAllocDetailTreeByTimestamp)
+TEST_F(MemScopeServiceTest, ParseMemoryAllocDetailTreeByTimestamp)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     ASSERT_TRUE(memoryDatabase != nullptr);
-    LeaksMemoryDetailTreeNode tree;
+    MemScopeMemoryDetailTreeNode tree;
     const std::string deviceId = "7";
     const std::string eventType = "PTA";
     const uint64_t expectDuration = 1000000;
@@ -146,19 +146,19 @@ TEST_F(LeaksMemoryServiceTest, ParseMemoryAllocDetailTreeByTimestamp)
 /***
  * 测试解析出的内存块数据首末次访问事件是否正确
  */
-TEST_F(LeaksMemoryServiceTest, TestMemoryBlockFirstLastAccessTimestamp)
+TEST_F(MemScopeServiceTest, TestMemoryBlockFirstLastAccessTimestamp)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     ASSERT_TRUE(memoryDatabase != nullptr);
     const uint64_t groupId = 1910;
-    std::vector<MemoryEvent> events;
+    std::vector<MemScopeEvent> events;
     memoryDatabase->QueryEventsByGroupId(groupId, "1", true, events);
     EventGroup eventGroup(events);
     EXPECT_FALSE(events.empty());
     auto firstEvent = events.front();
     // 根据首次事件的deviceId、eventType和timestamp查询出对应解析出的内存块
     std::vector<MemoryBlock> blocks;
-    LeaksMemoryBlockParams queryParams;
+    MemScopeMemoryBlockParams queryParams;
     queryParams.deviceId = firstEvent.deviceId;
     queryParams.eventType = firstEvent.eventType;
     queryParams.relativeTime = true;
@@ -186,10 +186,10 @@ TEST_F(LeaksMemoryServiceTest, TestMemoryBlockFirstLastAccessTimestamp)
 *                   |-------func03-------|               |--------------func04--------------|
  *
 */
-TEST_F(LeaksMemoryServiceTest, TestTrimPythonTraceSlicesOnlyFilter)
+TEST_F(MemScopeServiceTest, TestTrimPythonTraceSlicesOnlyFilter)
 {
     // 构造测试数据
-    LeaksMemoryPythonTrace trace;
+    MemScopePythonTrace trace;
     // 模拟时间范围在100000ns的情况
     trace.maxTimestamp = 100000;
     trace.minTimestamp = 0;
@@ -218,10 +218,10 @@ TEST_F(LeaksMemoryServiceTest, TestTrimPythonTraceSlicesOnlyFilter)
 *    |---Merged---||-------func03-------|                 |--------------func04-------------|
 *                       |func031|
 */
-TEST_F(LeaksMemoryServiceTest, TestTrimPythonTraceSlicesOnlyCompress)
+TEST_F(MemScopeServiceTest, TestTrimPythonTraceSlicesOnlyCompress)
 {
     // 构造测试数据
-    LeaksMemoryPythonTrace trace;
+    MemScopePythonTrace trace;
     trace.maxTimestamp = 100000;
     trace.minTimestamp = 0;
     trace.maxDepth = 2;
@@ -252,10 +252,10 @@ TEST_F(LeaksMemoryServiceTest, TestTrimPythonTraceSlicesOnlyCompress)
 *    |---Merged---||-------func03-------|                 |--------------func14-------------|
 *
 */
-TEST_F(LeaksMemoryServiceTest, TestTrimPythonTraceSlicesCompressAndFilter)
+TEST_F(MemScopeServiceTest, TestTrimPythonTraceSlicesCompressAndFilter)
 {
     // 构造测试数据
-    LeaksMemoryPythonTrace trace;
+    MemScopePythonTrace trace;
     trace.maxTimestamp = 100000;
     trace.minTimestamp = 0;
     trace.maxDepth = 2;
