@@ -86,12 +86,10 @@ export const EventDetail = observer((props: SelectContentViewProps & { request: 
         setAllCondition({ ...allCondition, page, sorter, filters });
     }, [sorter, filters, page.current, page.pageSize]);
     useEffect(() => {
-        if (props.session.showEvent) {
-            setPage(defaultPage);
-            setSorter(defaultSorter);
-            setFilters(defaultFilters);
-            setAllCondition({ ...allCondition, showEvent: props.session.showEvent, page: defaultPage, sorter: defaultSorter, filters: defaultFilters });
-        }
+        setPage(defaultPage);
+        setSorter(defaultSorter);
+        setFilters(defaultFilters);
+        setAllCondition({ ...allCondition, showEvent: props.session.showEvent, page: defaultPage, sorter: defaultSorter, filters: defaultFilters });
     }, [props.session.showEvent]);
 
     useEffect(() => {
@@ -167,7 +165,6 @@ const updateData = async ({
     setEventColum(getColumns(res.columnList, filters));
     setDataSource(data);
     setPage((prevPage: any) => ({ ...pages, total: res.count }));
-    props.session.showEvent = false;
 };
 
 const generateEventColumns = (
