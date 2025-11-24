@@ -14,7 +14,7 @@
 #include "DbTraceDataBase.h"
 #include "TextClusterDatabase.h"
 #include "VirtualMemoryDataBase.h"
-#include "LeaksMemoryDatabase.h"
+#include "MemScopeDatabase.h"
 #include "KernelParse.h"
 
 namespace Dic {
@@ -68,8 +68,8 @@ public:
 
     std::vector<Memory::VirtualMemoryDataBase *> GetAllMemoryDatabase();
 
-    std::shared_ptr<FullDb::LeaksMemoryDatabase> GetLeaksMemoryDatabase(const std::string &fileId);
-    std::vector<FullDb::LeaksMemoryDatabase *> GetAllLeaksMemoryDatabase();
+    std::shared_ptr<FullDb::MemScopeDatabase> GetLeaksMemoryDatabase(const std::string &fileId);
+    std::vector<FullDb::MemScopeDatabase*> GetAllLeaksMemoryDatabase();
     std::shared_ptr<Summary::VirtualSummaryDataBase> GetSummaryDatabaseByRankId(const std::string &rankId);
     std::shared_ptr<Summary::VirtualSummaryDataBase> GetSummaryDatabaseWithCluster(const std::string &cluster,
                                                                                    const std::string &rankId);
@@ -133,7 +133,7 @@ private:
     std::map<FileId, std::shared_ptr<DBConnectionPool<VirtualTraceDatabase>>> traceDatabaseMap;
     std::map<ClusterPath, std::shared_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
     std::map<RankId, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
-    std::map<FileId, std::shared_ptr<FullDb::LeaksMemoryDatabase>> leaksMemoryDatabaseMap;
+    std::map<FileId, std::shared_ptr<FullDb::MemScopeDatabase>> leaksMemoryDatabaseMap;
     std::map<RankId, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryDatabaseMap;
 
     FileType baselineFileType = FileType::PYTORCH;
