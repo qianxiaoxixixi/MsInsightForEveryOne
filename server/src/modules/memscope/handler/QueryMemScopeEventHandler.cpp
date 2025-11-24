@@ -8,8 +8,8 @@
 namespace Dic::Module::MemScope {
 bool QueryMemScopeEventHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    auto &request = dynamic_cast<LeaksMemoryEventRequest &>(*requestPtr);
-    std::unique_ptr<LeaksMemoryEventResponse> responsePtr = std::make_unique<LeaksMemoryEventResponse>();
+    auto &request = dynamic_cast<MemScopeEventRequest &>(*requestPtr);
+    std::unique_ptr<MemScopeEventResponse> responsePtr = std::make_unique<MemScopeEventResponse>();
     auto &response = *responsePtr;
     SetBaseResponse(request, response);
     std::string errorMsg;
@@ -17,9 +17,9 @@ bool QueryMemScopeEventHandler::HandleRequest(std::unique_ptr<Protocol::Request>
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+    auto database = Timeline::DataBaseManager::Instance().GetMemScopeDatabase("");
     if (database == nullptr) {
-        errorMsg = "Get leaks memory database failed when querying events table.";
+        errorMsg = "Get memscope database failed when querying events table.";
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }

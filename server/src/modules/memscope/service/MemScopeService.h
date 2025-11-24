@@ -18,8 +18,8 @@ namespace Dic {
 namespace Module {
 namespace MemScope {
 struct ParseContext {
-    std::vector<MemoryEvent> events;
-    std::unordered_map<std::string, std::map<std::string, const MemoryEvent *>> deviceMallocMap;
+    std::vector<MemScopeEvent> events;
+    std::unordered_map<std::string, std::map<std::string, const MemScopeEvent *>> deviceMallocMap;
     std::unordered_map<std::string, uint64_t> deviceTotalSize;
     std::unordered_map<uint64_t, EventGroup> eventGroupMap;
     std::shared_ptr<FullDb::MemScopeDatabase> db;
@@ -31,28 +31,28 @@ struct ParseContext {
 class MemScopeService {
 public:
     static void ParseEventsToBlockAndAllocations(ParseContext &context);
-    static bool ParseMemoryLeaksDumpEventsAndPythonTraces(const std::string &fileId);
+    static bool ParseMemoryMemScopeDumpEventsAndPythonTraces(const std::string &fileId);
     static void ParserEnd(const std::string &rankId, bool result);
     static void ParseCallBack(const std::string &fileId, bool result, const std::string &msg);
     static bool ParseMemoryAllocDetailTreeByTimestamp(const std::string &deviceId,
                                                       const uint64_t &timestamp,
                                                       const std::string &eventType,
-                                                      LeaksMemoryDetailTreeNode &detailTree,
+                                                      MemScopeMemoryDetailTreeNode &detailTree,
                                                       bool relativeTime);
     // 传入slices必须为已按照startTimestamp升序排序的数组
-    static bool ParseThreadPythonTrace(LeaksMemoryPythonTrace &trace, ParseContext &context);
+    static bool ParseThreadPythonTrace(MemScopePythonTrace &trace, ParseContext &context);
     // 判断eventType是否合法
     static bool IsValidMemoryEventType(const std::string &event, const std::string &eventType);
     static std::optional<ParseContext> BuildContext(std::shared_ptr<FullDb::MemScopeDatabase> &db);
 private:
     static void ParseRemainMallocEvents(ParseContext &context);
-    static bool SingleDeviceEventParse(const MemoryEvent &event,
+    static bool SingleDeviceEventParse(const MemScopeEvent &event,
                                        ParseContext &context);
     // 递归,depth从0开始
     static void BuildMemoryAllocDetailTreeNode(const std::string &deviceId,
                                         const uint64_t &timestamp,
                                         const std::set<std::string> &owners,
-                                        LeaksMemoryDetailTreeNode &curNode, int depth);
+                                        MemScopeMemoryDetailTreeNode &curNode, int depth);
     static void SetMemoryBlockExtendByEventGroup(MemoryBlock& block, const uint64_t groupId,
                                                  ParseContext &context);
 };

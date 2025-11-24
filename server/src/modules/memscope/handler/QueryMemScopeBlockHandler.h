@@ -12,16 +12,16 @@ namespace Module {
 namespace MemScope {
 class QueryMemScopeBlockHandler : public MemScopeRequestHandler {
 public:
-    QueryMemScopeBlockHandler() { command = Protocol::REQ_RES_LEAKS_MEMORY_BLOCKS; }
+    QueryMemScopeBlockHandler() { command = Protocol::REQ_RES_MEM_SCOPE_MEMORY_BLOCKS; }
     ~QueryMemScopeBlockHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
-    static void BuildBlocksViewResponse(const std::vector<MemoryBlock>& blocks, LeaksMemoryBlocksResponse& response);
+    static void BuildBlocksViewResponse(const std::vector<MemoryBlock>& blocks, MemScopeMemoryBlocksResponse& response);
 
-    static bool HandleBlocksTableRequest(LeaksMemoryBlockRequest& request,
-                                         LeaksMemoryBlocksResponse& response,
+    static bool HandleBlocksTableRequest(MemScopeMemoryBlockRequest& request,
+                                         MemScopeMemoryBlocksResponse& response,
                                          std::string &errorMsg);
-    static bool HandleBlocksViewRequest(LeaksMemoryBlockRequest& request,
-                                        LeaksMemoryBlocksResponse& response,
+    static bool HandleBlocksViewRequest(MemScopeMemoryBlockRequest& request,
+                                        MemScopeMemoryBlocksResponse& response,
                                         std::string &errorMsg);
 };
 }  // namespace MemScope

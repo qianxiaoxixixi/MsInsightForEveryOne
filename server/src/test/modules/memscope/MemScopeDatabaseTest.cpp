@@ -15,7 +15,7 @@ using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
 using namespace Dic;
 
-class LeaksMemoryDatabaseTest : public ::testing::Test {
+class MemScopeDatabaseTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
@@ -24,40 +24,40 @@ public:
         currPath = currPath.substr(0, index + 1);
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
         DataBaseManager::Instance().SetDataType(DataType::DB);
-        DataBaseManager::Instance().SetFileType(FileType::LEAKS);
-        auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+        DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE);
+        auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
         ASSERT_TRUE(memoryDatabase->OpenDb(currPath + dbPath3 + "leaks_dump_20250806.dat", false));
         ASSERT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
-        ASSERT_TRUE(MemScopeService::ParseMemoryLeaksDumpEventsAndPythonTraces("0"));
+        ASSERT_TRUE(MemScopeService::ParseMemoryMemScopeDumpEventsAndPythonTraces("0"));
     }
     static void TearDownTestSuite()
     {
-        auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+        auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
         memoryDatabase->CloseDb();
         DataBaseManager::Instance().Clear();
     }
 };
 
-TEST_F(LeaksMemoryDatabaseTest, QueryEntireEventsTable)
+TEST_F(MemScopeDatabaseTest, QueryEntireEventsTable)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
-    std::vector<MemoryEvent> events;
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
+    std::vector<MemScopeEvent> events;
     memoryDatabase->QueryEntireEventsTable(events);
     size_t expectSize = 33882;
     EXPECT_EQ(events.size(), expectSize);
 }
 
-TEST_F(LeaksMemoryDatabaseTest, QueryDeviceIds)
+TEST_F(MemScopeDatabaseTest, QueryDeviceIds)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     std::set<std::string> deviceIds;
     memoryDatabase->QueryDeviceIds(deviceIds);
     size_t expectSize = 1;
     EXPECT_EQ(deviceIds.size(), expectSize);
 }
-TEST_F(LeaksMemoryDatabaseTest, QueryDeviceEventTypeMap)
+TEST_F(MemScopeDatabaseTest, QueryDeviceEventTypeMap)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     std::unordered_map<std::string, std::vector<std::string>> resultMap;
     memoryDatabase->QueryMallocOrFreeEventTypeWithDeviceId(resultMap);
     std::vector<std::string> eventTypes = resultMap["1"];
@@ -66,9 +66,9 @@ TEST_F(LeaksMemoryDatabaseTest, QueryDeviceEventTypeMap)
     it = std::find(eventTypes.begin(), eventTypes.end(), "PTA");
     EXPECT_TRUE(it != eventTypes.end());
 }
-TEST_F(LeaksMemoryDatabaseTest, QueryMinAndMaxTimestamp)
+TEST_F(MemScopeDatabaseTest, QueryMinAndMaxTimestamp)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     uint64_t minTimestamp = memoryDatabase->GetGlobalMinTimestamp();
     uint64_t maxTimestamp = memoryDatabase->GetGlobalMaxTimestamp();
     const uint64_t expectMin = 1754448083902750070;
@@ -77,11 +77,11 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMinAndMaxTimestamp)
     EXPECT_EQ(maxTimestamp, expectMax);
 }
 
-TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockWithNoTimeAndSizeCondition)
+TEST_F(MemScopeDatabaseTest, QueryMemoryBlockWithNoTimeAndSizeCondition)
 {
-    std::vector<MemoryEvent> events;
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
-    LeaksMemoryBlockParams params;
+    std::vector<MemScopeEvent> events;
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
+    MemScopeMemoryBlockParams params;
     params.deviceId = "1";
     params.relativeTime = false;
     params.eventType = "PTA";
@@ -91,9 +91,9 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockWithNoTimeAndSizeCondition)
     EXPECT_EQ(blocks.size(), expectSize);
 }
 
-TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockWithTimeAndSizeConditionAndRelativeTime)
+TEST_F(MemScopeDatabaseTest, QueryMemoryBlockWithTimeAndSizeConditionAndRelativeTime)
 {
-    LeaksMemoryBlockParams params;
+    MemScopeMemoryBlockParams params;
     params.deviceId = "1";
     params.relativeTime = true;
     // 15s
@@ -104,7 +104,7 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockWithTimeAndSizeConditionAndRelat
     params.eventType = "PTA";
     params.orderBy = std::string(MemoryBlockTableColumn::START_TIMESTAMP);
     std::vector<MemoryBlock> blocks;
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     memoryDatabase->QueryMemoryBlocks(params, false, blocks);
     const size_t expectSize = 269;
     EXPECT_EQ(blocks.size(), expectSize);
@@ -116,22 +116,22 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockWithTimeAndSizeConditionAndRelat
     EXPECT_TRUE(firstBlock.size > 0 and firstBlock.size < params.maxSize);
 }
 
-TEST_F(LeaksMemoryDatabaseTest, QueryAllocationWithNoTimeCondition)
+TEST_F(MemScopeDatabaseTest, QueryAllocationWithNoTimeCondition)
 {
-    LeaksMemoryAllocationParams params;
+    MemScopeMemoryAllocationParams params;
     params.deviceId = "1";
     params.optimized = false;
     params.eventType = "PTA";
     std::vector<MemoryAllocation> allocations;
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     memoryDatabase->QueryMemoryAllocations(params, allocations);
     size_t expectSize = 6534;
     EXPECT_EQ(allocations.size(), expectSize);
 }
 
-TEST_F(LeaksMemoryDatabaseTest, QueryAllocationWithTimeAndRelativeCondition)
+TEST_F(MemScopeDatabaseTest, QueryAllocationWithTimeAndRelativeCondition)
 {
-    LeaksMemoryAllocationParams params;
+    MemScopeMemoryAllocationParams params;
     params.deviceId = "1";
     params.optimized = false;
     // 15s
@@ -140,7 +140,7 @@ TEST_F(LeaksMemoryDatabaseTest, QueryAllocationWithTimeAndRelativeCondition)
     params.relativeTime = true;
     params.eventType = "PTA";
     std::vector<MemoryAllocation> allocations;
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     memoryDatabase->QueryMemoryAllocations(params, allocations);
     const size_t expectSize = 324;
     EXPECT_EQ(allocations.size(), expectSize);
@@ -151,9 +151,9 @@ TEST_F(LeaksMemoryDatabaseTest, QueryAllocationWithTimeAndRelativeCondition)
     EXPECT_EQ(firstAllocation.totalSize, totalSize);
 }
 
-TEST_F(LeaksMemoryDatabaseTest, QueryLatestAllocationWithinTimestamp)
+TEST_F(MemScopeDatabaseTest, QueryLatestAllocationWithinTimestamp)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     const std::string deviceId = "1";
     const std::string eventType = "HAL";
     const uint64_t expectDuration = 20000000000;
@@ -166,9 +166,9 @@ TEST_F(LeaksMemoryDatabaseTest, QueryLatestAllocationWithinTimestamp)
 }
 
 
-TEST_F(LeaksMemoryDatabaseTest, QueryNextAllocationAfterTimestamp)
+TEST_F(MemScopeDatabaseTest, QueryNextAllocationAfterTimestamp)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     const std::string deviceId = "1";
     const std::string eventType = "PTA";
     const uint64_t expectDuration = 10000000;
@@ -180,9 +180,9 @@ TEST_F(LeaksMemoryDatabaseTest, QueryNextAllocationAfterTimestamp)
     EXPECT_EQ(alloc->totalSize, expectTotalSize);
 }
 
-TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlocksOwnersReleasedAfterTimestamp)
+TEST_F(MemScopeDatabaseTest, QueryMemoryBlocksOwnersReleasedAfterTimestamp)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     const std::string deviceId = "1";
     const std::string eventType = "PTA";
     // 10s
@@ -198,9 +198,9 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlocksOwnersReleasedAfterTimestamp)
     EXPECT_EQ(owners, expectOwners);
 }
 
-TEST_F(LeaksMemoryDatabaseTest, QueryTotalSizeUtilTimestampUsingOwner)
+TEST_F(MemScopeDatabaseTest, QueryTotalSizeUtilTimestampUsingOwner)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     const std::string deviceId = "1";
     // 10s
     const uint64_t expectDuration = 20000000000;
@@ -228,36 +228,36 @@ TEST_F(LeaksMemoryDatabaseTest, QueryTotalSizeUtilTimestampUsingOwner)
     EXPECT_EQ(ptaOpTotalSize, expectPTAOpTotalSize);
 }
 
-TEST_F(LeaksMemoryDatabaseTest, QueryPythonTraces)
+TEST_F(MemScopeDatabaseTest, QueryPythonTraces)
 {
     const uint64_t startTimestamp = 1000000;
     const uint64_t endTimestamp = 20000000000;
-    LeaksMemoryThreadPythonTraceParams params;
+    MemScopeThreadPythonTraceParams params;
     params.startTimestamp = startTimestamp;
     params.endTimestamp = endTimestamp;
     params.relativeTime = true;
     params.deviceId = "1";
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     ASSERT_TRUE(memoryDatabase != nullptr);
     std::vector<uint64_t> threadIds;
     const int expectThreadIdSize = 2;
     memoryDatabase->QueryThreadIds(threadIds);
     EXPECT_EQ(threadIds.size(), expectThreadIdSize);
     params.threadId = threadIds[0];
-    LeaksMemoryPythonTrace trace;
+    MemScopePythonTrace trace;
     memoryDatabase->QueryPythonTrace(params, trace);
     EXPECT_FALSE(trace.slices.empty());
 }
 /***
  * 测试通过简易请求(仅deviceId)查询内存事件  应返回该deviceId下的所有事件
  */
-TEST_F(LeaksMemoryDatabaseTest, QueryMemoryEventsTableWithSimpleParams)
+TEST_F(MemScopeDatabaseTest, QueryMemoryEventsTableWithSimpleParams)
 {
-    LeaksMemoryEventParams simpleQueryParams;
+    MemScopeEventParams simpleQueryParams;
     simpleQueryParams.deviceId = "1";
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     ASSERT_TRUE(memoryDatabase != nullptr);
-    std::vector<MemoryEvent> events;
+    std::vector<MemScopeEvent> events;
     int64_t totalSize = memoryDatabase->QueryEventsByRequestParams(simpleQueryParams, events);
     int64_t expectTotalSize = 33882;
     EXPECT_EQ(totalSize, expectTotalSize);
@@ -267,27 +267,27 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryEventsTableWithSimpleParams)
 /***
 * 测试通过时间范围、字段、分页、排序参数请求内存事件
 */
-TEST_F(LeaksMemoryDatabaseTest, QueryMemoryEventsTableWithComplexParams)
+TEST_F(MemScopeDatabaseTest, QueryMemoryEventsTableWithComplexParams)
 {
-    LeaksMemoryEventParams complexParams;
+    MemScopeEventParams complexParams;
     // 测试过滤后总量大于pageSize的情况，且根据Timestamp升序排序
     complexParams.deviceId = "1";
     complexParams.endTimestamp = 20000000000;
     complexParams.relativeTime = true;
     complexParams.currentPage = 1;
     complexParams.pageSize = 10;
-    complexParams.orderBy = std::string(MemoryEventTableColumn::TIMESTAMP);
+    complexParams.orderBy = std::string(EventTableColumn::TIMESTAMP);
     int64_t expectTotalSize = 2927;
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     ASSERT_TRUE(memoryDatabase != nullptr);
-    std::vector<MemoryEvent> events;
+    std::vector<MemScopeEvent> events;
     int64_t totalSize = memoryDatabase->QueryEventsByRequestParams(complexParams, events);
     EXPECT_EQ(totalSize, expectTotalSize);
     EXPECT_EQ(events.size(), complexParams.pageSize);
     EXPECT_EQ(events[0].timestamp, 4454383900);
     // 测试过滤后总量小于pageSize的情况，且根据Ptr降序排序
     complexParams.pageSize = 3000;
-    complexParams.orderBy = std::string(MemoryEventTableColumn::PTR);
+    complexParams.orderBy = std::string(EventTableColumn::PTR);
     complexParams.desc = true;
     expectTotalSize = 2927;
     uint64_t expectFirstEventTimestamp = 12318467490;
@@ -298,7 +298,7 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryEventsTableWithComplexParams)
     EXPECT_EQ(events[0].timestamp, expectFirstEventTimestamp);
     // 测试过滤后总量大于pageSize的情况，包括分页参数、filter、orderBy
     complexParams.pageSize = 10;
-    complexParams.filters.emplace(std::string(MemoryEventTableColumn::ATTR), "PTA");
+    complexParams.filters.emplace(std::string(EventTableColumn::ATTR), "PTA");
     expectTotalSize = 649;
     events.clear();
     totalSize = memoryDatabase->QueryEventsByRequestParams(complexParams, events);
@@ -313,12 +313,12 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryEventsTableWithComplexParams)
 /***
 * 测试查询某个deviceId+eventType下的全部数据
 */
-TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockTablesWithTimeRangeParams)
+TEST_F(MemScopeDatabaseTest, QueryMemoryBlockTablesWithTimeRangeParams)
 {
-    LeaksMemoryBlockParams simpleQueryParams;
+    MemScopeMemoryBlockParams simpleQueryParams;
     simpleQueryParams.deviceId = "1";
     simpleQueryParams.eventType = "PTA";
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     ASSERT_TRUE(memoryDatabase != nullptr);
     std::vector<MemoryBlock> blocks;
     int64_t totalSize = memoryDatabase->QueryMemoryBlocks(simpleQueryParams, true, blocks);
@@ -337,28 +337,28 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockTablesWithTimeRangeParams)
 /***
 * 测试通过时间范围、字段、分页、排序参数请求内存事件
 */
-TEST_F(LeaksMemoryDatabaseTest, QueryMemoryEventsTableWithPaginationParams)
+TEST_F(MemScopeDatabaseTest, QueryMemoryEventsTableWithPaginationParams)
 {
-    LeaksMemoryEventParams complexParams;
+    MemScopeEventParams complexParams;
     // 测试过滤后总量大于pageSize的情况，且根据startTimestamp升序排序
     complexParams.deviceId = "1";
     complexParams.endTimestamp = 100000000000;
     complexParams.relativeTime = true;
     complexParams.currentPage = 1;
     complexParams.pageSize = 20;
-    complexParams.orderBy = std::string(MemoryEventTableColumn::TIMESTAMP);
+    complexParams.orderBy = std::string(EventTableColumn::TIMESTAMP);
     int64_t expectTotalSize = 33882;
     uint64_t expectFirstEventStartTimestamp = 4454383900;
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     EXPECT_TRUE(memoryDatabase != nullptr);
-    std::vector<MemoryEvent> events;
+    std::vector<MemScopeEvent> events;
     int64_t totalSize = memoryDatabase->QueryEventsByRequestParams(complexParams, events);
     EXPECT_EQ(totalSize, expectTotalSize);
     EXPECT_EQ(events.size(), complexParams.pageSize);
     EXPECT_EQ(events[0].timestamp, expectFirstEventStartTimestamp);
     // 测试过滤后总量小于pageSize的情况，且根据Ptr降序排序
     complexParams.endTimestamp = expectFirstEventStartTimestamp + 1;
-    complexParams.orderBy = std::string(MemoryEventTableColumn::PTR);
+    complexParams.orderBy = std::string(EventTableColumn::PTR);
     complexParams.desc = true;
     expectTotalSize = 1;
     expectFirstEventStartTimestamp = 4454383900;
@@ -369,7 +369,7 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryEventsTableWithPaginationParams)
     EXPECT_EQ(events[0].timestamp, expectFirstEventStartTimestamp);
     // 测试过滤后总量大于pageSize的情况，包括分页参数、filter、orderBy
     complexParams.endTimestamp = 100000000000;
-    complexParams.filters.emplace(std::string(MemoryEventTableColumn::PTR), "24");
+    complexParams.filters.emplace(std::string(EventTableColumn::PTR), "24");
     expectTotalSize = 1167;
     expectFirstEventStartTimestamp = 4473763530;
     events.clear();
@@ -379,9 +379,9 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryEventsTableWithPaginationParams)
     EXPECT_EQ(events[0].timestamp, expectFirstEventStartTimestamp);
 }
 
-TEST_F(LeaksMemoryDatabaseTest, QueryAllDeviceExtreumTimestampMap)
+TEST_F(MemScopeDatabaseTest, QueryAllDeviceExtreumTimestampMap)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     EXPECT_TRUE(memoryDatabase != nullptr);
     const uint64_t expectMin = 1754448088357133970;
     const uint64_t expectMax = 1754448132413582150;
@@ -393,29 +393,29 @@ TEST_F(LeaksMemoryDatabaseTest, QueryAllDeviceExtreumTimestampMap)
     EXPECT_EQ(extreTsMap["1"].second, expectMax);
 }
 
-TEST_F(LeaksMemoryDatabaseTest, QueryEventsByGroupId)
+TEST_F(MemScopeDatabaseTest, QueryEventsByGroupId)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     EXPECT_TRUE(memoryDatabase != nullptr);
     const uint64_t groupId = 1910;
-    std::vector<MemoryEvent> events;
+    std::vector<MemScopeEvent> events;
     memoryDatabase->QueryEventsByGroupId(groupId, "1", false, events);
     const uint64_t expectTotalSize = 5;
     EXPECT_EQ(events.size(), expectTotalSize);
-    MemoryEvent& firstEvent = events[0];
-    MemoryEvent& lastEvent = events[expectTotalSize-1];
-    EXPECT_EQ(firstEvent.event, LEAKS_DUMP_EVENT::MALLOC);
-    EXPECT_EQ(lastEvent.event, LEAKS_DUMP_EVENT::FREE);
+    MemScopeEvent& firstEvent = events[0];
+    MemScopeEvent& lastEvent = events[expectTotalSize-1];
+    EXPECT_EQ(firstEvent.event, MEM_SCOPE_DUMP_EVENT::MALLOC);
+    EXPECT_EQ(lastEvent.event, MEM_SCOPE_DUMP_EVENT::FREE);
 }
 
 /***
  * 测试低效显存识别
  */
-TEST_F(LeaksMemoryDatabaseTest, QueryBlocksTableWithInefficientThreshold)
+TEST_F(MemScopeDatabaseTest, QueryBlocksTableWithInefficientThreshold)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     ASSERT_TRUE(memoryDatabase != nullptr);
-    LeaksMemoryBlockParams queryParams;
+    MemScopeMemoryBlockParams queryParams;
     queryParams.deviceId = "1";
     queryParams.relativeTime = true;
     queryParams.eventType = "PTA";
@@ -468,9 +468,9 @@ TEST_F(LeaksMemoryDatabaseTest, QueryBlocksTableWithInefficientThreshold)
  *  2. 新增的标签 以原某固化标签为前缀，却并原固化标签分类的子分类(如新增的PTA_WORKSPACE, 与原固化标签PTA存在前缀关系，却并非PTA子类)
  *  3. 测试统计标签分类总Size时是否可能误将上述新增固化标签误统计入内
  */
-TEST_F(LeaksMemoryDatabaseTest, QueryTotalSizeUtilTimestampUsingOwnerWhenWorkspaceExists)
+TEST_F(MemScopeDatabaseTest, QueryTotalSizeUtilTimestampUsingOwnerWhenWorkspaceExists)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     const std::string deviceId = "1";
     // 未插入新标签内存块前的总量统计
     const uint64_t expectDuration = 20000000000;
@@ -479,38 +479,38 @@ TEST_F(LeaksMemoryDatabaseTest, QueryTotalSizeUtilTimestampUsingOwnerWhenWorkspa
     uint64_t originPtaTotalSize = memoryDatabase->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp,
                                                                                          "PTA");
     uint64_t originPtaWorkspaceTotalSize = memoryDatabase->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp,
-                                                                                                  LEAKS_MEMORY_ALLOC_OWNER_PTA_WORKSPACE);
+                                                                                                  MEM_SCOPE_ALLOC_OWNER_PTA_WORKSPACE);
     EXPECT_EQ(originPtaWorkspaceTotalSize, 0);
     EXPECT_GT(originPtaTotalSize, 0);
     std::string testFlag = "DT-TEST";
     // 插入一条PTA_WORKSPACE数据, 内存块在之后释放
     MemoryBlock mockPTAWorkspaceBlock(testFlag, deviceId, 1, 0, timestamp + 1,
-                                      LEAKS_MEMORY_ALLOC_OWNER_PTA_WORKSPACE, LEAKS_MEMORY_ALLOC_OWNER_PTA_WORKSPACE,
+                                      MEM_SCOPE_ALLOC_OWNER_PTA_WORKSPACE, MEM_SCOPE_ALLOC_OWNER_PTA_WORKSPACE,
                                       "", 0, 0);
     memoryDatabase->InsertMemoryBlock(mockPTAWorkspaceBlock);
     memoryDatabase->FlushMemoryBlocksCache();
     uint64_t newPtaTotalSize = memoryDatabase->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp,
-                                                                                      LEAKS_MEMORY_ALLOC_OWNER_PTA);
+                                                                                      MEM_SCOPE_ALLOC_OWNER_PTA);
     uint64_t newPtaWorkspaceTotalSize = memoryDatabase->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp,
-                                                                                               LEAKS_MEMORY_ALLOC_OWNER_PTA_WORKSPACE);
+                                                                                               MEM_SCOPE_ALLOC_OWNER_PTA_WORKSPACE);
     EXPECT_EQ(newPtaTotalSize, originPtaTotalSize);
     EXPECT_EQ(newPtaWorkspaceTotalSize, 1);
     std::string clearSql = StringUtil::FormatString("DELETE FROM {} WHERE {} = '{}' AND {} = '{}'",
-                                                    TABLE_LEAKS_DUMP, MemoryEventTableColumn::PTR, testFlag,
-                                                    MemoryEventTableColumn::EVENT_TYPE, LEAKS_MEMORY_ALLOC_OWNER_PTA_WORKSPACE);
+                                                    TABLE_LEAKS_DUMP, EventTableColumn::PTR, testFlag,
+                                                    EventTableColumn::EVENT_TYPE, MEM_SCOPE_ALLOC_OWNER_PTA_WORKSPACE);
     EXPECT_TRUE(memoryDatabase->ExecSql(clearSql));
 }
 
 /***
 * 该DT用于测试msleaks采集时开启CallStack的场景
 */
-TEST_F(LeaksMemoryDatabaseTest, TestCompatibilityOfCallStack)
+TEST_F(MemScopeDatabaseTest, TestCompatibilityOfCallStack)
 {
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
 
     // 插入Callstack列模拟开启了CallStack
     std::string addCallStackSql = StringUtil::FormatString("ALTER TABLE {} ADD {} TEXT DEFAULT 'N/A'",
-                                                           TABLE_LEAKS_DUMP, MemoryEventTableColumn::CALL_STACK_C);
+                                                           TABLE_LEAKS_DUMP, EventTableColumn::CALL_STACK_C);
     EXPECT_TRUE(memoryDatabase->ExecSql(addCallStackSql));
 
     // 重开一个db(由于db在open中会检查是否有callstack列，所以必须关闭重开)
@@ -520,17 +520,17 @@ TEST_F(LeaksMemoryDatabaseTest, TestCompatibilityOfCallStack)
     EXPECT_TRUE(memoryDatabase->withCallStackC);
     EXPECT_FALSE(memoryDatabase->withCallStackPython);
 
-    LeaksMemoryEventParams queryParams;
+    MemScopeEventParams queryParams;
     queryParams.deviceId = "1";
     queryParams.currentPage = 1;
     queryParams.pageSize = 10;
-    std::vector<MemoryEvent> events;
+    std::vector<MemScopeEvent> events;
     int64_t total = memoryDatabase->QueryEventsByRequestParams(queryParams, events);
     EXPECT_TRUE(total > 0 && !events.empty());
     EXPECT_EQ(events.front().callStackC, "N/A");
 
     // 清理插入的CallStack列
     std::string clearCallStackSql = StringUtil::FormatString("ALTER TABLE {} DROP COLUMN {}",
-                                                             TABLE_LEAKS_DUMP, MemoryEventTableColumn::CALL_STACK_C);
+                                                             TABLE_LEAKS_DUMP, EventTableColumn::CALL_STACK_C);
     EXPECT_TRUE(memoryDatabase->ExecSql(clearCallStackSql));
 }

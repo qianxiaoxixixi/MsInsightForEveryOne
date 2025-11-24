@@ -39,24 +39,24 @@ public:
     bool CreateMemoryAllocationAndBlockTable();
     bool AppendDepthColumnForPythonTraceTables();
     bool DropMemoryAllocationAndBlockTable();
-    bool QueryEntireEventsTable(std::vector<MemoryEvent>& eventDetails);
-    int64_t QueryEventsByRequestParams(const LeaksMemoryEventParams &queryParams, std::vector<MemoryEvent>& events);
+    bool QueryEntireEventsTable(std::vector<MemScopeEvent>& eventDetails);
+    int64_t QueryEventsByRequestParams(const MemScopeEventParams &queryParams, std::vector<MemScopeEvent>& events);
     void QueryDeviceIds(std::set<std::string>& deviceIdSet);
     void QueryThreadIdsByProcessId(uint64_t processId, std::vector<uint64_t>& threadIds);
     void QueryMallocOrFreeEventTypeWithDeviceId(std::unordered_map<std::string, std::vector<std::string>>& resultMap);
     void QueryThreadIds(std::vector<uint64_t>& threadIds);
-    int64_t QueryMemoryBlocks(const LeaksMemoryBlockParams& queryParams,
+    int64_t QueryMemoryBlocks(const MemScopeMemoryBlockParams& queryParams,
                               const bool isTable,
                               std::vector<MemoryBlock>& blocks);
     void QueryMemoryBlocksOwnersReleasedAfterTimestamp(const std::string& deviceId, const std::string& eventType,
                                                        uint64_t timestamp, std::set<std::string>& owners);
-    void QueryPythonTrace(const LeaksMemoryThreadPythonTraceParams& queryParams, LeaksMemoryPythonTrace& trace);
+    void QueryPythonTrace(const MemScopeThreadPythonTraceParams& queryParams, MemScopePythonTrace& trace);
     void QueryPythonTracesUsingTableName(const std::string& traceTableName,
-                                         const LeaksMemoryThreadPythonTraceParams& queryParams,
-                                         LeaksMemoryPythonTrace& trace);
+                                         const MemScopeThreadPythonTraceParams& queryParams,
+                                         MemScopePythonTrace& trace);
     uint64_t QueryTotalSizeUntilTimestampUsingOwner(const std::string& deviceId, uint64_t timestamp,
                                                     const std::string& owner);
-    void QueryMemoryAllocations(const LeaksMemoryAllocationParams& queryParams,
+    void QueryMemoryAllocations(const MemScopeMemoryAllocationParams& queryParams,
                                 std::vector<MemoryAllocation>& allocations);
     std::optional<MemoryAllocation> QueryLatestAllocationWithinTimestamp(const std::string& deviceId,
                                                                          const std::string& eventType,
@@ -65,7 +65,7 @@ public:
                                                                       const std::string& eventType, uint64_t timestamp);
     void QueryAllDeviceExtremumTimestamp(std::unordered_map<std::string, std::pair<uint64_t, uint64_t>> &extreTsMap);
     void QueryEventsByGroupId(const uint64_t groupId, const std::string &deviceId,
-                              bool relativeTime, std::vector<MemoryEvent> &events);
+                              bool relativeTime, std::vector<MemScopeEvent> &events);
     std::vector<std::string> GetPythonTraceTables();
     void UpdatePythonTraceSlice(const PythonTraceSlice &slice);
     void UpdatePythonTraceSliceList(const std::vector<PythonTraceSlice> &slices, uint64_t processId);
@@ -83,25 +83,25 @@ public:
     bool withCallStackPython = false;
 
 private:
-    int64_t QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vector<MemoryEvent>& events,
+    int64_t QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vector<MemScopeEvent>& events,
                                     const bool withExtraCountCol);
     int64_t QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::vector<MemoryBlock>& blocks,
                                     const bool withExtraCountCol);
     bool QueryMemoryAllocationsByStep(sqlite3_stmt* stmt, std::vector<MemoryAllocation>& allocations);
-    bool QueryMemoryPythonTracesByStep(sqlite3_stmt* stmt, LeaksMemoryPythonTrace& trace);
-    std::string BuildQueryEventsConditionSqlByParams(const LeaksMemoryEventParams &queryParams,
+    bool QueryMemoryPythonTracesByStep(sqlite3_stmt* stmt, MemScopePythonTrace& trace);
+    std::string BuildQueryEventsConditionSqlByParams(const MemScopeEventParams &queryParams,
                                                      bool &timeCondition,
                                                      bool &filtersCondition);
     std::string AppendInefficientBlockColumnSql(const std::string& selectColumn,
-                                                const LeaksMemoryBlockParams& queryParams);
-    std::string BuildQueryBlocksConditionSqlByParams(const LeaksMemoryBlockParams &queryParams,
+                                                const MemScopeMemoryBlockParams& queryParams);
+    std::string BuildQueryBlocksConditionSqlByParams(const MemScopeMemoryBlockParams &queryParams,
                                                      bool onlyAllocOrFreeInTimeRange,
                                                      bool &timeCondition,
                                                      bool &filtersCondition);
     sqlite3_stmt* BuildQueryEventsByQueryParamsAndBindParam(std::string &selectColumns,
-                                                            const LeaksMemoryEventParams &queryParams);
+                                                            const MemScopeEventParams &queryParams);
     sqlite3_stmt* BuildQueryBlocksByQueryParamsAndBindParam(const std::string &selectColumns,
-                                                            const LeaksMemoryBlockParams &queryParams,
+                                                            const MemScopeMemoryBlockParams &queryParams,
                                                             const bool isTable);
 
     static std::string BuildQueryFiltersConditionSqlByParams(const FiltersParam &filtersParam);
@@ -121,6 +121,8 @@ private:
     std::vector<std::string> GetAlterPythonTraceTablesAddDepthColumnSql();
     bool SetCallStackExistsFlagByCheckColumn();
 
+    // memscope dump内存表，可能为leaks_dump(旧数据)或memscope_dump(新数据)
+    std::string memScopeDumpTable;
     // 内存折线图数据库中存储表名为memory_alloc, 包含优化前、后
     const std::string memoryAllocationTable = "memory_allocation";
     // 内存块图数据
@@ -149,7 +151,7 @@ private:
     uint64_t globalMaxTimestamp = 0;
 
     // Parse status info
-    const std::string leaksMemoryParseStatus = "LEAKS_PARSE_STATUS";
+    const std::string memScopeParseStatus = "MEM_SCOPE_PARSE_STATUS";
     const uint64_t cacheSize = 100;
 
     bool hasInitStmt = false;

@@ -21,7 +21,7 @@ class MemScopeRequestHandler : public ModuleRequestHandler {
 public:
     MemScopeRequestHandler()
     {
-        moduleName = MODULE_LEAKS;
+        moduleName = MODULE_MEM_SCOPE;
         async = false;
     }
     ~MemScopeRequestHandler() override = default;

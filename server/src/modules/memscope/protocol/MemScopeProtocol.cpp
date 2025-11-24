@@ -8,27 +8,32 @@
 #include "MemScopeProtocol.h"
 
 namespace Dic::Protocol {
-void MemoryDetailProtocolUtil::RegisterJsonToRequestFuncs()
+void MemScopeProtocolUtil::RegisterJsonToRequestFuncs()
 {
-    jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_ALLOCATIONS, ProtocolUtil::BuildRequestFromJson<LeaksMemoryAllocationRequest>);
-    jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_BLOCKS, ProtocolUtil::BuildRequestFromJson<LeaksMemoryBlockRequest>);
-    jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_DETAILS, ProtocolUtil::BuildRequestFromJson<LeaksMemoryDetailRequest>);
-    jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_TRACES, ProtocolUtil::BuildRequestFromJson<LeaksMemoryTraceRequest>);
-    jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_EVENTS, ProtocolUtil::BuildRequestFromJson<LeaksMemoryEventRequest>);
+    jsonToReqFactory.emplace(REQ_RES_MEM_SCOPE_MEMORY_ALLOCATIONS,
+                             ProtocolUtil::BuildRequestFromJson<MemScopeMemoryAllocationRequest>);
+    jsonToReqFactory.emplace(REQ_RES_MEM_SCOPE_MEMORY_BLOCKS,
+                             ProtocolUtil::BuildRequestFromJson<MemScopeMemoryBlockRequest>);
+    jsonToReqFactory.emplace(REQ_RES_MEM_SCOPE_MEMORY_DETAILS,
+                             ProtocolUtil::BuildRequestFromJson<MemScopeMemoryDetailRequest>);
+    jsonToReqFactory.emplace(REQ_RES_MEM_SCOPE_PYTHON_TRACES,
+                             ProtocolUtil::BuildRequestFromJson<MemScopePythonTraceRequest>);
+    jsonToReqFactory.emplace(REQ_RES_MEM_SCOPE_EVENTS,
+                             ProtocolUtil::BuildRequestFromJson<MemScopeEventRequest>);
 }
 
-void MemoryDetailProtocolUtil::RegisterResponseToJsonFuncs()
+void MemScopeProtocolUtil::RegisterResponseToJsonFuncs()
 {
-    resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_ALLOCATIONS, ProtocolUtil::CommonResponseToJson);
-    resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_BLOCKS, ProtocolUtil::CommonResponseToJson);
-    resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_DETAILS, ProtocolUtil::CommonResponseToJson);
-    resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_TRACES, ProtocolUtil::CommonResponseToJson);
-    resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_EVENTS, ProtocolUtil::CommonResponseToJson);
+    resToJsonFactory.emplace(REQ_RES_MEM_SCOPE_MEMORY_ALLOCATIONS, ProtocolUtil::CommonResponseToJson);
+    resToJsonFactory.emplace(REQ_RES_MEM_SCOPE_MEMORY_BLOCKS, ProtocolUtil::CommonResponseToJson);
+    resToJsonFactory.emplace(REQ_RES_MEM_SCOPE_MEMORY_DETAILS, ProtocolUtil::CommonResponseToJson);
+    resToJsonFactory.emplace(REQ_RES_MEM_SCOPE_PYTHON_TRACES, ProtocolUtil::CommonResponseToJson);
+    resToJsonFactory.emplace(REQ_RES_MEM_SCOPE_EVENTS, ProtocolUtil::CommonResponseToJson);
 }
 
-void MemoryDetailProtocolUtil::RegisterEventToJsonFuncs()
+void MemScopeProtocolUtil::RegisterEventToJsonFuncs()
 {
-    eventToJsonFactory.emplace(EVENT_PARSE_LEAKS_MEMORY_COMPLETED, TimelineProtocol::ToLeaksParseSuccessEventJson);
+    eventToJsonFactory.emplace(EVENT_PARSE_MEM_SCOPE_COMPLETED, ProtocolUtil::CommonEventToJson);
     eventToJsonFactory.emplace(EVENT_MODULE_RESET, TimelineProtocol::ToModuleResetEventJson);
     eventToJsonFactory.emplace(EVENT_ALL_SUCCESS, TimelineProtocol::ToAllSuccessEventJson);
 }

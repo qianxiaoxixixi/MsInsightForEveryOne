@@ -9,7 +9,7 @@
 namespace Dic::Module::MemScope {
 class QueryMemScopeEventHandler : public MemScopeRequestHandler {
 public:
-    QueryMemScopeEventHandler() { command = Protocol::REQ_RES_LEAKS_MEMORY_EVENTS; }
+    QueryMemScopeEventHandler() { command = Protocol::REQ_RES_MEM_SCOPE_EVENTS; }
     ~QueryMemScopeEventHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };

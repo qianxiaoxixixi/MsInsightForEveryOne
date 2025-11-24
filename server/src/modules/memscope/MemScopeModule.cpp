@@ -16,7 +16,7 @@ namespace Dic {
 namespace Module {
 MemScopeModule::MemScopeModule()
 {
-    moduleName = MODULE_LEAKS;
+    moduleName = MODULE_MEM_SCOPE;
 }
 
 MemScopeModule::~MemScopeModule()
@@ -27,11 +27,11 @@ MemScopeModule::~MemScopeModule()
 void MemScopeModule::RegisterRequestHandlers()
 {
     requestHandlerMap.clear();
-    requestHandlerMap.emplace(REQ_RES_LEAKS_MEMORY_ALLOCATIONS, std::make_unique<QueryMemScopeAllocationHandler>());
-    requestHandlerMap.emplace(REQ_RES_LEAKS_MEMORY_BLOCKS, std::make_unique<QueryMemScopeBlockHandler>());
-    requestHandlerMap.emplace(REQ_RES_LEAKS_MEMORY_DETAILS, std::make_unique<QueryMemScopeMemoryDetailHandler>());
-    requestHandlerMap.emplace(REQ_RES_LEAKS_MEMORY_TRACES, std::make_unique<QueryMemScopePythonTraceHandler>());
-    requestHandlerMap.emplace(REQ_RES_LEAKS_MEMORY_EVENTS, std::make_unique<QueryMemScopeEventHandler>());
+    requestHandlerMap.emplace(REQ_RES_MEM_SCOPE_MEMORY_ALLOCATIONS, std::make_unique<QueryMemScopeAllocationHandler>());
+    requestHandlerMap.emplace(REQ_RES_MEM_SCOPE_MEMORY_BLOCKS, std::make_unique<QueryMemScopeBlockHandler>());
+    requestHandlerMap.emplace(REQ_RES_MEM_SCOPE_MEMORY_DETAILS, std::make_unique<QueryMemScopeMemoryDetailHandler>());
+    requestHandlerMap.emplace(REQ_RES_MEM_SCOPE_PYTHON_TRACES, std::make_unique<QueryMemScopePythonTraceHandler>());
+    requestHandlerMap.emplace(REQ_RES_MEM_SCOPE_EVENTS, std::make_unique<QueryMemScopeEventHandler>());
 }
 
 void MemScopeModule::OnRequest(std::unique_ptr<Protocol::Request> request)

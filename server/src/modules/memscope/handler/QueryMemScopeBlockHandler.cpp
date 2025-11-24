@@ -21,8 +21,8 @@ struct SimpleBlockEvent {
 };
 bool QueryMemScopeBlockHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    auto &request = dynamic_cast<LeaksMemoryBlockRequest &>(*requestPtr);
-    std::unique_ptr<LeaksMemoryBlocksResponse> responsePtr = std::make_unique<LeaksMemoryBlocksResponse>();
+    auto &request = dynamic_cast<MemScopeMemoryBlockRequest &>(*requestPtr);
+    std::unique_ptr<MemScopeMemoryBlocksResponse> responsePtr = std::make_unique<MemScopeMemoryBlocksResponse>();
     auto &response = *responsePtr;
     SetBaseResponse(request, response);
     std::string errorMsg;
@@ -62,7 +62,7 @@ static void SplitMemoryBlocks2Events(const std::vector<MemoryBlock> &blocks,
 }
 
 void BuildBlocksResponseBySortedEvent(std::vector<std::shared_ptr<SimpleBlockEvent>> &sortedEvents,
-                                      LeaksMemoryBlocksResponse &response)
+                                      MemScopeMemoryBlocksResponse &response)
 {
     if (sortedEvents.empty()) {
         Server::ServerLog::Error("Empty sorted events");
@@ -113,7 +113,7 @@ void BuildBlocksResponseBySortedEvent(std::vector<std::shared_ptr<SimpleBlockEve
 }
 
 void QueryMemScopeBlockHandler::BuildBlocksViewResponse(const std::vector<MemoryBlock> &blocks,
-                                                        LeaksMemoryBlocksResponse &response)
+                                                        MemScopeMemoryBlocksResponse &response)
 {
     if (blocks.empty()) {
         Server::ServerLog::Warn("Empty blocks.");
@@ -126,11 +126,12 @@ void QueryMemScopeBlockHandler::BuildBlocksViewResponse(const std::vector<Memory
     response.blocks.assign(blockItemPtrList.begin(), blockItemPtrList.end());
     response.withPath = true;
 }
-bool QueryMemScopeBlockHandler::HandleBlocksTableRequest(LeaksMemoryBlockRequest& request,
-                                                         LeaksMemoryBlocksResponse& response,
+
+bool QueryMemScopeBlockHandler::HandleBlocksTableRequest(MemScopeMemoryBlockRequest& request,
+                                                         MemScopeMemoryBlocksResponse& response,
                                                          std::string &errorMsg)
 {
-    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemScopeDatabase("");
     if (memoryDatabase == nullptr) {
         errorMsg = "Failed to query memory blocks: get database connection failed.";
         return false;
@@ -148,11 +149,11 @@ bool QueryMemScopeBlockHandler::HandleBlocksTableRequest(LeaksMemoryBlockRequest
                    });
     return true;
 }
-bool QueryMemScopeBlockHandler::HandleBlocksViewRequest(LeaksMemoryBlockRequest& request,
-                                                        LeaksMemoryBlocksResponse& response,
+bool QueryMemScopeBlockHandler::HandleBlocksViewRequest(MemScopeMemoryBlockRequest& request,
+                                                        MemScopeMemoryBlocksResponse& response,
                                                         std::string &errorMsg)
 {
-    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemScopeDatabase("");
     if (memoryDatabase == nullptr) {
         errorMsg = "Failed to query memory blocks: get database connection failed.";
         return false;

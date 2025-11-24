@@ -12,7 +12,7 @@ namespace Module {
 namespace MemScope {
 class QueryMemScopePythonTraceHandler : public MemScopeRequestHandler {
 public:
-    QueryMemScopePythonTraceHandler() { command = Protocol::REQ_RES_LEAKS_MEMORY_TRACES; }
+    QueryMemScopePythonTraceHandler() { command = Protocol::REQ_RES_MEM_SCOPE_PYTHON_TRACES; }
     ~QueryMemScopePythonTraceHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 

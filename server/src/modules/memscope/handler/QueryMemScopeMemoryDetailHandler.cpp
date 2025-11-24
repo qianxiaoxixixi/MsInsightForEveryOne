@@ -10,8 +10,8 @@ namespace Module {
 namespace MemScope {
 bool QueryMemScopeMemoryDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    auto &request = dynamic_cast<LeaksMemoryDetailRequest &>(*requestPtr);
-    std::unique_ptr<LeaksMemoryDetailsResponse> responsePtr = std::make_unique<LeaksMemoryDetailsResponse>();
+    auto &request = dynamic_cast<MemScopeMemoryDetailRequest &>(*requestPtr);
+    std::unique_ptr<MemScopeMemoryDetailsResponse> responsePtr = std::make_unique<MemScopeMemoryDetailsResponse>();
     auto &response = *responsePtr;
     SetBaseResponse(request, response);
     std::string errorMsg;
@@ -19,7 +19,7 @@ bool QueryMemScopeMemoryDetailHandler::HandleRequest(std::unique_ptr<Protocol::R
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    if (!MemScopeService::IsValidMemoryEventType(LEAKS_DUMP_EVENT::MALLOC, request.params.eventType)) {
+    if (!MemScopeService::IsValidMemoryEventType(MEM_SCOPE_DUMP_EVENT::MALLOC, request.params.eventType)) {
         errorMsg = "The eventType is invalid.";
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;

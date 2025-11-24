@@ -12,12 +12,13 @@ namespace Module {
 namespace MemScope {
 class QueryMemScopeAllocationHandler : public MemScopeRequestHandler {
 public:
-    QueryMemScopeAllocationHandler() { command = Protocol::REQ_RES_LEAKS_MEMORY_ALLOCATIONS; }
+    QueryMemScopeAllocationHandler() { command = Protocol::REQ_RES_MEM_SCOPE_MEMORY_ALLOCATIONS; }
     ~QueryMemScopeAllocationHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 
 private:
-    void PaddingAllocations(std::vector<MemoryAllocation>& allocations, const LeaksMemoryAllocationParams& queryParams);
+    void PaddingAllocations(std::vector<MemoryAllocation>& allocations,
+                            const MemScopeMemoryAllocationParams& queryParams);
 };
 
 }  // namespace MemScope
