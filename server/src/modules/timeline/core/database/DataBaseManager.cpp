@@ -478,7 +478,7 @@ bool DataBaseManager::IsContainDatabasePath(const std::string &databasePath)
     return (databasePathSet.count(databasePath) > 0);
 }
 
-std::shared_ptr<FullDb::LeaksMemoryDatabase> DataBaseManager::GetLeaksMemoryDatabase(const std::string &fileId)
+std::shared_ptr<FullDb::MemScopeDatabase> DataBaseManager::GetLeaksMemoryDatabase(const std::string &fileId)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     if (fileId.empty() && !leaksMemoryDatabaseMap.empty()) {
@@ -486,15 +486,15 @@ std::shared_ptr<FullDb::LeaksMemoryDatabase> DataBaseManager::GetLeaksMemoryData
     }
     if (leaksMemoryDatabaseMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
-        leaksMemoryDatabaseMap.emplace(fileId, std::make_unique<FullDb::LeaksMemoryDatabase>(dbMutex));
+        leaksMemoryDatabaseMap.emplace(fileId, std::make_unique<FullDb::MemScopeDatabase>(dbMutex));
     }
     return leaksMemoryDatabaseMap[fileId];
 }
 
-std::vector<FullDb::LeaksMemoryDatabase *> DataBaseManager::GetAllLeaksMemoryDatabase()
+std::vector<FullDb::MemScopeDatabase*> DataBaseManager::GetAllLeaksMemoryDatabase()
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    std::vector<FullDb::LeaksMemoryDatabase *> leaksDatabases;
+    std::vector<FullDb::MemScopeDatabase*> leaksDatabases;
     for (auto &leaksDatabase : leaksMemoryDatabaseMap) {
         leaksDatabases.emplace_back(leaksDatabase.second.get());
     }
