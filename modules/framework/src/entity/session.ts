@@ -229,6 +229,7 @@ export class Session {
         this.sourceList = [];
         this.memoryCardInfos = [];
         this.operatorCardInfos = [];
+        this.iERankIds = [];
         this.compareSet = {
             baseline: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
             comparison: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
