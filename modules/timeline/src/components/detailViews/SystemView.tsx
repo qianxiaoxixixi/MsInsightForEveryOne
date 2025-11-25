@@ -230,6 +230,7 @@ export const RankFilter = observer((props: { session: Session; viewOption?: numb
 
     useEffect(() => {
         if (rankCondition.value === undefined) {
+            props.handleChange({ cardId: '', dbPath: '' });
             return;
         }
         const cardRankInfo = rankCondition.options[rankCondition.value];
@@ -461,7 +462,7 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
     }, [rowData]);
 
     return (
-        (status === 'download' || props.card === undefined || props.card.cardId === '')
+        (status === 'download' && props.card !== undefined && props.card.cardId !== '')
             ? <ResizeTable
                 onChange={(pagination: any, filters: any, nwSorter: any): void => {
                     setSorter(nwSorter);
