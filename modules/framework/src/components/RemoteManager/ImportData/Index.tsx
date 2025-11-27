@@ -69,6 +69,7 @@ const ImportData = observer(({ session }: {session: Session}) => {
         setCustomImport(false);
         setDialogOpen(false);
         setImportTips('');
+        session.resetActionListener();
     };
     // 新导入数据
     const importData = (): void => {

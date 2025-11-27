@@ -123,7 +123,7 @@ export async function handleProjectAction({ action, project, isConflict, selecte
             session.reset();
         }
         // 这里立即将 actionListener 恢复为默认值，防止在正常导入或切换项目的场景下，不执行上方的 session.reset
-        session.actionListener = { type: SessionAction.NO_ACTION, value: '' };
+        session.resetActionListener();
 
         openLoading();
         // 切换项目
