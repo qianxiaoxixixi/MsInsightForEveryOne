@@ -59,7 +59,7 @@ test.describe('Operator(SingleMachine)', () => {
     // 【case】非对比非多机see more表格加载
     test('expand_table_when_click_seeMoreCell', async ({ page, operatorPage }) => {
         const { operatorFrame, rankIdSelector } = operatorPage;
-        const seeMoreBtn = operatorFrame.getByRole('button', { name: 'See more' }).first();
+        const seeMoreBtn = operatorFrame.getByRole('button', { name: 'Details' }).first();
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, operatorFrame);
         await rankIdSelect.open();
         await rankIdSelect.selectOption('0');
@@ -99,7 +99,7 @@ test.describe('Operator(MultiMachines)', () => {
     // 多机多卡数据界面正常加载，切换卡序号正常显示
     test('operator_multi_machine_display', async ({ page, operatorPage }) => {
         const { operatorFrame, rankIdSelector } = operatorPage;
-        const seeMoreBtn = operatorFrame.getByRole('button', { name: 'See more' }).first();
+        const seeMoreBtn = operatorFrame.getByRole('button', { name: 'Details' }).first();
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, operatorFrame);
         await rankIdSelect.open();
         await rankIdSelect.selectOption('1');

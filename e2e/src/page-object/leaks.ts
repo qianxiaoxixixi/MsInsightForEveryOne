@@ -15,7 +15,7 @@ export class LeaksPage {
 
     constructor(page: Page) {
         this.page = page;
-        this.leaksFrame = page.frameLocator('#Leaks');
+        this.leaksFrame = page.frameLocator('#MemScope');
         this.threadIdSelector = this.leaksFrame.locator('#select-threadId');
         this.funcsSelector = this.leaksFrame.locator('#select-funcName');
         this.deviceIdSelector = this.leaksFrame.locator('#select-deviceId');
@@ -24,6 +24,6 @@ export class LeaksPage {
 
     async goto(): Promise<void> {
         const frameworkPage = new FrameworkPage(this.page);
-        await frameworkPage.clickTab('leaks');
+        await frameworkPage.clickTab('MemScope');
     }
 }
