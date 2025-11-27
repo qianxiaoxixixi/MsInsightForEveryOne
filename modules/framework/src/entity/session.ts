@@ -290,6 +290,10 @@ export class Session {
     }
 
     private updateClusterPageInfo(selectedProject: ActiveDataSource): void {
+        if (selectedProject.projectName === '') {
+            return;
+        }
+
         let clusterList = selectedProject.children.filter((child) => child.type === 'CLUSTER').map((child) => {
             const prev = this.getClusterInfoByPath(child.path);
             return {
@@ -317,5 +321,9 @@ export class Session {
         }
         this.clusterPageInfo.clusterList = clusterList;
         this.clusterPageInfo.selectedClusterPath = selectedClusterPath;
+    }
+
+    resetActionListener(): void {
+        this.actionListener = { type: SessionAction.NO_ACTION, value: '' };
     }
 }
