@@ -6,6 +6,7 @@
 #include "MemoryProtocolRequest.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
+#include "MemoryTestUtil.h"
 #include "../../../TestSuit.cpp"
 
 using namespace Dic::Module::Timeline;
@@ -713,4 +714,147 @@ TEST_F(TestSuit, QueryOperatorSizeData)
     EXPECT_TRUE(result);
     EXPECT_EQ(min, expectMin);
     EXPECT_EQ(max, expectMax);
+}
+
+/***
+ * 组合筛选/排序/范围筛选测试
+ */
+TEST_F(TestSuit, TextDbQueryOperatorWithFilterNameAndOrderBy)
+{
+    auto database = DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
+    MemoryOperatorParams params;
+    params.deviceId = "0";
+    params.rankId = "0";
+    params.startTime = -1;
+    params.endTime = -1;
+    // 测试过滤name并按照释放时间降序排列
+    std::string expectFilterName = "cann";
+    params.filters[std::string(OpMemoryColumn::NAME)] = expectFilterName;
+    params.orderBy = OpMemoryColumn::RELEASE_TIME;
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.desc = true;
+    std::vector<MemoryOperator> operators;
+    int64_t totalNum = database->QueryOperatorDetail(params, operators);
+    EXPECT_GT(totalNum, 0);
+    EXPECT_EQ(operators.size(), min(totalNum, params.pageSize));
+    EXPECT_TRUE(OperatorMemoryTestUtil::IsOperatorsSorted(operators, params.orderBy, params.desc));
+    EXPECT_TRUE(OperatorMemoryTestUtil::IsOperatorsNameAllContains(operators, expectFilterName));
+    // 测试过滤name并按照name排序
+    operators.clear();
+    params.orderBy = OpMemoryColumn::NAME;
+    totalNum = database->QueryOperatorDetail(params, operators);
+    EXPECT_GT(totalNum, 0);
+    EXPECT_EQ(operators.size(), min(totalNum, params.pageSize));
+    EXPECT_TRUE(OperatorMemoryTestUtil::IsOperatorsSorted(operators, params.orderBy, params.desc));
+    EXPECT_TRUE(OperatorMemoryTestUtil::IsOperatorsNameAllContains(operators, expectFilterName));
+}
+
+TEST_F(TestSuit, TextDbQueryOperatorWithFilterNameAndOrderByAndRangeFilter)
+{
+    auto database = DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
+    MemoryOperatorParams params;
+    params.deviceId = "0";
+    params.rankId = "0";
+    params.startTime = -1;
+    params.endTime = -1;
+    params.currentPage = 1;
+    params.pageSize = 10;
+    double minTimeMs = 0;
+    double maxTimeMs = 100000;
+    double minSize = -1000;
+    double maxSize = 100000;
+    std::string expectFilterName = "cann";
+    params.filters[std::string(OpMemoryColumn::NAME)] = expectFilterName;
+    params.rangeFilters[std::string(OpMemoryColumn::ALLOCATION_TIME)] = {minTimeMs, maxTimeMs};
+    params.rangeFilters[std::string(OpMemoryColumn::SIZE)] = {minSize, maxSize};
+    params.orderBy = OpMemoryColumn::ALLOCATION_TIME;
+    std::vector<MemoryOperator> operators;
+    int64_t totalNum = database->QueryOperatorDetail(params, operators);
+    EXPECT_GT(totalNum, 0);
+    EXPECT_EQ(operators.size(), min(totalNum, params.pageSize));
+    for (auto op: operators) {
+        EXPECT_TRUE(op.size >= minSize && op.size <= maxSize);
+        double allocationTime = NumberUtil::StringToDouble(op.allocationTime);
+        EXPECT_TRUE(allocationTime >= minTimeMs && allocationTime <= maxTimeMs);
+    }
+    EXPECT_TRUE(OperatorMemoryTestUtil::IsOperatorsSorted(operators, params.orderBy, params.desc));
+    EXPECT_TRUE(OperatorMemoryTestUtil::IsOperatorsNameAllContains(operators, expectFilterName));
+}
+
+TEST_F(TestSuit, TextDbQueryOperatorWithFullCondition)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
+    Dic::Protocol::MemoryOperatorParams params;
+    params.deviceId = "0";
+    params.rankId = "0";
+    params.startTime = 100;
+    params.endTime = 10000;
+    params.currentPage = 1;
+    params.pageSize = 10;
+    double minTimeMs = 0;
+    double maxTimeMs = 100000;
+    double minSize = -1000;
+    double maxSize = 100000;
+    std::string expectFilterName = "can";
+    params.filters[std::string(OpMemoryColumn::NAME)] = expectFilterName;
+    params.rangeFilters[std::string(OpMemoryColumn::ALLOCATION_TIME)] = {minTimeMs, maxTimeMs};
+    params.rangeFilters[std::string(OpMemoryColumn::SIZE)] = {minSize, maxSize};
+    params.orderBy = OpMemoryColumn::ALLOCATION_TIME;
+    std::vector<MemoryOperator> operators;
+    int64_t totalNum = database->QueryOperatorDetail(params, operators);
+    EXPECT_GT(totalNum, 0);
+    EXPECT_EQ(operators.size(), min(totalNum, params.pageSize));
+    for (auto op: operators) {
+        EXPECT_TRUE(op.size >= minSize && op.size <= maxSize);
+        double allocationTime = NumberUtil::StringToDouble(op.allocationTime);
+        double releaseTime = NumberUtil::StringToDouble(op.releaseTime);
+        if (releaseTime <= 0) {
+            releaseTime = std::numeric_limits<double>::max();
+        }
+        EXPECT_TRUE(allocationTime >= minTimeMs && allocationTime <= maxTimeMs);
+        EXPECT_TRUE(allocationTime <= params.endTime && releaseTime >= params.startTime);
+    }
+    EXPECT_TRUE(OperatorMemoryTestUtil::IsOperatorsSorted(operators, params.orderBy, params.desc));
+    EXPECT_TRUE(OperatorMemoryTestUtil::IsOperatorsNameAllContains(operators, expectFilterName));
+}
+
+TEST_F(TestSuit, TextDbQueryOperatorWithFullConditionAndOnlyShowInterval)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
+    Dic::Protocol::MemoryOperatorParams params;
+    params.deviceId = "0";
+    params.rankId = "0";
+    params.startTime = 100;
+    params.endTime = 10000;
+    params.currentPage = 1;
+    params.pageSize = 10;
+    double minTimeMs = 0;
+    double maxTimeMs = 100000;
+    double minSize = -1000;
+    double maxSize = 100000;
+    std::string expectFilterName = "can";
+    params.filters[std::string(OpMemoryColumn::NAME)] = expectFilterName;
+    params.rangeFilters[std::string(OpMemoryColumn::ALLOCATION_TIME)] = {minTimeMs, maxTimeMs};
+    params.rangeFilters[std::string(OpMemoryColumn::SIZE)] = {minSize, maxSize};
+    params.orderBy = OpMemoryColumn::ALLOCATION_TIME;
+    params.isOnlyShowAllocatedOrReleasedWithinInterval = true;
+    std::vector<MemoryOperator> operators;
+    int64_t totalNum = database->QueryOperatorDetail(params, operators);
+    EXPECT_GT(totalNum, 0);
+    EXPECT_EQ(operators.size(), min(totalNum, params.pageSize));
+    for (auto op: operators) {
+        EXPECT_TRUE(op.size >= minSize && op.size <= maxSize);
+        double allocationTime = NumberUtil::StringToDouble(op.allocationTime);
+        double releaseTime = NumberUtil::StringToDouble(op.releaseTime);
+        if (releaseTime <= 0) {
+            releaseTime = std::numeric_limits<double>::max();
+        }
+        EXPECT_TRUE(allocationTime >= minTimeMs && allocationTime <= maxTimeMs);
+        bool allocIn = allocationTime >= params.startTime && allocationTime <= params.endTime;
+        bool releaseIn = releaseTime >= params.startTime && releaseTime <= params.endTime;
+        EXPECT_TRUE(allocIn || releaseIn);
+    }
+    EXPECT_TRUE(OperatorMemoryTestUtil::IsOperatorsSorted(operators, params.orderBy, params.desc));
+    EXPECT_TRUE(OperatorMemoryTestUtil::IsOperatorsNameAllContains(operators, expectFilterName));
 }
