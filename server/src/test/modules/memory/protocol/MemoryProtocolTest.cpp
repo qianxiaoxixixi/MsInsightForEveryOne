@@ -286,6 +286,236 @@ TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestNormalTest)
     EXPECT_TRUE(result.desc);
     EXPECT_FALSE(result.isCompare);
 }
+/***
+ * 测试Memory/view/operator接口合法的所有排序字段
+ */
+TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestValidOrderByTest)
+{
+    std::string baseStringOrderByPattern =
+        R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
+        "command": "Memory/view/operator", "params": {"rankId": "3", "type": "Stream", "searchName": "aten::add",
+        "minSize": -100, "maxSize": 1000, "startTime": 100.314, "endTime": 256.397, "currentPage": 100, "pageSize": 10,
+        "orderBy": "{}", "order": "descend"}})";
+    Dic::document_t json;
+    std::string reqJsonl;
+    std::string err;
+    // 常规允许排序OrderBy测试
+    for (const auto& header : OperatorMemoryTableView::FIELD_FULL_COLUMNS) {
+        if (header.sortable) {
+            std::string reqJson = StringUtil::FormatString(baseStringOrderByPattern, header.key);
+            auto parseResult = JsonUtil::TryParse(reqJson, err);
+            EXPECT_TRUE(err.empty());
+            EXPECT_TRUE(parseResult.has_value());
+            auto paramFromJson =
+                dynamic_cast<MemoryOperatorRequest&>(*(memoryProtocol.FromJson(parseResult.value(), err))).params;
+            EXPECT_TRUE(err.empty());
+            EXPECT_EQ(paramFromJson.rankId, "3");
+            EXPECT_EQ(paramFromJson.type, "Stream");
+            EXPECT_EQ(paramFromJson.searchName, "aten::add");
+            EXPECT_EQ(paramFromJson.minSize, -100);
+            EXPECT_EQ(paramFromJson.maxSize, 1000);
+            EXPECT_EQ(paramFromJson.startTime, 100.314);
+            EXPECT_EQ(paramFromJson.endTime, 256.397);
+            EXPECT_EQ(paramFromJson.currentPage, 100);
+            EXPECT_EQ(paramFromJson.pageSize, 10);
+            EXPECT_EQ(paramFromJson.orderBy, header.key);
+            EXPECT_TRUE(paramFromJson.desc);
+            EXPECT_FALSE(paramFromJson.isCompare);
+        }
+    }
+}
+
+/***
+ * 测试Memory/view/operator接口不合法的排序字段
+ */
+TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestInValidOrderByTest)
+{
+    std::string baseStringOrderByPattern = R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
+        "command": "Memory/view/operator", "params": {"rankId": "3", "type": "Stream", "searchName": "aten::add",
+        "minSize": -100, "maxSize": 1000, "startTime": 100.314, "endTime": 256.397, "currentPage": 100, "pageSize": 10,
+        "orderBy": "{}", "order": "descend"}})";
+    Dic::document_t json;
+    std::string reqJsonl;
+    std::string err;
+    // 不允许排序的列
+    for (const auto &header: OperatorMemoryTableView::FIELD_FULL_COLUMNS) {
+        if (!header.sortable) {
+            std::string reqJson = StringUtil::FormatString(baseStringOrderByPattern, header.key);
+            auto parseResult = JsonUtil::TryParse(reqJson, err);
+            EXPECT_TRUE(err.empty());
+            EXPECT_TRUE(parseResult.has_value());
+            memoryProtocol.FromJson(parseResult.value(), err);
+            EXPECT_FALSE(err.empty());
+        }
+        err = "";
+    }
+    // 恶意构造的sql注入列
+    std::string reqJson = StringUtil::FormatString(baseStringOrderByPattern, "name' AND 1=2 -- ");
+    auto parseResult = JsonUtil::TryParse(reqJson, err);
+    EXPECT_TRUE(err.empty());
+    EXPECT_TRUE(parseResult.has_value());
+    memoryProtocol.FromJson(parseResult.value(), err);
+    EXPECT_FALSE(err.empty());
+}
+/***
+ * 测试Memory/view/operator接口合法的所有filters字段
+ */
+TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestValidFiltersTest)
+{
+    std::string basicStringPattern =
+        R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
+        "command": "Memory/view/operator", "params": {"rankId": "3", "type": "Stream",
+        "minSize": -100, "maxSize": 1000, "startTime": 100.314, "endTime": 256.397, "currentPage": 100, "pageSize": 10,
+        "orderBy": "", "order": "", "filters": {"{}": "{}"}}})";
+    Dic::document_t json;
+    std::string reqJsonl;
+    std::string err;
+    // 允许filter的测试
+    for (const auto& header : OperatorMemoryTableView::FIELD_FULL_COLUMNS) {
+        if (header.searchable) {
+            std::string expectFilterKey = std::string(header.key);
+            std::string expectFilterValue = StringUtil::FormatString("test_{}", header.key);
+            std::string reqJson = StringUtil::FormatString(basicStringPattern, header.key, expectFilterValue);
+            auto parseResult = JsonUtil::TryParse(reqJson, err);
+            EXPECT_TRUE(err.empty());
+            EXPECT_TRUE(parseResult.has_value());
+            auto paramFromJson =
+                dynamic_cast<MemoryOperatorRequest&>(*(memoryProtocol.FromJson(parseResult.value(), err))).params;
+            EXPECT_TRUE(err.empty());
+            EXPECT_EQ(paramFromJson.rankId, "3");
+            EXPECT_EQ(paramFromJson.type, "Stream");
+            EXPECT_EQ(paramFromJson.minSize, -100);
+            EXPECT_EQ(paramFromJson.maxSize, 1000);
+            EXPECT_EQ(paramFromJson.startTime, 100.314);
+            EXPECT_EQ(paramFromJson.endTime, 256.397);
+            EXPECT_EQ(paramFromJson.currentPage, 100);
+            EXPECT_EQ(paramFromJson.pageSize, 10);
+            EXPECT_EQ(paramFromJson.filters.size(), 1);
+            EXPECT_TRUE(paramFromJson.filters.find(std::string(header.key)) != paramFromJson.filters.end());
+            EXPECT_EQ(paramFromJson.filters.at(std::string(header.key)), expectFilterValue);
+            EXPECT_FALSE(paramFromJson.isCompare);
+        }
+    }
+}
+
+/***
+ * 测试Memory/view/operator接口不合法的所有filters字段
+ */
+TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestInValidFiltersTest)
+{
+    std::string basicStringPattern =
+        R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
+        "command": "Memory/view/operator", "params": {"rankId": "3", "type": "Stream",
+        "minSize": -100, "maxSize": 1000, "startTime": 100.314, "endTime": 256.397, "currentPage": 100, "pageSize": 10,
+        "orderBy": "", "order": "", "filters": {"{}": "{}"}}})";
+    Dic::document_t json;
+    std::string reqJsonl;
+    std::string err;
+    // 不允许filter的列测试
+    for (const auto& header : OperatorMemoryTableView::FIELD_FULL_COLUMNS) {
+        if (!header.searchable) {
+            std::string expectFilterKey = std::string(header.key);
+            std::string expectFilterValue = StringUtil::FormatString("test_{}", header.key);
+            std::string reqJson = StringUtil::FormatString(basicStringPattern, header.key, expectFilterValue);
+            auto parseResult = JsonUtil::TryParse(reqJson, err);
+            EXPECT_TRUE(err.empty());
+            EXPECT_TRUE(parseResult.has_value());
+            memoryProtocol.FromJson(parseResult.value(), err);
+            EXPECT_FALSE(err.empty());
+        }
+        err = "";
+    }
+
+    // 恶意构造的sql注入列
+    std::string reqJson = StringUtil::FormatString(basicStringPattern, "name' AND 1=2 -- ", "test");
+    auto parseResult = JsonUtil::TryParse(reqJson, err);
+    EXPECT_TRUE(err.empty());
+    EXPECT_TRUE(parseResult.has_value());
+    memoryProtocol.FromJson(parseResult.value(), err);
+    EXPECT_FALSE(err.empty());
+}
+
+/***
+ * 测试Memory/view/operator接口合法的所有rangeFilters字段
+ */
+TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestValidRangeFiltersTest)
+{
+    std::string basicStringPattern =
+        R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
+        "command": "Memory/view/operator", "params": {"rankId": "3", "type": "Stream",
+        "minSize": -100, "maxSize": 1000, "startTime": 100.314, "endTime": 256.397, "currentPage": 100, "pageSize": 10,
+        "orderBy": "", "order": "", "rangeFilters": {"{}": [{}, {}]}}})";
+    Dic::document_t json;
+    std::string reqJsonl;
+    std::string err;
+    // 允许rangeFilter的测试
+    for (const auto& header : OperatorMemoryTableView::FIELD_FULL_COLUMNS) {
+        if (header.rangeFilterable) {
+            std::string expectFilterKey = std::string(header.key);
+            double leftValue = 0.0005;
+            double rightValue = 5000000000.1;
+            std::string reqJson = StringUtil::FormatString(basicStringPattern, header.key,
+                                                           std::to_string(leftValue), std::to_string(rightValue));
+            auto parseResult = JsonUtil::TryParse(reqJson, err);
+            EXPECT_TRUE(err.empty());
+            EXPECT_TRUE(parseResult.has_value());
+            auto paramFromJson =
+                dynamic_cast<MemoryOperatorRequest&>(*(memoryProtocol.FromJson(parseResult.value(), err))).params;
+            EXPECT_TRUE(err.empty());
+            EXPECT_EQ(paramFromJson.rankId, "3");
+            EXPECT_EQ(paramFromJson.type, "Stream");
+            EXPECT_EQ(paramFromJson.minSize, -100);
+            EXPECT_EQ(paramFromJson.maxSize, 1000);
+            EXPECT_EQ(paramFromJson.startTime, 100.314);
+            EXPECT_EQ(paramFromJson.endTime, 256.397);
+            EXPECT_EQ(paramFromJson.currentPage, 100);
+            EXPECT_EQ(paramFromJson.pageSize, 10);
+            EXPECT_EQ(paramFromJson.rangeFilters.size(), 1);
+            EXPECT_TRUE(paramFromJson.rangeFilters.find(std::string(header.key)) != paramFromJson.rangeFilters.end());
+            EXPECT_EQ(paramFromJson.rangeFilters.at(std::string(header.key)).first, leftValue);
+            EXPECT_EQ(paramFromJson.rangeFilters.at(std::string(header.key)).second, rightValue);
+            EXPECT_FALSE(paramFromJson.isCompare);
+        }
+    }
+}
+
+/***
+ * 测试Memory/view/operator接口不合法的rangeFilters字段
+ */
+TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestInValidRangeFiltersTest)
+{
+    std::string basicStringPattern =
+        R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
+        "command": "Memory/view/operator", "params": {"rankId": "3", "type": "Stream",
+        "minSize": -100, "maxSize": 1000, "startTime": 100.314, "endTime": 256.397, "currentPage": 100, "pageSize": 10,
+        "orderBy": "", "order": "", "rangeFilters": {"{}": [{}, {}]}}})";
+    Dic::document_t json;
+    std::string reqJsonl;
+    std::string err;
+    // 不允许filter的列测试
+    for (const auto& header : OperatorMemoryTableView::FIELD_FULL_COLUMNS) {
+        if (!header.rangeFilterable) {
+            std::string expectFilterKey = std::string(header.key);
+            double leftValue = 0.0005;
+            double rightValue = 5000000000.1;
+            std::string reqJson = StringUtil::FormatString(basicStringPattern, header.key,
+                                                           std::to_string(leftValue), std::to_string(rightValue));
+            auto parseResult = JsonUtil::TryParse(reqJson, err);
+            EXPECT_TRUE(err.empty());
+            EXPECT_TRUE(parseResult.has_value());
+            memoryProtocol.FromJson(parseResult.value(), err);
+            EXPECT_FALSE(err.empty());
+        }
+        err = "";
+    }
+    // 恶意构造的sql注入列
+    std::string reqJson = StringUtil::FormatString(basicStringPattern, "name' AND 1=2 -- ", "0.1", "0.2");
+    auto parseResult = JsonUtil::TryParse(reqJson, err);
+    EXPECT_TRUE(err.empty());
+    EXPECT_TRUE(parseResult.has_value());
+    memoryProtocol.FromJson(parseResult.value(), err);
+    EXPECT_FALSE(err.empty());
+}
 
 TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestLackMinSizeAndMaxSizeTest)
 {

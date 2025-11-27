@@ -8,6 +8,7 @@
 #include "MemoryProtocolRespose.h"
 #include "TraceTime.h"
 #include "TrackInfoManager.h"
+#include "OperatorMemoryService.h"
 #include "QueryMemoryOperatorHandler.h"
 
 namespace Dic {
@@ -266,95 +267,11 @@ void QueryMemoryOperatorHandler::SortResult(MemoryOperatorRequest &request, Memo
     if (request.params.orderBy.empty()) {
         return;
     }
-    if (request.params.desc) {
-        SortDescend(request, result);
-    } else {
-        SortAscend(request, result);
-    }
-}
-
-void QueryMemoryOperatorHandler::SortAscend(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result)
-{
-    std::map<std::string_view, bool (*)(MemoryOperatorComparison &, MemoryOperatorComparison &)> compFunc = {
-        {OpMemoryColumn::NAME, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.name < op2.diff.name;}},
-        {OpMemoryColumn::SIZE, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.size < op2.diff.size;}},
-        {OpMemoryColumn::ALLOCATION_TIME, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return NumberUtil::StringToDouble(op1.diff.allocationTime) <
-            NumberUtil::StringToDouble(op2.diff.allocationTime);}},
-        {OpMemoryColumn::RELEASE_TIME, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return NumberUtil::StringToDouble(op1.diff.releaseTime) <
-            NumberUtil::StringToDouble(op2.diff.releaseTime);}},
-        {OpMemoryColumn::DURATION, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.duration < op2.diff.duration;}},
-        {OpMemoryColumn::ACTIVE_RELEASE_TIME, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return NumberUtil::StringToDouble(op1.diff.activeReleaseTime) <
-            NumberUtil::StringToDouble(op2.diff.activeReleaseTime);}},
-        {OpMemoryColumn::ACTIVE_DURATION, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.activeDuration < op2.diff.activeDuration;}},
-        {OpMemoryColumn::ALLOCATION_ALLOCATED, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.allocationAllocated < op2.diff.allocationAllocated;}},
-        {OpMemoryColumn::ALLOCATION_RESERVE, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.allocationReserved < op2.diff.allocationReserved;}},
-        {OpMemoryColumn::ALLOCATION_ACTIVE, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.allocationActive < op2.diff.allocationActive;}},
-        {OpMemoryColumn::RELEASE_ALLOCATED, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.releaseAllocated < op2.diff.releaseAllocated;}},
-        {OpMemoryColumn::RELEASE_RESERVE, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.releaseReserved < op2.diff.releaseReserved;}},
-        {OpMemoryColumn::RELEASE_ACTIVE, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.releaseActive < op2.diff.releaseActive;}},
-        {OpMemoryColumn::STREAM, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.streamId < op2.diff.streamId;}},
-        {OpMemoryColumn::DEVICE_ID, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.deviceType < op2.diff.deviceType;}}};
-    if (compFunc.find(request.params.orderBy) != compFunc.end()) {
-        std::sort(result.operatorDiffDetails.begin(), result.operatorDiffDetails.end(),
-            compFunc[request.params.orderBy]);
-    }
-}
-
-void QueryMemoryOperatorHandler::SortDescend(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result)
-{
-    std::map<std::string_view, bool (*)(MemoryOperatorComparison &, MemoryOperatorComparison &)> compFunc = {
-        {OpMemoryColumn::NAME, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.name > op2.diff.name;}},
-        {OpMemoryColumn::SIZE, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.size > op2.diff.size;}},
-        {OpMemoryColumn::ALLOCATION_TIME, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return NumberUtil::StringToDouble(op1.diff.allocationTime) >
-            NumberUtil::StringToDouble(op2.diff.allocationTime);}},
-        {OpMemoryColumn::RELEASE_TIME, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return NumberUtil::StringToDouble(op1.diff.releaseTime) >
-            NumberUtil::StringToDouble(op2.diff.releaseTime);}},
-        {OpMemoryColumn::DURATION, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.duration > op2.diff.duration;}},
-        {OpMemoryColumn::ACTIVE_RELEASE_TIME, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return NumberUtil::StringToDouble(op1.diff.activeReleaseTime) >
-            NumberUtil::StringToDouble(op2.diff.activeReleaseTime);}},
-        {OpMemoryColumn::ACTIVE_DURATION, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.activeDuration > op2.diff.activeDuration;}},
-        {OpMemoryColumn::ALLOCATION_ALLOCATED, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.allocationAllocated > op2.diff.allocationAllocated;}},
-        {OpMemoryColumn::ALLOCATION_RESERVE, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.allocationReserved > op2.diff.allocationReserved;}},
-        {OpMemoryColumn::ALLOCATION_ACTIVE, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.allocationActive > op2.diff.allocationActive;}},
-        {OpMemoryColumn::RELEASE_ALLOCATED, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.releaseAllocated > op2.diff.releaseAllocated;}},
-        {OpMemoryColumn::RELEASE_RESERVE, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.releaseReserved > op2.diff.releaseReserved;}},
-        {OpMemoryColumn::RELEASE_ACTIVE, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.releaseActive > op2.diff.releaseActive;}},
-        {OpMemoryColumn::STREAM, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.streamId > op2.diff.streamId;}},
-        {OpMemoryColumn::DEVICE_ID, [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.deviceType > op2.diff.deviceType;}}};
-    if (compFunc.find(request.params.orderBy) != compFunc.end()) {
-        std::sort(result.operatorDiffDetails.begin(), result.operatorDiffDetails.end(),
-            compFunc[request.params.orderBy]);
-    }
+    auto comparator = OperatorMemoryService::GetComparatorByColumn(request.params.orderBy, request.params.desc);
+    std::sort(result.operatorDiffDetails.begin(), result.operatorDiffDetails.end(),
+              [comparator](const MemoryOperatorComparison& op1, const MemoryOperatorComparison& op2) {
+                  return comparator(op1.diff, op2.diff);
+              });
 }
 } // end of namespace Memory
 } // end of namespace Module

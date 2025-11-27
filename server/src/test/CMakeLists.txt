@@ -14,6 +14,7 @@ aux_source_directory(${TEST_HOME_DIR}/modules/communication/protocol TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/communication/handler TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/communication/core TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/communication/advisor TEST)
+aux_source_directory(${TEST_HOME_DIR}/modules/memory TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/memory/database TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/memory/handler TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/memory/service TEST)
@@ -75,6 +76,12 @@ aux_source_directory(${TEST_HOME_DIR}/modules/rl/core TEST)
 aux_source_directory(${TEST_HOME_DIR}/performance PERFORMANCE_TEST)
 aux_source_directory(${HOME_DIR}/src/protocol TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/rl TEST)
+
+# 增加头文件include目录
+include_directories(
+        ${TEST_HOME_DIR}/modules/memory
+)
+
 list(APPEND DIC_TEST_LIST
         ${TEST}
         ${U_SOCKETS_SRC_LIST}
