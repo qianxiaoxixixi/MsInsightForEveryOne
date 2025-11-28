@@ -96,6 +96,7 @@ struct FlowPoint {
     uint64_t timestamp = 0;
     std::string type;
     uint32_t depth = 0;
+    uint64_t duration = 0;
     std::string tid;
     std::string pid;
     std::string rankId;
