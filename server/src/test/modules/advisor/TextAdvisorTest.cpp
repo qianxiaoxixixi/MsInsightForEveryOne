@@ -70,7 +70,7 @@ TEST_F(TestSuit, QueryAICPUOperatorAdvisorSuccessText)
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
     std::vector<Protocol::KernelBaseInfo> data{};
     Protocol::KernelDetailsParams params = {"duration", "DESC", 1,
-                                            10, "0", "0"}; // 1是第1页，10是每页10条数据
+                                            10, 0, 0, "0", "0"}; // 1是第1页，10是每页10条数据
     auto result = db->QueryAICpuOpCanBeOptimized(params,
         AICPU_OP_EQUIVALENT_REPLACE, AICPU_OP_DATATYPE_RULE, data, startTime);
     EXPECT_TRUE(result);

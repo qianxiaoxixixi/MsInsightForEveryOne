@@ -433,12 +433,12 @@ struct KernelDetailsParams {
     std::string order;
     uint64_t current{};
     uint64_t pageSize{};
+    uint64_t startTime = 0;
+    uint64_t endTime = 0;
     std::string rankId;
     std::string deviceId;
     std::string coreType;
     std::string searchName;
-    uint64_t startTime = 0;
-    uint64_t endTime = 0;
     std::vector<std::pair<std::string, std::string>> filters;
     void Check(uint64_t minTime, std::string &error) const;
 };

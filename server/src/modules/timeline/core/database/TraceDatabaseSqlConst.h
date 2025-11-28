@@ -251,7 +251,7 @@ public:
         return "SELECT py.ROWID as id, str.value as name, py.startNs - ? as startTime, "
             "py.endNs - ? as endTime, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
             "FROM " + TABLE_API + " py JOIN " + TABLE_STRING_IDS + " str ON py.name = str.id "
-            "WHERE str.value LIKE 'aten::%' OR str.value LIKE 'npu::%' " + timeCondSql +
+            "WHERE (str.value LIKE 'aten::%' OR str.value LIKE 'npu::%') " + timeCondSql +
             "ORDER BY py.globalTid ASC, py.startNs ASC ";
     }
 
@@ -358,7 +358,7 @@ public:
             "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
             "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
             "JOIN " + TABLE_STRING_IDS + " s2 ON info.opType = s2.id "
-            "WHERE task.deviceId = ? ) " + timeCondSql +
+            "WHERE task.deviceId = ? "  + timeCondSql + " ) "
             "SELECT d0.* FROM data d0 ";
         for (size_t i = 1; i < rule.opList.size(); ++i) { // 上文保证rule.opList.size() ≥ 2
             std::string table = "d" + std::to_string(i);

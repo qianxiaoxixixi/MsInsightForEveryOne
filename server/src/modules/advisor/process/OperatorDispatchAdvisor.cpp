@@ -18,8 +18,8 @@ bool OperatorDispatchAdvisor::Process(const Protocol::APITypeParams &params, Pro
         return false;
     }
     Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
-                                           .current = params.currentPage, .pageSize = params.pageSize,
-                                           .rankId = params.rankId};
+        .current = params.currentPage, .pageSize = params.pageSize, .startTime = params.startTime,
+        .endTime = params.endTime, .rankId = params.rankId};
     param.order = params.orderType == "ascend" ? "ASC" : "DESC";
     if (std::count(OPERATOR_DISPATCH_ORDER_BY_NAME_LIST.begin(), OPERATOR_DISPATCH_ORDER_BY_NAME_LIST.end(),
                    params.orderBy) == 0) {
