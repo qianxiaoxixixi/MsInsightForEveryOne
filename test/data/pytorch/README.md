@@ -1,1 +1,1 @@
-https://wiki.huawei.com/domains/52290/wiki/75313/WIKI202409294708189
+请参考开发者测试（DT）专项wiki中的：PyTorch场景测试数据生成
