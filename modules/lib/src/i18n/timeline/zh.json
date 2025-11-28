@@ -68,6 +68,7 @@
       "Title": "标题",
       "Start": "开始",
       "Raw Start": "开始（原始时间戳）",
+      "Raw End": "结束（原始时间戳）",
       "Wall Duration": "持续时间",
       "Self Time": "自用时间",
       "Args": "参数",

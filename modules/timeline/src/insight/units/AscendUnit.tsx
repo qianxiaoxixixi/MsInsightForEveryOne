@@ -62,6 +62,10 @@ const isHiddenRawStartTime = (data: AscendSliceDetail): boolean => {
     return data.rawStartTime === undefined;
 };
 
+const isHiddenRawEndTime = (data: AscendSliceDetail): boolean => {
+    return data.rawEndTime === undefined;
+};
+
 const isHiddenDuration = (data: AscendSliceDetail): boolean => {
     return data.duration === undefined;
 };
@@ -159,7 +163,8 @@ const singleSliceDetail = singleData({
     renderFields: [
         ['Title', (data): string => data.title === undefined ? '' : `${data.title}`, isHiddenTitle],
         ['Start', (data: AscendSliceDetail): string => getDetailTimeDisplay(data.startTime ?? 0), isHiddenStartTime],
-        ['Raw Start', (data: AscendSliceDetail): string => `${Number(data.rawStartTime ?? 0)}ns`, isHiddenRawStartTime],
+        ['Raw Start', (data: AscendSliceDetail): string => `${data.rawStartTime ?? ''}ns`, isHiddenRawStartTime],
+        ['Raw End', (data: AscendSliceDetail): string => `${data.rawEndTime ?? '0'}ns`, isHiddenRawEndTime],
         ['Wall Duration', (data): string => getDetailTimeDisplay(data.duration as number), isHiddenDuration],
         ['Self Time', (data): string => getDetailTimeDisplay(data.selfTime as number), isHiddenSelfTime],
         ['Input Shapes', (data: AscendSliceDetail): string => getDisplay(data.inputShapes), (data: AscendSliceDetail): boolean => isHidden(data.inputShapes)],

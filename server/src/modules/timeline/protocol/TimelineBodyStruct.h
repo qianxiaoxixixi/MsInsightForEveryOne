@@ -64,5 +64,22 @@ struct UnitThreadsOperatorsBody {
     uint64_t pageSize{};
     uint64_t currentPage{};
 };
+
+struct ThreadDetail {
+    uint64_t selfTime = 0;
+    uint64_t duration = 0;
+    uint64_t rawTimestamp = 0;
+    uint64_t rawEndstamp = 0;
+    std::string args;
+    std::string title;
+    std::string cat;
+    std::string inputShapes;
+    std::string inputDataTypes;
+    std::string inputFormats;
+    std::string outputShapes;
+    std::string outputDataTypes;
+    std::string outputFormats;
+    std::string attrInfo;
+};
 }  // namespace Dic::Protocol
 #endif  // PROFILER_SERVER_TIMELINEBODYSTRUCT_H
