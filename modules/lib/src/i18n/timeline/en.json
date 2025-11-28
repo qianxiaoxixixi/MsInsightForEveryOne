@@ -68,6 +68,7 @@
       "Title": "Title",
       "Start": "Start",
       "Raw Start": "Start(Raw Timestamp)",
+      "Raw End": "End(Raw Timestamp)",
       "Wall Duration": "Wall Duration",
       "Self Time": "Self Time",
       "Args": "Args",

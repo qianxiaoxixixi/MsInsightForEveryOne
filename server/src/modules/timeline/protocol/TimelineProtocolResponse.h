@@ -133,22 +133,6 @@ struct UnitThreadsResponse : public Response {
     UnitThreadsBody body;
 };
 
-struct ThreadDetail {
-    uint64_t selfTime = 0;
-    uint64_t duration = 0;
-    uint64_t rawTimestamp = 0;
-    std::string args;
-    std::string title;
-    std::string cat;
-    std::string inputShapes;
-    std::string inputDataTypes;
-    std::string inputFormats;
-    std::string outputShapes;
-    std::string outputDataTypes;
-    std::string outputFormats;
-    std::string attrInfo;
-};
-
 struct UnitThreadDetailBody {
     bool emptyFlag = false;
     ThreadDetail data;

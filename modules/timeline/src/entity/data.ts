@@ -803,7 +803,8 @@ export interface AscendSliceDetail extends Record<string, unknown> {
     tid?: string;
     title?: string;
     startTime?: number;
-    rawStartTime?: number;
+    rawStartTime?: string;
+    rawEndTime?: string;
     depth?: number;
     duration?: number;
     selfTime?: number;
