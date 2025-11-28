@@ -586,6 +586,7 @@ bool TextTraceDatabase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestP
         if (it != sliceVec.end()) {
             item.depth = it->depth;
             item.id = it->id;
+            item.duration = it->endTime - it->timestamp;
         }
         item.pid = threadInfo[item.trackId].first;
         item.tid = threadInfo[item.trackId].second;

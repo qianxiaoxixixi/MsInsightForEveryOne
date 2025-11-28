@@ -219,18 +219,21 @@ void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowPoint> &flowEventsVec,
             onePointer.timestamp = flow.timestamp;
             onePointer.rankId = flow.rankId;
             onePointer.id = std::to_string(flow.id);
+            onePointer.duration = flow.duration;
             flowEvent->from.pid = fromPointer.pid;
             flowEvent->from.tid = fromPointer.tid;
             flowEvent->from.depth = fromPointer.depth;
             flowEvent->from.timestamp = fromPointer.timestamp;
             flowEvent->from.rankId = fromPointer.rankId;
             flowEvent->from.id = fromPointer.id;
+            flowEvent->from.duration = fromPointer.duration;
             flowEvent->to.pid = flow.pid;
             flowEvent->to.tid = flow.tid;
             flowEvent->to.depth = flow.depth;
             flowEvent->to.timestamp = flow.timestamp;
             flowEvent->to.rankId = flow.rankId;
             flowEvent->to.id = std::to_string(flow.id);
+            flowEvent->to.duration = flow.duration;
             flowDetailList.emplace_back(std::move(flowEvent));
         }
         curFlowId = flowId;
@@ -247,6 +250,7 @@ Protocol::FlowLocation& FlowAnalyzer::ComputeLocation(Protocol::FlowLocation& lo
     location.type = type;
     location.rankId = flow.rankId;
     location.id = std::to_string(flow.id);
+    location.duration = flow.duration;
     return location;
 }
 
