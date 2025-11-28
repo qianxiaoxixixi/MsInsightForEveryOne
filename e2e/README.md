@@ -8,7 +8,7 @@ npm install
 
 ### 准备测试数据
 
-测试数据可以在此仓库下载：[测试数据地址](https://codehub-y.huawei.com/q30057178/GUI_TEST_DATA/files?ref=master)
+测试数据可以在对应的数据仓库中下载
 
 ### Run End-to-End Tests with [Playwright](https://playwright.dev)
 
@@ -16,7 +16,7 @@ npm install
 # 首先执行该命令，下载测试浏览器，执行后会自动在C盘生成必要目录
 # 注意：由于内网无法自动下载对应的浏览器，需要手动下载并放在指定目录
 # 下载链接：https://playwright.azureedge.net/builds/chromium/1129/chromium-win64.zip
-# 指定目录：C:\Users\q30057178\AppData\Local\ms-playwright\chromium-1129\chrome-win\chrome.exe
+# 指定目录：C:\Users\xxxxxxxx\AppData\Local\ms-playwright\chromium-1129\chrome-win\chrome.exe
 #（其中 chromium-1129 目录需要手动创建，1129 为当前 playwright 版本对应的测试浏览器版本）
 npx playwright install
 
