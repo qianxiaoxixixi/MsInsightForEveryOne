@@ -313,7 +313,7 @@ public:
         return "SELECT s.track_id as track, s.id as id, s.name as name, s.timestamp - ? as startTime, "
             "s.end_time - ? as endTime, t.pid as pid, t.tid as tid "
             "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
-            "WHERE s.cat = 'cpu_op' AND s.name LIKE 'aten::%' OR s.name LIKE 'npu::%' " + timeCondSql +
+            "WHERE s.cat = 'cpu_op' AND (s.name LIKE 'aten::%' OR s.name LIKE 'npu::%') " + timeCondSql +
             "ORDER BY s.track_id ASC, s.timestamp ASC";
     }
 

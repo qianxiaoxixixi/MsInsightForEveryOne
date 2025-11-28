@@ -26,7 +26,8 @@ bool AffinityOptimizerAdvisor::Process(const Protocol::APITypeParams& params,
 
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
-                                           .current = params.currentPage, .pageSize = params.pageSize};
+                                           .current = params.currentPage, .pageSize = params.pageSize,
+                                           .startTime = params.startTime, .endTime = params.endTime};
     param.order = params.orderType == "ascend" ? "ASC" : "DESC";
     if (std::count(AFFINITY_OP_ORDER_BY_NAME_LIST.begin(), AFFINITY_OP_ORDER_BY_NAME_LIST.end(), params.orderBy) == 0) {
         param.orderBy = "duration";

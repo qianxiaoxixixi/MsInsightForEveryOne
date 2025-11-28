@@ -18,7 +18,8 @@ bool AICpuOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::AI
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::vector<Protocol::KernelBaseInfo> data{};
     Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
-                                           .current = params.currentPage, .pageSize = params.pageSize};
+                                           .current = params.currentPage, .pageSize = params.pageSize,
+                                           .startTime = params.startTime, .endTime = params.endTime};
     param.order = params.orderType == "ascend" ? "ASC" : "DESC";
     if (std::count(AICPU_OP_ORDER_BY_NAME_LIST.begin(), AICPU_OP_ORDER_BY_NAME_LIST.end(), params.orderBy) == 0) {
         param.orderBy = "duration";
