@@ -81,6 +81,7 @@ aux_source_directory(${TEST_HOME_DIR}/modules/rl TEST)
 # 增加头文件include目录
 include_directories(
         ${TEST_HOME_DIR}/modules/memory
+        ${TEST_HOME_DIR}/mock
 )
 
 list(APPEND DIC_TEST_LIST
