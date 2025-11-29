@@ -160,6 +160,23 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorMoreInfoRequestTest)
     EXPECT_EQ(result.order, expect.order);
 }
 
+// OperatorExportDetailsRequest请求反序列化校验
+TEST_F(OperatorProtocolUtilTest, ToOperatorExportDetailsRequestTest)
+{
+    std::string reqJson = R"({"id": 1, "moduleName": "operator", "type": "request", "resultCallbackId": 0,
+        "command": "operator/exportDetails", "params": {"isCompare": true, "rankId": "1", "deviceId": "1",
+        "group": "group", "topK": 5}})";
+    Dic::document_t json;
+    json.Parse(reqJson.c_str());
+    std::string err;
+    auto result = dynamic_cast<OperatorExportDetailsRequest &>(*(operatorProtocol.FromJson(json, err))).params;
+    const int64_t exceptTopK = 5;
+    EXPECT_EQ(result.isCompare, true);
+    EXPECT_EQ(result.rankId, "1");
+    EXPECT_EQ(result.topK, exceptTopK);
+    EXPECT_EQ(result.group, "group");
+}
+
 TEST_F(OperatorProtocolUtilTest, ToOperatorCategoryInfoResponseTest)
 {
     Dic::Protocol::OperatorCategoryInfoResponse response;
@@ -211,6 +228,23 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorComputeUnitInfoResponseTest)
         EXPECT_EQ(item["duration"].GetDouble(), response.datas[i++].duration);
         EXPECT_EQ(item.MemberCount(), 2); // 2, name and duration
     }
+}
+
+// OperatorExportDetails响应序列化
+TEST_F(OperatorProtocolUtilTest, ToOperatorExportDetailsResponseTest)
+{
+    Dic::Protocol::OperatorExportDetailsResponse response;
+    response.exceedingFileLimit = true;
+    response.filePath = "filePath";
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = operatorProtocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    auto body = jsonOptional.value()["body"].GetObj();
+    EXPECT_EQ(body.HasMember("exceedingFileLimit"), true);
+    EXPECT_EQ(body.HasMember("filePath"), true);
+    EXPECT_EQ(body["exceedingFileLimit"].GetBool(), true);
+    EXPECT_EQ(body["filePath"].GetString(), response.filePath);
 }
 
 TEST_F(OperatorProtocolUtilTest, ToOperatorStatisticInfoResponseTest)

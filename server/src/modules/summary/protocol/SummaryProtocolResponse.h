@@ -47,7 +47,7 @@ struct SummaryTopRankResBody {
 };
 
 struct SummaryTopRankResponse : public Response {
-    SummaryTopRankResponse() : Response(REQ_RES_SUMMARY_STATISTIC) {}
+    SummaryTopRankResponse() : Response(REQ_RES_SUMMARY_QUERY_TOP_DATA) {}
 
     SummaryTopRankResBody body;
 };
