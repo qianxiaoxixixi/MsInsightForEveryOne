@@ -426,6 +426,56 @@ TEST_F(SummaryProtocolUtilTest, ToSummarySlowRankAdvisorResponseTestWillReturnWh
     EXPECT_EQ(jsonOptional.value()["body"].HasMember("matchSuccess"), true);
 }
 
+// 基础信息数据序列化校验
+TEST_F(SummaryProtocolUtilTest, SummaryTopRankResponseSuccess)
+{
+    SummaryTopRankResponse response;
+    SummaryBaseInfo compare{5, {"1", "2"}, 100, 100, "filePath", 10, 5, {"1"}};
+    SummaryBaseInfo baseline{5, {"1", "2"}, 100, 100, "filePath", 10, 5, {"1"}};
+    response.body.baseInfo.compare = compare;
+    response.body.baseInfo.baseline = baseline;
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("baseInfo"), true);
+    EXPECT_EQ(jsonOptional.value()["body"]["baseInfo"].HasMember("baseline"), true);
+    auto baselineJson = jsonOptional.value()["body"]["baseInfo"]["baseline"].GetObject();
+    EXPECT_EQ(baselineJson["rankCount"].GetUint(), baseline.rankCount);
+    EXPECT_EQ(baselineJson["rankList"].GetArray().Size(), baseline.rankList.size());
+    EXPECT_EQ(baselineJson["dataSize"].GetDouble(), baseline.dataSize);
+    EXPECT_EQ(baselineJson["collectStartTime"].GetInt(), baseline.collectStartTime);
+    EXPECT_EQ(baselineJson["filePath"].GetString(), baseline.filePath);
+    EXPECT_EQ(baselineJson["collectDuration"].GetDouble(), baseline.collectDuration);
+    EXPECT_EQ(baselineJson["stepNum"].GetUint(), baseline.stepNum);
+    EXPECT_EQ(baselineJson["stepList"].GetArray().Size(), baseline.stepList.size());
+    EXPECT_EQ(jsonOptional.value()["body"]["baseInfo"].HasMember("compare"), true);
+    auto compareJson = jsonOptional.value()["body"]["baseInfo"]["compare"].GetObject();
+    EXPECT_EQ(compareJson["rankCount"].GetUint(), compare.rankCount);
+    EXPECT_EQ(compareJson["rankList"].GetArray().Size(), compare.rankList.size());
+    EXPECT_EQ(compareJson["dataSize"].GetDouble(), compare.dataSize);
+    EXPECT_EQ(compareJson["collectStartTime"].GetInt(), compare.collectStartTime);
+    EXPECT_EQ(compareJson["filePath"].GetString(), compare.filePath);
+    EXPECT_EQ(compareJson["collectDuration"].GetDouble(), compare.collectDuration);
+    EXPECT_EQ(compareJson["stepNum"].GetUint(), compare.stepNum);
+    EXPECT_EQ(compareJson["stepList"].GetArray().Size(), compare.stepList.size());
+}
+
+// 查询模型信息数据序列化校验
+TEST_F(SummaryProtocolUtilTest, QueryModelInfoResponseSuccess)
+{
+    QueryModelInfoResponse response;
+    response.body = {60, {0, 1}, 200};
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    auto body = jsonOptional.value()["body"].GetObject();
+    EXPECT_EQ(body["layerNum"].GetInt(), response.body.layerNum);
+    EXPECT_EQ(body["expertNum"].GetInt(), response.body.expertNum);
+    EXPECT_EQ(body["denseLayerList"].GetArray().Size(), response.body.denseLayerList.size());
+}
+
 TEST_F(SummaryProtocolUtilTest, ToQueryExpertHotspotResponseJsonWhenNormalInput)
 {
     QueryExpertHotspotResponse response{};
