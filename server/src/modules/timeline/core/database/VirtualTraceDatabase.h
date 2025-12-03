@@ -251,6 +251,7 @@ public:
 protected:
     std::vector<UnitCounterData> DownSampleUnitCounterData(const std::vector<UnitCounterData>& dataList, size_t targetSize);
     const uint32_t counterSampleSize = 10000;
+    static std::string ExtractGroupNameValue(const std::string &str);
 private:
     // 给定一个通信算子或Task，计算其未被通信掩盖部分的耗时
     uint64_t CalculateUncoveredTime(const std::vector<Protocol::ThreadTraces> &uncovered, size_t &index,
@@ -263,6 +264,8 @@ private:
     void ComputeCommunicationWaitAndTransmitTimeByGroup(
         const std::map<std::string, CommunicationSummaryInfoByGroup> &summaryData,
         SystemViewOverallHelper &overallHelper, Protocol::SystemViewOverallRes &result);
+    static SystemViewOverallRes CollectCommunicationGroupMetrics(const CommunicationSummaryInfoByGroup &data,
+        SystemViewOverallHelper &overallHelper);
 };
 }
 #endif // PROFILER_SERVER_TRACE_DATABASE_H

@@ -5,6 +5,7 @@
 #include <cmath>
 #include "CommonDefs.h"
 #include "ServerLog.h"
+#include "MetaDataCacheManager.h"
 #include "VirtualTraceDatabase.h"
 
 namespace Dic::Module::Timeline {
@@ -100,6 +101,50 @@ void VirtualTraceDatabase::ExecuteQueryCommunicationSummaryData(
     }
 }
 
+/**
+ * 兼容Text场景和DB场景的Group Name，其中Text场景为"Group {groupNameValue} Communication"，DB场景为{groupNameValue}
+ * 解开 "Group {groupNameValue} Communication" 的形式，获取 {groupNameValue}
+ * @param str "Group {groupNameValue} Communication"
+ * @return {groupNameValue}
+ */
+std::string VirtualTraceDatabase::ExtractGroupNameValue(const std::string& str)
+{
+    // 静态初始化正则表达式，确保只编译一次
+    static const std::regex expr(R"(Group ([\S]+(\s\w*)?) Communication)");
+
+    std::smatch match;
+    if (std::regex_match(str, match, expr) && match.size() > 1) {
+        // 获取第一个匹配项（即 groupNameValue）
+        return match.str(1);
+    }
+    return "";
+}
+
+SystemViewOverallRes VirtualTraceDatabase::CollectCommunicationGroupMetrics(
+    const CommunicationSummaryInfoByGroup &data, SystemViewOverallHelper &overallHelper)
+{
+    Protocol::SystemViewOverallRes group = {
+        .totalTime = 0, .ratio = 0, .nums = 0, .avg = 0, .max = 0, .min = 0,
+        .name = data.groupName, .children = {}, .level = 2, // level 2
+        .id = std::to_string(overallHelper.idCounter++)
+    };
+    // 获取 {groupNameValue}, 因为MetaDataCacheManager以groupNameValue作为键值
+    std::string groupNameValue = ExtractGroupNameValue(group.name);
+
+    // 此处进行了一个拆分判断，是由于数据中可能存在将一个通信甬道拆分成两个的情况（mc2算子）
+    // 这个场景会在mc2算子的aicpu通信辅流加上“Aicpu”进行区分，需要将该字段去掉才能与metadata中通信域的数据相匹配
+    std::vector<std::string> groupNameSplit = StringUtil::Split(groupNameValue, " ");
+    std::string normalizedGroupNameValue = groupNameSplit.size() > 1 ? groupNameSplit[0] : groupNameValue;
+    auto groupInfoOpt = MetaDataCacheManager::Instance().GetParallelGroupInfo(normalizedGroupNameValue);
+    if (groupInfoOpt.has_value()) {
+        group.name = groupInfoOpt.value().groupName + ":" + data.groupName;
+    }
+    group.totalTime = NumberUtil::DoubleReservedNDigits(data.op.uncoveredTransmitTime * NS_TO_US, TWO);
+    group.ratio = NumberUtil::DoubleReservedNDigits(
+        group.totalTime / overallHelper.e2eTime * PERCENTAGE_RATIO_SCALE, TWO);
+    return group;
+}
+
 void VirtualTraceDatabase::ComputeCommunicationWaitAndTransmitTimeByGroup(
     const std::map<std::string, CommunicationSummaryInfoByGroup> &summaryData, SystemViewOverallHelper &overallHelper,
     Protocol::SystemViewOverallRes &result)
@@ -109,14 +154,7 @@ void VirtualTraceDatabase::ComputeCommunicationWaitAndTransmitTimeByGroup(
     }
     for (auto &item : summaryData) {
         CommunicationSummaryInfoByGroup data = item.second;
-        Protocol::SystemViewOverallRes group = {
-            .totalTime = 0, .ratio = 0, .nums = 0, .avg = 0, .max = 0, .min = 0,
-            .name = data.groupName, .children = {}, .level = 2, // level 2
-            .id = std::to_string(overallHelper.idCounter++)
-        };
-        group.totalTime = NumberUtil::DoubleReservedNDigits(data.op.uncoveredTransmitTime * NS_TO_US, TWO);
-        group.ratio = NumberUtil::DoubleReservedNDigits(
-            group.totalTime / overallHelper.e2eTime * PERCENTAGE_RATIO_SCALE, TWO);
+        SystemViewOverallRes group = CollectCommunicationGroupMetrics(data, overallHelper);
         Protocol::SystemViewOverallRes wait = {
             .totalTime = 0, .ratio = 0, .nums = 0, .avg = 0, .max = 0, .min = 0,
             .name = WAIT_TIME, .children = {}, .level = 3, // level 3
