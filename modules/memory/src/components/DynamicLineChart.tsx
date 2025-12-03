@@ -5,14 +5,17 @@
 import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
-import { Spin, CollapsiblePanel } from '@insight/lib/components';
+import { Spin, CollapsiblePanel, Select } from '@insight/lib/components';
 import { StyledEmpty, customConsole as console } from '@insight/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { Graph, MemoryCurve } from '../entity/memory';
 import { LineChart } from './LineChart';
 import { Session } from '../entity/session';
-import { MemorySession, GroupBy } from '../entity/memorySession';
+import { MemorySession, GroupBy, type RangeFlagList } from '../entity/memorySession';
 import { memoryCurveGet } from '../utils/RequestUtils';
+import { getTimelineOffsetByKey } from '../connection/handler';
+import { Label } from './Common';
+import { FlexDiv } from '../utils/styleUtils';
 
 const DynamicLineChart = observer(({ session, memorySession, isDark }:
 { session: Session; memorySession: MemorySession; isDark: boolean }) => {
@@ -22,6 +25,8 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
     // 内存曲线绘制数据
     const [lineChartData, setLineChartData] = useState<Graph | undefined>(undefined);
     const [curveSpin, setCurveSpin] = useState<boolean>(false);
+    const [rangeFlagData, setRangeFlagData] = useState<RangeFlagList[]>([]);
+    const [rankOffsetNs, setRankOffsetNs] = useState<number>(0);
     const { t } = useTranslation('memory');
 
     const onSelectedRangeChanged = (start: number, end: number): void => {
@@ -75,6 +80,7 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
                 columns,
                 rows: resp.lines,
             });
+            setRankOffsetNs(resp.rankOffsetNs);
         }).catch(err => {
             console.error(err);
         }).finally(() => {
@@ -107,22 +113,96 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
         <div className="mb-30">
             <CollapsiblePanel title={t('Memory Analysis')}>
                 <Spin spinning={curveSpin}>
-                    { lineChartData
-                        ? <LineChart
-                            hAxisTitle={t('Time (ms)')}
-                            vAxisTitle={t('Memory Usage (MB)')}
-                            graph={lineChartData}
-                            onSelectionChanged={onSelectedRangeChanged}
-                            record={memorySession.selectedRecord}
-                            isDark={isDark}
-                            isStatic={false}
-                        />
+                    {lineChartData
+                        ? <>
+                            <div style={{ paddingBottom: 20 }}>
+                                <RangeFlagSelect memorySession={memorySession} rankOffsetNs={rankOffsetNs} callback={setRangeFlagData}/>
+                            </div>
+                            <LineChart
+                                hAxisTitle={t('Time (ms)')}
+                                vAxisTitle={t('Memory Usage (MB)')}
+                                graph={lineChartData}
+                                onSelectionChanged={onSelectedRangeChanged}
+                                record={memorySession.selectedRecord}
+                                isDark={isDark}
+                                isStatic={false}
+                                rangeFlagData={rangeFlagData}
+                            />
+                        </>
                         : <StyledEmpty style={{ marginTop: 160 }} />
                     }
                 </Spin>
             </CollapsiblePanel>
         </div>
     );
+});
+
+const RangeFlagSelect = observer(({ memorySession, rankOffsetNs, callback }: { memorySession: MemorySession; rankOffsetNs: number; callback: (value: RangeFlagList[]) => void }): JSX.Element => {
+    const [selectValue, setSelectValue] = useState<string[]>([]);
+    const [selectOptions, setSelectOptions] = useState<Array<{ label: string; value: string }>>([]);
+    const { t } = useTranslation('memory');
+
+    const handleChange = (value: string[]): void => {
+        setSelectValue(value);
+    };
+
+    const updateSelectData = (): void => {
+        const selectOptionsValueListOld = selectOptions.map(item => item.value);
+        const selectOptionsValueListNew = memorySession.rangeFlagList.map(item => item.uid);
+        const selectValueNew = [...selectValue];
+        for (let i = 0; i < selectValueNew.length;) {
+            if (!selectOptionsValueListNew.includes(selectValueNew[i])) {
+                selectValueNew.splice(i, 1);
+            } else {
+                i++;
+            }
+        }
+        memorySession.rangeFlagList.forEach(item => {
+            if (!selectOptionsValueListOld.includes(item.uid)) {
+                selectValueNew.push(item.uid);
+            }
+        });
+        setSelectOptions(memorySession.rangeFlagList.map(item => ({ value: item.uid, label: item.description })));
+        setSelectValue(selectValueNew);
+    };
+
+    useEffect(() => {
+        updateSelectData();
+    }, [memorySession.rangeFlagList]);
+
+    useEffect(() => {
+        getTimelineOffsetByKey();
+    }, [memorySession.hostCondition.value, memorySession.rankCondition.value]);
+
+    useEffect(() => {
+        const selectedRangeFlag: RangeFlagList[] = [];
+        memorySession.rangeFlagList.forEach(item => {
+            if (selectValue.includes(item.uid)) {
+                selectedRangeFlag.push({
+                    ...item,
+                    timeStamp: item.timeStamp - memorySession.timelineOffset - rankOffsetNs,
+                    anotherTimeStamp: item.anotherTimeStamp - memorySession.timelineOffset - rankOffsetNs,
+                });
+            }
+        });
+        callback(selectedRangeFlag);
+    }, [selectValue.length, memorySession.rangeFlagList, memorySession.timelineOffset]);
+
+    return <FlexDiv>
+        <Label name={t('AreaMark')} />
+        <Select
+            mode="multiple"
+            allowClear
+            style={{ width: 600 }}
+            value={selectValue}
+            onChange={handleChange}
+            options={selectOptions}
+            maxTagTextLength={10}
+            maxTagCount="responsive"
+            showSearch={true}
+            optionFilterProp="label"
+        />
+    </FlexDiv>;
 });
 
 export default DynamicLineChart;

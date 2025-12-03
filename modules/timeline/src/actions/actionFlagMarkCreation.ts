@@ -23,6 +23,16 @@ export const actionFlagMarkCreation = register({
             addRangeFlag(session, s, rangeStartTimeDisplay, e);
             return;
         }
+        if (session.selectedData !== undefined) { // flag range select slice
+            const selectedRange: [number, number] = [session.selectedData.startTime, session.selectedData.startTime + session.selectedData.duration];
+            const rangeStartTimeDisplay = getTimestamp(selectedRange[0], { precision: session.isNsMode ? 'ns' : 'ms' });
+            runInAction(() => {
+                // 用来判断是否在同范围位置重复创建旗帜
+                session.timelineMaker.oldMarkedRange = session.selectedRange;
+            });
+            addRangeFlag(session, selectedRange[0], rangeStartTimeDisplay, selectedRange[1], session.selectedData.name);
+            return;
+        }
         if (session.hoverMouseX !== null && session.scaleBag.timelineMarkerTimeScale) { // flag single
             const timeScale = session.scaleBag.timelineMarkerTimeScale;
             const timestamp = Math.floor(timeScale(session.hoverMouseX));

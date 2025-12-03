@@ -13,6 +13,8 @@ import {
     getIndexByRankNameAndDeviceId,
     getRankInfoKey,
 } from '@insight/lib/utils';
+import { RangeFlagList } from '../entity/memorySession';
+import connector from './index';
 
 function addMemoryCardInfos(before: CardRankInfo[], addList: MemoryRankInfo[]): CardRankInfo[] {
     const current = [...before];
@@ -61,6 +63,8 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
             session.isCluster = false;
             session.compareRank.rankId = '';
             memorySession.rankCondition = { options: [], value: 0 };
+            memorySession.rangeFlagList = [];
+            memorySession.timelineOffset = 0;
         });
     } catch (error) {
         console.error(error);
@@ -151,4 +155,58 @@ export const switchDirectoryHandler: NotificationHandler = (data): void => {
             session.compareRank = { rankId: data.rankId as string, isCompare: data.isCompare as boolean };
         });
     }
+};
+
+export const updateRangeFlagListHandler: NotificationHandler = (data): void => {
+    const session = store.memoryStore.activeSession;
+    if (session) {
+        runInAction(() => {
+            session.rangeFlagList = (data.timelineFlagList ?? []) as RangeFlagList[];
+        });
+    }
+};
+
+export const updateTimelineOffsetHandler: NotificationHandler = (data): void => {
+    const session = store.memoryStore.activeSession;
+    if (session) {
+        runInAction(() => {
+            session.timelineOffset = (data.timelineOffset ?? 0) as number;
+        });
+    }
+};
+
+export const getTimelineOffsetByKey = (): void => {
+    const session = store.memoryStore.activeSession;
+    if (session === undefined || session.rankCondition.value === undefined) {
+        return;
+    }
+    let offsetKey: string;
+    if (session.hostCondition.value.length > 0) {
+        offsetKey = `${session.hostCondition.value} ${session.rankCondition.value}`;
+    } else {
+        offsetKey = String(session.rankCondition.value);
+    }
+    connector.send({
+        event: 'getTimelineOffsetByKey',
+        to: 'Timeline',
+        body: {
+            from: 'Memory',
+            offsetKey,
+        },
+    });
+};
+
+const getTimelineRangeFlagList = (): void => {
+    connector.send({
+        event: 'getTimelineRangeFlagList',
+        to: 'Timeline',
+        body: {
+            from: 'Memory',
+        },
+    });
+};
+
+export const moduleActiveHandler: NotificationHandler = (): void => {
+    getTimelineRangeFlagList();
+    getTimelineOffsetByKey();
 };

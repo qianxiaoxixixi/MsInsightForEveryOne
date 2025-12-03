@@ -59,6 +59,7 @@
     "Comparison": "Comparison",
     "Loading": "loading...",
     "SamplingNotice": "Due to the large data volume, the chart is currently showing sampled results; zoom in to view the full data points.",
+    "AreaMark": "Area Mark",
     "searchCriteria": {
       "RankId": "Rank ID",
       "GroupBy": "Group By",

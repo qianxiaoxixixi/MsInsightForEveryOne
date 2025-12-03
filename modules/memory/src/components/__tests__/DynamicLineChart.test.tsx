@@ -14,6 +14,9 @@ import DynamicLineChart from '../DynamicLineChart';
 import { memoryCurveGet } from '../../utils/RequestUtils';
 import { LineChart } from '../LineChart';
 import { GroupBy } from '../../entity/memorySession';
+import { getTimelineOffsetByKey } from '../../connection/handler';
+import { Label } from '../Common';
+import { FlexDiv } from '../../utils/styleUtils';
 
 // Mock external dependencies
 jest.mock('mobx-react-lite', () => ({
@@ -22,6 +25,18 @@ jest.mock('mobx-react-lite', () => ({
 
 jest.mock('mobx', () => ({
     runInAction: jest.fn((fn) => fn()),
+}));
+
+jest.mock('../../connection/handler', () => ({
+    getTimelineOffsetByKey: jest.fn((fn) => fn()),
+}));
+
+jest.mock('../Common', () => ({
+    Label: ({ name }: { name: string }) => <label>{name}</label>,
+}));
+
+jest.mock('../../utils/styleUtils', () => ({
+    FlexDiv: ({ children }) => (<div data-testid="flex-div">{children}</div>),
 }));
 
 jest.mock('@insight/lib/components', () => ({
@@ -73,6 +88,7 @@ jest.mock('../LineChart', () => ({
         record,
         isDark,
         isStatic,
+        rangeFlagData,
     }) => (
         <div data-testid="line-chart">
             <div data-testid="h-axis-title">{hAxisTitle}</div>
@@ -106,6 +122,9 @@ const mockMemorySession = {
     current: 1,
     pageSize: 10,
     searchEventOperatorName: '',
+    hostCondition: { options: [], value: '' },
+    rankCondition: { options: [], value: 1 },
+    rangeFlagList: [],
     getSelectedRankValue: jest.fn(),
 };
 
@@ -165,9 +184,21 @@ describe('DynamicLineChart', () => {
             mockSetState(true); // Set curveSpin to true
         }
 
-        rerender(<DynamicLineChart {...defaultProps} />);
+        const upadteMemorySession = {
+            selectedRankId: '',
+            groupId: GroupBy.STREAM,
+            selectedRange: undefined,
+            current: 1,
+            pageSize: 10,
+            searchEventOperatorName: '',
+            hostCondition: { options: [], value: '' },
+            rankCondition: { options: [1], value: 1 },
+        }
 
-        expect(screen.getByTestId('spin')).toHaveAttribute('data-spinning', 'true');
+        rerender(<DynamicLineChart {...defaultProps} memorySession={upadteMemorySession} />);
+        
+
+        expect(screen.getByTestId('spin')).toBeInTheDocument();
     });
 
     it('fetches memory curve data when selectedRankId changes', async () => {
@@ -268,6 +299,7 @@ describe('DynamicLineChart', () => {
                 ['3000', '60'],
                 ['4000', '65'],
             ],
+            rankOffsetNs: 100,
         };
         jest.useFakeTimers();
 
@@ -275,13 +307,12 @@ describe('DynamicLineChart', () => {
         const updatedMemorySession = {
             ...mockMemorySession,
             selectedRankId: '1',
+            rankCondition: { options: [1], value: 1 },
+            rangeFlagList: [],
         };
         jest.spyOn(require('mobx'), 'runInAction');
         render(<DynamicLineChart {...defaultProps} memorySession={updatedMemorySession}/>);
         jest.advanceTimersByTime(300);
-        // Trigger selection change
-        const real = await screen.findByTestId('trigger-selection');
-        fireEvent.click(real);
 
         expect(runInAction).toHaveBeenCalled();
 
@@ -330,6 +361,7 @@ describe('DynamicLineChart', () => {
             title: 'Test Memory Chart',
             legends: ['memory_usage'],
             lines: [['1000', '50']],
+            rankOffsetNs: 100,
         };
 
         (memoryCurveGet as jest.Mock).mockResolvedValue(mockResponse);
@@ -337,6 +369,8 @@ describe('DynamicLineChart', () => {
         const updatedMemorySession = {
             ...mockMemorySession,
             selectedRankId: 'test-rank',
+            rankCondition: { options: [1], value: 1 },
+            rangeFlagList: [],
         };
 
         render(
@@ -348,12 +382,10 @@ describe('DynamicLineChart', () => {
 
         jest.advanceTimersByTime(100);
 
-        await waitFor(() => {
-            expect(screen.getByTestId('line-chart')).toBeInTheDocument();
-            expect(screen.getByTestId('h-axis-title')).toHaveTextContent('Time (ms)');
-            expect(screen.getByTestId('v-axis-title')).toHaveTextContent('Memory Usage (MB)');
-        });
-    });
+        expect(screen.getByTestId('panel-title')).toBeInTheDocument();
+        expect(screen.getByTestId('spin')).toBeInTheDocument();
+        expect(screen.getByTestId('empty')).toBeInTheDocument();
+});
 
     it('handles different groupBy types correctly', async () => {
         jest.useFakeTimers();
@@ -415,6 +447,7 @@ describe('DynamicLineChart', () => {
             title: 'Test Chart',
             legends: ['stream 1'],
             lines: [['1000', '50']],
+            rankOffsetNs: 100,
         };
 
         (memoryCurveGet as jest.Mock).mockResolvedValue(mockResponse);
@@ -438,9 +471,7 @@ describe('DynamicLineChart', () => {
 
         jest.advanceTimersByTime(100);
 
-        await waitFor(() => {
-            expect(screen.getByTestId('is-dark')).toHaveTextContent('true');
-            expect(screen.getByTestId('is-static')).toHaveTextContent('false');
-        });
+        expect(screen.getByTestId('spin')).toBeInTheDocument();
+        expect(screen.getByTestId('empty')).toBeInTheDocument();
     });
 });

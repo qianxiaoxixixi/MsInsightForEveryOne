@@ -11,6 +11,7 @@ import { convertTime, useChartCharacter } from './Common';
 import styled from '@emotion/styled';
 import { chartColors, getDefaultChartOptions, getLegendStyle, safeStr } from '@insight/lib/utils';
 import { type Theme, useTheme } from '@emotion/react';
+import type { RangeFlagList } from '../entity/memorySession';
 
 // 最大不分页的折线图图例数量，超过该数量图例分页展示
 const MAX_PLAIN_LEGENDS_COUNT = 9;
@@ -28,6 +29,7 @@ interface IProps {
     record?: any;
     isDark: boolean;
     isStatic: boolean;
+    rangeFlagData?: RangeFlagList[];
 }
 
 const _getLegendData = (data: string[]): string[] => {
@@ -101,7 +103,72 @@ const _getOriginOption = (props: IProps, theme: Theme): echarts.EChartsOption =>
     };
 };
 
-const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.EChartsOption => {
+const findClosestIndex = (data: Graph['rows'], target: number): number => {
+    if (data.length === 0) {
+        return -1; // 数组为空时返回 -1
+    }
+
+    let left = 0;
+    let right = data.length - 1;
+
+    while (left < right - 1) {
+        const mid = Math.floor((left + right) / 2);
+        if (Number(data[mid][0]) === target) {
+            return mid;
+        } else if (Number(data[mid][0]) < target) {
+            left = mid;
+        } else {
+            right = mid;
+        }
+    }
+
+    // 检查 left 和 right 位置的值，哪个更接近 target
+    if (Math.abs(Number(data[left][0]) - target) <= Math.abs(Number(data[right][0]) - target)) {
+        return left;
+    } else {
+        return right;
+    }
+};
+
+const _getMarkAreaOptions = (rangeFlagData: RangeFlagList[], data: Graph['rows'], chartWidth: number): echarts.EChartsOption => {
+    return {
+        name: 'Mark Area',
+        type: 'line',
+        data: [],
+        markArea: {
+            data: rangeFlagData.map(item => {
+                const startIndex = findClosestIndex(data, item.timeStamp / 1000000);
+                let endIndex = findClosestIndex(data, item.anotherTimeStamp / 1000000);
+                if (startIndex === endIndex && startIndex !== 0) {
+                    endIndex++;
+                }
+                const titleWidth = chartWidth / data.length * (endIndex - startIndex);
+
+                return [
+                    {
+                        xAxis: startIndex,
+                        label: {
+                            show: titleWidth > 30,
+                            position: 'top',
+                            formatter: item.description,
+                            overflow: 'truncate',
+                            width: titleWidth,
+                        },
+                        itemStyle: {
+                            color: item.color,
+                            opacity: 0.3,
+                        },
+                    },
+                    {
+                        xAxis: endIndex,
+                    },
+                ];
+            }),
+        },
+    };
+};
+
+const _handleOption = (option: echarts.EChartsOption, graph: Graph, chartWidth: number, rangeFlagData?: RangeFlagList[]): echarts.EChartsOption => {
     const lineSeries: echarts.SeriesOption = {
         type: 'line',
         connectNulls: true,
@@ -124,6 +191,10 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.ECh
         },
         animation: false,
     };
+    const series = Array(graph.columns.length - 1).fill(lineSeries);
+    if (rangeFlagData !== undefined && rangeFlagData.length > 0) {
+        series.push(_getMarkAreaOptions(rangeFlagData, graph.rows, chartWidth));
+    }
     const newOption = {
         ...option,
         color: chartColors,
@@ -132,17 +203,17 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.ECh
         {
             source: [graph.columns, ...graph.rows],
         },
-        series: Array(graph.columns.length - 1).fill(lineSeries),
+        series,
     };
     return newOption;
 };
 
 const _showGraph = (myChart: echarts.ECharts, selectedPoints: React.MutableRefObject<number[]>,
-    props: IProps, theme: Theme): void => {
-    const { graph, onSelectionChanged } = props;
+    props: IProps, theme: Theme, chartWidth: number): void => {
+    const { graph, onSelectionChanged, rangeFlagData } = props;
 
     let option = _getOriginOption(props, theme);
-    option = _handleOption(option, graph);
+    option = _handleOption(option, graph, chartWidth, rangeFlagData);
 
     // 数据量大时，切换主题时setOption会阻塞整体界面主题切换，使用 requestAnimationFrame 优化
     requestAnimationFrame(() => {
@@ -247,10 +318,11 @@ const useTitle = (title: string): string => {
     return translatedMessage;
 };
 export const LineChart: React.FC<IProps> = (props) => {
-    const { graph, record, isDark } = props;
+    const { graph, record, isDark, rangeFlagData } = props;
     const graphRef = React.useRef<HTMLDivElement>(null);
     const [resizeEventDependency] = useResizeEventDependency();
     const [chartObj, setChartObj] = React.useState<echarts.ECharts | undefined>();
+    const [chartWidth, setChartWidth] = React.useState<number>(0);
     const selectedPoints = React.useRef<number[]>([]);
     const chartCharacter = useChartCharacter();
     const title = useTitle(graph.title ?? '');
@@ -265,19 +337,20 @@ export const LineChart: React.FC<IProps> = (props) => {
         }
         element.oncontextmenu = (): boolean => { return false; };
         const myChart = echarts.init(element, isDark ? 'dark' : 'customed', { locale });
-        _showGraph(myChart, selectedPoints, props, theme);
+        _showGraph(myChart, selectedPoints, props, theme, chartWidth);
 
         setChartObj(myChart);
         return () => {
             myChart.dispose();
         };
-    }, [graph, isDark, i18n]);
+    }, [graph, isDark, i18n, rangeFlagData, chartWidth]);
 
     React.useEffect(() => {
         if (!graphRef.current) {
             return;
         }
         echarts.getInstanceByDom(graphRef.current)?.resize();
+        setChartWidth(graphRef.current.clientWidth - 200);
     }, [resizeEventDependency]);
 
     React.useEffect(() => {

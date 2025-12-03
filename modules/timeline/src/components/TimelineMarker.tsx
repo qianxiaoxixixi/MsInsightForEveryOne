@@ -31,7 +31,8 @@ interface DrawTimelineAxisFlag extends TimelineAxisFlag {
     anotherOffsetX?: number;
 }
 
-const FLAG_DEFAULT_NAME_REG = /default-\d+/;
+const RANGE_FLAG_PREFIX = 'range-';
+const SINGLE_FLAG_PREFIX = 'default-';
 enum FLAG_TYPE {
     NORMAL = 0,
     START = 1,
@@ -213,7 +214,7 @@ export const transformTimeToLeft = (domainStart: number, domainEnd: number, time
 
 export const addNewFlag = (session: Session, timeStamp: number, timeDisplay: string): void => {
     const maxNumber = generateDefaultNumber(session);
-    const defaultDesc = `default-${maxNumber.toString()}`;
+    const defaultDesc = `${SINGLE_FLAG_PREFIX}${maxNumber}`;
     const color = session.timelineMaker.timelineFlagColorList[maxNumber % session.timelineMaker.timelineFlagColorList.length];
     runInAction(() => {
         session.timelineMaker.selectedFlag = {
@@ -237,10 +238,12 @@ export const addNewFlag = (session: Session, timeStamp: number, timeDisplay: str
     });
 };
 
-export const addRangeFlag = (session: Session, rangeStartTimeStamp: number, rangeStartDisplay: string, rangeEndTimeStamp: number): void => {
-    const maxNumber = generateDefaultNumber(session);
-    const defaultDesc = `default-${maxNumber.toString()}`;
-    const color = session.timelineMaker.timelineFlagColorList[maxNumber % session.timelineMaker.timelineFlagColorList.length];
+export const addRangeFlag = (session: Session, rangeStartTimeStamp: number, rangeStartDisplay: string, rangeEndTimeStamp: number,
+    flagName?: string): void => {
+    const maxNumber = generateDefaultNumber(session, RANGE_FLAG_PREFIX);
+    const defaultDesc = (flagName !== undefined && flagName.length > 0) ? flagName : `${RANGE_FLAG_PREFIX}${maxNumber}`;
+    const colorIndex = session.timelineMaker.timelineFlagList.length % session.timelineMaker.timelineFlagColorList.length;
+    const color = session.timelineMaker.timelineFlagColorList[colorIndex];
     const uid = crypto.getRandomValues(new Uint32Array(3)).join('-');
     runInAction(() => {
         const rangeStartFlag: TimelineAxisFlag = {
@@ -279,10 +282,10 @@ export const deleteRangeFlag = (session: Session, rangeStartTimestamp: TimeStamp
     });
 };
 
-const generateDefaultNumber = (session: Session): number => {
+const generateDefaultNumber = (session: Session, prefix: string = SINGLE_FLAG_PREFIX): number => {
     let maxNumber = 0;
     session.timelineMaker.timelineFlagList.forEach((item: TimelineAxisFlag) => {
-        if (item.description.match(FLAG_DEFAULT_NAME_REG)) {
+        if (item.description.startsWith(prefix)) {
             const matchRes = item.description.split('-');
             const defaultNum = parseInt(matchRes[1]);
             if (defaultNum >= maxNumber) {
@@ -833,6 +836,16 @@ const useCreateFlagMarkKeyEffect = (canvas: React.RefObject<HTMLCanvasElement>, 
         // 对于有框选区间的情况，优先框选区间创建旗帜区间标记
         if (session.selectedRange !== undefined) {
             const [start, end] = session.selectedRange;
+            // 检查选中区间前后线上是否对应有旗帜区间
+            const hasFlagRange = session.timelineMaker.timelineFlagList.some((flag) =>
+                flag.anotherTimeStamp !== undefined && flag.timeStamp === start && flag.anotherTimeStamp === end);
+            runInAction(() => { session.showCreateFlagMarkKey = !hasFlagRange; });
+            return;
+        }
+        // 对于有选中slice的情况，slice所在区间区间创建旗帜区间标记
+        if (session.selectedData !== undefined) {
+            const start = session.selectedData.startTime;
+            const end = session.selectedData.startTime + session.selectedData.duration;
             // 检查选中区间前后线上是否对应有旗帜区间
             const hasFlagRange = session.timelineMaker.timelineFlagList.some((flag) =>
                 flag.anotherTimeStamp !== undefined && flag.timeStamp === start && flag.anotherTimeStamp === end);

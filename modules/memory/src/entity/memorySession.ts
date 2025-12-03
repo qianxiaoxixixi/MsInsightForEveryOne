@@ -40,6 +40,18 @@ export const enum GroupBy {
     COMPONENT = 'Component',
 };
 
+export interface RangeFlagList {
+    uid: string;
+    timeStamp: number;
+    timeDisplay: string;
+    color: string;
+    colorCache: string;
+    description: string;
+    descriptionCache: string;
+    type: 'range';
+    anotherTimeStamp: number;
+};
+
 export class MemorySession {
     // memory类型相关变量
     memoryType: string = MemoryGraphType.DYNAMIC;
@@ -79,6 +91,9 @@ export class MemorySession {
     // 底部表格分页相关变量
     current: number = 1;
     pageSize: number = 10;
+
+    rangeFlagList: RangeFlagList[] = [];
+    timelineOffset: number = 0;
 
     constructor() {
         makeAutoObservable(this);

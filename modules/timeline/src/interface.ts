@@ -21,6 +21,8 @@ import {
     updateProjectNameHandler,
     resetRemoteHandler, findBlock,
     parseUnitCompletedHandler,
+    getTimelineOffsetByKeyHandler,
+    getTimelineRangeFlagListHandler,
 } from './connection/handler';
 
 interface InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> {
@@ -66,4 +68,6 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     updateProjectName: updateProjectNameHandler,
     findBlock,
     [PARSE_UNIT_COMPLETED]: parseUnitCompletedHandler,
+    getTimelineOffsetByKey: getTimelineOffsetByKeyHandler,
+    getTimelineRangeFlagList: getTimelineRangeFlagListHandler,
 };

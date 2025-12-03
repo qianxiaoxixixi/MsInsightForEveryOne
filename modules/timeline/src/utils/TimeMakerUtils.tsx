@@ -266,7 +266,9 @@ const MarkerBody = (props: MarkerBodyProps): JSX.Element => {
                     }
                     }>
                     <div style={{ display: 'flex' }}>
-                        <div style={{ width: '40%', flexGrow: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', lineHeight: item.anotherTimeStamp === undefined ? undefined : '38px' }}> { item.description }</div>
+                        <Tooltip title={item.description}>
+                            <div style={{ width: '40%', flexGrow: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', lineHeight: item.anotherTimeStamp === undefined ? undefined : '38px' }}> { item.description }</div>
+                        </Tooltip>
                         { handleMakerTimeDisplay(timeLineMarkerProps.session, item) }
                         <div style={{ width: '15%' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: item.anotherTimeStamp === undefined ? '0' : '11px' }}>
                             <div id={`${item.uid}color`} style={{ width: '12px', height: '12px', backgroundColor: item.color, cursor: 'pointer' }} onClick={(): void => handleSelectColor(item, timeLineMarkerProps, setFlagColor)} />
