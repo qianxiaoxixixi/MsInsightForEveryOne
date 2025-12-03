@@ -11,6 +11,9 @@ import {
     allSuccessHandler,
     switchLanguageHandler,
     switchDirectoryHandler,
+    updateRangeFlagListHandler,
+    updateTimelineOffsetHandler,
+    moduleActiveHandler,
 } from './connection/handler';
 
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
@@ -24,4 +27,7 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     deleteCard: deleteCardHandler,
     switchLanguage: switchLanguageHandler,
     switchDirectory: switchDirectoryHandler,
+    updateRangeFlagList: updateRangeFlagListHandler,
+    updateTimelineOffset: updateTimelineOffsetHandler,
+    moduleActive: moduleActiveHandler,
 };

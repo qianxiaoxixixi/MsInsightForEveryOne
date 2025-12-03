@@ -1002,3 +1002,41 @@ export const updateProjectNameHandler: NotificationHandler = (data): void => {
     }
     updatePageSetting({ type: 'updateProjectName', data });
 };
+
+/**
+ * 获取timeline模块的rangeFlagList，通过触发事件返回。
+ * @returns 无返回值。
+ */
+export const getTimelineRangeFlagListHandler: NotificationHandler = (): void => {
+    const session = store.sessionStore.activeSession;
+    if (session === undefined) {
+        return;
+    }
+    connector.send({
+        event: 'updateRangeFlagList',
+        to: 'Memory',
+        body: {
+            timelineFlagList: session.timelineMaker.timelineFlagList.filter(item => item.type === 'range'),
+        },
+    });
+};
+
+/**
+ * 通过key获取timeline模块的rank偏移量，通过触发事件返回。
+ * @param data.offsetKey 需要获取的偏移量的key。
+ * @returns 无返回值。
+ */
+export const getTimelineOffsetByKeyHandler: NotificationHandler = (data): void => {
+    const session = store.sessionStore.activeSession;
+    if (session === undefined) {
+        return;
+    }
+
+    connector.send({
+        event: 'updateTimelineOffset',
+        to: 'Memory',
+        body: {
+            offset: session.unitsConfig.offsetConfig.timestampOffset[(data as any).offsetKey],
+        },
+    });
+};

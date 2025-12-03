@@ -144,6 +144,16 @@ const Index = observer(({ session }: {session: Session}) => {
     };
 
     useEffect(() => {
+        connector.send({
+            event: 'moduleActive',
+            to: activeModule,
+            body: {
+                moduleName: activeModule,
+            },
+        });
+    }, [activeModule]);
+
+    useEffect(() => {
         const fetchModuleConfigData = async (): Promise<void> => {
             try {
                 const { configs }: any = await getModuleConfig();

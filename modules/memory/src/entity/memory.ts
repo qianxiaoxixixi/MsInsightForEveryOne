@@ -66,6 +66,7 @@ export interface MemoryCurve {
      * @memberof MemoryCurve
      */
     lines: Array<Array<number | string>>;
+    rankOffsetNs: number;
 }
 
 /**
