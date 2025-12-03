@@ -188,8 +188,6 @@ private:
 
     void QuerySimulationUintFlows(const Protocol::UnitFlowsParams &requestParams, Protocol::UnitFlowsBody &responseBody,
         uint64_t minTimestamp);
-    static std::string ExtractGroupNameValue(const std::string &str);
-
     std::vector<Process> QueryAllProcess();
 
     std::map<std::string, std::vector<Thread>> QueryAllThreadInfo();

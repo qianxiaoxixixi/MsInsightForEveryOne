@@ -842,20 +842,6 @@ std::map<std::pair<std::string, std::string>, std::string> TextTraceDatabase::Qu
     return res;
 }
 
-std::string TextTraceDatabase::ExtractGroupNameValue(const std::string& str)
-{
-    // 静态初始化正则表达式，确保只编译一次
-    static const std::regex expr(R"(Group ([\S]+(\s\w*)?) Communication)");
-
-    std::smatch match;
-    if (std::regex_match(str, match, expr) && match.size() > 1) {
-        // 获取第一个匹配项（即 groupNameValue）
-        return match.str(1);
-    }
-
-    return "";
-}
-
 std::vector<std::string> TextTraceDatabase::GetCounterDataType(const std::string &args)
 {
     std::vector<std::string> type{};
