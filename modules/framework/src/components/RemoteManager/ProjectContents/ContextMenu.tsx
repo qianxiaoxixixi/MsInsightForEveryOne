@@ -92,6 +92,10 @@ function getClusterIsComparableAndSelectedClusterPath(baseline: File, comparison
     return { isBaseline, isComparison, hasBaseline, isComparable, isCanBeBaseline, selectedClusterPath };
 }
 
+const openInExplorer = (selectedFile: File): void => {
+    window.ipc?.postMessage(`openProjectInExplorer|${selectedFile.filePath}`);
+};
+
 // 右键菜单
 const getMenuItems = ({ session }: IProps, t: TFunction): MenuItemModel[] => {
     const { activeDataSource, selectedFile, compareSet: { baseline, comparison } } = session;
@@ -132,6 +136,12 @@ const getMenuItems = ({ session }: IProps, t: TFunction): MenuItemModel[] => {
             action: cancelCompareData,
             // 此文件（项目）是比对文件
             visible: isComparison,
+        },
+        {
+            label: t('Open in Explorer'),
+            key: 'openInExplorer',
+            action: () => openInExplorer(selectedFile),
+            visible: window.ipc !== undefined,
         },
     ];
 
