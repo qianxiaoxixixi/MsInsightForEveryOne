@@ -495,7 +495,9 @@ std::vector<std::string> ProjectParserDb::GetDbFilesInDir(const std::string &fil
     static std::map<FileType, std::regex> dbRegex = {
         {FileType::MEM_SCOPE, std::regex{memScopeDbReg}}, {FileType::PYTORCH, std::regex{pytorchDBReg}},
         {FileType::PYTORCH, std::regex{mindsporeDBReg}}, {FileType::MS_PROF, std::regex{msprofDBReg}}};
-    for (const auto &[type, dbRegx]: dbRegex) {
+    for (const auto &pair: dbRegex) {
+        FileType type = pair.first;
+        auto& dbRegx = pair.second;
         std::vector<std::string> res = FileUtil::FindFilesWithFilter(filePath, dbRegx);
         if (!res.empty()) {
             std::for_each(res.begin(), res.end(), [&type](const auto& file) {
