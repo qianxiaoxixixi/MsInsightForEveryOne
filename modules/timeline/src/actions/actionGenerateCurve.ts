@@ -33,10 +33,16 @@ async function findLineChart(session: Session, type: string): Promise<void> {
     });
 }
 
+function checkCardIsIE(session: Session): boolean {
+    const { isIE, isCluster, selectedData, units } = session;
+    const cluster = units.find(unit => unit.metadata?.cardId === selectedData?.cardId)?.metadata?.cluster;
+    return Boolean(isIE && selectedData && (!isCluster || (isCluster && !cluster)));
+}
+
 export const actionGenerateBubbleCurve = register({
     name: 'generateBubbleCurveByBlock',
     label: 'timeline:contextMenu.Generate Bubble Line Chart By Block',
-    visible: (session) => session.isIE && session.selectedData !== undefined,
+    visible: (session) => checkCardIsIE(session),
     perform: (session): void => {
         findLineChart(session, '2');
     },
@@ -44,7 +50,7 @@ export const actionGenerateBubbleCurve = register({
 export const actionGenerateCurve = register({
     name: 'generateCurveByBlock',
     label: 'timeline:contextMenu.Generate Line Chart By Block',
-    visible: (session) => session.isIE && session.selectedData !== undefined,
+    visible: (session) => checkCardIsIE(session),
     perform: (session): void => {
         findLineChart(session, '1');
     },

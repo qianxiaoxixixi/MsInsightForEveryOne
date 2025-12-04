@@ -62,6 +62,7 @@ export function updateDataScene(data: Record<string, any>): void {
         isLeaks: data.isLeaks ?? false,
         isIE: data.isIE ?? false,
         isRL: false,
+        isHybridParse: data.isCluster && data.isIE,
     };
     updateSession(scenceInfo);
 }
@@ -187,7 +188,7 @@ const Index = observer(({ session }: {session: Session}) => {
         }
         setScene(session.scene);
         setDataCompose({ hasCachelineRecords: session.hasCachelineRecords, isRL: session.isRL });
-    }, [session.isBinary, session.isCluster, session.hasCachelineRecords, session.isOnlyTraceJson, session.isIE, session.isLeaks, session.isRL]);
+    }, [session.isBinary, session.isCluster, session.hasCachelineRecords, session.isOnlyTraceJson, session.isIE, session.isLeaks, session.isRL, session.isHybridParse]);
 
     // 添加监听新的页签加载后发送当前工程
     useEffect(() => {

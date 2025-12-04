@@ -46,9 +46,10 @@ const CurveHeader = observer(({ session, curveSession }:
 
     useEffect(() => {
         runInAction(() => {
+            const isValidCompareRank = notNull(session.compareRank.rankId) && session.iERankIds.includes(session.compareRank.rankId);
             curveSession.rankIdCondition = {
                 options: session.iERankIds,
-                value: notNull(session.compareRank.rankId) ? session.compareRank.rankId : (session.iERankIds[0] ?? ''),
+                value: isValidCompareRank ? session.compareRank.rankId : (session.iERankIds[0] ?? ''),
             };
             const rankId: string = curveSession.rankIdCondition.value;
             groupByOptions(rankId);
