@@ -15,7 +15,8 @@ export interface ModuleConfig {
     isRL?: boolean;
     hasCachelineRecords?: boolean;
     isOnlyTraceJson?: boolean;
-};
+    isHybridParse?: boolean;
+}
 
 const isDev = process.env.REACT_APP_ENV === 'development';
 export const MEM_SCOPE_MODULE_NAME = 'MemScope';
@@ -32,6 +33,7 @@ export const modulesConfig: ModuleConfig[] = [
         isOnlyTraceJson: true,
         isIE: true,
         isLeaks: true,
+        isHybridParse: true,
     },
     {
         name: 'Memory',
@@ -41,6 +43,7 @@ export const modulesConfig: ModuleConfig[] = [
         },
         isDefault: true,
         isCluster: true,
+        isHybridParse: true,
     },
     {
         name: 'Operator',
@@ -50,6 +53,7 @@ export const modulesConfig: ModuleConfig[] = [
         },
         isDefault: true,
         isCluster: true,
+        isHybridParse: true,
     },
     {
         name: 'Summary',
@@ -58,6 +62,7 @@ export const modulesConfig: ModuleConfig[] = [
             src: isDev ? 'http://localhost:3003/summary.html' : './plugins/Cluster/summary.html',
         },
         isCluster: true,
+        isHybridParse: true,
     },
     {
         name: 'Communication',
@@ -66,6 +71,7 @@ export const modulesConfig: ModuleConfig[] = [
             src: isDev ? 'http://localhost:3003/communication.html' : './plugins/Cluster/communication.html',
         },
         isCluster: true,
+        isHybridParse: true,
     },
     {
         name: 'Source',
@@ -99,6 +105,7 @@ export const modulesConfig: ModuleConfig[] = [
             src: isDev ? 'http://localhost:3006/' : './plugins/Statistic/index.html',
         },
         isIE: true,
+        isHybridParse: true,
     },
     {
         name: MEM_SCOPE_MODULE_NAME,

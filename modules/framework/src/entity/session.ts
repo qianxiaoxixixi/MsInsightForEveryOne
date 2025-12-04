@@ -14,7 +14,7 @@ import { SessionAction } from '@/utils/enum';
 import { deleteProjectDataPath } from '@/utils/Project';
 
 // Scene：数据场景：默认、集群、算子调优、Jupter、Leaks、只trace.json文件
-export type Scene = 'Default' | 'Cluster' | 'Compute' | 'OnlyTraceJson' | 'IE' | 'Leaks' | 'RL';
+export type Scene = 'Default' | 'Cluster' | 'Compute' | 'OnlyTraceJson' | 'IE' | 'Leaks' | 'RL' | 'HybridParse';
 
 interface ContextMenu {
     visible: boolean;
@@ -93,6 +93,7 @@ export class Session {
     isOnlyTraceJson: boolean = false;
     isLeaks: boolean = false;
     isRL: boolean = false;
+    isHybridParse: boolean = false;
     hasCachelineRecords: boolean = false;
     instrVersion: number = -1;
     // 解析状态
@@ -141,7 +142,9 @@ export class Session {
     // 导入数据场景：默认、集群、算子调优、Jupter、只trace.json
     get scene(): Scene {
         let scene: Scene;
-        if (this.isOnlyTraceJson) {
+        if (this.isHybridParse) {
+            scene = 'HybridParse';
+        } else if (this.isOnlyTraceJson) {
             scene = 'OnlyTraceJson';
         } else if (this.isLeaks) {
             scene = 'Leaks';
@@ -235,6 +238,7 @@ export class Session {
             comparison: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
         };
         this.profilingExpertDataParsed = null;
+        this.isHybridParse = false;
     }
 
     // 数据源管理
