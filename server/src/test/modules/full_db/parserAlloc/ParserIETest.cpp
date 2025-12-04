@@ -54,3 +54,17 @@ TEST_F(ParserIETest, TestGetProjectType)
     auto res = parserIe.GetProjectType({});
     EXPECT_EQ(res, ProjectTypeEnum::IE);
 }
+
+TEST_F(ParserIETest, BuidlProject)
+{
+    Dic::Module::ParserIE parserIE;
+    ProjectExplorerInfo projectInfo;
+    projectInfo.projectName = "testIe";
+    projectInfo.projectType = static_cast<int>(ProjectTypeEnum::IE);
+    std::vector<std::string> parseFileList = {"ms_service_parsed_1.db", "ms_service_parsed_2.db"};
+    parserIE.BuildProjectExploreInfo(projectInfo, parseFileList);
+    EXPECT_EQ(projectInfo.subParseFileInfo.size(), 2);  // expect 2
+    for (size_t i = 0; i < parseFileList.size(); i++) {
+        EXPECT_EQ(projectInfo.subParseFileInfo[i]->parseFilePath, parseFileList[i]);
+    }
+}

@@ -12,6 +12,16 @@ using namespace Dic::Module::Global;
 
 class ProjectParserDbTest : public testing::Test {
 protected:
+    class ProjectParserDbTestHelper : public ProjectParserDb {
+    public:
+        void SetRankDeviceMapHelper(std::shared_ptr<ParseFileInfo> parseFileInfo,
+                                    std::unordered_map<std::string, std::string> &rankDeviceMap,
+                                    const std::string &deviceIdInMem,
+                                    const std::string &rank)
+        {
+            SetRankDeviceMap(parseFileInfo, rankDeviceMap, deviceIdInMem, rank);
+        }
+    };
     std::string GetMultiDeviceTestDataPath()
     {
         std::string current = Dic::FileUtil::GetCurrPath();
@@ -26,7 +36,7 @@ protected:
 
     void DataPrepare()
     {
-        std::string  path = GetMultiDeviceTestDataPath();
+        std::string path = GetMultiDeviceTestDataPath();
         std::string profDir = FileUtil::SplicePath(path, "PROF_000001_20250722180243900_BNJAGJGRKECIQHIA");
         for (int i = 0; i < 4; i++) {
             fs::create_directories(FileUtil::SplicePath(profDir, "device_" + std::to_string(i)));
@@ -82,4 +92,26 @@ TEST_F(ProjectParserDbTest, multiDeivce)
                       deviceIds.insert(info->deviceId);
                   });
     EXPECT_EQ(expectDeviceIds, deviceIds);
+}
+
+TEST_F(ProjectParserDbTest, parse_baseline_info_emty_cluster)
+{
+    ProjectExplorerInfo project;
+    project.fileInfoMap.emplace("test", std::make_shared<ParseFileInfo>());
+    BaselineInfo baselineInfo;
+    baselineInfo.isCluster = true;
+    ProjectParserDb dbParser;
+    EXPECT_NO_THROW(dbParser.ParserBaseline(project, baselineInfo));
+}
+
+TEST_F(ProjectParserDbTest, set_rank_device_map_multi_device)
+{
+    ProjectParserDbTestHelper dbParser;
+    auto fileInfo = std::make_shared<ParseFileInfo>();
+    fileInfo->type = DEVICE_CHIP;
+    fileInfo->rankId = "test_rankId";
+    fileInfo->deviceId = "test_deviceId";
+    std::unordered_map<std::string, std::string> rankDeviceMap;
+    dbParser.SetRankDeviceMapHelper(fileInfo, rankDeviceMap, "", "");
+    EXPECT_EQ(rankDeviceMap[fileInfo->rankId], fileInfo->deviceId);
 }
