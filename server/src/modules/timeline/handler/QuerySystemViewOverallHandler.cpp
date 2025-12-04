@@ -22,7 +22,8 @@ bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Requ
         SendResponse(std::move(responsePtr), false, "Failed to get connection for system view overall statistics.");
         return false;
     }
-    if (!database->CheckValueFromStatusInfoTable(OVERLAP_ANALYSIS_UNIT, FINISH_STATUS)) {
+    if (DataBaseManager::Instance().GetDataType() == DataType::DB &&
+        !database->CheckValueFromStatusInfoTable(OVERLAP_ANALYSIS_UNIT, FINISH_STATUS)) {
         response.isLoading = true;
         SendResponse(std::move(responsePtr), true, "The overlap analysis data is not parse finish.");
         return true;

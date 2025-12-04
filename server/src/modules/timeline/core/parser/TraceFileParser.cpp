@@ -105,7 +105,6 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr,
         ParserStatusManager::Instance().SetFinishStatus(rankId);
         std::vector<std::string> taskStatusList = {CONNECTION_UNIT, WAIT_TIME_UNIT, OVERLAP_ANALYSIS_UNIT};
         for (const auto &item: taskStatusList) {
-            database->UpdateValueIntoStatusInfoTable(item, FINISH_STATUS);
             ProjectParserBase::SendUnitFinishNotify(fileId, true, item);
         }
         return true;

@@ -24,7 +24,8 @@ bool QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         return false;
     }
     // 状态校验
-    if (!database->CheckValueFromStatusInfoTable(CONNECTION_UNIT, FINISH_STATUS)) {
+    if (DataBaseManager::Instance().GetDataType() == DataType::DB &&
+        !database->CheckValueFromStatusInfoTable(CONNECTION_UNIT, FINISH_STATUS)) {
         SendResponse(std::move(responsePtr), false, "The connection category parse unit is not finish.");
         return false;
     }
