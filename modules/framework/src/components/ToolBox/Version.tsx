@@ -52,6 +52,11 @@ function Version(): JSX.Element {
     const showShortcutsModal = (): void => {
         setShortcutsVisible(true);
     };
+
+    const showLogInExplorer = (): void => {
+        window.ipc.postMessage('showLogInExplorer');
+    };
+
     const handleShortcutsModalClose = (): void => {
         setShortcutsVisible(false);
     };
@@ -59,6 +64,7 @@ function Version(): JSX.Element {
     const HelpPopoverContent = (): JSX.Element => {
         return <div>
             <div className="mi-popover-item" onClick={showShortcutsModal}>{t('Keyboard shortcuts')}</div>
+            <div className="mi-popover-item" onClick={showLogInExplorer}>{t('Show Log in Explorer')}</div>
             <div className="mi-popover-item" onClick={showVersion}>{t('About')}</div>
         </div>;
     };

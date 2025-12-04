@@ -272,11 +272,11 @@ export const ShortcutsModal = ({ open, onClose }: {open: boolean;onClose: () => 
             <ShortcutModule caption={t('tabs.ZoomEcharts')}>
                 <Shortcut
                     label={`${t('shortcuts.Pan left')}/${t('shortcuts.Pan right')}`}
-                    shortcuts={[`${getShortcutKey('Shift')}${DELIMITER}${t('shortcuts.Scorll')}`]}
+                    shortcuts={[`${getShortcutKey('Shift')}${DELIMITER}${t('shortcuts.Scroll')}`]}
                 />
                 <Shortcut
                     label={t('shortcuts.Zoom in/out')}
-                    shortcuts={[`${getShortcutKey('CtrlOrCmd')}${DELIMITER}${t('shortcuts.Scorll')}`]}
+                    shortcuts={[`${getShortcutKey('CtrlOrCmd')}${DELIMITER}${t('shortcuts.Scroll')}`]}
                 />
             </ShortcutModule>
             <ShortcutModule caption={t('tabs.Source')}>

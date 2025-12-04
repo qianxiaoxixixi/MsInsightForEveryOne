@@ -41,6 +41,7 @@
     "Set as Comparison Data": "Set as Comparison Data",
     "Unset as Baseline Data": "Unset as Baseline Data",
     "Unset as Comparison Data": "Unset as Comparison Data",
+    "Open in Explorer": "Open in Explorer",
     "Set Comparison Data Out Of Range": "Set Comparison Data Out Of Range!",
     "Set baseline first": "Please set baseline first!",
     "Baseline Conflict": "Can't set baseline and comparison data to be the same",
@@ -77,6 +78,7 @@
       "RLTooltip": "Visualize control flow timelines from collected data to quickly spot long-running tasks and bubbles, enabling deeper performance analysis."
     },
     "Keyboard shortcuts": "Keyboard shortcuts",
+    "Show Log in Explorer": "Show Log in Explorer",
     "shortcuts": {
       "Zoom in": "Zoom in",
       "Zoom out": "Zoom out",
@@ -99,7 +101,7 @@
       "drag": "drag",
       "ScrollUp": "Scroll Up",
       "ScrollDown": "Scroll Down",
-      "Scorll": "Mouse Scroll",
+      "Scroll": "Mouse Scroll",
       "click": "click",
       "double-click": "double-click",
       "Find in source code": "Find in source code"
