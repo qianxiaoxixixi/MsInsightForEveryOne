@@ -166,6 +166,7 @@ void TraceFileSimulationParser::EndParseTask(const std::string &rankId,
     ServerLog::Info("Update depth completed. ID:", rankId);
     ParseEndCallBack(rankId, fileId, true, "");
     // update flow status
+    database->UpdateValueIntoStatusInfoTable(CONNECTION_UNIT, FINISH_STATUS);
     ProjectParserBase::SendUnitFinishNotify(fileId, true, CONNECTION_UNIT);
 }
 
