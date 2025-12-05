@@ -327,7 +327,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
     name: 'Thread',
     pinType: 'copied',
     renderInfo: (session: Session, thread: ThreadMetaData, thisUnit: InsightUnit) => {
-        return isPinned(thisUnit) && !isSonPinned(thisUnit) ? `${thread.cardId}_${thread.processName} (${thread.processId})_${thread.threadName}` : `${thread.threadName}`;
+        return isPinned(thisUnit) && !isSonPinned(thisUnit) ? `${thread.threadName}_${thread.processName} (${thread.processId})_${thread.cardId}` : `${thread.threadName}`;
     },
     chart: chart({
         type: 'stackStatus',
