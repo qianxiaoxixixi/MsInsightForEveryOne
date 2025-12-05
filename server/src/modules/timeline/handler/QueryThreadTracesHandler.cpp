@@ -31,7 +31,7 @@ bool QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         SendResponse(std::move(responsePtr), false, "The database is not exist when query thread traces.");
         return false;
     }
-    if (DataBaseManager::Instance().GetDataType() == DataType::DB && request.params.metaType == "OVERLAP_ANALYSIS" &&
+    if (request.params.metaType == "OVERLAP_ANALYSIS" &&
         !database->CheckValueFromStatusInfoTable(OVERLAP_ANALYSIS_UNIT, FINISH_STATUS)) {
         response.body.isLoading = true;
         SendResponse(std::move(responsePtr), true, "The overlap analysis data is not parse finish.");

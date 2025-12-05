@@ -188,7 +188,7 @@ void ProjectParserBase::SendParseSuccessEvent(const std::string &rankId, const s
     event->body.startTime = TraceTime::Instance().GetStartTime();
     event->body.offset = TraceTime::Instance().GetOffsetByFileId(rankId);
     event->body.fileId = fileId;
-    event->body.isFullDb = Timeline::DataBaseManager::Instance().GetDataType() == DataType::DB;
+    event->body.isFullDb = Timeline::DataBaseManager::Instance().GetDataType(fileId) == DataType::DB;
     std::vector<std::string> taskNameList = RL::RLMstxConfigManager::Instance().GetMstxTaskNameList();
     auto mstxSliceList = FullDb::RenderEngine::Instance()->QueryMstxRLDetail(rankId,
         Timeline::DataBaseManager::Instance().GetDataType(fileId),
