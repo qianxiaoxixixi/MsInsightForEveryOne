@@ -100,8 +100,9 @@
       "Self Time": "Self Time",
       "Index": "Index",
       "Timestamp": "Timestamp",
+      "Start Time": "Start Time",
       "Duration": "Duration",
-      "Duration(ns)": "Duration(ns)"
+      "Duration(ms)": "Duration(ms)"
     },
     "systemView": {
       "System View": "System View",

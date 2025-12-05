@@ -753,8 +753,15 @@ const useColumns = (): any => {
     const { t } = useTranslation('timeline', { keyPrefix: 'sliceList' });
     return [
         { title: t('Index'), dataIndex: 'index', ellipsis: true, width: 60 },
-        { title: t('Timestamp'), dataIndex: 'startTime', ...getDefaultColumData('time') },
-        { title: t('Duration(ns)'), dataIndex: 'duration', ...getDefaultColumData('duration') },
+        { title: t('Start Time'), dataIndex: 'startTime', ...getDefaultColumData('time') },
+        {
+            title: t('Duration(ms)'),
+            dataIndex: 'duration',
+            ...getDefaultColumData('duration'),
+            render: (text: number): string => {
+                return (text / 1e6).toFixed(6);
+            },
+        },
     ];
 };
 
