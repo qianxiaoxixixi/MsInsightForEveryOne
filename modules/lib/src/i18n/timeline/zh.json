@@ -100,8 +100,9 @@
       "Self Time": "自用时间",
       "Index": "索引",
       "Timestamp": "时间戳",
+      "Start Time": "开始时间",
       "Duration": "时长",
-      "Duration(ns)": "时长(ns)"
+      "Duration(ms)": "时长(ms)"
     },
     "systemView": {
       "System View": "系统视图",
