@@ -69,7 +69,6 @@ const ImportData = observer(({ session }: {session: Session}) => {
         setCustomImport(false);
         setDialogOpen(false);
         setImportTips('');
-        session.resetActionListener();
     };
     // 新导入数据
     const importData = (): void => {
@@ -83,6 +82,10 @@ const ImportData = observer(({ session }: {session: Session}) => {
             body: { path },
             to: 'Summary',
         });
+    };
+
+    const handleCancel = (): void => {
+        session.resetActionListener();
     };
 
     useEffect(() => {
@@ -110,6 +113,7 @@ const ImportData = observer(({ session }: {session: Session}) => {
         </ImportContainer>
         <FileExplorer
             onConfirm={handleConfirm}
+            onCancel={handleCancel}
             customImport={customImport}
             importTips={importTips}
             currentProject={currentProject}

@@ -69,9 +69,10 @@ interface IProps {
     dialogOpen: boolean;
     closeDialog: () => void;
     onConfirm: (path: string) => void;
+    onCancel: () => void;
 }
 // 文件资源管理器
-const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject, customImport, importTips, onConfirm }: IProps) => {
+const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject, customImport, importTips, onConfirm, onCancel }: IProps) => {
     const { t } = useTranslation('framework');
     const [inputPath, setInputPath] = useState(getLastFilePath());
     const [selectedPath, setSelectedPath] = useState('');
@@ -89,6 +90,12 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject, custom
         } finally {
             setConfirmLoading(false);
         }
+    };
+
+    // 点击确认
+    const handleCancel = (): void => {
+        onCancel();
+        closeDialog();
     };
 
     const confirmFile = async (): Promise<void> => {
@@ -182,11 +189,11 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject, custom
         setHit({ alert: false, message: 'FileSearchDescribe' });
     }, [inputPath]);
 
-    return <><StyledModal title={t('File Explorer')} open={dialogOpen} onOk={closeDialog} onCancel={closeDialog}
+    return <><StyledModal title={t('File Explorer')} open={dialogOpen} onCancel={handleCancel}
         width={800}
         footer={<div>
             <Button onClick={handleConfirm} loading={confirmLoading} type="primary" style={{ marginRight: 8 }} disabled={selectedPath === ''}>{t('Confirm')}</Button>
-            <Button onClick={closeDialog}>{t('Cancel')}</Button>
+            <Button onClick={handleCancel}>{t('Cancel')}</Button>
         </div>}>
         <FileExplorerContainer>
             {!currentProject ? <></> : <span className="project-name">{t('Current Project')} ：{currentProject}</span>}
