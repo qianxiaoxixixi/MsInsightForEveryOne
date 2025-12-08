@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 #include "TimelineProtocolRequest.h"
 #include "DataBaseManager.h"
-#include "../../TestSuit.cpp"
+#include "../../TestSuit.h"
 #include "cmath"
 #include "TimelineTestUtil.h"
 #include "TraceDatabaseHelper.h"

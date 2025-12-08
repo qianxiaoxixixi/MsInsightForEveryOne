@@ -7,7 +7,7 @@
 #include "DbClusterDataBase.h"
 #include "CommunicationMatrixRapidHandler.h"
 #include "CommunicationRapidSaxHandler.h"
-#include "../../TestSuit.cpp"
+#include "../../TestSuit.h"
 
 class ClusterParseTest : public ::testing::Test {
 };

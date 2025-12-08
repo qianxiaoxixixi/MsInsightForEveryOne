@@ -6,7 +6,7 @@
 #include "SourceFileParser.h"
 #include "SourceProtocolRequest.h"
 #include "ProjectParserFactory.h"
-#include "../../TestSuit.cpp"
+#include "../../TestSuit.h"
 
 using namespace std;
 using namespace Dic::Module::Source;

@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 #include "vector"
-#include "../../TestSuit.cpp"
+#include "../../TestSuit.h"
 #include "DataBaseManager.h"
 #include "OperatorProtocolRequest.h"
 #include "OperatorProtocolResponse.h"

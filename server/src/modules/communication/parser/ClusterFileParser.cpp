@@ -364,23 +364,23 @@ bool ClusterFileParser::TransCommunicationToDb(const std::string &selectedPath, 
 bool ClusterFileParser::InitClusterDatabase()
 {
     clusterDbPath = selectedFilePath + FILE_SEPARATOR + "cluster.db";
-    std::ifstream file = OpenReadFileSafely(clusterDbPath, std::ios::in);
+
+    // 创建新的db连接池
+    DataBaseManager::Instance().CreateClusterConnectionPool(selectedFilePath, clusterDbPath, DataType::TEXT);
+    database = DataBaseManager::Instance().GetClusterDatabase(selectedFilePath);
     std::shared_ptr<TextClusterDatabase> databaseWrite = std::dynamic_pointer_cast<TextClusterDatabase>(database);
     if (databaseWrite == nullptr) {
-        ServerLog::Error("Can't get cluster database.");
+        ServerLog::Error("Can't get text cluster database.");
         return false;
     }
+    std::ifstream file = OpenReadFileSafely(clusterDbPath, std::ios::in);
     if (!file.good()) {
-        if (!(databaseWrite->OpenDb(clusterDbPath, true) && databaseWrite->CreateTable() &&
+        if (!(databaseWrite->DropAllTable() && databaseWrite->CreateTable() &&
               databaseWrite->SetConfig() && databaseWrite->SetDbVersion() && databaseWrite->InitStmt())) {
-            ServerLog::Error("Failed to open databaseWrite. path:", selectedFilePath);
+            ServerLog::Error("Failed to update databaseWrite. path:", selectedFilePath);
             return false;
         }
     } else {
-        if (!(databaseWrite->OpenDb(clusterDbPath, false))) {
-            ServerLog::Error("Failed to open databaseWrite. path:", selectedFilePath);
-            return false;
-        }
         // 判断数据库版本是否变更，若变更不能跳过解析
         auto isChange = databaseWrite->IsDatabaseVersionChange();
         std::string status = databaseWrite->QueryParseClusterStatus();
@@ -544,17 +544,14 @@ bool ClusterFileParser::ParserClusterOfDb()
         ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         return false;
     }
-    std::shared_ptr<FullDb::DbClusterDataBase> clusterDatabase = std::dynamic_pointer_cast<DbClusterDataBase>(database);
-    if (clusterDatabase == nullptr) {
-        ServerLog::Error("Failed to get Cluster connection.");
-        ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
-        return false;
-    }
-
     ServerLog::Info("Cluster Db Path: " + clusterPath[0]);
     clusterDbPath = clusterPath[0];
-    if (!clusterDatabase->OpenDb(clusterPath[0], false)) {
-        ServerLog::Error("Failed to open Cluster. File path:", clusterDbPath);
+    Dic::Module::FullDb::DataBaseManager::Instance().CreateClusterConnectionPool(selectedFilePath, clusterDbPath,
+        Dic::Module::Timeline::DataType::DB);
+    database = Dic::Module::FullDb::DataBaseManager::Instance().GetClusterDatabase(selectedFilePath);
+    std::shared_ptr<FullDb::DbClusterDataBase> clusterDatabase = std::dynamic_pointer_cast<DbClusterDataBase>(database);
+    if (clusterDatabase == nullptr) {
+        ServerLog::Error("Failed to get db cluster connection.");
         ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         return false;
     }

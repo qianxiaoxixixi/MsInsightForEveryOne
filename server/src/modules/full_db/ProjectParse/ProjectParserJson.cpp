@@ -325,12 +325,9 @@ void ProjectParserJson::ClusterProcess(std::shared_ptr<ParseFileInfo> clusterInf
     }
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (projectType == ProjectTypeEnum::TEXT_CLUSTER) {
-        auto database = DataBaseManager::Instance().CreateClusterDatabase(clusterInfo->parseFilePath, DataType::TEXT);
-        if (!database) {
-            ServerLog::Warn("Failed to creat cluster db.path:" + clusterInfo->parseFilePath);
-            return;
-        }
-        ClusterFileParser clusterFileParser(clusterInfo->parseFilePath, database,
+        // 集群解析，如果集群已解析，则只会初始化db，然后结束流程
+        // database先传空指针，等完成mstt分析之后再对该指针赋值
+        ClusterFileParser clusterFileParser(clusterInfo->parseFilePath, nullptr,
                                             clusterInfo->clusterId + TimeUtil::Instance().NowStr());
         if (clusterFileParser.ParseClusterFiles()) {
             ServerLog::Info("The cluster file is parsed successfully.");
@@ -557,14 +554,11 @@ std::vector<std::string> ProjectParserJson::GetParseFileByImportFile(const std::
 void ProjectParserJson::ParserClusterBaseline(const Global::ProjectExplorerInfo &projectInfo,
                                               BaselineInfo &baselineInfo)
 {
-    // 创建新的db连接对象
     std::string clusterPath = BaselineManager::Instance().GetBaseLineClusterPath();
     std::string uniqueKey = FileUtil::GetFileName(clusterPath) + TimeUtil::Instance().NowStr();
-    // 创建新的db连接对象
-    auto database = DataBaseManager::Instance().CreateClusterDatabase(
-        BaselineManager::Instance().GetBaseLineClusterPath(), DataType::TEXT);
     // 集群解析，如果集群已解析，则只会初始化db，然后结束流程
-    ClusterFileParser clusterFileParser(clusterPath, database, uniqueKey);
+    // database先传空指针，等完成mstt解析之后再对该指针赋值
+    ClusterFileParser clusterFileParser(clusterPath, nullptr, uniqueKey);
     baselineInfo.fileId = clusterFileParser.GetClusterDbPath();
     if (clusterFileParser.ParseClusterFiles()) {
         ServerLog::Info("The cluster file is parsed successfully.");

@@ -94,9 +94,8 @@ void ProjectParserDb::ClusterProcess(std::shared_ptr<ParseFileInfo> clusterInfo,
     ParserStatusManager::Instance().WaitStartParse();
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (curProjectTypeEnum == ProjectTypeEnum::DB_CLUSTER) {
-        auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(clusterInfo->parseFilePath,
-                                                                                 DataType::DB);
-        ClusterFileParser clusterFileParser(clusterInfo->parseFilePath, clusterDatabase,
+        // database先传空指针，等完成mstt解析之后再对该指针赋值
+        ClusterFileParser clusterFileParser(clusterInfo->parseFilePath, nullptr,
                                             clusterInfo->parseFilePath + TimeUtil::Instance().NowStr());
         if (clusterFileParser.ParserClusterOfDb()) {
             ServerLog::Info("The cluster db file is parsed successfully.");
@@ -377,8 +376,8 @@ void ProjectParserDb::ParseBaselineClusterInfo(const Global::ProjectExplorerInfo
         clusterInfos.emplace_back(cluster);
     }
     std::for_each(clusterInfos.begin(), clusterInfos.end(), [&baselineInfo](const std::shared_ptr<ParseFileInfo>& item) {
-        auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(item->parseFilePath, DataType::DB);
-        ClusterFileParser clusterFileParser(item->parseFilePath, clusterDatabase,
+        // database先传空指针，等完成mstt解析之后再对该指针赋值
+        ClusterFileParser clusterFileParser(item->parseFilePath, nullptr,
                                             item->clusterId + TimeUtil::Instance().NowStr());
         if (!clusterFileParser.ParserClusterOfDb()) {
             ServerLog::Warn("Failed to parse cluster db files");

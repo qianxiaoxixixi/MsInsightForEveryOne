@@ -7,14 +7,13 @@
 #include "DataBaseManager.h"
 #include "ClusterDomainObject.h"
 #include "ClusterDef.h"
-#include "../../TestSuit.cpp"
+#include "../../TestSuit.h"
 
-class CommunicationTest : TestSuit {
-};
+class CommunicationTest : TestSuit {};
 
 TEST_F(TestSuit, QueryIterationsData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::vector<Dic::Protocol::IterationsOrRanksObject> responseBody;
     database->QueryIterations(responseBody);
     int expectSize = 1;
@@ -24,7 +23,7 @@ TEST_F(TestSuit, QueryIterationsData)
 
 TEST_F(TestSuit, QueryOperatorNameData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     Dic::Protocol::OperatorNamesParams requestParams;
     requestParams.iterationId = "2";
     requestParams.groupIdHash = "13337953553061386822";
@@ -38,7 +37,7 @@ TEST_F(TestSuit, QueryOperatorNameData)
 
 TEST_F(TestSuit, QueryIterationAndCommunicationGroupSuccess)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     Dic::Protocol::CommunicationKernelParams requestParams;
     requestParams.name = "hcom_broadcast__483_0";
     requestParams.rankId = "0";
@@ -50,7 +49,7 @@ TEST_F(TestSuit, QueryIterationAndCommunicationGroupSuccess)
 
 TEST_F(TestSuit, QueryOperatorNamesFailWithErrorGroupIdHash)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     Dic::Protocol::OperatorNamesParams requestParams;
     requestParams.iterationId = "2";
     requestParams.groupIdHash = "test";
@@ -62,7 +61,7 @@ TEST_F(TestSuit, QueryOperatorNamesFailWithErrorGroupIdHash)
 
 TEST_F(TestSuit, QueryParseClusterStatusSuccess)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::string status = database->QueryParseClusterStatus();
     EXPECT_EQ(status, "FINISH");
 }
@@ -70,7 +69,7 @@ TEST_F(TestSuit, QueryParseClusterStatusSuccess)
 
 TEST_F(TestSuit, QueryRanksData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::vector<Dic::Protocol::IterationsOrRanksObject> responseBody;
     database->QueryRanksHandler(responseBody);
     int expectSize = 16;
@@ -81,7 +80,7 @@ TEST_F(TestSuit, QueryRanksData)
 
 TEST_F(TestSuit, QueryDurationData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     Dic::Protocol::DurationListParams requestParams;
     std::vector<Dic::Module::DurationDo> durationList;
     requestParams.iterationId = "2";
@@ -94,7 +93,7 @@ TEST_F(TestSuit, QueryDurationData)
 
 TEST_F(TestSuit, QueryBandwidthDistributionData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     Dic::Protocol::DistributionDataParam requestParams;
     Dic::Protocol::DistributionResBody responseBody;
     requestParams.iterationId = "2";
@@ -110,7 +109,7 @@ TEST_F(TestSuit, QueryBandwidthDistributionData)
 
 TEST_F(TestSuit, QueryBandwidthData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     Dic::Protocol::BandwidthDataParam requestParams;
     Dic::Protocol::BandwidthDataResBody responseBody;
     requestParams.iterationId = "2";
@@ -129,7 +128,7 @@ TEST_F(TestSuit, QueryBandwidthData)
 
 TEST_F(TestSuit, QueryBandwidthDataWithErrorParamReturnExpectSize0)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     Dic::Protocol::BandwidthDataParam requestParams;
     Dic::Protocol::BandwidthDataResBody responseBody;
     requestParams.iterationId = "100";
@@ -143,7 +142,7 @@ TEST_F(TestSuit, QueryBandwidthDataWithErrorParamReturnExpectSize0)
 
 TEST_F(TestSuit, QueryOperatorsCount)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     Dic::Protocol::OperatorDetailsParam requestParams;
     Dic::Protocol::OperatorDetailsResBody responseBody;
     requestParams.iterationId = "2";
@@ -162,7 +161,7 @@ TEST_F(TestSuit, QueryOperatorsCount)
 
 TEST_F(TestSuit, GetCommunicationGroups)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::vector<Dic::Module::GroupInfoDo> groupList;
     database->GetGroups(groupList);
     int expectSize = 28;
@@ -171,7 +170,7 @@ TEST_F(TestSuit, GetCommunicationGroups)
 
 TEST_F(TestSuit, GetAllRankFromStepStatisticInfoSuccess)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::vector<std::string> res = database->GetAllRankFromStepStatisticInfo();
     int expectSize = 16;
     EXPECT_EQ(res.size(), expectSize);
@@ -179,7 +178,7 @@ TEST_F(TestSuit, GetAllRankFromStepStatisticInfoSuccess)
 
 TEST_F(TestSuit, QueryMatrixData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     Dic::Protocol::MatrixBandwidthParam requestParams;
     std::vector<Dic::Module::MatrixInfoDo> matrixList;
     requestParams.iterationId = "2";
@@ -198,7 +197,7 @@ TEST_F(TestSuit, QueryMatrixData)
 
 TEST_F(TestSuit, QueryAllCommunicationOperatorsDetails)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     Dic::Protocol::OperatorDetailsParam requestParams;
     Dic::Protocol::OperatorDetailsResBody responseBody;
     requestParams.iterationId = "2";
@@ -221,7 +220,7 @@ TEST_F(TestSuit, QueryAllCommunicationOperatorsDetails)
 
 TEST_F(TestSuit, QueryMatrixSortOpNames)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::vector<Dic::Protocol::OperatorNamesObject> responseBody;
     Dic::Protocol::OperatorNamesParams requestParams;
     requestParams.iterationId = "2";
@@ -234,7 +233,7 @@ TEST_F(TestSuit, QueryMatrixSortOpNames)
 
 TEST_F(TestSuit, QueryAllPerformanceDataByStepWhenSingleStep)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::string step = "2";
     std::unordered_map<std::uint32_t, Dic::Module::StepStatistic> data{};
     auto result = database->QueryAllPerformanceDataByStep(step, data);
@@ -250,7 +249,7 @@ TEST_F(TestSuit, QueryAllPerformanceDataByStepWhenSingleStep)
 
 TEST_F(TestSuit, GetCommTimeForRankDimByStepWhenSingleStep)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::string step = "2";
     std::vector<Dic::Module::CommInfoUnderRank> result = database->GetCommTimeForRankDim(step);
     const int exceptSize = 4;
@@ -259,7 +258,7 @@ TEST_F(TestSuit, GetCommTimeForRankDimByStepWhenSingleStep)
 
 TEST_F(TestSuit, GetCommTimeForRankDimByStepWhenAllStep)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::string step = "";
     std::vector<Dic::Module::CommInfoUnderRank> result = database->GetCommTimeForRankDim(step);
     const int exceptSize = 4;
@@ -268,7 +267,7 @@ TEST_F(TestSuit, GetCommTimeForRankDimByStepWhenAllStep)
 
 TEST_F(TestSuit, QueryAllPerformanceDataByStepWhenAllStep)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::string step = "";
     std::unordered_map<std::uint32_t, Dic::Module::StepStatistic> data{};
     auto result = database->QueryAllPerformanceDataByStep(step, data);
@@ -287,7 +286,7 @@ TEST_F(TestSuit, QueryAllPerformanceDataByStepWhenAllStep)
 
 TEST_F(TestSuit, QueryPacketAnalyzerDataTest)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::vector<Dic::Module::PacketAnalyzerData> data;
     bool result = database->QueryPacketAnalyzerData(data);
     int expectSize = 5; // 5
@@ -302,7 +301,7 @@ TEST_F(TestSuit, QueryPacketAnalyzerDataTest)
 
 TEST_F(TestSuit, QueryBandwidthContentionAnalyzerDataTest)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::vector<Dic::Module::BandwidthContentionSDMAInfo> res;
     std::string rankId = "0";
     bool result = database->QueryBandwidthContentionAnalyzerData(res, rankId);
@@ -322,7 +321,7 @@ TEST_F(TestSuit, QueryBandwidthContentionAnalyzerDataTest)
 
 TEST_F(TestSuit, QueryRetransmissionAnalyzerClassificationData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::vector<Dic::Module::RetransmissionClassificationInfo> data;
     bool result = database->QueryRetransmissionAnalyzerData(data);
     int expectSize = 2;
@@ -332,7 +331,7 @@ TEST_F(TestSuit, QueryRetransmissionAnalyzerClassificationData)
 
 TEST_F(TestSuit, GetOpStatByStepIdSuccess)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::string stepId = "2";
     std::vector<Dic::Module::OpTypeStatistics> res = database->GetOpStatByStepId(stepId);
     const int expectSize = 2;
@@ -343,7 +342,7 @@ TEST_F(TestSuit, GetOpStatByStepIdSuccess)
 
 TEST_F(TestSuit, GetCommTimeForRankDimTest)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::string iterationId = "2";
     auto commTimeForRankDim = database->GetCommTimeForRankDim(iterationId);
     EXPECT_EQ(commTimeForRankDim.size(), 4); // 2
@@ -351,7 +350,7 @@ TEST_F(TestSuit, GetCommTimeForRankDimTest)
 
 TEST_F(TestSuit, QuerySlowOpByCommDurationTest)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     std::string fastestRankId = "1";
     Protocol::DurationListParams params;
     params.iterationId = "2";

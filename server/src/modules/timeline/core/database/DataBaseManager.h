@@ -57,7 +57,7 @@ public:
     void ReleaseDatabaseByRankId(const std::string &rankId);
     void ReleaseDatabaseByFileId(const std::string& fileId);
     bool HasRankId(DatabaseType type, const std::string &rankId);
-    std::shared_ptr<VirtualClusterDatabase> CreateClusterDatabase(const std::string &uniqueKey, DataType type);
+    void CreateClusterConnectionPool(const std::string &projectPath, const std::string &dbPath, DataType type);
     std::shared_ptr<VirtualClusterDatabase> GetClusterDatabase(const std::string &uniqueKey);
     std::vector<std::shared_ptr<VirtualClusterDatabase>> GetAllClusterDatabase();
 
@@ -115,7 +115,8 @@ private:
     using FileId = std::string;
     using DbPath = FileId;
     using HostId = std::string;
-    using ClusterPath = std::string;
+    using ClusterProjectPath = std::string;
+    using ClusterDbPath = std::string;
     DataBaseManager() = default;
     ~DataBaseManager() = default;
     std::recursive_mutex mutex;
@@ -126,10 +127,11 @@ private:
     std::map<RankId, DbPath> dbFilePathMap;
     std::map<RankId, FileId> rankId2FileIdMap;
     std::map<FileId, RankId> fileIdToRankIdMap;
+    std::map<ClusterProjectPath, ClusterDbPath> clusterProject2DbPathMap;
     std::map<HostId, std::vector<DbPath>> host2DbPath;
     std::unordered_set<std::string> databasePathSet;
     std::map<FileId, std::shared_ptr<DBConnectionPool<VirtualTraceDatabase>>> traceDatabaseMap;
-    std::map<ClusterPath, std::shared_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
+    std::map<ClusterDbPath, std::shared_ptr<DBConnectionPool<VirtualClusterDatabase>>> clusterDatabaseMap;
     std::map<RankId, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
     std::map<FileId, std::shared_ptr<FullDb::MemScopeDatabase>> memScopeDatabaseMap;
     std::map<RankId, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryDatabaseMap;
@@ -140,6 +142,7 @@ private:
 
     std::map<std::string, std::string> rankIdToDeviceIdMap;  // key: fileId + rankId , value: deviceId
     std::recursive_mutex &GetDbMutex(const std::string &fileId);
+    void SetClusterProjectDbPathMapping(const std::string &projectPath, const std::string &dbPath);
 };
 } // end of namespace Timeline
 } // end of namespace Module

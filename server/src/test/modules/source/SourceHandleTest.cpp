@@ -14,7 +14,7 @@
 #include "QueryDetailsRooflineHandler.h"
 #include "SourceProtocolRequest.h"
 #include "WsSessionManager.h"
-#include "../../TestSuit.cpp"
+#include "../../TestSuit.h"
 
 using namespace Dic::Server;
 using namespace Dic::Protocol;

@@ -3,7 +3,7 @@
  */
 
 #include <gtest/gtest.h>
-#include "../../TestSuit.cpp"
+#include "../../TestSuit.h"
 #include "TraceTime.h"
 #include "DataBaseManager.h"
 #include "AffinityAPIAdvisor.h"

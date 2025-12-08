@@ -12,7 +12,7 @@
 #include "ProjectExplorerManager.h"
 #include "WsSessionImpl.h"
 #include "../../../FullDbTestSuit.cpp"
-#include "../../../TestSuit.cpp"
+#include "../../../TestSuit.h"
 
 using namespace Dic::Server;
 using namespace Dic::Module::Timeline;

@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 #include "FileUtil.h"
 #include "IdBuilder.h"
-#include "../TestSuit.cpp"
+#include "../TestSuit.h"
 #include "JsonUtil.h"
 
 using namespace Dic;
