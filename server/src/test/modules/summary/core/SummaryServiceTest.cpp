@@ -17,6 +17,8 @@ const int NUMBER_SIXTEEN = 16;
 class SummaryServiceTest : public ::testing::Test {
 protected:
     std::string filePath;
+    std::string baselineFilePath;
+    std::string dbPath;
 
     void SetUp() override
     {
@@ -24,25 +26,23 @@ protected:
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
         filePath = currPath + R"(/src/test/test_data/cluster_analysis_output)";
+        baselineFilePath = currPath + R"(/src/test/test_data/baseline_cluster/cluster_analysis_output)";
+        dbPath = filePath + FILE_SEPARATOR + "cluster.db";
     }
 
-    static std::string InitParser(const std::string &dataPath, const std::string &uniqueKey)
+    void InitParser(const std::string &dataPath)
     {
-        // 创建新的db连接对象
-        auto database = Dic::Module::FullDb::DataBaseManager::Instance().CreateClusterDatabase(uniqueKey,
-            Dic::Module::Timeline::DataType::TEXT);
         // 集群解析，如果集群已解析，则只会初始化db，然后结束流程
-        Dic::Module::FullDb::ClusterFileParser clusterFileParser(dataPath, database,
-                                                                 uniqueKey + Dic::TimeUtil::Instance().NowStr());
+        // database直接传空指针，建立连接池的动作在ParseClusterFiles中
+        Dic::Module::FullDb::ClusterFileParser clusterFileParser(dataPath, nullptr,
+                                                                 dataPath + Dic::TimeUtil::Instance().NowStr());
         clusterFileParser.ParseClusterFiles();
         clusterFileParser.ParseClusterStep2Files();
-        return database->GetDbPath();
     }
 
-    static void Clear()
+    void Clear()
     {
-        Dic::Module::FullDb::DataBaseManager::Instance().EraseClusterDb(Dic::COMPARE);
-        Dic::Module::FullDb::DataBaseManager::Instance().EraseClusterDb(Dic::BASELINE);
+        Dic::Module::FullDb::DataBaseManager::Instance().ClearClusterDb();
     }
 };
 
@@ -60,12 +60,12 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryBaseInfoAllFail)
 TEST_F(SummaryServiceTest, QueryCompareSummaryBaseInfoAllSuccess)
 {
     Clear();
-    InitParser(filePath, Dic::COMPARE);
-    InitParser(filePath, Dic::BASELINE);
+    InitParser(filePath);
+    InitParser(baselineFilePath);
     SummaryTopRankRequest request;
     request.params.isCompare = true;
-    request.params.clusterPath = Dic::COMPARE;
-    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
+    request.params.clusterPath = filePath;
+    BaselineManager::Instance().SetBaselineClusterPath(baselineFilePath);
     SummaryTopRankResponse response;
     SummaryService::QueryCompareSummaryBaseInfo(request, response);
     EXPECT_EQ(response.body.baseInfo.compare.rankCount, NUMBER_SIXTEEN);
@@ -76,10 +76,10 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryBaseInfoAllSuccess)
 TEST_F(SummaryServiceTest, QueryCompareSummaryBaseInfoOnlyCompareSuccess)
 {
     Clear();
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(filePath);
     SummaryTopRankRequest request;
     request.params.isCompare = true;
-    request.params.clusterPath = Dic::COMPARE;
+    request.params.clusterPath = filePath;
     SummaryTopRankResponse response;
     SummaryService::QueryCompareSummaryBaseInfo(request, response);
     EXPECT_EQ(response.body.baseInfo.compare.rankCount, NUMBER_SIXTEEN);
@@ -90,10 +90,10 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryBaseInfoOnlyCompareSuccess)
 TEST_F(SummaryServiceTest, QueryCompareSummaryBaseInfoOnlyBaselineSuccess)
 {
     Clear();
-    InitParser(filePath, Dic::BASELINE);
+    InitParser(baselineFilePath);
     SummaryTopRankRequest request;
     request.params.isCompare = true;
-    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
+    BaselineManager::Instance().SetBaselineClusterPath(baselineFilePath);
     SummaryTopRankResponse response;
     SummaryService::QueryCompareSummaryBaseInfo(request, response);
     EXPECT_EQ(response.body.baseInfo.compare.rankCount, NUMBER_ZERO);
@@ -104,12 +104,12 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryBaseInfoOnlyBaselineSuccess)
 TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategyWithAlgIsNull)
 {
     Clear();
-    InitParser(filePath, Dic::BASELINE);
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(baselineFilePath);
+    InitParser(filePath);
     ParallelismPerformance params;
     params.isCompare = true;
-    params.clusterPath = Dic::COMPARE;
-    BaselineManager::Instance().SetBaselineClusterPath(Dic::COMPARE);
+    params.clusterPath = filePath;
+    BaselineManager::Instance().SetBaselineClusterPath(baselineFilePath);
     PerformanceIndicatorData indicatorData;
     SummaryService::QueryParallelismPerformanceInfo(params, indicatorData);
     EXPECT_EQ(indicatorData.indicators.size(), NUMBER_ZERO);
@@ -118,8 +118,8 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategyWithAlgIsNull)
 TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWhenIsCompare)
 {
     Clear();
-    std::string dbPath = InitParser(filePath, Dic::BASELINE);
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(baselineFilePath);
+    InitParser(filePath);
     Dic::Module::ParallelStrategyConfig config;
     const int defaultSize = 2;
     config.ppSize = defaultSize;
@@ -134,8 +134,8 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWhenIsCompa
     params.step = "2";
     params.isCompare = true;
     params.config = config;
-    params.clusterPath = Dic::COMPARE;
-    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
+    params.clusterPath = filePath;
+    BaselineManager::Instance().SetBaselineClusterPath(baselineFilePath);
     PerformanceIndicatorData indicatorData;
     SummaryService::QueryParallelismPerformanceInfo(params, indicatorData);
     EXPECT_EQ(indicatorData.performanceData.size(), NUMBER_SIXTEEN);
@@ -144,8 +144,8 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWhenIsCompa
 TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithDpDimWhenIsNotCompare)
 {
     Clear();
-    std::string dbPath = InitParser(filePath, Dic::BASELINE);
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(baselineFilePath);
+    InitParser(filePath);
     Dic::Module::ParallelStrategyConfig config;
     const int defaultSize = 2;
     config.ppSize = defaultSize;
@@ -160,7 +160,7 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithDpDimWh
     params.step = "2";
     params.isCompare = false;
     params.config = config;
-    params.clusterPath = Dic::COMPARE;
+    params.clusterPath = filePath;
     auto algorithm = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(dbPath);
     algorithm->UpdateParallelDimension(params.dimension, config, err);
     PerformanceIndicatorData indicatorData;
@@ -171,8 +171,8 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithDpDimWh
 TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithPpDimWhenIsNotCompare)
 {
     Clear();
-    std::string dbPath = InitParser(filePath, Dic::BASELINE);
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(baselineFilePath);
+    InitParser(filePath);
     Dic::Module::ParallelStrategyConfig config;
     const int defaultSize = 2;
     config.ppSize = defaultSize;
@@ -187,7 +187,7 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithPpDimWh
     params.step = "2";
     params.isCompare = false;
     params.config = config;
-    params.clusterPath = Dic::COMPARE;
+    params.clusterPath = filePath;
     auto algorithm = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(dbPath);
     algorithm->UpdateParallelDimension(params.dimension, config, err);
     PerformanceIndicatorData indicatorData;
@@ -198,8 +198,8 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithPpDimWh
 TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithCpDimWhenIsNotCompare)
 {
     Clear();
-    std::string dbPath = InitParser(filePath, Dic::BASELINE);
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(baselineFilePath);
+    InitParser(filePath);
     Dic::Module::ParallelStrategyConfig config;
     const int defaultSize = 2;
     config.ppSize = defaultSize;
@@ -214,7 +214,7 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithCpDimWh
     params.step = "2";
     params.isCompare = false;
     params.config = config;
-    params.clusterPath = Dic::COMPARE;
+    params.clusterPath = filePath;
     auto algorithm = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(dbPath);
     algorithm->UpdateParallelDimension(params.dimension, config, err);
     PerformanceIndicatorData indicatorData;
@@ -226,8 +226,8 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithCpDimWh
 TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithTpDimWhenIsNotCompare)
 {
     Clear();
-    std::string dbPath = InitParser(filePath, Dic::BASELINE);
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(baselineFilePath);
+    InitParser(filePath);
     Dic::Module::ParallelStrategyConfig config;
     const int defaultSize = 2;
     config.ppSize = defaultSize;
@@ -242,7 +242,7 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithTpDimWh
     params.step = "2";
     params.isCompare = false;
     params.config = config;
-    params.clusterPath = Dic::COMPARE;
+    params.clusterPath = filePath;
     auto algorithm = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(dbPath);
     algorithm->UpdateParallelDimension(params.dimension, config, err);
     PerformanceIndicatorData indicatorData;
@@ -253,8 +253,8 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithTpDimWh
 TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithoutConfigWhenIsNotCompare)
 {
     Clear();
-    std::string dbPath = InitParser(filePath, Dic::BASELINE);
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(baselineFilePath);
+    InitParser(filePath);
     Dic::Module::ParallelStrategyConfig config;
     const int defaultSize = 1;
     config.ppSize = defaultSize;
@@ -270,7 +270,7 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccessWithoutConf
     params.step = "2";
     params.isCompare = false;
     params.config = config;
-    params.clusterPath = Dic::COMPARE;
+    params.clusterPath = filePath;
     auto algorithm = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(dbPath);
     algorithm->UpdateParallelDimension(params.dimension, config, err);
     PerformanceIndicatorData indicatorData;

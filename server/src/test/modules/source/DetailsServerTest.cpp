@@ -6,7 +6,7 @@
 #include "SourceProtocolRequest.h"
 #include "SourceProtocolResponse.h"
 #include "SourceFileParser.h"
-#include "../../TestSuit.cpp"
+#include "../../TestSuit.h"
 #include "BaselineManager.h"
 
 const int NUMBER_ONE = 1;

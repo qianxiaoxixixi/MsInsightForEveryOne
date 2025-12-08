@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 #include "SummaryProtocolRequest.h"
 #include "DataBaseManager.h"
-#include "../../TestSuit.cpp"
+#include "../../TestSuit.h"
 
 class SummaryTest : TestSuit {
 };

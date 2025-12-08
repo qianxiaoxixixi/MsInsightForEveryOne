@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-#include "../../TestSuit.cpp"
+#include "../../TestSuit.h"
 #include "ProtocolDefs.h"
 #include "AclnnOpAdvisor.h"
 #include "AffinityAPIAdvisor.h"

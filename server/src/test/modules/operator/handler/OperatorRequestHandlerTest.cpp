@@ -19,7 +19,7 @@
 #include "ProjectExplorerManager.h"
 #include "WsSessionImpl.h"
 #include "RenderEngine.h"
-#include "../../../TestSuit.cpp"
+#include "../../../TestSuit.h"
 
 
 using namespace Dic::Server;

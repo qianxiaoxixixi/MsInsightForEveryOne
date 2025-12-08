@@ -21,6 +21,7 @@ using namespace Dic::Module::FullDb;
 class ExpertHotspotManagerTest : public ::testing::Test {
 protected:
     std::string filePath;
+    std::string baselineFilePath;
     std::string hotspotPath;
     std::string deploymentPath;
     std::string heatMapProfilingPath;
@@ -30,22 +31,20 @@ protected:
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
         filePath = currPath + R"(/src/test/test_data/cluster_analysis_output)";
+        baselineFilePath = currPath + R"(/src/test/test_data/baseline_cluster/cluster_analysis_output)";
         hotspotPath = currPath + R"(/src/test/test_data/expert_hotspot)";
         deploymentPath = currPath + R"(/src/test/test_data/expert_deployment)";
         heatMapProfilingPath = currPath + R"(/src/test/test_data/heatMap/)";
     }
 
-    static std::string InitParser(const std::string &dataPath, const std::string &uniqueKey)
+    void InitParser(const std::string &dataPath)
     {
-        // 创建新的db连接对象
-        auto database = Dic::Module::FullDb::DataBaseManager::Instance()
-            .CreateClusterDatabase(uniqueKey, Dic::Module::Timeline::DataType::TEXT);
         // 集群解析，如果集群已解析，则只会初始化db，然后结束流程
-        Dic::Module::FullDb::ClusterFileParser clusterFileParser(dataPath, database,
-                                                                 uniqueKey + Dic::TimeUtil::Instance().NowStr());
+        // database直接传空指针，建立连接池的动作在ParseClusterFiles中
+        Dic::Module::FullDb::ClusterFileParser clusterFileParser(dataPath, nullptr,
+                                                                 dataPath + Dic::TimeUtil::Instance().NowStr());
         clusterFileParser.ParseClusterFiles();
         clusterFileParser.ParseClusterStep2Files();
-        return database->GetDbPath();
     }
 
     static void WaitParseEnd(std::vector<std::string> statusList)
@@ -77,9 +76,9 @@ protected:
         WaitParseEnd({"100"});
     }
 
-    static void Clear()
+   void Clear()
     {
-        auto db = Dic::Module::FullDb::DataBaseManager::Instance().GetClusterDatabase(Dic::COMPARE);
+        auto db = Dic::Module::FullDb::DataBaseManager::Instance().GetClusterDatabase(filePath);
         if (db != nullptr) {
             // 清空热点数据
             db->DeleteExpertHotspot("decode", "1");
@@ -94,17 +93,18 @@ protected:
             baseInfoMap[Dic::Module::KEY_MODEL_LAYER] = "0";
             db->InsertDuplicateUpdateBaseInfo(baseInfoMap);
         }
-        Dic::Module::FullDb::DataBaseManager::Instance().EraseClusterDb(Dic::COMPARE);
+        db.reset();
+        Dic::Module::FullDb::DataBaseManager::Instance().ClearClusterDb();
         TraceFileParser::Instance().DeleteParseFiles({"100"});
     }
 };
 
 TEST_F(ExpertHotspotManagerTest, InitExpertHotspotDataSuccess)
 {
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(filePath);
     std::string error;
-    Dic::Module::Summary::ExpertHotspotManager::InitExpertHotspotData(hotspotPath, "1", error, COMPARE);
-    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData(COMPARE, "decode", "1");
+    Dic::Module::Summary::ExpertHotspotManager::InitExpertHotspotData(hotspotPath, "1", error, filePath);
+    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData(filePath, "decode", "1");
     const int exceptSize = 232;
     EXPECT_EQ(res.size(), exceptSize);
     Clear();
@@ -112,12 +112,12 @@ TEST_F(ExpertHotspotManagerTest, InitExpertHotspotDataSuccess)
 
 TEST_F(ExpertHotspotManagerTest, UpdateModelInfoSuccess)
 {
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(filePath);
     std::string error;
-    Dic::Module::Summary::ExpertHotspotManager::InitExpertHotspotData(hotspotPath, "1", error, COMPARE);
+    Dic::Module::Summary::ExpertHotspotManager::InitExpertHotspotData(hotspotPath, "1", error, filePath);
     Dic::Module::ModelInfo modelInfo{{0, 2}, 0, 0, 4, 61};
-    Dic::Module::Summary::ExpertHotspotManager::UpdateModelInfo(COMPARE, modelInfo, error);
-    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData(COMPARE, "decode", "1");
+    Dic::Module::Summary::ExpertHotspotManager::UpdateModelInfo(filePath, modelInfo, error);
+    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData(filePath, "decode", "1");
     const int exceptSize = 244;
     const int numberZero = 0;
     const int exceptVisits = 35661;
@@ -134,11 +134,11 @@ TEST_F(ExpertHotspotManagerTest, UpdateModelInfoSuccess)
 
 TEST_F(ExpertHotspotManagerTest, QueryWithoutHotspotData)
 {
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(filePath);
     std::string error;
     Dic::Module::ModelInfo modelInfo{{0, 2}, 0, 0, 4, 61};
-    Dic::Module::Summary::ExpertHotspotManager::UpdateModelInfo(COMPARE, modelInfo, error);
-    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData(COMPARE, "decode", "1");
+    Dic::Module::Summary::ExpertHotspotManager::UpdateModelInfo(filePath, modelInfo, error);
+    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData(filePath, "decode", "1");
     const int exceptSize = 244;
     const int numberZero = 0;
     EXPECT_EQ(res.size(), exceptSize);
@@ -148,10 +148,10 @@ TEST_F(ExpertHotspotManagerTest, QueryWithoutHotspotData)
 
 TEST_F(ExpertHotspotManagerTest, InitExpertDeploymentDataSuccess)
 {
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(filePath);
     std::string error;
-    Dic::Module::Summary::ExpertHotspotManager::InitExpertHotspotData(deploymentPath, "1", error, COMPARE);
-    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData(COMPARE, "prefill", "1");
+    Dic::Module::Summary::ExpertHotspotManager::InitExpertHotspotData(deploymentPath, "1", error, filePath);
+    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData(filePath, "prefill", "1");
     const int exceptSize = 18560;
     EXPECT_EQ(res.size(), exceptSize);
     Clear();
@@ -160,14 +160,14 @@ TEST_F(ExpertHotspotManagerTest, InitExpertDeploymentDataSuccess)
 TEST_F(ExpertHotspotManagerTest, ParseHeatMapFromProfilingWithoutTraceDb)
 {
     Dic::Module::ParserFactory::Reset();
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(filePath);
     auto respotoryFactory = RepositoryFactory::Instance();
     auto dataEngine = DataEngine::Instance();
     dataEngine->SetRepositoryFactory(respotoryFactory);
     auto renderEngine = RenderEngine::Instance();
     renderEngine->SetDataEngineInterface(dataEngine);
     std::string errorMsg;
-    bool res = Dic::Module::Summary::ExpertHotspotManager::UpdateHeatMapFromProfiling(errorMsg, Dic::COMPARE, {"0"});
+    bool res = Dic::Module::Summary::ExpertHotspotManager::UpdateHeatMapFromProfiling(errorMsg, filePath, {"0"});
     EXPECT_EQ(res, false);
     Clear();
     Dic::Module::ParserFactory::Reset();

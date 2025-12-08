@@ -29,8 +29,10 @@ public:
         std::string dbFilePath = currPath + dbPath3 + "cluster_analysis.db";
         DataBaseManager::Instance().SetDataType(DataType::DB, dbFilePath);
         DataBaseManager::Instance().SetFileType(FileType::MS_PROF, dbFilePath);
-        auto culsterDatabase = DataBaseManager::Instance().CreateClusterDatabase(COMPARE, DataType::DB);
-        culsterDatabase->OpenDb(currPath + dbPath3 + "cluster_analysis.db", false);
+        std::string clusterDbPath = currPath + dbPath3 + "cluster_analysis.db";
+        Dic::Module::FullDb::DataBaseManager::Instance().CreateClusterConnectionPool(COMPARE, clusterDbPath,
+            Dic::Module::Timeline::DataType::DB);
+        auto clusterDatabase = Dic::Module::FullDb::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     }
     static void TearDownTestSuite() {}
 };

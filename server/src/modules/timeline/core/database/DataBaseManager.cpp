@@ -253,6 +253,7 @@ void DataBaseManager::Clear()
     memoryDatabaseMap.clear();
     summaryDatabaseMap.clear();
     clusterDatabaseMap.clear();
+    clusterProject2DbPathMap.clear();
     dbMutexMap.clear();
     dbFilePathMap.clear();
     host2DbPath.clear();
@@ -288,8 +289,20 @@ void DataBaseManager::EraseClusterDb(const std::string &uniqueKey)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     if (clusterDatabaseMap.count(uniqueKey) != 0) {
-        clusterDatabaseMap[uniqueKey].get()->CloseDb();
+        auto clusterConnectionPtr = clusterDatabaseMap[uniqueKey]->GetConnection();
+        if (clusterConnectionPtr != nullptr) {
+            clusterConnectionPtr->ReleaseStmt();
+            clusterConnectionPtr->CloseDb();
+        }
         clusterDatabaseMap.erase(clusterDatabaseMap.find(uniqueKey));
+        // erase clusterProject2DbPathMap on value of uniqueKey
+        auto it = std::find_if(clusterProject2DbPathMap.begin(), clusterProject2DbPathMap.end(),
+            [&uniqueKey](const auto &pair) {
+            return pair.second == uniqueKey;
+            });
+        if (it != clusterProject2DbPathMap.end()) {
+            clusterProject2DbPathMap.erase(it);
+        }
     }
 }
 
@@ -297,48 +310,77 @@ void DataBaseManager::ClearClusterDb()
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     for (const auto &item: clusterDatabaseMap) {
-        if (item.second != nullptr) {
-            item.second->ReleaseStmt();
-            item.second->CloseDb();
+        auto clusterConnectionPtr = item.second->GetConnection();
+        if (clusterConnectionPtr != nullptr) {
+            clusterConnectionPtr->ReleaseStmt();
+            clusterConnectionPtr->CloseDb();
         }
     }
     clusterDatabaseMap.clear();
+    clusterProject2DbPathMap.clear();
 }
 
 /**
- * 创建集群db对象（如果对象已存在，则清除重新创建）
- *
- * @param uniqueKey 唯一键
- * @param type db类型
+ * 使用连接池时，需传入db文件路径, 此处设置project->db路径映射，是为了兼容旧有GetClusterDatabase通过project路径调用数据库连接的逻辑
+ * @param projectPath 导入项目文件路径
+ * @param dbPath 集群db文件路径，用作唯一键
+ */
+void DataBaseManager::SetClusterProjectDbPathMapping(const std::string &projectPath, const std::string &dbPath)
+{
+    clusterProject2DbPathMap[projectPath] = dbPath;
+}
+
+/**
+ * 创建集群db连接池（如果连接池已存在, 则清除重新创建）
+ * @param projectPath 导入项目文件路径
+ * @param dbPath 集群db文件路径，用作唯一键
+ * @param type 数据类型，DB or TEXT
  * @return
  */
-std::shared_ptr<VirtualClusterDatabase> DataBaseManager::CreateClusterDatabase(const std::string &uniqueKey,
-                                                                               DataType type)
+void DataBaseManager::CreateClusterConnectionPool(const std::string &projectPath, const std::string &dbPath,
+                                                  DataType type)
 {
+    const static unsigned int CPU_CORE_COUNT = SystemUtil::GetCpuCoreCount();
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    if (clusterDatabaseMap.count(uniqueKey) != 0) {
-        EraseClusterDb(uniqueKey);
+    SetClusterProjectDbPathMapping(projectPath, dbPath);
+    // 如果连接池已存在, 则清除重新创建
+    if (clusterDatabaseMap.count(dbPath) != 0) {
+        EraseClusterDb(dbPath);
     }
-    if (type == DataType::TEXT) {
-        clusterDatabaseMap.emplace(uniqueKey, std::make_shared<TextClusterDatabase>(GetDbMutex(uniqueKey)));
-    } else if (type == DataType::DB) {
-        clusterDatabaseMap.emplace(uniqueKey, std::make_shared<DbClusterDataBase>(GetDbMutex(uniqueKey)));
+    std::recursive_mutex &dbMutex = GetDbMutex(dbPath);
+    std::shared_ptr<DBConnectionPool<VirtualClusterDatabase>> conn;
+    switch (type) {
+        case DataType::DB:
+            conn = std::make_shared<DBConnectionPool<VirtualClusterDatabase>>(dbPath,
+                [&dbMutex]() { return new FullDb::DbClusterDataBase(dbMutex); });
+            break;
+        case DataType::TEXT:
+        default:
+            conn = std::make_shared<DBConnectionPool<VirtualClusterDatabase>>(dbPath,
+                [&dbMutex]() { return new TextClusterDatabase(dbMutex); }
+            );
+            break;
     }
-    return clusterDatabaseMap[uniqueKey];
+    conn->SetMaxActiveCount(CPU_CORE_COUNT);
+    clusterDatabaseMap.emplace(dbPath, std::move(conn));
 }
 
 /**
  * 根据唯一键获取集群db（会返回空指针，如不存在会返回空指针，外层需做好空指针校验）
  *
- * @param uniqueKey 唯一键
+ * @param projectPath 导入项目文件路径
  * @return
  */
-std::shared_ptr<VirtualClusterDatabase> DataBaseManager::GetClusterDatabase(const std::string &uniqueKey)
+std::shared_ptr<VirtualClusterDatabase> DataBaseManager::GetClusterDatabase(const std::string &projectPath)
 {
-    if (clusterDatabaseMap.count(uniqueKey) == 0) {
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    std::string uniqueKey = clusterProject2DbPathMap[projectPath];
+    auto it = clusterDatabaseMap.find(uniqueKey);
+    if (it == clusterDatabaseMap.end()) {
         return nullptr;
     }
-    return clusterDatabaseMap[uniqueKey];
+    auto ptr = it->second->GetConnection();
+    return ptr;
 }
 
 std::vector<std::shared_ptr<VirtualClusterDatabase>> DataBaseManager::GetAllClusterDatabase()
@@ -346,7 +388,7 @@ std::vector<std::shared_ptr<VirtualClusterDatabase>> DataBaseManager::GetAllClus
     std::vector<std::shared_ptr<VirtualClusterDatabase>> res;
     for (auto& [key, value]: clusterDatabaseMap) {
         (void)(key);
-        res.push_back(value);
+        res.push_back(value->GetConnection());
     }
     return res;
 }

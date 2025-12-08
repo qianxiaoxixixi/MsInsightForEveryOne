@@ -7,7 +7,7 @@
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 #include "MemoryTestUtil.h"
-#include "../../../TestSuit.cpp"
+#include "../../../TestSuit.h"
 
 using namespace Dic::Module::Timeline;
 

@@ -2,7 +2,7 @@
 * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
 */
 #include <gtest/gtest.h>
-#include "../../../TestSuit.cpp"
+#include "../../../TestSuit.h"
 #include "Database.h"
 #include "DataBaseManager.h"
 #include "DbSummaryDataBase.h"

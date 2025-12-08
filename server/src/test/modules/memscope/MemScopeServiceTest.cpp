@@ -8,7 +8,7 @@
 #include "TraceTime.h"
 #include "MemScopeEntities.h"
 #include "MemScopeDatabase.h"
-#include "../../TestSuit.cpp"
+#include "../../TestSuit.h"
 #include "MemScopeService.h"
 
 using namespace Dic::Module::Timeline;

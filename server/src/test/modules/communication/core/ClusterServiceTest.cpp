@@ -19,6 +19,7 @@ const int NUMBER_TWO = 2;
 class ClusterServiceTest : public ::testing::Test {
 protected:
     std::string filePath;
+    std::string baselineFilePath;
 
     void SetUp() override
     {
@@ -26,24 +27,22 @@ protected:
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
         filePath = currPath + R"(/src/test/test_data/cluster_analysis_output)";
+        baselineFilePath = currPath + R"(/src/test/test_data/baseline_cluster/cluster_analysis_output)";
     }
 
-    static void InitParser(const std::string &dataPath, const std::string &uniqueKey)
+    static void InitParser(const std::string &dataPath)
     {
-        // 创建新的db连接对象
-        auto database = Dic::Module::FullDb::DataBaseManager::Instance().CreateClusterDatabase(uniqueKey,
-            Dic::Module::Timeline::DataType::TEXT);
         // 集群解析，如果集群已解析，则只会初始化db，然后结束流程
-        Dic::Module::FullDb::ClusterFileParser clusterFileParser(dataPath, database,
-                                                                 uniqueKey + Dic::TimeUtil::Instance().NowStr());
+        // database直接传空指针，建立连接池的动作在ParseClusterFiles中
+        Dic::Module::FullDb::ClusterFileParser clusterFileParser(dataPath, nullptr,
+                                                                 dataPath + Dic::TimeUtil::Instance().NowStr());
         clusterFileParser.ParseClusterFiles();
         clusterFileParser.ParseClusterStep2Files();
     }
 
     static void Clear()
     {
-        Dic::Module::FullDb::DataBaseManager::Instance().EraseClusterDb(Dic::COMPARE);
-        Dic::Module::FullDb::DataBaseManager::Instance().EraseClusterDb(Dic::BASELINE);
+        Dic::Module::FullDb::DataBaseManager::Instance().ClearClusterDb();
     }
 };
 
@@ -61,12 +60,12 @@ TEST_F(ClusterServiceTest, QueryIterationsAllFail)
 TEST_F(ClusterServiceTest, QueryIterationsAllSuccess)
 {
     Clear();
-    InitParser(filePath, Dic::COMPARE);
-    InitParser(filePath, Dic::BASELINE);
+    InitParser(filePath);
+    InitParser(baselineFilePath);
     Dic::Protocol::IterationsRequest request;
     request.params.isCompare = true;
-    request.params.clusterPath = Dic::COMPARE;
-    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
+    request.params.clusterPath = filePath;
+    BaselineManager::Instance().SetBaselineClusterPath(baselineFilePath);
     Dic::Protocol::IterationsOrRanksResponse response;
     ClusterService::QueryIterations(request, response);
     EXPECT_EQ(response.body.compare.size(), NUMBER_ONE);
@@ -78,10 +77,10 @@ TEST_F(ClusterServiceTest, QueryIterationsAllSuccess)
 TEST_F(ClusterServiceTest, QueryIterationsOnlyCompareSuccess)
 {
     Clear();
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(filePath);
     Dic::Protocol::IterationsRequest request;
     request.params.isCompare = true;
-    request.params.clusterPath = Dic::COMPARE;
+    request.params.clusterPath = filePath;
     Dic::Protocol::IterationsOrRanksResponse response;
     ClusterService::QueryIterations(request, response);
     EXPECT_EQ(response.body.compare.size(), NUMBER_ONE);
@@ -102,14 +101,14 @@ TEST_F(ClusterServiceTest, QueryGroupInfoAllFail)
 
 TEST_F(ClusterServiceTest, QueryGroupInfoAllSuccess)
 {
-    InitParser(filePath, Dic::COMPARE);
-    InitParser(filePath, Dic::BASELINE);
+    InitParser(filePath);
+    InitParser(baselineFilePath);
     Dic::Protocol::MatrixGroupRequest request;
     request.params.iterationId = "2";
     request.params.baselineIterationId = "2";
     request.params.isCompare = true;
-    request.params.clusterPath = Dic::COMPARE;
-    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
+    request.params.clusterPath = filePath;
+    BaselineManager::Instance().SetBaselineClusterPath(baselineFilePath);
     Dic::Protocol::MatrixGroupResponse response;
     ClusterService::QueryGroupInfo(request, response);
     EXPECT_EQ(response.body.groupList.size(), NUMBER_ONE);
@@ -118,12 +117,12 @@ TEST_F(ClusterServiceTest, QueryGroupInfoAllSuccess)
 
 TEST_F(ClusterServiceTest, QueryGroupInfoOnlyCompareSuccess)
 {
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(filePath);
     Dic::Protocol::MatrixGroupRequest request;
     request.params.iterationId = "2";
     request.params.baselineIterationId = "1";
     request.params.isCompare = true;
-    request.params.clusterPath = Dic::COMPARE;
+    request.params.clusterPath = filePath;
     Dic::Protocol::MatrixGroupResponse response;
     ClusterService::QueryGroupInfo(request, response);
     EXPECT_EQ(response.body.groupList.size(), NUMBER_ONE);
@@ -132,12 +131,12 @@ TEST_F(ClusterServiceTest, QueryGroupInfoOnlyCompareSuccess)
 
 TEST_F(ClusterServiceTest, QueryMatrixInfoSuccess)
 {
-    InitParser(filePath, Dic::COMPARE);
-    InitParser(filePath, Dic::BASELINE);
+    InitParser(filePath);
+    InitParser(baselineFilePath);
     Dic::Protocol::MatrixBandwidthParam params = {"(0, 1, 2, 3, 4, 5, 6, 7)", "hcom_broadcast__483_0",
                                                   "2", "", "9350434047717501483", true, "2",
-                                                  Dic::COMPARE, "9350434047717501483"};
-    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
+                                                  filePath, "9350434047717501483"};
+    BaselineManager::Instance().SetBaselineClusterPath(baselineFilePath);
     Dic::Protocol::MatrixListResponseBody body;
     ClusterService::QueryMatrixInfo(params, body);
     EXPECT_EQ(body.matrixList.size(), NUMBER_TWO);
@@ -150,7 +149,7 @@ TEST_F(ClusterServiceTest, QueryMatrixInfoFailOfDatabaseNotExist)
     Clear();
     Dic::Protocol::MatrixBandwidthParam params = {"(0, 1, 2, 3, 4, 5, 6, 7)", "hcom_broadcast__483_0",
                                                   "2", "", "9350434047717501483", true,
-                                                  "2", Dic::COMPARE};
+                                                  "2", filePath};
     Dic::Protocol::MatrixListResponseBody body;
     ClusterService::QueryMatrixInfo(params, body);
     EXPECT_EQ(body.matrixList.size(), NUMBER_ZERO);
@@ -158,8 +157,8 @@ TEST_F(ClusterServiceTest, QueryMatrixInfoFailOfDatabaseNotExist)
 
 TEST_F(ClusterServiceTest, QueryOperatorListSuccess)
 {
-    InitParser(filePath, Dic::COMPARE);
-    InitParser(filePath, Dic::BASELINE);
+    InitParser(filePath);
+    InitParser(baselineFilePath);
     Dic::Protocol::DurationListParams params;
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
@@ -167,8 +166,8 @@ TEST_F(ClusterServiceTest, QueryOperatorListSuccess)
     params.baselineGroupIdHash = "9350434047717501483";
     params.baselineIterationId = "2";
     params.isCompare = true;
-    params.clusterPath = Dic::COMPARE;
-    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
+    params.clusterPath = filePath;
+    BaselineManager::Instance().SetBaselineClusterPath(baselineFilePath);
     Dic::Protocol::OperatorListsResponseBody body;
     ClusterService::QueryOperatorList(params, body);
     const uint64_t expectMaxTime = 11229980;
@@ -189,7 +188,7 @@ TEST_F(ClusterServiceTest, QueryOperatorListFailWithoutDb)
     params.iterationId = "2";
     params.groupIdHash = "9350434047717501483";
     params.isCompare = true;
-    params.clusterPath = Dic::COMPARE;
+    params.clusterPath = filePath;
     Dic::Protocol::OperatorListsResponseBody body;
     ClusterService::QueryOperatorList(params, body);
     EXPECT_EQ(body.opLists.size(), NUMBER_ZERO);
@@ -197,16 +196,16 @@ TEST_F(ClusterServiceTest, QueryOperatorListFailWithoutDb)
 
 TEST_F(ClusterServiceTest, QueryDurationListSuccess)
 {
-    InitParser(filePath, Dic::COMPARE);
-    InitParser(filePath, Dic::BASELINE);
+    InitParser(filePath);
+    InitParser(baselineFilePath);
     Dic::Protocol::DurationListParams params;
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
     params.groupIdHash = "9350434047717501483";
     params.baselineIterationId = "2";
     params.isCompare = true;
-    params.clusterPath = Dic::COMPARE;
-    BaselineManager::Instance().SetBaselineClusterPath(Dic::BASELINE);
+    params.clusterPath = filePath;
+    BaselineManager::Instance().SetBaselineClusterPath(baselineFilePath);
     Dic::Protocol::DurationListsResponseBody body;
     ClusterService::QueryDurationList(params, body);
     const double expectStartTime = 10.6855;
@@ -227,7 +226,7 @@ TEST_F(ClusterServiceTest, QueryDurationListFailWithoutDb)
     params.groupIdHash = "9350434047717501483";
     params.baselineIterationId = "2";
     params.isCompare = true;
-    params.clusterPath = Dic::COMPARE;
+    params.clusterPath = filePath;
     Dic::Protocol::DurationListsResponseBody body;
     ClusterService::QueryDurationList(params, body);
     EXPECT_EQ(body.durationList.size(), NUMBER_ZERO);
@@ -237,13 +236,13 @@ TEST_F(ClusterServiceTest, QueryDurationListFailWithoutDb)
 TEST_F(ClusterServiceTest, AnalyzeCommunicationSlowRanksCheckOperatorNameFalse)
 {
     Clear();
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(filePath);
     Dic::Protocol::DurationListParams params;
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
     params.groupIdHash = "9350434047717501483";
     params.isCompare = false;
-    params.clusterPath = Dic::COMPARE;
+    params.clusterPath = filePath;
     Dic::Protocol::CommunicationSlowRankAnalysisResponseBody body;
     auto res = ClusterService::AnalyzeCommunicationSlowRanks(params, body);
     EXPECT_EQ(res, true);
@@ -254,14 +253,14 @@ TEST_F(ClusterServiceTest, AnalyzeCommunicationSlowRanksCheckOperatorNameFalse)
 TEST_F(ClusterServiceTest, AnalyzeCommunicationSlowRanksCheckPgNameFalse)
 {
     Clear();
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(filePath);
     Dic::Protocol::DurationListParams params;
     params.operatorName = "Total Op Info";
     params.iterationId = "2";
     params.groupIdHash = "9350434047717501483";
     params.isCompare = false;
     params.pgName = "pp";
-    params.clusterPath = Dic::COMPARE;
+    params.clusterPath = filePath;
     Dic::Protocol::CommunicationSlowRankAnalysisResponseBody body;
     auto res = ClusterService::AnalyzeCommunicationSlowRanks(params, body);
     EXPECT_EQ(res, true);
@@ -271,13 +270,13 @@ TEST_F(ClusterServiceTest, AnalyzeCommunicationSlowRanksCheckPgNameFalse)
 TEST_F(ClusterServiceTest, AnalyzeCommunicationSlowRanksSuccess)
 {
     Clear();
-    InitParser(filePath, Dic::COMPARE);
+    InitParser(filePath);
     Dic::Protocol::DurationListParams params;
     params.operatorName = "Total Op Info";
     params.iterationId = "2";
     params.groupIdHash = "9350434047717501483";
     params.isCompare = false;
-    params.clusterPath = Dic::COMPARE;
+    params.clusterPath = filePath;
     Dic::Protocol::CommunicationSlowRankAnalysisResponseBody body;
     auto res = ClusterService::AnalyzeCommunicationSlowRanks(params, body);
     EXPECT_EQ(res, true);

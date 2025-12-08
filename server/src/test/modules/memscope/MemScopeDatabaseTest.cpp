@@ -9,7 +9,7 @@
 #include "MemScopeDatabase.h"
 #include "MemScopeService.h"
 #include "MemScopeTableColumn.h"
-#include "../../TestSuit.cpp"
+#include "../../TestSuit.h"
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;

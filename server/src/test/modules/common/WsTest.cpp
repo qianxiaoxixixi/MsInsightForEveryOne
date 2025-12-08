@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-#include "../../TestSuit.cpp"
-#include "ServerLog.h"
+#include "../../TestSuit.h"
+#include "../../TestSuit.h"#include "ServerLog.h"
 #include "JsonUtil.h"
 #include "ProtocolManager.h"
 #include "ModuleManager.h"
