@@ -18,7 +18,7 @@ import {
     importProject,
     ImportProjectParams,
 } from '@/utils/Request';
-import { ProjectAction } from '@/utils/enum';
+import { ProjectAction, SessionAction } from '@/utils/enum';
 import { updateRankMap } from '@/utils/Rank';
 import { transformFile, updateProject } from '@/utils/Project';
 import { closeLoading } from '@/utils/useLoading';
@@ -74,6 +74,15 @@ export const addDataPath = async function(project: Project, action: ProjectActio
             connector.send({ event: 'remote/reset', body: {}, target: 'plugin' }); // 由于发送时页签应该只有 时间线、内存、算子 存在，所以这个事件只能被这三个页签收到
             return false;
         }
+        const res = result as ImportResultBody;
+        // 这里添加 session.actionListener.type !== SessionAction.ADD_DATA_UNDER_PROJECT 条件，防止在项目中添加卡的场景下，集群页面被重置
+        // 这里添加 res.isCluster 判断导入数据是否是集群，如果是集群数据，也要重置 session 使 clusterCompleted = false, 确保 Summary 和 Communication 模块正常加载
+        if (session.actionListener.type !== SessionAction.ADD_DATA_UNDER_PROJECT && (res.reset || res.isCluster)) {
+            session.reset();
+        }
+        // 这里立即将 actionListener 恢复为默认值，防止在正常导入或切换项目的场景下，不执行上方的 session.reset
+        session.resetActionListener();
+
         // 时间线需要判断是整体添加还是在项目内添加
         const { activeDataSource } = session;
 
@@ -83,10 +92,10 @@ export const addDataPath = async function(project: Project, action: ProjectActio
         // 添加参数告诉是否为点击的添加
         connector.send({
             event: 'remote/import',
-            body: { dataSource: transformTimelineDataSource(project), importResult: result as ImportResultBody, switchProject },
+            body: { dataSource: transformTimelineDataSource(project), importResult: res, switchProject },
             target: 'plugin',
         }); // 由于发送时页签应该只有 时间线、内存、算子 存在，所以这个事件只能被这三个页签收到
-        afterImportProject(params, result as ImportResultBody);
+        afterImportProject(params, res);
     }
     return true;
 };
