@@ -1211,6 +1211,11 @@ std::string DbTraceDataBase::GetStringCacheValue(const std::string& path, const 
     return stringsCache.at(path)[key];
 }
 
+void DbTraceDataBase::ClearStringsCache()
+{
+    stringsCache = {};
+}
+
 void DbTraceDataBase::InitStringsCache()
 {
     if (!stringsCache[path].empty()) {

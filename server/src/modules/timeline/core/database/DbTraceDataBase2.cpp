@@ -6,6 +6,7 @@
 #include "TrackInfoManager.h"
 #include "TraceDatabaseHelper.h"
 #include "CounterEventHelper.h"
+#include "HardWareRepo.h"
 
 namespace Dic::Module::FullDb {
 using namespace Server;
@@ -193,6 +194,7 @@ bool DbTraceDataBase::QueryUnitFlows(const Protocol::UnitFlowsParams &requestPar
     std::vector<FlowLocation> taskFlowLocationList =
         ExecuteQueryUnitFlowsForTable(requestParams, {"TASK", TASK_UNIT_FLOW_SQL}, minTimestamp,
         connectionId.value(), deviceIdList);
+    UpdateAscendHardwareFlowLocationName(requestParams.rankId, taskFlowLocationList);
     std::vector<FlowLocation> communicationOpFlowLocationList =
         ExecuteQueryUnitFlowsForTable(requestParams, {"COMMUNICATION_OP", comSql}, minTimestamp,
         connectionId.value(), deviceIdList);
@@ -333,6 +335,39 @@ bool DbTraceDataBase::AssembleUnitFlowOfTypeFwdBwd(const std::vector<FlowLocatio
     std::vector<UnitSingleFlow> flows{singleFlow};
     responseBody.unitAllFlows.push_back({.cat = singleFlow.cat, .flows = flows});
     return true;
+}
+
+void DbTraceDataBase::UpdateAscendHardwareFlowLocationName(const std::string &rankId,
+    std::vector<FlowLocation> &flowLocations)
+{
+    // 搜索 name
+    const std::vector<uint64_t> ids = std::accumulate(flowLocations.begin(), flowLocations.end(),
+        std::vector<uint64_t>(), [](std::vector<uint64_t>& acc, const FlowLocation& item) {
+            if (item.metaType == "Ascend Hardware") {
+                acc.push_back(StringUtil::StringToUint32(item.id));
+            }
+            return acc;
+        });
+    if (ids.empty()) {
+        return;
+    }
+    const std::shared_ptr<IBaseSliceRepo> hardwareRepo = std::make_unique<HardWareRepo>();
+    SliceQuery sliceQuery;
+    sliceQuery.rankId = rankId;
+    std::vector<CompeteSliceDomain> competeSliceVec;
+    hardwareRepo->QueryCompeteSliceByIds(sliceQuery, ids, competeSliceVec);
+    // 创建 id 到 name 的映射
+    std::unordered_map<std::string, std::string> nameMap;
+    for (const auto& item : competeSliceVec) {
+        nameMap[std::to_string(item.id)] = item.name;
+    }
+
+    // 更新 flowLocation 中的 name
+    std::for_each(flowLocations.begin(), flowLocations.end(), [nameMap](FlowLocation& flow) {
+        if (const auto it = nameMap.find(flow.id); it != nameMap.end()) {
+            flow.name = it->second;
+        }
+    });
 }
 
 std::string DbTraceDataBase::GetDeviceIdFromMemoryTable()

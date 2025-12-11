@@ -142,6 +142,7 @@ public:
 
     void UpdateStartTime(const std::string &fileId);
     void UpdateAllDepth();
+    static void ClearStringsCache();
     void InitStringsCache();
     void InitMetaDataInfo();
     static std::string GetStringCacheValue(const std::string& path, const std::string& key);
@@ -301,6 +302,8 @@ private:
     static std::string GetKernelDetailSqlWithHCCL(const KernelDetailsParams &requestParams);
 
     static std::string GetKernelDetailSqlWithoutHCCL(const KernelDetailsParams &requestParams);
+
+    static void UpdateAscendHardwareFlowLocationName(const std::string &rankId, std::vector<FlowLocation> &flowLocations);
 };
 }
 
