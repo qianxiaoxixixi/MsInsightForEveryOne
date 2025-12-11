@@ -20,6 +20,7 @@ protected:
         {
             isOpen = true;
             db = dbPtr;
+            ClearStringsCache();
             InitStringsCache();
         }
     };
@@ -62,6 +63,23 @@ protected:
         "INSERT INTO PYTORCH_API (startNs, endNs, globalTid, connectionId, name, "
         "sequenceNumber, fwdThreadId, inputDtypes, inputShapes, callchainId, type, depth) "
         "VALUES (20, 40, 17738580008830245, 1, 268435456, NULL, NULL, NULL, NULL, NULL, 50002, 3);";
+
+    const std::map<TableName, std::string> FLOW_INSERT_DATA_SQL_MAP = {
+        {TableName::DB_PYTORCH_API, "INSERT INTO PYTORCH_API (startNs, endNs, globalTid, connectionId, name, "
+            "sequenceNumber, fwdThreadId, inputDtypes, inputShapes, callchainId, type, depth) "
+            "VALUES (20, 40, 17738580008830245, 1, 268435456, NULL, NULL, NULL, NULL, NULL, 50002, 3);"},
+        {TableName::DB_CANN_API, "INSERT INTO CANN_API (startNs, endNs, type, globalTid, connectionId, "
+            "name, depth) VALUES (50, 70, 10000, 87471303975183, 19, 7052, 0);"},
+        {TableName::DB_MSTX_EVENTS, "INSERT INTO MSTX_EVENTS (startNs, endNs, eventType, rangeId, category, "
+            "message, globalTid, endGlobalTid, domainId, connectionId, depth) VALUES (1741595906437848910, "
+            "1741595906438879500, 2, 4294967295, 4294967295, 342, 497262723712066, 497262723712066, 343, 19, 0);"},
+        {TableName::DB_TASK, "INSERT INTO TASK (startNs, endNs, deviceId, connectionId, globalTaskId, "
+            "globalPid, taskType, contextId, streamId, taskId, modelId, depth) VALUES "
+            "(80, 100, 1, 19, 183022, 20366, 7166, 4294967295, 0, 39, 4294967295, 0);"},
+        {TableName::DB_COMMUNICATION_OP, "INSERT INTO COMMUNICATION_OP (opName, startNs, endNs, connectionId, "
+            "groupName, opId, relay, retry, dataType, algType, count, opType, waitNs) VALUES (393, "
+            "1723537649878647930, 1723537649878710990, 19, 395, 1, 0, 0, 5, 396, 5, 338, 1097840);"},
+    };
 };
 namespace Dic::Protocol {
 using namespace Dic::Module::Timeline;
@@ -1395,6 +1413,308 @@ TEST_F(DbTraceDatabaseTest, TestQueryUnitFlowsFromPyTorchToPyTorchFlowTypeFwdBwd
     EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.timestamp, 20); // 20
     EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.timestamp, 30); // 30
     RestoreRepoFunc();
+}
+
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlows_FromMSTX_EVENTS_ToAscendHardware_HaveName)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
+        TableName::DB_NPU_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP, TableName::DB_CONNECTION_IDS,
+        TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    const std::string connectIdsData = "INSERT INTO CONNECTION_IDS (id, connectionId) VALUES (1, 19);";
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (1, 'abc')";
+    const std::string taskData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_TASK);
+    const std::string mstxData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_MSTX_EVENTS);
+    const std::string stringIdsData =
+        "INSERT INTO STRING_IDS (id, value) VALUES (7166, 'task_name_1'), (342, 'dataloader');";
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdsData);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    DatabaseTestCaseMockUtil::InsertData(db, mstxData);
+    DatabaseTestCaseMockUtil::InsertData(db, stringIdsData);
+    std::string sql = "CREATE TABLE RANK_DEVICE_MAP (rankId INTEGER, deviceId INTEGER);";
+    DatabaseTestCaseMockUtil::CreateTable(db, sql);
+    std::string insertSql = "INSERT INTO RANK_DEVICE_MAP (rankId, deviceId) VALUES (1, 1);";
+    DatabaseTestCaseMockUtil::InsertData(db, insertSql);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "1";
+    requestParams.metaType = "MSTX_EVENTS";
+    requestParams.rankId = "1";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 1); // 1
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 1); // 1
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.metaType, "MSTX_EVENTS");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.name, "dataloader");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.metaType, "Ascend Hardware");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.name, "task_name_1");
+}
+
+
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlows_FromPyTorch_ToCANN_HaveName_Fail)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
+        TableName::DB_NPU_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP, TableName::DB_CONNECTION_IDS,
+        TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    const std::string connectIdsData =
+        "INSERT INTO CONNECTION_IDS (id, connectionId) VALUES (1, 19);";
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (1, 'abc')";
+    const std::string cannApiData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_CANN_API);
+    const std::string pytorchData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_PYTORCH_API);
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdsData);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
+    DatabaseTestCaseMockUtil::InsertData(db, pytorchData);
+    std::string sql = "CREATE TABLE RANK_DEVICE_MAP (rankId INTEGER, deviceId INTEGER);";
+    DatabaseTestCaseMockUtil::CreateTable(db, sql);
+    std::string insertSql = "INSERT INTO RANK_DEVICE_MAP (rankId, deviceId) VALUES (1, 1);";
+    DatabaseTestCaseMockUtil::InsertData(db, insertSql);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "19";
+    requestParams.metaType = "CANN_API";
+    requestParams.rankId = "1";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlows_FromPyTorch_ToAscendHardware_HaveName)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
+        TableName::DB_NPU_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP, TableName::DB_CONNECTION_IDS,
+        TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    const std::string connectIdsData =
+        "INSERT INTO CONNECTION_IDS (id, connectionId) VALUES (1, 19);";
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (1, 'abc')";
+    const std::string taskData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_TASK);
+    const std::string pytorchData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_PYTORCH_API);
+    const std::string stringIdsData =
+        "INSERT INTO STRING_IDS (id, value) VALUES "
+        " (7166, 'task_name_1'),"
+        " (268435456, 'python_name_1');";
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdsData);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    DatabaseTestCaseMockUtil::InsertData(db, pytorchData);
+    DatabaseTestCaseMockUtil::InsertData(db, stringIdsData);
+    std::string sql = "CREATE TABLE RANK_DEVICE_MAP (rankId INTEGER, deviceId INTEGER);";
+    DatabaseTestCaseMockUtil::CreateTable(db, sql);
+    std::string insertSql = "INSERT INTO RANK_DEVICE_MAP (rankId, deviceId) VALUES (1, 1);";
+    DatabaseTestCaseMockUtil::InsertData(db, insertSql);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "1";
+    requestParams.metaType = "PYTORCH_API";
+    requestParams.rankId = "1";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 1); // 1
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 1); // 1
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.metaType, "PYTORCH_API");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.name, "python_name_1");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.metaType, "Ascend Hardware");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.name, "task_name_1");
+}
+
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlows_FromPyTorch_ToCommunication_HaveName)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
+        TableName::DB_NPU_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP, TableName::DB_CONNECTION_IDS,
+        TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    const std::string connectIdsData =
+        "INSERT INTO CONNECTION_IDS (id, connectionId) VALUES (1, 19);";
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (1, 'abc')";
+    const std::string pytorchData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_PYTORCH_API);
+    const std::string taskData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_TASK);
+    const std::string communicationOpData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_COMMUNICATION_OP);
+    const std::string stringIdsData =
+        "INSERT INTO STRING_IDS (id, value) VALUES "
+        " (393, 'hcom_broadcast__550_0_1'),"
+        " (268435456, 'python_name_1');";
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdsData);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    DatabaseTestCaseMockUtil::InsertData(db, pytorchData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    DatabaseTestCaseMockUtil::InsertData(db, communicationOpData);
+    DatabaseTestCaseMockUtil::InsertData(db, stringIdsData);
+    std::string sql = "CREATE TABLE RANK_DEVICE_MAP (rankId INTEGER, deviceId INTEGER);";
+    DatabaseTestCaseMockUtil::CreateTable(db, sql);
+    std::string insertSql = "INSERT INTO RANK_DEVICE_MAP (rankId, deviceId) VALUES (1, 1);";
+    DatabaseTestCaseMockUtil::InsertData(db, insertSql);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "1";
+    requestParams.metaType = "PYTORCH_API";
+    requestParams.rankId = "1";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 1); // 1
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 2); // 2
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[1].from.metaType, "PYTORCH_API");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[1].from.name, "python_name_1");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[1].to.metaType, "HCCL");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[1].to.name, "hcom_broadcast__550_0_1");
+}
+
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlows_FromCANN_ToAscendHardware_HaveName)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
+        TableName::DB_NPU_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP, TableName::DB_CONNECTION_IDS,
+        TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    const std::string connectIdsData =
+        "INSERT INTO CONNECTION_IDS (id, connectionId) VALUES (1, 19);";
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (1, 'abc')";
+    const std::string cannApiData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_CANN_API);
+    const std::string taskData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_TASK);
+    const std::string stringIdsData =
+        "INSERT INTO STRING_IDS (id, value) VALUES "
+        " (7052, 'cann_name_1'),"
+        " (7166, 'task_name_1');";
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdsData);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    DatabaseTestCaseMockUtil::InsertData(db, stringIdsData);
+    std::string sql = "CREATE TABLE RANK_DEVICE_MAP (rankId INTEGER, deviceId INTEGER);";
+    DatabaseTestCaseMockUtil::CreateTable(db, sql);
+    std::string insertSql = "INSERT INTO RANK_DEVICE_MAP (rankId, deviceId) VALUES (1, 1);";
+    DatabaseTestCaseMockUtil::InsertData(db, insertSql);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "19";
+    requestParams.metaType = "CANN_API";
+    requestParams.rankId = "1";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 1); // 1
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 1); // 1
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.metaType, "CANN_API");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].from.name, "cann_name_1");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.metaType, "Ascend Hardware");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[0].to.name, "task_name_1");
+}
+
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlows_FromCANN_ToCommunication_HaveName)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
+        TableName::DB_NPU_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP, TableName::DB_CONNECTION_IDS,
+        TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    const std::string connectIdsData =
+        "INSERT INTO CONNECTION_IDS (id, connectionId) VALUES (1, 19);";
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (1, 'abc')";
+    const std::string cannApiData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_CANN_API);
+    const std::string taskData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_TASK);
+    const std::string communicationOpData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_COMMUNICATION_OP);
+    const std::string stringIdsData =
+        "INSERT INTO STRING_IDS (id, value) VALUES "
+        " (7052, 'cann_name_1'),"
+        " (393, 'hcom_broadcast__550_0_1');";
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdsData);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    DatabaseTestCaseMockUtil::InsertData(db, communicationOpData);
+    DatabaseTestCaseMockUtil::InsertData(db, stringIdsData);
+    std::string sql = "CREATE TABLE RANK_DEVICE_MAP (rankId INTEGER, deviceId INTEGER);";
+    DatabaseTestCaseMockUtil::CreateTable(db, sql);
+    std::string insertSql = "INSERT INTO RANK_DEVICE_MAP (rankId, deviceId) VALUES (1, 1);";
+    DatabaseTestCaseMockUtil::InsertData(db, insertSql);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "19";
+    requestParams.metaType = "CANN_API";
+    requestParams.rankId = "1";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(responseBody.unitAllFlows.size(), 1); // 1
+    ASSERT_EQ(responseBody.unitAllFlows[0].flows.size(), 2); // 2
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[1].from.metaType, "CANN_API");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[1].from.name, "cann_name_1");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[1].to.metaType, "HCCL");
+    EXPECT_EQ(responseBody.unitAllFlows[0].flows[1].to.name, "hcom_broadcast__550_0_1");
+}
+
+TEST_F(DbTraceDatabaseTest, TestQueryUnitFlows_FromAscendHardware_ToCommunication_HaveName_Fail)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    const std::vector<TableName> list{TableName::DB_CANN_API, TableName::DB_MSTX_EVENTS, TableName::DB_PYTORCH_API,
+        TableName::DB_NPU_INFO, TableName::DB_TASK, TableName::DB_COMMUNICATION_OP, TableName::DB_CONNECTION_IDS,
+        TableName::DB_STRING_IDS};
+    DatabaseTestCaseMockUtil::CreateTablesFromList(db, list);
+    const std::string connectIdsData =
+        "INSERT INTO CONNECTION_IDS (id, connectionId) VALUES (1, 19);";
+    const std::string npuInfoData = "INSERT INTO NPU_INFO (id, name) VALUES (1, 'abc')";
+    const std::string taskData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_TASK);
+    const std::string communcationOpData = FLOW_INSERT_DATA_SQL_MAP.at(TableName::DB_COMMUNICATION_OP);
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdsData);
+    DatabaseTestCaseMockUtil::InsertData(db, npuInfoData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    DatabaseTestCaseMockUtil::InsertData(db, communcationOpData);
+    std::string sql = "CREATE TABLE RANK_DEVICE_MAP (rankId INTEGER, deviceId INTEGER);";
+    DatabaseTestCaseMockUtil::CreateTable(db, sql);
+    std::string insertSql = "INSERT INTO RANK_DEVICE_MAP (rankId, deviceId) VALUES (1, 1);";
+    DatabaseTestCaseMockUtil::InsertData(db, insertSql);
+    database.SetDbPtr(db);
+
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "1";
+    requestParams.metaType = "ASCEND_HARDWARE";
+    requestParams.rankId = "1";
+
+    Dic::Protocol::UnitFlowsBody responseBody;
+    bool result = database.QueryUnitFlows(requestParams, responseBody, 0, 0);
+    EXPECT_EQ(result, false);
 }
 
 TEST_F(DbTraceDatabaseTest, GetLockRangeSqlWhenPython)

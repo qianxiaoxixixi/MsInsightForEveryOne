@@ -151,8 +151,8 @@ const static std::string MSTX_UNIT_FLOW_SQL =
 const static std::string TASK_UNIT_FLOW_SQL =
       " select task.ROWID as id, task.streamId as tid, task.depth as depth,"
       " task.startNs - constValue.minTime as startTime, "
-      " task.endNs - task.startNs as duration, 'Ascend Hardware' as pid, 'Ascend Hardware' as metaType, '' as name, "
-      " task.deviceId as deviceId, m.domainId as domainId from TASK task join constValue "
+      " task.endNs - task.startNs as duration, 'Ascend Hardware' as pid, 'Ascend Hardware' as metaType, "
+      " task.taskType as name, task.deviceId as deviceId, m.domainId as domainId from TASK task join constValue "
       " left join MSTX_EVENTS m on task.connectionId = m.connectionId "
       " where task.connectionId = constValue.connectionId "
       " and task.connectionId != " + WRONG_DATA + " ";

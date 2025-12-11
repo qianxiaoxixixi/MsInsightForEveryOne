@@ -10,6 +10,14 @@
 #include "SummaryProtocolRequest.h"
 #include "SummaryProtocolResponse.h"
 
+#ifdef GetObject
+// a former included windows.h might have defined a macro called GetObject, which affects
+// GetObject defined here. This ensures the macro does not get applied
+#pragma push_macro("GetObject")
+#define RAPIDJSON_WINDOWS_GETOBJECT_WORKAROUND_APPLIED
+#undef GetObject
+#endif
+
 using namespace Dic::Protocol;
 using namespace Dic::Module;
 class SummaryProtocolUtilTest : public ::testing::Test {
