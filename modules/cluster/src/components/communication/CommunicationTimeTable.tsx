@@ -2,8 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import { observer } from 'mobx-react-lite';
-import type { CSSProperties } from 'react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { CSSProperties, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Button, CollapsiblePanel } from '@insight/lib/components';
@@ -83,8 +82,10 @@ const useCommonColumns = (): ColumnsType<DataType> => {
         },
         {
             title: `${t('tableHead.RDMABW')}(GB)`, dataIndex: 'rdmaBw', sorter: (a: DataType, b: DataType) => a.rdmaBw - b.rdmaBw, ellipsis: true,
-        }];
+        },
+    ];
 };
+
 interface OpDetail {
     operatorName: string;
     rankId: number;
@@ -92,6 +93,19 @@ interface OpDetail {
     elapseTime: number;
 }
 let selectedOpDetail: OpDetail | null;
+
+/**
+ * 更新selectedOpDetail
+ * @param record
+ * @param row
+ */
+function updateSelectedOpDetail(record: any, row: any): void {
+    selectedOpDetail = record as unknown as OpDetail;
+    if (selectedOpDetail) {
+        selectedOpDetail.rankId = row.rankId;
+    }
+}
+
 async function redirectToTimeline(): Promise<void> {
     if (selectedOpDetail === null) {
         return;
@@ -179,22 +193,18 @@ const OperatorsTable = ({ record: parentRow, conditions }: any): JSX.Element => 
         setPage({ ..._page, total: res?.count ?? 0 });
     };
 
-    const columns: TableColumnsType<DataType> = [
+    const commonColumns = useCommonColumns().map(item => ({ ...item, sorter: true }));
+    const columns: TableColumnsType<DataType> = useMemo(() => [
         { title: t('tableHead.Operator Name'), dataIndex: 'operatorName', key: 'operatorName', sorter: true, ellipsis: true },
-        ...useCommonColumns().map(item => {
-            return { ...item, sorter: true };
-        }),
+        ...commonColumns,
         {
             title: `${t('tableHead.Operation')}`,
             dataIndex: 'operation',
+            key: `operation_${parentRow.rankId}`,
             fixed: 'right',
-            render: (_: any, record) => {
+            render: (_: any, _record: any) => {
                 return (<>
                     <Button type="link" style={{ marginRight: '8px' }} onClick={(): void => {
-                        selectedOpDetail = record as unknown as OpDetail;
-                        if (selectedOpDetail !== undefined) {
-                            selectedOpDetail.rankId = parentRow.rankId;
-                        }
                         redirectToTimeline();
                     }}>{t('Show in Timeline')}</Button>
                     <Button type="link" onClick={(): void => {
@@ -203,7 +213,19 @@ const OperatorsTable = ({ record: parentRow, conditions }: any): JSX.Element => 
                 </>);
             },
         },
-    ];
+    ], [parentRow, conditions]);
+
+    /**
+     * 光标移入行获取当前行的数据
+     * @param rowData
+     */
+    const onRow = (rowData: any): React.HTMLAttributes<any> => {
+        return {
+            onMouseEnter: (): void => {
+                updateSelectedOpDetail(rowData, parentRow);
+            },
+        };
+    };
     return (
         <div>
             <ResizeTable columns={columns} dataSource={dataSource} size="small" allowCopy
@@ -214,6 +236,7 @@ const OperatorsTable = ({ record: parentRow, conditions }: any): JSX.Element => 
                         setSorter(newSorter);
                     }
                 }}
+                onRow={onRow}
             />
         </div>
     );
