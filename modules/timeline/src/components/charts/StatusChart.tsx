@@ -4,11 +4,12 @@
 import type { Theme } from '@emotion/react';
 import { useTheme } from '@emotion/react';
 import * as d3 from 'd3';
+import { Skeleton } from 'antd';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useRef } from 'react';
 import type { ChartProps, Scale, StatusData } from '../../entity/chart';
-import { Canvas, CanvasContainer, zipStatusData } from './common';
+import { Canvas, SkeletonWrapper, CanvasContainer, zipStatusData } from './common';
 import { useBatchedRender, useClick, useData, useHoverPosX, useRangeAndDomain } from './hooks';
 import { TooltipComponent, type TooltipProps } from './TooltipComp';
 import type { ThreadMetaData } from '../../entity/data';
@@ -164,7 +165,11 @@ export const StatusChart = observer(({
     };
 
     return <CanvasContainer ref={canvasContainer} className={'canvasContainer'} width={width} height={height}>
-        <TooltipComponent {...tooltipProp} />
-        <Canvas className={'drawCanvas'} ref={canvas} width={width * devicePixelRatio} height={height * devicePixelRatio}/>
+        <SkeletonWrapper>
+            <Skeleton loading={unit.isSummaryLoading} active paragraph={false}>
+                <TooltipComponent {...tooltipProp} />
+                <Canvas className={'drawCanvas'} ref={canvas} width={width * devicePixelRatio} height={height * devicePixelRatio}/>
+            </Skeleton>
+        </SkeletonWrapper>
     </CanvasContainer>;
 });

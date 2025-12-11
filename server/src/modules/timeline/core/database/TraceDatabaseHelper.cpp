@@ -278,7 +278,7 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryLabelTracesSummary(co
     switch (processType) {
         case PROCESS_TYPE::CANN_API:
             sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
-                  " FROM " + TABLE_CANN_API + " WHERE globalTid = ? AND depth = 0 "
+                  " FROM " + TABLE_CANN_API + " WHERE globalTid = ? "
                   " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) ORDER BY start_time;";
             return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.processId,
                 requestParams.startTime, minTimestamp, requestParams.endTime, minTimestamp);
@@ -323,7 +323,7 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryHardwareTracesSummary
     std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams)
 {
     std::string sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
-        "FROM " + TABLE_TASK + " WHERE deviceId = ? AND start_time >= ? AND start_time <= ? AND depth = 0 ORDER BY startNs;";
+        "FROM " + TABLE_TASK + " WHERE deviceId = ? AND start_time >= ? AND start_time <= ? ORDER BY startNs;";
     return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId,
                         requestParams.startTime, requestParams.endTime);
 }
@@ -360,9 +360,9 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryCannTracesSummary(con
 {
     // 这个方法作用是查询Thread *泳道的缩略图，所以会查询CANN PyTorch MSTX OSRT数据
     std::string  sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
-        " FROM " + TABLE_CANN_API + " WHERE globalTid = ? AND depth = 0 AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) "
+        " FROM " + TABLE_CANN_API + " WHERE globalTid = ? AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) "
         " UNION ALL SELECT startNs - ? as start_time,endNs - startNs as duration,"
-        "    endNs - ? as end_time from  " + TABLE_API + " WHERE globalTid = ? AND depth = 0 "
+        "    endNs - ? as end_time from  " + TABLE_API + " WHERE globalTid = ? "
         " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) "
         " UNION ALL SELECT startNs - ? AS start_time, endNs - startNs AS duration, endNs - ? AS end_time FROM "
         + TABLE_MSTX_EVENTS + " WHERE globalTid = ? AND startNs BETWEEN ( ? + ? ) AND ( ? + ? )"
@@ -393,9 +393,9 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryProcessUnitTracesSumm
 {
     uint64_t pid = NumberUtil::StringToUnsignedLongLong(requestParams.processId) >> 32;
     std::string sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
-        " FROM " + TABLE_CANN_API + " WHERE (globalTid >> 32) = ? AND depth = 0 "
+        " FROM " + TABLE_CANN_API + " WHERE (globalTid >> 32) = ? "
         " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) UNION ALL SELECT startNs - ? as start_time,endNs - startNs as duration,"
-        "    endNs - ? as end_time from  " + TABLE_API + " WHERE (globalTid >> 32) = ? AND depth = 0 "
+        "    endNs - ? as end_time from  " + TABLE_API + " WHERE (globalTid >> 32) = ? "
         " AND startNs BETWEEN ( ? + ? ) AND ( ? + ? ) "
          " UNION ALL SELECT startNs - ? AS start_time, endNs - startNs AS duration, endNs - ? AS end_time FROM "
          + TABLE_MSTX_EVENTS + " WHERE (globalTid >> 32) = ? AND startNs BETWEEN ( ? + ? ) AND ( ? + ? )"
