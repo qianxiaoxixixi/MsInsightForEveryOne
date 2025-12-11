@@ -104,6 +104,14 @@ export const CanvasContainer = styled.div<{ width: number; height: number }>`
     height: ${(p): number => p.height}px;
 `;
 
+export const SkeletonWrapper = styled.div`
+    display: flex;
+    align-items: center;   /* 垂直居中 */
+    justify-content: center; /* 若骨架宽度较小，水平也居中 */
+    width: 100%;
+    height: 100%;
+`;
+
 export const Canvas = styled.canvas`
     width: 100%;
     height: 100%;

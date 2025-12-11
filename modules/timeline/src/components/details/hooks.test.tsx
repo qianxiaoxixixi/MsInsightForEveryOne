@@ -21,6 +21,7 @@ describe('hooks test', () => {
         isDisplay: true,
         isUnitVisible: true,
         isMerged: false,
+        isSummaryLoading: false,
         type: 'basic',
         phase: 'download',
         isParseLoading: false,

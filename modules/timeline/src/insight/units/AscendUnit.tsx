@@ -569,6 +569,7 @@ async function createSummaryChart<T extends ProcessMetaData | LabelMetaData>(
     metaData: T,
     session: Session,
     unitType: string,
+    unit?: InsightUnit,
 ): Promise<StatusData[]> {
     const timestampOffset = getTimeOffset(session, metaData);
 
@@ -586,8 +587,17 @@ async function createSummaryChart<T extends ProcessMetaData | LabelMetaData>(
 
     const requestKey = createStatusParam('unit/threadTracesSummary', requestParam);
     try {
+        // Counter类型泳道去除无效缩略图请求
+        if (unit !== undefined && unit?.children?.[0].name === 'Counter') {
+            return [];
+        }
+        if (unit !== undefined) {
+            unit.isSummaryLoading = true;
+        }
         const request: any = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, requestParam);
-
+        if (unit !== undefined) {
+            unit.isSummaryLoading = false;
+        }
         const resProcess = (result: any): StatusData[] => {
             if (result === undefined) {
                 return [];
@@ -626,8 +636,8 @@ async function createSummaryChart<T extends ProcessMetaData | LabelMetaData>(
 
 const ProcessSummaryChart = chart({
     type: 'status',
-    mapFunc: async (session: Session, metaData: unknown) => {
-        return await createSummaryChart(metaData as ProcessMetaData, session, 'process');
+    mapFunc: async (session: Session, metaData: unknown, unit: InsightUnit | undefined) => {
+        return await createSummaryChart(metaData as ProcessMetaData, session, 'process', unit);
     },
     config: {
         rowHeight: UnitHeight.STANDARD,
@@ -637,8 +647,8 @@ const ProcessSummaryChart = chart({
 
 const LabelSummaryChart = chart({
     type: 'status',
-    mapFunc: async (session: Session, metaData: unknown) => {
-        return await createSummaryChart(metaData as LabelMetaData, session, 'label');
+    mapFunc: async (session: Session, metaData: unknown, unit: InsightUnit | undefined) => {
+        return await createSummaryChart(metaData as LabelMetaData, session, 'label', unit);
     },
     config: {
         rowHeight: UnitHeight.STANDARD,
