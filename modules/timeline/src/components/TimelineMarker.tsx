@@ -668,6 +668,9 @@ const handleNewColor = (theme: Theme, session: Session, newColor: string, timeli
 const handleConfirm = (session: Session, timelineAxisFlag: TimelineAxisFlag): void => {
     runInAction(() => {
         timelineAxisFlag.color = timelineAxisFlag.colorCache;
+        if (timelineAxisFlag.descriptionCache.length < 1) {
+            timelineAxisFlag.descriptionCache = timelineAxisFlag.description;
+        }
         timelineAxisFlag.description = timelineAxisFlag.descriptionCache;
         Modal.destroyAll();
         session.timelineMaker.refreshTrigger = (++session.timelineMaker.refreshTrigger) % 10;
