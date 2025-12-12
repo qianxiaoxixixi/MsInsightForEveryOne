@@ -165,7 +165,7 @@ const getTableColumns = function ({ columns, theme, t, isCompare, setExpandedKey
             },
         });
     }
-    if (!isComp) {
+    if (!isComp && !isCompare) {
         dataColumns.push({
             key: `operation_${selectedCard?.cardId}`,
             title: t('Operation', { defaultValue: 'Operation', keyPrefix: 'tableHead' }),
