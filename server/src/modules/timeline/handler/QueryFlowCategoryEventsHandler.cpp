@@ -21,13 +21,14 @@ bool QueryFlowCategoryEventsHandler::HandleRequest(std::unique_ptr<Protocol::Req
     std::string warnMsg;
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
-        SetResponseResult(response, false, warnMsg);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     if (renderEngine == nullptr) {
         ServerLog::Error("Query flow events Failed to render.");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::QUERY_FLOW_EVENTS_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     bool result = renderEngine->QueryFlowCategoryEvents(request.params, minTimestamp, response.body.flowDetailList);

@@ -6,6 +6,7 @@
 #include "TraceTime.h"
 #include "VirtualTraceDatabase.h"
 #include "AffinityOptimizerAdvisor.h"
+#include "AdvisorErrorManager.h"
 
 namespace Dic::Module::Advisor {
 using namespace Dic::Server;
@@ -21,6 +22,7 @@ bool AffinityOptimizerAdvisor::Process(const Protocol::APITypeParams& params,
     auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", params.rankId);
+        SetAdvisorError(ErrorCode::CONNECT_DATABASE_FAILED);
         return false;
     }
 
@@ -34,6 +36,7 @@ bool AffinityOptimizerAdvisor::Process(const Protocol::APITypeParams& params,
     }
     if (!database->QueryAffinityOptimizer(param, optimizers, data, startTime)) {
         ServerLog::Error("Failed to Query Affinity Optimizer from database.");
+        SetAdvisorError(ErrorCode::QUERY_AFFINITY_OPTIMIZER_FAILED);
         return false;
     }
     uint64_t start = param.pageSize * (param.current - 1);

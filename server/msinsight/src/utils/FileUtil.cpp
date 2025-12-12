@@ -169,18 +169,20 @@ bool FileUtil::CheckDirValid(const std::string &path)
 {
     if (path.empty()) {
         Server::ServerLog::Error("The path is empty. ");
+        Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_PATH_IS_EMPTY);
         return false;
     }
     std::string dir = GetAbsPath(path);
     if (dir.empty()) {
         Server::ServerLog::Error("Failed to retrieve the absolute path.");
+        Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_PATH_IS_EMPTY);
         return false;
     }
     if (!CheckFilePathLength(dir)) {
         return false;
     }
     if (CheckPathInvalidChar(dir)) {
-            return false;
+        return false;
     }
     if (!CheckDirAccess(dir, 0)) {
         Server::ServerLog::Error("The directory path not exists. path: %.", dir);
@@ -188,18 +190,22 @@ bool FileUtil::CheckDirValid(const std::string &path)
     }
     if (IsSoftLink(dir)) {
         Server::ServerLog::Error("The path is soft link. path: %.", dir);
+        Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_PATH_IS_SOFT_LINK);
         return false;
     }
     if (!CheckDirAccess(dir, R_OK)) {
         Server::ServerLog::Error("The path has no read access. path: %.", dir);
+        Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_NOT_READ_ACCESS);
         return false;
     }
     if (!CheckPathOwner(dir)) {
         Server::ServerLog::Error("The path's owner is not current user. path: %.", dir);
+        Dic::Common::SetCommonError(Dic::Common::ErrorCode::PATH_OWNER_ERROR);
         return false;
     }
     if (!CheckWritableByOther(dir)) {
         Server::ServerLog::Error("The path is writeable by other user.path: %", dir);
+        Dic::Common::SetCommonError(Dic::Common::ErrorCode::OTHER_CAN_WRITE);
         return false;
     }
     return true;
@@ -246,12 +252,14 @@ bool FileUtil::CheckFilePathLength(const std::string& filePath)
     if (filePath.size() >= MAX_PATH) {
         Server::ServerLog::Error("The path length of % exceeds the maximum allowed length of % characters."
                                  "The file size is % MB", filePath, MAX_PATH, filePath.size());
+        Dic::Common::SetCommonError(Dic::Common::ErrorCode::SUB_FILE_PATH_LENGTH_EXCEEDS);
         return false;
     }
 #else
     if (filePath.size() >= PATH_MAX) {
         Server::ServerLog::Error("The path length of % exceeds the maximum allowed length of % characters."
                                  "The file size is % MB", filePath, PATH_MAX, filePath.size());
+        Dic::Common::SetCommonError(Dic::Common::ErrorCode::SUB_FILE_PATH_LENGTH_EXCEEDS);
         return false;
     }
 #endif
@@ -675,6 +683,7 @@ bool FileUtil::CheckPathInvalidChar(const std::string &filePath)
     for (auto &item : INVALID_CHAR) {
         if (filePath.find(item.first) != std::string::npos) {
             Server::ServerLog::Error("The path: % contains invalid character: %.", filePath, item.second);
+            Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_PATH_CONTAINS_INVALID_CHAR);
             return true;
         }
     }
@@ -796,12 +805,15 @@ bool FileUtil::IsSubDir(const std::string &parent, const std::string &children)
     return true;
 }
 
+static std::regex msprofRegex(R"(msprof_[0-9]{1,16}\.db$)");
 std::vector<std::string> FileUtil::FindFilesWithFilter(const std::string &path, const std::regex &fileRegex)
 {
     std::vector<std::string> matchedFiles = {};
     if (!FileUtil::IsFolder(path)) {
         if (std::regex_match(FileUtil::GetFileName(path), fileRegex)) {
             matchedFiles.emplace_back(path);
+        } else {
+            Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_NOT_EXIST);
         }
         return matchedFiles;
     }
@@ -820,7 +832,6 @@ std::vector<std::string> FileUtil::FindFilesWithFilter(const std::string &path, 
             return;
         }
         // msprof db
-        static std::regex msprofRegex(R"(msprof_[0-9]{1,16}\.db$)");
         bool findMsprofDb = std::any_of(files.begin(), files.end(), [](const std::string &file) {
             return std::regex_match(file, msprofRegex);
         });
@@ -874,6 +885,8 @@ std::vector<std::string> FileUtil::FindNPUMonitorFiles(const std::string &path)
     if (!FileUtil::IsFolder(path)) {
         if (std::regex_match(FileUtil::GetFileName(path), fileRegex)) {
             matchedFiles.emplace_back(path);
+        } else {
+            Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_NOT_EXIST);
         }
         return matchedFiles;
     }

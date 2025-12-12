@@ -24,7 +24,8 @@ bool QueryAiCpuOpAdviceHandler::HandleRequest(std::unique_ptr<Protocol::Request>
     request.params.Check(minTimestamp, error);
     if (!std::empty(error)) {
         ServerLog::Error(error);
-        SetResponseResult(response, false, error);
+        SetAdvisorError(ErrorCode::PARAMS_ERROR);
+        SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return false;
     }

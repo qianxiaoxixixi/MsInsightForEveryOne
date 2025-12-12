@@ -106,10 +106,10 @@ void ProtocolUtil::SetResponseJsonBaseInfo(const Response &response, document_t 
     json.AddMember("result", response.result, allocator);
     JsonUtil::AddMember(json, "command", response.command, allocator);
     JsonUtil::AddMember(json, "moduleName", response.moduleName, allocator);
-    if (response.error.has_value()) {
+    if (response.error.has_value() && !response.error->message.empty()) {
         json_t error(kObjectType);
-        error.AddMember("code", response.error.value().code, allocator);
-        JsonUtil::AddMember(json, "message", response.error.value().message, allocator);
+        JsonUtil::AddMember(error, "code", response.error.value().code, allocator);
+        JsonUtil::AddMember(error, "message", response.error.value().message, allocator);
         json.AddMember("error", error, allocator);
     }
     if (response.resultCallbackId.has_value()) {

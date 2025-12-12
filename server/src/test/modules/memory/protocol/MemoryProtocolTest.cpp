@@ -1058,7 +1058,7 @@ TEST_F(MemoryProtocolTest, TestTMemoryFindSliceResponseError)
     const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
     const std::string jsonStr =
         "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":\"Memory/find/"
-        "slice\",\"moduleName\":\"unknown\",\"message\":\"ll\",\"error\":{\"code\":3},\"body\":{\"id\":\"\",\"rankId\":"
+        "slice\",\"moduleName\":\"unknown\",\"error\":{\"code\":3,\"message\":\"ll\"},\"body\":{\"id\":\"\",\"rankId\":"
         "\"\",\"processId\":\"\",\"threadId\":\"\",\"metaType\":\"\",\"depth\":0,\"startTime\":0,\"duration\":0}}";
     EXPECT_EQ(json, jsonStr);
 }

@@ -23,8 +23,8 @@ bool SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     std::string warnMsg;
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
-        SetResponseResult(response, false, warnMsg);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     std::vector<TrackQuery> trackQueryVec = GetTrackQueryVec(request, minTimestamp);

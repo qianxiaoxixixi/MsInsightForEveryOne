@@ -51,6 +51,7 @@ public:
         error = "No parsable files found, Possible reasons:; 1.File not exist; "
                 "2.The nesting depth of the imported sub-file exceeds 5; 3.The sub-file path length exceeds " +
                 std::to_string(FileUtil::GetFilePathLengthLimit());
+        Dic::Common::SetCommonError(Dic::Common::ErrorCode::IMPORT_FILE_OTHER_TYPE);
         return res;
     };
     static void ParseEndCallBack(const std::string &rankId,

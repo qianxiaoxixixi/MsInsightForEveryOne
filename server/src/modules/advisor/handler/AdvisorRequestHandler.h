@@ -7,6 +7,7 @@
 
 #include "ModuleRequestHandler.h"
 #include "ProtocolDefs.h"
+#include "AdvisorErrorManager.h"
 
 namespace Dic::Module::Advisor {
 class AdvisorRequestHandler : public ModuleRequestHandler {

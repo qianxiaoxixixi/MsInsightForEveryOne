@@ -16,12 +16,11 @@ bool QueryKernelDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     std::unique_ptr<KernelDetailsResponse> responsePtr = std::make_unique<KernelDetailsResponse>();
     KernelDetailsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    SetResponseResult(response, true);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
-        ServerLog::Error("Query kernel detail failed to get connection. ");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
@@ -29,25 +28,26 @@ bool QueryKernelDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     request.params.Check(minTimestamp, error);
     if (!std::empty(error)) {
         ServerLog::Warn(error);
-        SetResponseResult(response, false, error);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
 
     std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
     if (deviceId.empty()) {
         ServerLog::Error("Query kernel detail failed to get deviceId. ");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::GET_DEVICE_ID_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     request.params.deviceId = deviceId;
     if (!database->QueryKernelDetailData(request.params, response.body, minTimestamp)) {
-        SetResponseResult(response, false);
         ServerLog::Error("Failed to get kernel detail response data.");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::QUERY_KERNEL_DETAIL_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // Timeline

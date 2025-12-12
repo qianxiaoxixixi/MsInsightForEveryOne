@@ -7,6 +7,7 @@
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 #include "AffinityAPIAdvisor.h"
+#include "AdvisorErrorManager.h"
 
 namespace Dic::Module::Advisor {
 using namespace Dic::Server;
@@ -15,6 +16,7 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
     auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection for Affinity API query. fileId:", params.rankId);
+        SetAdvisorError(ErrorCode::CONNECT_DATABASE_FAILED);
         return false;
     }
     std::vector<Protocol::FlowLocation> results = GetFlowLocationData(params);
@@ -34,6 +36,7 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
         if (item.duration < item.timestamp) {
             ServerLog::Error("The original data seems to have an issue, as the end time is smaller than the timestamp."
                               "Please check the rationality of the data.");
+            SetAdvisorError(ErrorCode::DATA_ANOMALY_END_TIME_SMALLER_TIMESTAMP);
             return false;
         }
         one.baseInfo.duration = item.duration - item.timestamp; // duration里存储的是end time，前端需要的是ns
@@ -54,6 +57,7 @@ std::vector<Protocol::FlowLocation> AffinityAPIAdvisor::GetFlowLocationData(cons
     auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection for Affinity API query. fileId:", params.rankId);
+        SetAdvisorError(ErrorCode::CONNECT_DATABASE_FAILED);
         return results;
     }
     Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
@@ -69,6 +73,7 @@ std::vector<Protocol::FlowLocation> AffinityAPIAdvisor::GetFlowLocationData(cons
     std::map<uint64_t, std::vector<uint32_t>> indexMap{};
     if (!database->QueryAffinityAPIData(param, GetFirstApiList(AFFINITY_API_RULE), startTime, dataMap, indexMap)) {
         ServerLog::Error("Failed to Query Affinity API from database.");
+        SetAdvisorError(ErrorCode::QUERY_AFFINITY_API_FAILED);
         return results;
     }
     for (const auto& it : dataMap) { // 获取某个泳道的数据

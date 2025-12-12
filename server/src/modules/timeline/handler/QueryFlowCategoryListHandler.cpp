@@ -19,16 +19,20 @@ bool QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query flow category list failed to get connection. ");
-        SetResponseResult(response, true);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     // 状态校验
     if (!database->CheckValueFromStatusInfoTable(CONNECTION_UNIT, FINISH_STATUS)) {
-        SendResponse(std::move(responsePtr), false, "The connection category parse unit is not finish.");
+        SetTimelineError(ErrorCode::CATEGORY_PARSE_NOT_FINISH);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     bool result = database->QueryFlowCategoryList(response.body.category, request.params.rankId);
+    if (!result) {
+        SetTimelineError(ErrorCode::QUERY_FLOW_CATEGORY_FAILED);
+    }
     SetResponseResult(response, result);
     session.OnResponse(std::move(responsePtr));
     return result;

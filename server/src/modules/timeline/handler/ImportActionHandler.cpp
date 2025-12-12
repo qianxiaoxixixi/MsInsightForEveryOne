@@ -29,7 +29,8 @@ bool ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     std::string warnMsg;
     if (!request.params.CommonCheck(warnMsg)) {
         ServerLog::Warn(warnMsg);
-        SetResponseResult(response, false, warnMsg);
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return false;
     }
@@ -39,13 +40,12 @@ bool ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     if (request.params.projectAction == ProjectActionEnum::ADD_FILE) {
         // ConvertToRealPath 调用 FileUtil::ConvertToRealPath 方法，其中 FileUtil::CheckDirValid 已做软链接检查
         if (!request.params.ConvertToRealPath(warnMsg)) {
-            SetResponseResult(response, false, warnMsg);
+            SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
-            SendParseFailEvent(warnMsg);
             return false;
         }
         if (!ImportFile(request, warnMsg)) {
-            SetResponseResult(response, false, warnMsg);
+            SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
             return false;
         }
@@ -76,7 +76,7 @@ void ImportActionHandler::LogIfFileNotExist(const Global::ProjectExplorerInfo &p
     }
     if (!FileUtil::CheckFilePathExist(projectExplorerInfo.fileName)) {
         std::string message = "paths do not exist: " + projectExplorerInfo.fileName;
-        SendParseFailEvent(message);
+        SetTimelineError(ErrorCode::FILE_NOT_EXIST);
         ServerLog::Warn(message);
     }
 }
@@ -88,6 +88,7 @@ bool ImportActionHandler::TransferProject(ImportActionRequest &request)
             .QueryProjectExplorer(request.params.projectName, std::vector<std::string>());
     if (projectExplorerInfo.empty()) {
         ServerLog::Warn("params error, project explorer info is not existed.");
+        SetTimelineError(ErrorCode::PROJECT_EXPLORER_NOT_EXISTED);
         return false;
     }
     std::for_each(projectExplorerInfo.begin(), projectExplorerInfo.end(), [](const auto& project) {
@@ -99,6 +100,7 @@ bool ImportActionHandler::TransferProject(ImportActionRequest &request)
     });
     if (invalid) {
         ServerLog::Warn("Project type invalid!");
+        SetTimelineError(ErrorCode::PROJECT_TYPE_INVALID);
         return false;
     }
     auto response = std::make_unique<ImportActionResponse>();
@@ -179,14 +181,13 @@ std::optional<ProjectExplorerInfo> ImportActionHandler::BuildProjectInfo(ParserT
     }
     if (parseFileList.size() != tempFiles.size()) {
         warnMsg = "Other users have write permissions to the file or subfiles";
-        SendParseFailEvent(warnMsg);
+        SetTimelineError(ErrorCode::OTHER_CAN_WRITE);
         warnMsg = "";
     }
     bool isNotCluster = parseFileList.size() == 1 && !ClusterFileParser::CheckIsCluster(parseFileList[0]);
     // 如果没有找到文件（warnMag不为空），并且不是集群数据，则需要发送错误提示给前端
-    if (!warnMsg.empty() && isNotCluster) {
-        SendParseFailEvent(warnMsg);
-        // 这里不能return false，return false会导致插件导入时数据管理器无法保存目录，且对于一般的性能数据，导入失败时也保存目录
+    if (warnMsg.empty() || !isNotCluster) {
+        SetTimelineError(ErrorCode::RESET_ERROR);
     }
     ProjectExplorerInfo project;
     project.fileName = importPath;

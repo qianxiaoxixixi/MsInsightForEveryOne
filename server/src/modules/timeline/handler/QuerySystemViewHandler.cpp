@@ -22,35 +22,41 @@ bool QuerySystemViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     std::string warnMsg;
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
-        SetResponseResult(response, false, warnMsg);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     SetResponseResult(response, true);
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query system view failed to get connection.");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
     if (deviceId.empty()) {
         ServerLog::Error("Query system view failed to get deviceId.");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::GET_DEVICE_ID_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     request.params.deviceId = deviceId;
     if (!database->QuerySystemViewData(request.params, response.body, minTimestamp)) {
+        SetTimelineError(ErrorCode::QUERY_SYSTEM_VIEW_FAILED);
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get timeline table response data.");
     }
     if (request.params.layer == "Python" && std::empty(response.body.systemViewDetail)) {
         request.params.layer = "MindSpore";
         if (!database->QuerySystemViewData(request.params, response.body, minTimestamp)) {
-            SetResponseResult(response, false);
+            SetTimelineError(ErrorCode::QUERY_SYSTEM_VIEW_FAILED);
             ServerLog::Error("Failed to get timeline table response data.");
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false);
             return false;
+        } else {
+            SetTimelineError(ErrorCode::RESET_ERROR);
+            SetResponseResult(response, true);
         }
     }
     // add response to response queue in session

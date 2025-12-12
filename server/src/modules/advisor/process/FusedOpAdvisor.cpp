@@ -6,14 +6,14 @@
 #include "TraceTime.h"
 #include "AdvisorProcessUtil.h"
 #include "FusedOpAdvisor.h"
+#include "AdvisorErrorManager.h"
 
 namespace Dic::Module::Advisor {
 using namespace Dic::Server;
 bool FusedOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::OperatorFusionResBody &resBody)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(params.rankId);
+    auto database = GetDatabaseConnection(params.rankId);
     if (database == nullptr) {
-        ServerLog::Error("Failed to get connection for Fused Operator advice. fileId:", params.rankId);
         return false;
     }
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
@@ -27,6 +27,7 @@ bool FusedOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Op
     param.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(params.rankId);
     if (param.deviceId.empty()) {
         ServerLog::Error("Query Fused Operator advice failed to get deviceId.");
+        SetAdvisorError(ErrorCode::GET_DEVICE_ID_FAILED);
         return false;
     }
     for (const auto& item : FUSEABLE_OPERATER_RULE_LIST) {
@@ -59,5 +60,15 @@ bool FusedOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Op
     resBody.dbPath = database->GetDbPath();
     resBody.size = data.size();
     return true;
+}
+
+std::shared_ptr<Timeline::VirtualTraceDatabase> FusedOpAdvisor::GetDatabaseConnection(const std::string &rankId)
+{
+    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(rankId);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection for Fused Operator advice. fileId:", rankId);
+        SetAdvisorError(ErrorCode::CONNECT_DATABASE_FAILED);
+    }
+    return database;
 }
 } // Dic::Module::Advisor

@@ -21,17 +21,20 @@ bool SetCardAliasHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     std::string errMsg;
     WsSession &session = *WsSessionManager::Instance().GetSession();
     if (!request.params.CheckParams(request.params.cardAlias, errMsg)) {
-        SendResponse(std::move(responsePtr), false, errMsg);
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
-        SendResponse(std::move(responsePtr), false, "Set card alias failed to get connection.");
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
 
     if (!database->SetCardAlias(request.params, response.body)) {
-        SendResponse(std::move(responsePtr), false, "Failed to set card alias.");
+        SetTimelineError(ErrorCode::SET_CARD_ALIAS_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     SetResponseResult(response, true);

@@ -5,6 +5,7 @@
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 #include "AICpuOpAdvisor.h"
+#include "AdvisorErrorManager.h"
 
 namespace Dic::Module::Advisor {
 using namespace Dic::Server;
@@ -13,6 +14,7 @@ bool AICpuOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::AI
     auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection in AI CPU advice. fileId:", params.rankId);
+        SetAdvisorError(ErrorCode::CONNECT_DATABASE_FAILED);
         return false;
     }
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
@@ -27,12 +29,14 @@ bool AICpuOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::AI
     std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(params.rankId);
     if (deviceId.empty()) {
         ServerLog::Error("Query AI CPU advice failed to get deviceId. deviceId:", deviceId);
+        SetAdvisorError(ErrorCode::GET_DEVICE_ID_FAILED);
         return false;
     }
     param.deviceId = deviceId;
     if (!database->QueryAICpuOpCanBeOptimized(param, AICPU_OP_EQUIVALENT_REPLACE,
                                               AICPU_OP_DATATYPE_RULE, data, startTime)) {
         ServerLog::Error("Failed to Query Can Be Optimized AI CPU Op from database. fileId:", params.rankId);
+        SetAdvisorError(ErrorCode::QUERY_AI_CPU_OP_CAN_BE_OPTIMIZED_FAILED);
         return false;
     }
     uint64_t start = param.pageSize * (param.current - 1);

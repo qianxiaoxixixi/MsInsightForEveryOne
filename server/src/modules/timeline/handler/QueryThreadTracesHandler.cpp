@@ -22,24 +22,27 @@ bool QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     std::string warnMsg;
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
-        SetResponseResult(response, false, warnMsg);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.cardId);
     if (database == nullptr) {
-        SendResponse(std::move(responsePtr), false, "The database is not exist when query thread traces.");
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     if (request.params.metaType == "OVERLAP_ANALYSIS" &&
         !database->CheckValueFromStatusInfoTable(OVERLAP_ANALYSIS_UNIT, FINISH_STATUS)) {
         response.body.isLoading = true;
-        SendResponse(std::move(responsePtr), true, "The overlap analysis data is not parse finish.");
-        return true;
+        SetTimelineError(ErrorCode::OVERLAP_ANALYSIS_PARSE_NOT_FINISH);
+        SendResponse(std::move(responsePtr), false);
+        return false;
     }
     if (renderEngine == nullptr) {
         ServerLog::Error("Query thread traces Failed to render.");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::QUERY_THREAD_TRACES_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     if (std::empty(request.params.threadIdList)) {
@@ -49,8 +52,7 @@ bool QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     } else {
         QueryTracesByTrackIds(request, response, minTimestamp);
     }
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

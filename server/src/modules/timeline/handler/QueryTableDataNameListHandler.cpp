@@ -17,14 +17,16 @@ bool QueryTableDataNameListHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query table data name list failed to get connection.");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     std::shared_ptr<TextTraceDatabase> databasePtr =
             std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(database);
     if (databasePtr == nullptr) {
         ServerLog::Warn("Failed to get text connection when query table names,ID: %", request.params.rankId);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto nameList = databasePtr->QueryTableDataNameList();

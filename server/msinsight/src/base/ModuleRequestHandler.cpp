@@ -6,6 +6,7 @@
 #include "../utils/pch.h"
 #include "../WsSessionManager.h"
 #include "../utils/IdBuilder.h"
+#include "RequestContext.h"
 
 namespace Dic {
 namespace Module {
@@ -14,6 +15,7 @@ using namespace Dic::Server;
 
 bool ModuleRequestHandler::HandleRequestEntrance(std::unique_ptr<Request> requestPtr)
 {
+    RequestContext::GetInstance().resetError();
     unsigned int id = requestPtr->id;
     ServerLog::Info("Start handle request, module = ", moduleName, ", command = ", command, ", id = ", id);
     bool res = HandleRequest(std::move(requestPtr));
@@ -42,13 +44,21 @@ void ModuleRequestHandler::SetResponseResult(Response &response, bool result, co
                                              const int errorCode)
 {
     response.result = result;
-    if (result) {
-        return;
-    }
+
     if (!errorMsg.empty()) {
         ServerLog::Error(errorMsg);
     }
     response.error = { .code = errorCode, .message = errorMsg };
+
+    ErrorMessage error = RequestContext::GetInstance().GetError();
+    if (!error.message.empty()) {
+        response.error = { .code = error.code, .message = error.message };
+    }
+}
+
+void ModuleRequestHandler::SetResponseError(ErrorMessage error)
+{
+    RequestContext::GetInstance().SetError(error);
 }
 
 bool ModuleRequestHandler::IsAsync()

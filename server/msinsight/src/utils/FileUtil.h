@@ -19,6 +19,7 @@
 #include "FileDef.h"
 #include "StringUtil.h"
 #include "Status.h"
+#include "UtilErrorManager.h"
 
 #if defined(_WIN32)
 #include <filesystem>
@@ -141,6 +142,7 @@ public:
         std::string tmpPath = PathPreprocess(path);
         std::string currentPath = PathPreprocess(path);
         if ((hFile = _findfirst(tmpPath.append("\\*").c_str(), &fileInfo)) == -1) {
+            Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_NOT_EXIST);
             return false;
         }
         do {
@@ -176,6 +178,7 @@ public:
     {
         if (path.empty()) {
             Server::ServerLog::Error("path empty");
+            Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_PATH_IS_EMPTY);
             return false;
         }
         DIR *pDir = nullptr;
@@ -185,6 +188,7 @@ public:
         pDir = opendir(tmpPath.c_str());
         if (pDir == nullptr) {
             Server::ServerLog::Error("open dir failed");
+            Dic::Common::SetCommonError(Dic::Common::ErrorCode::OPEN_DIR_FAILED);
             return false;
         }
         const uint64_t fileCountLimit = 100000;
@@ -419,10 +423,12 @@ public:
         const size_t fileSizeLimit = 100000;
         if (depth > depthLimit) {
             error = "Too many levels of file nesting";
+            Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_TOO_DEEP);
             return false;
         }
         if (files.size() > fileSizeLimit) {
             error = "Too many files matching the requirements";
+            Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_TOO_MANY);
             return false;
         }
         return true;

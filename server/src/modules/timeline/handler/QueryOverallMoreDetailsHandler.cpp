@@ -19,24 +19,27 @@ bool QueryOverallMoreDetailsHandler::HandleRequest(std::unique_ptr<Protocol::Req
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
-        SendResponse(std::move(responsePtr), false, "Failed to get connection for system view overall statistics.");
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     std::string error;
     request.params.CheckParams(minTimestamp, error);
     if (!std::empty(error)) {
-        SendResponse(std::move(responsePtr), false, error);
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     if (request.params.categoryList.size() <= 1) {
-        SendResponse(std::move(responsePtr), false,
-                     "Failed to handle overall more details request due to empty category list.");
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
 
     std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
     if (deviceId.empty()) {
-        SendResponse(std::move(responsePtr), false, "Failed to get deviceId for system view overall statistics.");
+        SetTimelineError(ErrorCode::GET_DEVICE_ID_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     request.params.deviceId = deviceId;
@@ -56,7 +59,8 @@ bool QueryOverallMoreDetailsHandler::HandleRequest(std::unique_ptr<Protocol::Req
         SendResponse(std::move(responsePtr), true);
         return true;
     } else {
-        SendResponse(std::move(responsePtr), false, "Failed to get any overall metrics details.");
+        SetTimelineError(ErrorCode::QUERY_OVERALL_METRICS_DETAIL_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
 }

@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_COMMUNICATIONKERNERHANDLER_H
 
 #include "TimelineRequestHandler.h"
+#include "VirtualTraceDatabase.h"
 
 namespace Dic {
 namespace Module {
@@ -21,6 +22,7 @@ public:
 
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
     std::string GetRealRankId(const std::string &rankId);
+    std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseByRankId(CommunicationKernelRequest &request);
 };
 }
 }

@@ -61,7 +61,7 @@ TEST_F(TimelineProtocolUtilTest, TestThreadTracesResponseToJsonError)
     EXPECT_EQ(jsonOp.has_value(), true);
     const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
     const std::string jsonStr = "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":\"unit/"
-        "threadTraces\",\"moduleName\":\"unknown\",\"message\":\"ll\",\"error\":{\"code\":3},\"body\":{\"maxDepth\":0,"
+        "threadTraces\",\"moduleName\":\"unknown\",\"error\":{\"code\":3,\"message\":\"ll\"},\"body\":{\"maxDepth\":0,"
         "\"currentMaxDepth\":0,\"havePythonFunction\":false,\"isLoading\":false,\"data\":[]}}";
     EXPECT_EQ(json, jsonStr);
 }

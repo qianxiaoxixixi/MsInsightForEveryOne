@@ -6,6 +6,7 @@
 #include "TraceTime.h"
 #include "VirtualTraceDatabase.h"
 #include "AclnnOpAdvisor.h"
+#include "AdvisorErrorManager.h"
 
 namespace Dic::Module::Advisor {
 using namespace Dic::Server;
@@ -14,6 +15,7 @@ bool AclnnOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Ac
     auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection in Aclnn op advice. fileId:", params.rankId);
+        SetAdvisorError(ErrorCode::CONNECT_DATABASE_FAILED);
         return false;
     }
 
@@ -37,6 +39,7 @@ bool AclnnOpAdvisor::AclnnOpProcess(const std::shared_ptr<Timeline::VirtualTrace
     std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(param.rankId);
     if (deviceId.empty()) {
         ServerLog::Error("Query Aclnn op advice failed to get deviceId.");
+        SetAdvisorError(ErrorCode::GET_DEVICE_ID_FAILED);
         return false;
     }
     param.deviceId = deviceId;
@@ -44,6 +47,7 @@ bool AclnnOpAdvisor::AclnnOpProcess(const std::shared_ptr<Timeline::VirtualTrace
     std::vector<Protocol::KernelBaseInfo> data{};
     if (!database->QueryAclnnOpCountExceedThreshold(param, ACLNN_OP_CNT_THRESHOLD, data, startTime)) {
         ServerLog::Error("Failed to Query Aclnn Op from database which count exceeds .", ACLNN_OP_CNT_THRESHOLD);
+        SetAdvisorError(ErrorCode::QUERY_ACLNN_OPERATOR_COUNT_FAILED);
         return false;
     }
     uint64_t start = param.pageSize * (param.current - 1);

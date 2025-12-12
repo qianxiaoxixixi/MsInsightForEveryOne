@@ -21,25 +21,24 @@ bool QueryThreadTracesSummaryHandler::HandleRequest(std::unique_ptr<Protocol::Re
     std::string warnMsg;
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
-        SetResponseResult(response, false, warnMsg);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.cardId);
     if (database == nullptr) {
         ServerLog::Error("Query thread traces summary failed to get connection.");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     bool result = database->QueryThreadTracesSummary(request.params, response.body,
                                                      minTimestamp);
-    if (result) {
+    if (!result) {
+        SetTimelineError(ErrorCode::QUERY_THREAD_TRACES_SUMMARY_FAILED);
         SetResponseResult(response, result);
-    } else {
-        warnMsg = "Fail to search db to get thread traces summary data.";
-        SetResponseResult(response, result, warnMsg);
     }
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), result);
     return result;
 }
 

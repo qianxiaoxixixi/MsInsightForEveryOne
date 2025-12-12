@@ -25,24 +25,21 @@ bool QueryCommunicationKernelHandler::HandleRequest(std::unique_ptr<Protocol::Re
             request.params.rankId = StringUtil::StrJoin(FileUtil::GetFileName(request.params.clusterPath), "_",
                                                         request.params.rankId);
         }
-        database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
+        database = GetTraceDatabaseByRankId(request);
         if (database == nullptr) {
-            database = Timeline::DataBaseManager::Instance().GetTraceDatabaseInCluster(request.params.clusterPath,
-                                                                                       request.params.rankId);
-            if (database == nullptr) {
-                SendResponse(std::move(responsePtr), false, "Query communication kernel failed to get connection.");
-                return false;
-            }
+            SendResponse(std::move(responsePtr), false);
+            return false;
         }
     }
     if (!database->QueryCommunicationKernelInfo(request.params.name, request.params.rankId, response.body)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query communication kernel info."
-            " Please ensure that timeline data has been fully parsed and then try again.");
+        SetTimelineError(ErrorCode::QUERY_COMMUNICATION_KERNEL_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
 
     // 判断是否具备集群数据并且包含集群文件
     if (!Global::ProjectExplorerManager::Instance().IsClusterData(request.projectName)) {
+        SetTimelineError(ErrorCode::PROJECT_IS_NOT_CLUSTER);
         SendResponse(std::move(responsePtr), false);
         return false;
     }
@@ -59,7 +56,8 @@ bool QueryCommunicationKernelHandler::HandleRequest(std::unique_ptr<Protocol::Re
         break;
     }
     if (!flag) {
-        SendResponse(std::move(responsePtr), false, "Query communication kernel failed to get cluster connection.");
+        SetTimelineError(ErrorCode::QUERY_COMMUNICATION_KERNEL_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     SendResponse(std::move(responsePtr), true);
@@ -77,6 +75,21 @@ std::string QueryCommunicationKernelHandler::GetRealRankId(const std::string &ra
         return rankAfterSplit[1];
     }
     return rankId;
+}
+
+std::shared_ptr<VirtualTraceDatabase> QueryCommunicationKernelHandler::GetTraceDatabaseByRankId(
+    CommunicationKernelRequest &request)
+{
+    std::shared_ptr<VirtualTraceDatabase> database =
+        DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
+    if (database == nullptr) {
+        database = Timeline::DataBaseManager::Instance().GetTraceDatabaseInCluster(request.params.clusterPath,
+                                                                                   request.params.rankId);
+        if (database == nullptr) {
+            SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        }
+    }
+    return database;
 }
 }
 }

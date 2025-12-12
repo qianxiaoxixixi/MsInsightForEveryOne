@@ -18,17 +18,18 @@ bool QueryExpAnaAICoreFreqHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     WsSession &session = *WsSessionManager::Instance().GetSession();
     ExpAnaAICoreFreqResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    SetResponseResult(response, true);
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query system view AI core freq failed to get connection.");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
     if (deviceId.empty()) {
         ServerLog::Error("Query system view AI core freq failed to get deviceId.");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::GET_DEVICE_ID_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     request.params.deviceId = deviceId;
@@ -37,8 +38,10 @@ bool QueryExpAnaAICoreFreqHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     std::vector<std::pair<uint64_t, uint64_t>> freqs;
     if (!database->QueryExpAnaAICoreFreqData(request.params, response.body, freqs, maxFreq, minFreq)
         || freqs.empty()) {
+        SetTimelineError(ErrorCode::QUERY_AI_CORE_FREQ_FAILED);
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get system view AI core freq table response data.");
+        return false;
     }
     auto dbType = Timeline::DataBaseManager::Instance().GetDataType(request.fileId);
     response.body.rankId = dbType == Timeline::DataType::TEXT ? request.params.rankId : database->GetDbPath();
@@ -51,7 +54,7 @@ bool QueryExpAnaAICoreFreqHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     }
  
     // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 

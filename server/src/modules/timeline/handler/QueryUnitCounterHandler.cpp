@@ -21,8 +21,8 @@ bool QueryUnitCounterHandler::HandleRequest(std::unique_ptr<Protocol::Request> r
     std::string warnMsg;
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
-        SetResponseResult(response, false, warnMsg);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     const std::string hostString = "Host";
@@ -32,12 +32,15 @@ bool QueryUnitCounterHandler::HandleRequest(std::unique_ptr<Protocol::Request> r
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query unit counter failed to get connection.");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     bool result = database->QueryUnitCounter(request.params, minTimestamp, response.body.data);
-    SetResponseResult(response, result);
-    session.OnResponse(std::move(responsePtr));
+    if (!result) {
+        SetTimelineError(ErrorCode::QUERY_UNIT_COUNTER_FAILED);
+    }
+    SendResponse(std::move(responsePtr), true);
     return result;
 }
 } // end of namespace Timeline
