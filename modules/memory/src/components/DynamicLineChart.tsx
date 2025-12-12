@@ -180,13 +180,13 @@ const RangeFlagSelect = observer(({ memorySession, rankOffsetNs, callback }: { m
             if (selectValue.includes(item.uid)) {
                 selectedRangeFlag.push({
                     ...item,
-                    timeStamp: item.timeStamp - memorySession.timelineOffset - rankOffsetNs,
-                    anotherTimeStamp: item.anotherTimeStamp - memorySession.timelineOffset - rankOffsetNs,
+                    timeStamp: item.timeStamp + memorySession.timelineOffset - rankOffsetNs,
+                    anotherTimeStamp: item.anotherTimeStamp + memorySession.timelineOffset - rankOffsetNs,
                 });
             }
         });
         callback(selectedRangeFlag);
-    }, [selectValue.length, memorySession.rangeFlagList, memorySession.timelineOffset]);
+    }, [selectValue.length, memorySession.rangeFlagList, memorySession.timelineOffset, rankOffsetNs]);
 
     return <FlexDiv>
         <Label name={t('AreaMark')} />
