@@ -17,6 +17,7 @@ public:
     static void SetBaseResponse(const Request &request, Response &response);
     static void SetResponseResult(Response &response, bool result, const std::string &errorMsg = "",
                                   const int errorCode = UNKNOW_ERROR);
+    static void SetResponseError(ErrorMessage error);
 protected:
     std::string command;
     std::string error;

@@ -30,6 +30,9 @@ const std::vector<std::string> FUSED_OP_ORDER_BY_NAME_LIST = {
 class FusedOpAdvisor {
 public:
     static bool Process(const Protocol::APITypeParams& params, Protocol::OperatorFusionResBody& resBody);
+
+private:
+    static std::shared_ptr<Timeline::VirtualTraceDatabase> GetDatabaseConnection(const std::string& rankId);
 };
 
 } // Dic::Module::Advisor

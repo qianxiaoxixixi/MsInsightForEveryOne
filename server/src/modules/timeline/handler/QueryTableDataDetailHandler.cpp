@@ -17,7 +17,8 @@ bool QueryTableDataDetailHandler::HandleRequest(std::unique_ptr<Dic::Protocol::R
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query table data detail failed to get connection.");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     if (request.params.type.empty()) {

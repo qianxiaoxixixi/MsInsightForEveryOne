@@ -22,16 +22,16 @@ bool SearchSliceHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     std::string warnMsg;
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
-        SetResponseResult(response, false, warnMsg);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     response.body.rankId = request.params.rankId;
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Search slice can't find rankId.");
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     std::vector<TrackQuery> trackQueryVec;
@@ -52,8 +52,8 @@ bool SearchSliceHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     if (!database->SearchSliceName(request.params, request.params.index - 1,
                                    minTimestamp, response.body, trackQueryVec)) {
         ServerLog::Error("Failed to search slice name.");
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::QUERY_SLICE_NAME_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     response.body.dbPath = database->GetDbPath();

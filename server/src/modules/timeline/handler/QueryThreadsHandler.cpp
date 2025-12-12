@@ -22,14 +22,15 @@ bool QueryThreadsHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     std::string warnMsg;
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
-        SetResponseResult(response, false, warnMsg);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query threads failed to get connection.");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     std::vector<uint64_t> trackIdList;
@@ -40,6 +41,9 @@ bool QueryThreadsHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
     bool result = database->QueryThreads(request.params, response.body, minTimestamp,
                                          trackIdList);
+    if (!result) {
+        SetTimelineError(ErrorCode::QUERY_THREAD_FAILED);
+    }
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

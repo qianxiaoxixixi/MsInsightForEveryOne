@@ -21,29 +21,30 @@ bool QueryFlowsBySliceInfoHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     std::string warnMsg;
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
-        SetResponseResult(response, false, warnMsg);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query flows by slice info failed to get connection. ");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     uint64_t trackId =
         TrackInfoManager::Instance().GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
-    bool result;
     try {
-        result = database->QueryUnitFlows(request.params, response.body, minTimestamp, trackId);
+        database->QueryUnitFlows(request.params, response.body, minTimestamp, trackId);
     }  catch (DatabaseException &e) {
         e.Log("Query flows by slice info Fail, ");
+        SetTimelineError(ErrorCode::QUERY_UNIT_FLOWS_FAILED);
+        SendResponse(std::move(responsePtr), false);
+        return false;
     }
 
-    SetResponseResult(response, true);
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
-    return result;
+    SendResponse(std::move(responsePtr), true);
+    return true;
 }
 } // Timeline
 } // Module

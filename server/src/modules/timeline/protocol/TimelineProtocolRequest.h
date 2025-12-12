@@ -15,6 +15,7 @@
 #include "ProtocolParamUtil.h"
 #include "TimelineParamStrcut.h"
 #include "ProtocolMessage.h"
+#include "TimelineErrorManager.h"
 
 namespace Dic {
 namespace Protocol {
@@ -46,6 +47,7 @@ struct ImportActionParams {
         // 导入新文件时验证，路径不允许为空
         if (this->path.empty()) {
             errorMsg = "Import file path is empty.";
+            Dic::Module::Timeline::SetTimelineError(Dic::Module::Timeline::ErrorCode::FILE_PATH_IS_EMPTY);
             return false;
         }
         if (!FileUtil::ConvertToRealPath(errorMsg, this->path)) {
@@ -61,6 +63,7 @@ struct ImportActionParams {
         FileUtil::FindFolders(realPath, folders, files);
         if (std::empty(folders) && std::empty(files)) {
             errorMsg = "Import path is empty folder!";
+            Dic::Module::Timeline::SetTimelineError(Dic::Module::Timeline::ErrorCode::FOLDER_IS_EMPTY);
             return false;
         }
         return true;

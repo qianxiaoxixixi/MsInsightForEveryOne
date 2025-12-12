@@ -22,13 +22,15 @@ bool QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Re
     std::string warnMsg;
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
-        SetResponseResult(response, false, warnMsg);
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return false;
     }
     auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (db == nullptr) {
         ServerLog::Error("Query threads same operator failed to get connection.");
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return false;
@@ -41,6 +43,9 @@ bool QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Re
         }
     }
     bool result = db->QueryThreadSameOperatorsDetails(request.params, response.body, minTimestamp, trackIdList);
+    if (!result) {
+        SetTimelineError(ErrorCode::QUERY_THREAD_SAME_OPERATORS_DETAIL_FAILED);
+    }
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

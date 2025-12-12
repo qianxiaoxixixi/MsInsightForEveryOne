@@ -11,6 +11,7 @@
 #include "TimelineProtocolRequest.h"
 #include "TimelineProtocolResponse.h"
 #include "ProtocolDefs.h"
+#include "TimelineErrorManager.h"
 
 namespace Dic {
 namespace Module {

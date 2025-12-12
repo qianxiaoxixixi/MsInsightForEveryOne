@@ -22,15 +22,15 @@ bool SearchAllSlicesHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
-        SetResponseResult(response, false, warnMsg);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get search all slices  connection.");
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     request.params.fileId = request.fileId;
@@ -51,13 +51,13 @@ bool SearchAllSlicesHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     }
     if (!database->SearchAllSlicesDetails(request.params, response.body, minTimestamp, trackQueryVec)) {
         ServerLog::Error("Failed to search slice details.");
-        SetResponseResult(response, false);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::QUERY_SLICE_DETAIL_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     response.body.dbPath = database->GetDbPath();
-    SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
+
     return true;
 }
 

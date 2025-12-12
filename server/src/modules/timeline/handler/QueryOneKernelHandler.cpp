@@ -21,19 +21,22 @@ bool QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     std::string warnMsg;
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
-        SendResponse(std::move(responsePtr), false, warnMsg);
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         database = Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(request.params.rankId);
         if (database == nullptr) {
-            SendResponse(std::move(responsePtr), false, "Query one kernel failed to get connection.");
+            SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+            SendResponse(std::move(responsePtr), false);
             return false;
         }
     }
     if (!database->QueryKernelDepthAndThread(request.params, response.body, TraceTime::Instance().GetStartTime())) {
-        SendResponse(std::move(responsePtr), false, "Failed to query the operator response data.");
+        SetTimelineError(ErrorCode::QUERY_KERNEL_DEPTH_AND_THREAD_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
 

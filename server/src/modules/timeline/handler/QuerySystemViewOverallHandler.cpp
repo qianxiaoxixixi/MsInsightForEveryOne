@@ -19,18 +19,20 @@ bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     SetBaseResponse(request, response);
     auto database = DataBaseManager::Instance().GetTraceDatabaseByFileId(request.fileId);
     if (database == nullptr) {
-        SendResponse(std::move(responsePtr), false, "Failed to get connection for system view overall statistics.");
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     if (!database->CheckValueFromStatusInfoTable(OVERLAP_ANALYSIS_UNIT, FINISH_STATUS)) {
         response.isLoading = true;
-        SendResponse(std::move(responsePtr), true, "The overlap analysis data is not parse finish.");
+        SetTimelineError(ErrorCode::OVERLAP_ANALYSIS_PARSE_NOT_FINISH);
+        SendResponse(std::move(responsePtr), false);
         return true;
     }
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     std::string error;
-    request.params.CheckParams(minTimestamp, error);
-    if (!std::empty(error)) {
+    if (!request.params.CheckParams(minTimestamp, error)) {
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
         SendResponse(std::move(responsePtr), false, error);
         return false;
     }
@@ -44,7 +46,8 @@ bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Requ
             SystemViewOverallCacheManager::Instance().SetOverallData(request.fileId, response.details);
         }
     } else {
-        SendResponse(std::move(responsePtr), false, error);
+        SetTimelineError(ErrorCode::QUERY_SYSTEM_VIEW_OVERALL_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
 
@@ -62,6 +65,7 @@ bool QuerySystemViewOverallHandler::CalOverallData(SystemViewOverallRequest &req
     std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
     if (deviceId.empty()) {
         error = "Failed to get deviceId for system view overall statistics.";
+        SetTimelineError(ErrorCode::GET_DEVICE_ID_FAILED);
         return false;
     }
     request.params.deviceId = deviceId;
@@ -69,12 +73,14 @@ bool QuerySystemViewOverallHandler::CalOverallData(SystemViewOverallRequest &req
     overallHelper.e2eTime = GetOverlapAnalysisData(overallHelper, database, request, response.details);
     if (overallHelper.e2eTime == 0.0) {
         error = "Failed to query system view overall. Overlap information query incomplete or missing.";
+        SetTimelineError(ErrorCode::QUERY_SYSTEM_VIEW_OVERALL_FAILED);
         return false;
     }
     auto repoPtr = SystemViewOverallRepoFactory::Instance()->GetSystemViewOverallRepo(
         DataBaseManager::Instance().GetDataType(request.fileId));
     if (repoPtr == nullptr) {
         // GetSystemViewOverallRepo中已有日志报错
+        SetTimelineError(ErrorCode::QUERY_SYSTEM_VIEW_OVERALL_FAILED);
         return false;
     }
     // Computing拆解

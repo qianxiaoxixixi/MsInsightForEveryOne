@@ -17,12 +17,8 @@ bool CreateCurveHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     CreateCurveResponse& response = *responsePtr.get();
     SetBaseResponse(request, response);
     if (!request.params.x.empty() && !StringUtil::CheckSqlValid(request.params.x)) {
-        std::string errMessage = "The current input does not support generating line graphs";
-        auto event = std::make_unique<ParseFailEvent>();
-        event->moduleName = MODULE_TIMELINE;
-        event->result = false;
-        event->body.error = errMessage;
-        SendEvent(std::move(event));
+        ServerLog::Error("The current input does not support generating line graphs");
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return false;

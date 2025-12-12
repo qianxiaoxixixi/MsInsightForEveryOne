@@ -18,7 +18,7 @@ namespace Dic {
 using json_t = rapidjson::Value;
 using document_t = rapidjson::Document;
 using namespace rapidjson;
-const static int UNKNOW_ERROR = 1001;
+const static int UNKNOW_ERROR = 9999;
 const std::string MODULE_UNKNOWN = "unknown";
 namespace Protocol {
 struct ErrorMessage {

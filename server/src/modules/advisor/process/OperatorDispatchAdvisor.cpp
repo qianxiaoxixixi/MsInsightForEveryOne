@@ -7,6 +7,7 @@
 #include "TraceTime.h"
 #include "AdvisorProcessUtil.h"
 #include "OperatorDispatchAdvisor.h"
+#include "AdvisorErrorManager.h"
 
 namespace Dic::Module::Advisor {
 using namespace Dic::Server;
@@ -15,6 +16,7 @@ bool OperatorDispatchAdvisor::Process(const Protocol::APITypeParams &params, Pro
     auto database = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection for Operator Dispatch advice. fileId:", params.rankId);
+        SetAdvisorError(ErrorCode::CONNECT_DATABASE_FAILED);
         return false;
     }
     Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
@@ -30,6 +32,7 @@ bool OperatorDispatchAdvisor::Process(const Protocol::APITypeParams &params, Pro
     std::vector<Protocol::KernelBaseInfo> data{};
     if (!database->QueryOperatorDispatchData(param, data, startTime, OPERATOR_COMPILE_CNT_THRESHOLD)) {
         ServerLog::Error("Failed to Query Operator Dispatch data.");
+        SetAdvisorError(ErrorCode::QUERY_OPERATOR_DISPATCH_FAILED);
         return false;
     }
     uint64_t start = param.pageSize * (param.current - 1);

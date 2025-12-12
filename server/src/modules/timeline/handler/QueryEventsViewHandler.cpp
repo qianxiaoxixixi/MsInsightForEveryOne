@@ -23,15 +23,15 @@ bool QueryEventsViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     std::string warnMsg;
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
-        SetResponseResult(response, false, warnMsg);
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::PARAMS_ERROR);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
-    SetResponseResult(response, true);
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query events view failed to get connection.");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::CONNECT_DATABASE_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
     if (!request.params.tid.empty()) {
@@ -39,10 +39,11 @@ bool QueryEventsViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     }
     if (!database->QueryEventsViewData(request.params, responsePtr->body, minTimestamp)) {
         ServerLog::Warn("Failed to get events view table response data.");
-        session.OnResponse(std::move(responsePtr));
+        SetTimelineError(ErrorCode::QUERY_EVENTS_VIEW_DATA_FAILED);
+        SendResponse(std::move(responsePtr), false);
         return false;
     }
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // end of namespace Timeline
