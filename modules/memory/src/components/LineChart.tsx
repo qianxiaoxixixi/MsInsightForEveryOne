@@ -322,7 +322,6 @@ export const LineChart: React.FC<IProps> = (props) => {
     const graphRef = React.useRef<HTMLDivElement>(null);
     const [resizeEventDependency] = useResizeEventDependency();
     const [chartObj, setChartObj] = React.useState<echarts.ECharts | undefined>();
-    const [chartWidth, setChartWidth] = React.useState<number>(0);
     const selectedPoints = React.useRef<number[]>([]);
     const chartCharacter = useChartCharacter();
     const title = useTitle(graph.title ?? '');
@@ -336,6 +335,7 @@ export const LineChart: React.FC<IProps> = (props) => {
             return () => {};
         }
         element.oncontextmenu = (): boolean => { return false; };
+        const chartWidth = graphRef.current.clientWidth - 200;
         const myChart = echarts.init(element, isDark ? 'dark' : 'customed', { locale });
         _showGraph(myChart, selectedPoints, props, theme, chartWidth);
 
@@ -343,14 +343,13 @@ export const LineChart: React.FC<IProps> = (props) => {
         return () => {
             myChart.dispose();
         };
-    }, [graph, isDark, i18n, rangeFlagData, chartWidth]);
+    }, [graph, isDark, i18n, rangeFlagData]);
 
     React.useEffect(() => {
         if (!graphRef.current) {
             return;
         }
         echarts.getInstanceByDom(graphRef.current)?.resize();
-        setChartWidth(graphRef.current.clientWidth - 200);
     }, [resizeEventDependency]);
 
     React.useEffect(() => {

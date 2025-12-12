@@ -171,7 +171,7 @@ export const updateTimelineOffsetHandler: NotificationHandler = (data): void => 
     const session = store.memoryStore.activeSession;
     if (session) {
         runInAction(() => {
-            session.timelineOffset = (data.timelineOffset ?? 0) as number;
+            session.timelineOffset = (data.offset ?? 0) as number;
         });
     }
 };
