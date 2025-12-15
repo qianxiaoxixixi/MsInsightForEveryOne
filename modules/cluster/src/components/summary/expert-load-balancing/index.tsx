@@ -8,7 +8,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import connector from '../../../connection';
 import { importExpertData, queryModelInfo, queryExpertHotspot } from '../../../utils/RequestUtils';
 import { QueryExpertHotspotItem } from '../../../utils/interface';
-import { message } from 'antd';
 import { useRootStore } from '../../../context/context';
 import { observer } from 'mobx-react';
 
@@ -54,7 +53,6 @@ export const ExpertLoadBalancingBox = observer((): React.ReactElement => {
             setChartLoading(false);
             setChartData(hotspotInfos);
         } catch (error) {
-            message.error((error as any)?.message);
             setChartLoading(false);
         }
     };
@@ -71,17 +69,13 @@ export const ExpertLoadBalancingBox = observer((): React.ReactElement => {
             return;
         }
 
-        try {
-            await importExpertData({
-                version: formData.version,
-                filePath,
-            });
+        await importExpertData({
+            version: formData.version,
+            filePath,
+        });
 
-            const conditions = await getFormConditions();
-            await fetchChatData(conditions);
-        } catch (error) {
-            message.error((error as any)?.message);
-        }
+        const conditions = await getFormConditions();
+        await fetchChatData(conditions);
     }, [formData]);
 
     // 查询搜索条件

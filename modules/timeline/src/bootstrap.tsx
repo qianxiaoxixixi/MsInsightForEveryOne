@@ -11,14 +11,16 @@ import './theme.css';
 import { store } from './store';
 import { NOTIFICATION_HANDLERS } from './interface';
 import connector from './connection';
+import { createRequest, type RequestOptions, errorCenter, WsError } from '@insight/lib';
+
 interface CefQueryType {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
 
 declare global {
     interface Window {
         setTheme: (isDark: boolean) => void;
-        request: (dataSource: DataSource, params: { command: string; params: Record<string, unknown> }) => Promise<any>;
+        request: (dataSource: DataSource, params: { command: string; params: Record<string, unknown> }, options?: RequestOptions) => Promise<any>;
         cefQuery: (obj: CefQueryType) => void;
-        requestData: (method: string | RequestParams, params?: any, module?: string, voidResponse?: boolean) => Promise<any>;
+        requestData: (method: string, params?: any, module?: string, options?: RequestOptions) => Promise<any>;
     }
 
     type LayerType = 'PROJECT' | 'CLUSTER' | 'HOST' | 'RANK' | 'COMPUTE' | 'IPYNB' | 'UNKNOWN';
@@ -40,24 +42,24 @@ declare global {
         isBaseLine?: boolean;
         baseLineCardId?: string;
     }
-
-    interface RequestParams {
-        command: string;
-        params: any;
-        module?: string;
-        voidResponse?: boolean;
-        keepRawData?: boolean;
-        bufferField?: string;
-    }
 };
 
 // 禁用右键刷新以及F5、Ctrl+R刷新
 document.oncontextmenu = (): boolean => false;
 document.onkeydown = (event): boolean => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
 
-window.request = async (dataSource, params): Promise<any> => {
-    const data = await connector.fetch({ remote: dataSource, args: params });
-    return (data as any).body;
+window.request = async (dataSource, params, options): Promise<any> => {
+    try {
+        const data = await connector.fetch({ remote: dataSource, args: params });
+        return (data as any).body;
+    } catch (error: any) {
+        const wsError = new WsError(error.code, error.message);
+        if (!options?.silent) {
+            errorCenter.handleError(wsError);
+        }
+
+        throw wsError;
+    }
 };
 
 Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
@@ -70,33 +72,7 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
     });
 });
 
-window.requestData = async (command, params, module, voidResponse = false): Promise<any> => {
-    if (typeof command === 'object') {
-        return await requestWithOptions(command);
-    } else {
-        return await requestWithMultiParams(command, params, module, voidResponse);
-    }
-};
-
-async function requestWithMultiParams(command: string, params: any, module?: string, voidResponse = false): Promise<any> {
-    const data = await connector.fetch({
-        args: { command, params },
-        module: module !== undefined ? module : String(command).split('/')[0]?.toLowerCase(),
-        voidResponse,
-    });
-    return (data as any).body;
-}
-
-async function requestWithOptions({ command, params, module, voidResponse = false, keepRawData = false, bufferField }: RequestParams): Promise<any> {
-    const data = await connector.fetch({
-        args: { command, params },
-        module: module !== undefined ? module : String(command).split('/')[0]?.toLowerCase(),
-        voidResponse,
-        keepRawData,
-        bufferField,
-    });
-    return (data as any).body;
-}
+window.requestData = createRequest(connector);
 
 const root = createRoot(document.getElementById('root') as HTMLElement);
 root.render(

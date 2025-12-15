@@ -128,8 +128,13 @@ export async function handleProjectAction({ action, project, isConflict, selecte
                 newProject.selectedRankId = selectedRankId;
             }
         }
-        const res = await addDataPath(newProject, action, isConflict, session);
-        if (!res) {
+        try {
+            const res = await addDataPath(newProject, action, isConflict, session);
+            if (!res) {
+                closeLoading();
+                return;
+            }
+        } catch (e) {
             closeLoading();
             return;
         }

@@ -75,7 +75,7 @@ abstract class BaseConnector {
             return;
         }
         body.from = window.name;
-        const postBody = body.keepRawData === true ? body : JSON.stringify(body);
+        const postBody = JSON.stringify(body);
         targetWindows.forEach(targetWindow => {
             targetWindow.postMessage(postBody, this.getTargetOrigin());
         });
@@ -171,11 +171,7 @@ export class ClientConnector extends BaseConnector {
             params.id = this._curFetchSequenceID;
             (params as Record<string, unknown>).event = 'request';
             const body = params as unknown as SendParams<string>;
-            const voidResponse = params?.voidResponse as boolean;
             this.send(body, reject);
-            if (voidResponse) {
-                return;
-            }
             this._msgSequence.set(this._curFetchSequenceID++, { resolve, reject });
         });
     };

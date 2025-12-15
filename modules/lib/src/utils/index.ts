@@ -3,3 +3,5 @@
 */
 export { default as ThemeStore } from './ThemeStore';
 export * from './Common';
+export { errorCenter, WsError, ErrorCode } from './ErrorCenter';
+export { createRequest, type RequestOptions } from './Request';

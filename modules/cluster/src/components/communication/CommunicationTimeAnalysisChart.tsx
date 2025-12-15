@@ -10,13 +10,13 @@ import { observer } from 'mobx-react-lite';
 import { getBaselineName, getCompareName, Loading } from '../Common';
 import { colorPalette, hashToNumber } from '../../utils/colorUtil';
 import { Dropdown } from '@insight/lib/components';
-import { type MenuProps, message, Spin } from 'antd';
+import { type MenuProps, Spin } from 'antd';
 import connector from '../../connection';
 import i18n from '@insight/lib/i18n';
 import { themeInstance } from '@insight/lib/theme';
 import { type Theme } from '@emotion/react';
 import { disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions, safeStr } from '@insight/lib/utils';
-import { ChartZoomData, ClickOperatorItem, CompareData, type ErrorInfo, FormatterParams } from '../../utils/interface';
+import { ChartZoomData, ClickOperatorItem, CompareData, FormatterParams } from '../../utils/interface';
 import { queryTimelineUnitKernelDetail } from '../../utils/RequestUtils';
 import { useEventBus } from '../../utils/eventBus';
 import type { ECharts, InsideDataZoomComponentOption } from 'echarts';
@@ -393,11 +393,7 @@ async function redirectToTimeline(setDropDownVisible: (_: boolean) => void): Pro
             },
         });
     } catch (e) {
-        const errMsg = (e as ErrorInfo)?.message;
         setDropDownVisible(false);
-        if (errMsg !== undefined) {
-            message.error(errMsg);
-        }
     }
 }
 

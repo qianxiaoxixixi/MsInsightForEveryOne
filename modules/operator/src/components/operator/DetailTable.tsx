@@ -16,7 +16,6 @@ import { OperatorGroup, useColMap, useCompareSourceColumn } from '../TableColumn
 import { HelpIcon } from '@insight/lib/icon';
 import connector from '../../connection/index';
 import UpdateTableAsync from '../../utils/UpdateTableAsync';
-import type { Error } from '../../connection/defs';
 
 let GdbPath = '';
 const updateTableAsyne = new UpdateTableAsync();
@@ -387,8 +386,6 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         setLoading(true);
         try {
             await updateData();
-        } catch (e) {
-            message.error((e as Error).message || '请求失败');
         } finally {
             setExpandedKeys([]);
             setLoading(false);
@@ -562,10 +559,9 @@ const ExportBtn = ({ condition }: { condition: ConditionType }): JSX.Element => 
                 const filePathTip = t('exportFilePath', { filePath: res.filePath });
                 message.success(`${t('exportSuccess')}${exceedingFileLimitTip}${filePathTip}`);
             }
-        } catch {
-            message.error(t('exportFail'));
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     return <Button onClick={exportOp} type="primary" size="middle" style={{ marginLeft: 'auto' }} loading={loading}>{t('export')}</Button>;
