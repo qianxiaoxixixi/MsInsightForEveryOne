@@ -138,6 +138,7 @@ TEST_F(CannApiRepoTest, test_QuerySimpleSliceWithOutNameByTrackId_with_normal)
     cannApiRepo.SetCannApiTable(std::move(ptr));
     SliceQuery sliceQuery;
     sliceQuery.trackId = TrackInfoManager::Instance().GetTrackId("999", "yyy", "999");
+    sliceQuery.endTime = UINT64_MAX;
     std::vector<uint64_t> sliceIds = { 1, 2, 3 };
     std::vector<SliceDomain> sliceVec;
     cannApiRepo.QuerySimpleSliceWithOutNameByTrackId(sliceQuery, sliceVec);

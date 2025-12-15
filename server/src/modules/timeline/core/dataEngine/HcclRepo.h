@@ -56,9 +56,10 @@ private:
         const TrackInfo &trackInfo);
 
     void QuerySimpleSliceFromGroupTrack(std::vector<SliceDomain> &sliceVec, const TrackInfo &trackInfo,
-        const std::string &suffix);
+        const std::string &suffix, const SliceQuery &sliceQuery);
 
-    void QuerySimpleSliceFromPlaneTrack(std::vector<SliceDomain> &sliceVec, TrackInfo &trackInfo);
+    void QuerySimpleSliceFromPlaneTrack(std::vector<SliceDomain> &sliceVec, TrackInfo &trackInfo,
+                                        const SliceQuery &sliceQuery);
 
     bool QueryGroupSliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
         const TrackInfo &trackInfo);

@@ -264,6 +264,8 @@ private:
         const std::vector<std::string> tidList);
 
     void UpdataCommucationThreadName(const PROCESS_TYPE &type, std::unique_ptr<Protocol::UnitTrack> &process) const;
+    void FillFlowDepth(const Protocol::UnitFlowsParams &requestParams, FlowLocation &location,
+                       std::unordered_map<uint64_t, std::unordered_map<uint64_t, uint32_t>> &trackIdDepthCache);
 
     // 点击单个算子显示连线相关方法
     std::vector<FlowLocation> ExecuteQueryUnitFlowsForTable(const Protocol::UnitFlowsParams &requestParams,

@@ -64,6 +64,8 @@ private:
     void ComputeDepthInfoFromDB(const SliceQuery &sliceQuery, std::unordered_map<uint64_t, uint32_t> &depthInfo);
 
     void QueryPythonFuncIds(const SliceQuery &sliceQuery, std::vector<uint64_t> &pythonFunctionIds);
+    void QueryPythonFuncFromDBAndUpdateCache(const std::string &key, const SliceQuery &sliceQuery,
+                                             std::vector<uint64_t> &pythonFunctionIds);
 };
 }
 #endif // PROFILER_SERVER_SLICEANALYZER_H

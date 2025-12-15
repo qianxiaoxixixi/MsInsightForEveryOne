@@ -46,7 +46,9 @@ TEST_F(RenderEngineTest, TestFindSliceByTimePointNormal)
     sliceDomain1.id = expectId;
     sliceDomain1.depth = expectDepth;
     sliceVec.emplace_back(sliceDomain1);
-    sliceCacheManager.UpdateSliceCache("8", "", sliceVec);
+    SliceQuery sliceQuery;
+    sliceQuery.endTime = 3 * MINUTE_NS;
+    sliceCacheManager.UpdateSliceCache("8", sliceVec, sliceQuery);
     RenderEngine renderEngine;
     std::shared_ptr<DataEngineMock> dataEngineMock = std::make_unique<DataEngineMock>();
     renderEngine.SetDataEngineInterface(dataEngineMock);

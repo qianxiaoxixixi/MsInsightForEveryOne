@@ -1891,25 +1891,25 @@ std::string TraceDatabaseHelper::GetSingleSearchNameWithLockRangeSql(const std::
     std::string tempSql;
     if (type == PROCESS_TYPE::API) {
         tempSql = " SELECT api.ROWID as id, 'pytorch' as tid, api.globalTid as pid, api.startNs as timestamp, "
-            "api.endNs as endTime, api.depth from " + TABLE_API +
+            "api.endNs as endTime, api.depth, 'PYTORCH_API' as metaType from " + TABLE_API +
             "  api join ids on ids.id = api.name WHERE api.globalTid = ? AND api.startNs >= ? AND api.endNs <= ? ";
     } else if (type == PROCESS_TYPE::CANN_API) {
         tempSql = " SELECT cann.connectionId as id, cann.globalTid as pid, cann.type as tid, cann.startNs as "
-            "timestamp, cann.endNs as endTime, cann.depth from " + TABLE_CANN_API +
+            "timestamp, cann.endNs as endTime, cann.depth, 'CANN_API' as metaType from " + TABLE_CANN_API +
             "  cann join ids on ids.id = cann.name WHERE globalTid = ? AND type = ? AND startNs >= ? AND endNs <= "
             "? ";
     } else if (type == PROCESS_TYPE::MS_TX) {
         tempSql = " SELECT mstx.ROWID as id, mstx.globalTid as pid, mstx.domainId as tid, mstx.startNs as timestamp, "
-            "mstx.endNs as endTime, mstx.depth from " + TABLE_MSTX_EVENTS +
+            "mstx.endNs as endTime, mstx.depth, 'MSTX_EVENTS' as metaType from " + TABLE_MSTX_EVENTS +
             "  mstx join ids on ids.id = mstx.message WHERE globalTid = ? AND startNs >= ? AND endNs <= ? ";
     } else if (type == PROCESS_TYPE::OSRT_API) {
         tempSql = " SELECT osrt.ROWID AS id, 'OSRT_API' AS tid, osrt.globalTid AS pid, osrt.startNs AS timestamp, "
-            "osrt.endNs AS endTime, 0 AS depth FROM " + TABLE_OSRT_API +
+            "osrt.endNs AS endTime, 0 AS depth, 'OSRT_API' as metaType FROM " + TABLE_OSRT_API +
             "  osrt JOIN ids ON ids.id = osrt.name WHERE osrt.globalTid = ? AND osrt.startNs >= ? AND osrt.endNs <= ? ";
     } else if (type == PROCESS_TYPE::ASCEND_HARDWARE) {
         tempSql = "SELECT hadware.id as id, hadware.pid as pid, hadware.tid as tid, hadware.timestamp as "
-            "timestamp, hadware.endTime as endTime, hadware.depth as depth  FROM (SELECT coalesce(c.name, "
-            "m.message, s.name, main.taskType) as "
+            "timestamp, hadware.endTime as endTime, hadware.depth as depth, 'Ascend Hardware' as metaType  "
+            "FROM (SELECT coalesce(c.name, m.message, s.name, main.taskType) as "
             "name, main.ROWID AS id, 'Ascend Hardware' as pid, main.streamId as tid,main.startNs as timestamp, "
             "main.endNs as endTime, main.depth as depth FROM " +
             TABLE_TASK + " main left join " + TABLE_COMPUTE_TASK_INFO +
@@ -1921,12 +1921,12 @@ std::string TraceDatabaseHelper::GetSingleSearchNameWithLockRangeSql(const std::
     } else if (type == PROCESS_TYPE::HCCL) {
         if (StringUtil::EndWith(singleQuery.threadId, "group")) {
             tempSql = " SELECT op.opId as id, 'HCCL' as pid, op.groupName||'group' as tid, op.startNs as "
-                "timestamp, op.endNs as endTime, 0 as depth from " +
+                "timestamp, op.endNs as endTime, 0 as depth, 'HCCL' as metaType from " +
                 TABLE_COMMUNICATION_OP +
                 " op join ids on id = op.opName WHERE op.groupName = ? AND op.startNs >= ? AND op.endNs <= ? ";
         } else {
             tempSql = "SELECT main.ROWID as id, 'HCCL' as pid, ci.groupName||'_'||ci.planeId as tid, main.startNs "
-                "as timestamp, main.endNs as endTime, main.depth from TASK main join " +
+                "as timestamp, main.endNs as endTime, main.depth, 'HCCL' as metaType from TASK main join " +
                 TABLE_COMMUNICATION_TASK_INFO +
                 " ci on ci.globalTaskId = main.globalTaskId join ids on ids.id = ci.taskType" +
                 " WHERE main.deviceId = ? and ci.groupName = ? AND ci.planeId = ? AND main.startNs >= ? AND "

@@ -97,7 +97,10 @@ bool RenderEngine::QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &p
         if (item.trackId != curTrackId) {
             cacheSlices.clear();
             std::string sliceCacheKey = std::to_string(item.trackId);
-            cacheSlices = SliceCacheManager::Instance().GetSliceDomainVec(sliceCacheKey, params.rankId);
+            SliceQuery sliceQuery;
+            sliceQuery.startTime = params.startTime;
+            sliceQuery.endTime = params.endTime;
+            cacheSlices = SliceCacheManager::Instance().GetSliceDomainVec(sliceCacheKey, params.rankId, sliceQuery);
             curTrackId = item.trackId;
             TrackInfoManager::Instance().GetTrackInfo(curTrackId, trackInfo, flowQuery.fileId);
             sliceAnalyzerPtr->SortByTimestampASC(cacheSlices);
@@ -155,6 +158,9 @@ void RenderEngine::ComputeSimulationFlows(const FlowCategoryEventsParams &params
     std::unordered_map<std::string, uint32_t> simpleSliceMap;
     SliceQuery sliceQuery;
     sliceQuery.rankId = params.rankId;
+    sliceQuery.startTime = params.startTime;
+    sliceQuery.endTime = params.endTime;
+    sliceQuery.metaType = PROCESS_TYPE::TEXT;
     uint64_t curTrackId = 0;
     for (auto &item : flowPointResult) {
         if (curTrackId != item.trackId) {
@@ -231,6 +237,8 @@ void RenderEngine::QueryThreadDetail(const ThreadDetailParams &requestParams, Un
     responseBody.data.outputShapes = competeSliceDomain.sliceShape.outputShapes;
     responseBody.data.outputDataTypes = competeSliceDomain.sliceShape.outputDataTypes;
     responseBody.data.outputFormats = competeSliceDomain.sliceShape.outputFormats;
+    sliceQuery.startTime = competeSliceDomain.timestamp;
+    sliceQuery.endTime = competeSliceDomain.endTime;
     SliceAnalyzer sliceAnalyzer;
     std::vector<SliceDomain> sliceVec;
     sliceAnalyzer.ComputeSliceDomainVecByTrackId(sliceQuery, sliceVec);
@@ -275,6 +283,8 @@ CompeteSliceDomain RenderEngine::FindSliceByTimePoint(const std::string &fileId,
     std::unordered_map<uint64_t, uint32_t> depthCache;
     std::unique_ptr<SliceAnalyzer> sliceAnalyzerPtr = std::make_unique<SliceAnalyzer>();
     sliceQuery.trackId = slice.trackId;
+    sliceQuery.startTime = slice.timestamp;
+    sliceQuery.endTime = slice.endTime;
     sliceAnalyzerPtr->SetRepository(dataEngine);
     sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
     slice.depth = depthCache[slice.id];

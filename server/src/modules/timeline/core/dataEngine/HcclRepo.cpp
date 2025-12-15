@@ -14,13 +14,14 @@ void HcclRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery
         return;
     }
     if (StringUtil::EndWith(trackInfo.threadId, groupSuffix)) {
-        QuerySimpleSliceFromGroupTrack(sliceVec, trackInfo, groupSuffix);
+        QuerySimpleSliceFromGroupTrack(sliceVec, trackInfo, groupSuffix, sliceQuery);
     } else {
-        QuerySimpleSliceFromPlaneTrack(sliceVec, trackInfo);
+        QuerySimpleSliceFromPlaneTrack(sliceVec, trackInfo, sliceQuery);
     }
 }
 
-void HcclRepo::QuerySimpleSliceFromPlaneTrack(std::vector<SliceDomain> &sliceVec, TrackInfo &trackInfo)
+void HcclRepo::QuerySimpleSliceFromPlaneTrack(std::vector<SliceDomain> &sliceVec, TrackInfo &trackInfo,
+                                              const SliceQuery &sliceQuery)
 {
     std::vector<CommucationTaskInfoPO> commucationTaskInfoPoVec;
     std::string groupName = trackInfo.threadId;
@@ -40,6 +41,8 @@ void HcclRepo::QuerySimpleSliceFromPlaneTrack(std::vector<SliceDomain> &sliceVec
     std::vector<TaskPO> taskPoVec;
     taskTable->Select(TaskColumn::ROW_ID, TaskColumn::TIMESTAMP)
         .Select(TaskColumn::ENDTIME)
+        .LessEq(TaskColumn::TIMESTAMP, sliceQuery.endTime + sliceQuery.minTimestamp)
+        .Greater(TaskColumn::ENDTIME, sliceQuery.startTime + sliceQuery.minTimestamp)
         .Eq(TaskColumn::DECICED_ID, trackInfo.deviceId)
         .In(TaskColumn::GLOBAL_TASK_ID, globalTaskIds)
         .ExcuteQuery(trackInfo.cardId, taskPoVec);
@@ -53,7 +56,7 @@ void HcclRepo::QuerySimpleSliceFromPlaneTrack(std::vector<SliceDomain> &sliceVec
 }
 
 void HcclRepo::QuerySimpleSliceFromGroupTrack(std::vector<SliceDomain> &sliceVec, const TrackInfo &trackInfo,
-    const std::string &suffix)
+    const std::string &suffix, const SliceQuery &sliceQuery)
 {
     // 获取设备id列表
     std::vector<uint64_t> deviceIdList = npuInfoRepo->QueryDeviceIdByFileId(trackInfo.cardId);
@@ -61,7 +64,9 @@ void HcclRepo::QuerySimpleSliceFromGroupTrack(std::vector<SliceDomain> &sliceVec
     std::string tid = trackInfo.threadId.substr(0, trackInfo.threadId.size() - suffix.size());
     commucationOpTable->Select(CommucationTaskOpColumn::TIMESTAMP, CommucationTaskOpColumn::ENDTIME)
             .Select(CommucationTaskOpColumn::OP_ID)
-            .Eq(CommucationTaskOpColumn::GROUPNAME, tid);
+            .Eq(CommucationTaskOpColumn::GROUPNAME, tid)
+            .LessEq(CommucationTaskOpColumn::TIMESTAMP, sliceQuery.endTime + sliceQuery.minTimestamp)
+            .Greater(CommucationTaskOpColumn::ENDTIME, sliceQuery.startTime + sliceQuery.minTimestamp);
     if (deviceIdList.size() != 1) {
         // 设备id不唯一，走老逻辑，通过communication_task_info作为中间表查询对应deviceId下大算子数据
         std::vector<uint64_t> globalIds = QueryGlobalTaskIdsByRank(trackInfo);

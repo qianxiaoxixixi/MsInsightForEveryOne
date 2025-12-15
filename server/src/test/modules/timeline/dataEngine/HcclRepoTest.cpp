@@ -283,6 +283,7 @@ TEST_F(HcclRepoTest, test_QuerySimpleSliceWithOutNameByTrackId_group_track_with_
     hcclRepo.SetCommucationOpTable(std::move(copPtr));
     SliceQuery sliceQuery;
     sliceQuery.trackId = TrackInfoManager::Instance().GetTrackId("999", "yyy", "999group");
+    sliceQuery.endTime = UINT64_MAX;
     std::vector<SliceDomain> sliceVec;
     hcclRepo.QuerySimpleSliceWithOutNameByTrackId(sliceQuery, sliceVec);
     const uint64_t expectSize = 2;
@@ -352,6 +353,7 @@ TEST_F(HcclRepoTest, test_QuerySimpleSliceWithOutNameByTrackId_group_track_with_
     TrackInfoManager::Instance().Reset();
     HcclRepo hcclRepo = GetHcclRepoMock();
     SliceQuery sliceQuery;
+    sliceQuery.endTime = UINT64_MAX;
     sliceQuery.trackId = TrackInfoManager::Instance().GetTrackId("999", "yyy", "999group");
     std::vector<SliceDomain> sliceVec;
     hcclRepo.QuerySimpleSliceWithOutNameByTrackId(sliceQuery, sliceVec);
@@ -396,6 +398,7 @@ TEST_F(HcclRepoTest, test_QuerySimpleSliceWithOutNameByTrackId_plane_track_with_
     hcclRepo.SetCommucationTaskInfoTable(std::move(cmPtr));
     SliceQuery sliceQuery;
     sliceQuery.trackId = TrackInfoManager::Instance().GetTrackId("999", "yyy", "999");
+    sliceQuery.endTime = UINT64_MAX;
     std::vector<SliceDomain> sliceVec;
     hcclRepo.QuerySimpleSliceWithOutNameByTrackId(sliceQuery, sliceVec);
     const uint64_t expectSize = 2;

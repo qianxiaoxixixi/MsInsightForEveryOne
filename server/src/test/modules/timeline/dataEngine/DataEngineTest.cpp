@@ -220,6 +220,7 @@ TEST_F(DataEngineTest, QuerySliceIdsByCatTestWithOutFactory)
     sliceQuery.metaType = PROCESS_TYPE::API;
     sliceQuery.rankId = "0";
     sliceQuery.trackId = TrackInfoManager::Instance().GetTrackId("0", "59601261180469", "0");
+    sliceQuery.endTime = UINT64_MAX;
     dataEngine.QuerySliceIdsByCat(sliceQuery, sliceIds);
     EXPECT_EQ(sliceIds.size(), 1);
 }

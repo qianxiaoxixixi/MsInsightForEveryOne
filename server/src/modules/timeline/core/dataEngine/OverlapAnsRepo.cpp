@@ -21,13 +21,14 @@ void OverlapAnsRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &slic
         return;
     }
     std::string sql = "SELECT ROWID as id, startNs, endNs from " + TABLE_OVERLAP_ANALYSIS +
-        " where deviceId = ? and type = ? order by startNs , id";
+        " where deviceId = ? and type = ? AND startNs <= ? AND endNs >= ? order by startNs , id";
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Warn("Failed to parpare overlap query all slice");
         return;
     }
-    stmt->BindParams(trackInfo.deviceId, trackInfo.threadId);
+    stmt->BindParams(trackInfo.deviceId, trackInfo.threadId, sliceQuery.endTime + sliceQuery.minTimestamp,
+                     sliceQuery.startTime + sliceQuery.minTimestamp);
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Warn("Failed to execute query overlap query all slice");

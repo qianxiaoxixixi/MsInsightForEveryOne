@@ -4,6 +4,7 @@
 #ifndef PROFILER_SERVER_HARDWAREREPO_H
 #define PROFILER_SERVER_HARDWAREREPO_H
 #include "TaskTable.h"
+#include "TrackInfoManager.h"
 #include "TaskPmuInfoTable.h"
 #include "ComputeTaskInfoTable.h"
 #include "StringIdsTable.h"
@@ -35,6 +36,9 @@ protected:
                            uint64_t globalTaskId);
     bool QueryMemoryInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
                          const TaskPO &targetTask);
+    static std::unique_ptr<SqlitePreparedStatement> PrepareStmtForQuerySimpleSliceWithOutNameByTrackId(
+        const TrackInfo &trackInfo, const std::shared_ptr<VirtualTraceDatabase>& database,
+        const SliceQuery &sliceQuery);
 };
 }
 #endif // PROFILER_SERVER_HARDWAREREPO_H

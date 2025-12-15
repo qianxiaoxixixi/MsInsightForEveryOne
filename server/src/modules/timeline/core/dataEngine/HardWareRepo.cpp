@@ -21,38 +21,11 @@ void HardWareRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQ
         ServerLog::Warn("hardWare open database is failed");
         return;
     }
-
-    // 这个函数会将Device侧的非MSTX事件和MSTX事件分开显示，其中MSTX事件会分domainId展示，且摆放在非MSTX事件的上方
-    // 非MSTX事件的threadId是其Stream编号，MSTX事件的threadId是{Stream编号}_{domain编号}
-    // 非MSTX事件查询时必须使用connectionId NOT IN显式排除MSTX事件，否则会将MSTX事件同时查询
-    // 因为TASK表没有字段表征该事件是否为MSTX事件，所以需要和MSTX_EVENTS表连接，和MSTX_EVENTS表中具有相同connectionId的事件才是Device侧的MSTX事件
-    // 因为DbTraceDataBase在执行OpenDb()方法时当MSTX_EVENTS表不存在时，会创建临时表MSTX_EVENTS，所以可以默认MSTX_EVENTS表在操作数据库时存在
-    std::string sql;
-    if (trackInfo.threadId.find('_') != std::string::npos) {
-        sql = "SELECT main.rowid AS id, main.startNs AS startNs, main.endNs AS endNs FROM " + TABLE_TASK +
-            " AS main INNER JOIN " + TABLE_MSTX_EVENTS+ " AS mstx ON main.connectionId = mstx.connectionId "
-            "WHERE main.deviceId = ? AND main.streamId = ? AND mstx.domainId = ? "
-            "ORDER BY main.startNs, main.rowid;";
-    } else {
-        sql = "SELECT rowid as id, startNs, endNs FROM " + TABLE_TASK +
-            " WHERE deviceId = ? AND streamId = ? AND connectionId NOT IN (SELECT connectionId FROM " +
-            TABLE_MSTX_EVENTS + ") ORDER BY startNs, id;";
-    }
-    auto stmt = database->CreatPreparedStatement(sql);
+    auto stmt = PrepareStmtForQuerySimpleSliceWithOutNameByTrackId(trackInfo, database, sliceQuery);
     if (stmt == nullptr) {
         ServerLog::Warn("Failed to prepare hardWare query all slice");
         return;
     }
-
-    if (trackInfo.threadId.find('_') != std::string::npos) {
-        size_t pos = trackInfo.threadId.find('_');
-        std::string streamId = trackInfo.threadId.substr(0, pos);
-        std::string domainId = trackInfo.threadId.substr(pos + 1);
-        stmt->BindParams(trackInfo.deviceId, streamId, domainId);
-    } else {
-        stmt->BindParams(trackInfo.deviceId, trackInfo.threadId);
-    }
-
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Warn("Failed to execute query hardWare query all slice");
@@ -65,6 +38,43 @@ void HardWareRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQ
         sliceDomain.endTime = resultSet->GetUint64("endNs");
         sliceVec.emplace_back(sliceDomain);
     }
+}
+
+std::unique_ptr<SqlitePreparedStatement> HardWareRepo::PrepareStmtForQuerySimpleSliceWithOutNameByTrackId(
+    const TrackInfo &trackInfo, const std::shared_ptr<VirtualTraceDatabase>& database, const SliceQuery &sliceQuery)
+{
+    // 这个函数会将Device侧的非MSTX事件和MSTX事件分开显示，其中MSTX事件会分domainId展示，且摆放在非MSTX事件的上方
+    // 非MSTX事件的threadId是其Stream编号，MSTX事件的threadId是{Stream编号}_{domain编号}
+    // 非MSTX事件查询时必须使用connectionId NOT IN显式排除MSTX事件，否则会将MSTX事件同时查询
+    // 因为TASK表没有字段表征该事件是否为MSTX事件，所以需要和MSTX_EVENTS表连接，和MSTX_EVENTS表中具有相同connectionId的事件才是Device侧的MSTX事件
+    // 因为DbTraceDataBase在执行OpenDb()方法时当MSTX_EVENTS表不存在时，会创建临时表MSTX_EVENTS，所以可以默认MSTX_EVENTS表在操作数据库时存在
+    std::string sql;
+    if (trackInfo.threadId.find('_') != std::string::npos) {
+        sql = "SELECT main.rowid AS id, main.startNs AS startNs, main.endNs AS endNs FROM " + TABLE_TASK +
+            " AS main INNER JOIN " + TABLE_MSTX_EVENTS + " AS mstx ON main.connectionId = mstx.connectionId "
+            " WHERE main.deviceId = ? AND main.streamId = ? AND mstx.domainId = ? "
+            " AND startNs <= ? AND endNs >= ? "
+            " ORDER BY main.startNs, main.rowid;";
+    } else {
+        sql = "SELECT rowid as id, startNs AS startNs, endNs AS endNs FROM " + TABLE_TASK +
+              " WHERE deviceId = ? AND streamId = ? AND connectionId NOT IN (SELECT connectionId FROM " +
+              TABLE_MSTX_EVENTS + ") AND startNs <= ? AND endNs >= ? ORDER BY startNs, id;";
+    }
+    auto stmt = database->CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        return stmt;
+    }
+    if (trackInfo.threadId.find('_') != std::string::npos) {
+        size_t pos = trackInfo.threadId.find('_');
+        std::string streamId = trackInfo.threadId.substr(0, pos);
+        std::string domainId = trackInfo.threadId.substr(pos + 1);
+        stmt->BindParams(trackInfo.deviceId, streamId, domainId, sliceQuery.endTime + sliceQuery.minTimestamp,
+                         sliceQuery.startTime + sliceQuery.minTimestamp);
+    } else {
+        stmt->BindParams(trackInfo.deviceId, trackInfo.threadId, sliceQuery.endTime + sliceQuery.minTimestamp,
+                         sliceQuery.startTime + sliceQuery.minTimestamp);
+    }
+    return stmt;
 }
 
 void HardWareRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,

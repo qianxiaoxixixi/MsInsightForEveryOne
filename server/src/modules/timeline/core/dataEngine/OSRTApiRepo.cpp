@@ -20,19 +20,21 @@ void OSRTApiRepo::QuerySimpleSliceWithOutNameByTrackId(const Dic::Module::Timeli
         ServerLog::Error("OSRT_API open database failed.");
         return;
     }
-    QuerySimpleSliceWithOutNameByTrackIdExecuteSQL(database, trackInfo.processId, sliceVec);
+    QuerySimpleSliceWithOutNameByTrackIdExecuteSQL(database, trackInfo.processId, sliceVec, sliceQuery);
 }
 
-void OSRTApiRepo::QuerySimpleSliceWithOutNameByTrackIdExecuteSQL(std::shared_ptr<VirtualTraceDatabase> database,
-    std::string &processId, std::vector<SliceDomain> &sliceVec)
+void OSRTApiRepo::QuerySimpleSliceWithOutNameByTrackIdExecuteSQL(const std::shared_ptr<VirtualTraceDatabase>& database,
+    std::string &processId, std::vector<SliceDomain> &sliceVec, const SliceQuery &sliceQuery)
 {
-    std::string sql = "SELECT rowid AS id, startNs, endNs FROM " + TABLE_OSRT_API + " WHERE globalTid = ?;";
+    std::string sql = "SELECT rowid AS id, startNs, endNs FROM " + TABLE_OSRT_API + " WHERE globalTid = ?"
+                      " AND startNs <= ? AND endNs >= ? ;";
     auto stmt = database->CreatPreparedStatement(sql);
     if (!stmt) {
         ServerLog::Error("Failed to prepare OSRT_API query for simple slice.");
         return;
     }
-    stmt->BindParams(processId);
+    stmt->BindParams(processId, sliceQuery.endTime + sliceQuery.minTimestamp,
+                     sliceQuery.startTime + sliceQuery.minTimestamp);
     auto resultSet = stmt->ExecuteQuery();
     if (!resultSet) {
         ServerLog::Error("Failed to execute OSRT_API query for simple slice.");

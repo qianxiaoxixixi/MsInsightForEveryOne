@@ -220,8 +220,11 @@ bool DbTraceDataBase::SearchSliceName(const Protocol::SearchSliceParams &params,
     responseBody.tid = resultSet->GetString("tid");
     responseBody.startTime = resultSet->GetUint64("startTime");
     responseBody.duration = resultSet->GetUint64("duration");
-    responseBody.depth = resultSet->GetUint32("depth");
     responseBody.id = resultSet->GetString("id");
+    std::string metaType = resultSet->GetString("metaType");
+    SliceQuery sliceQuery = CreateSliceQueryWithTimeRange({responseBody.rankId, responseBody.pid, responseBody.tid,
+                                                           metaType, responseBody.startTime, responseBody.duration});
+    responseBody.depth = GetSliceDepthForJump(sliceQuery, NumberUtil::StringToUnsignedLongLong(responseBody.id));
     return true;
 }
 
@@ -253,8 +256,11 @@ bool DbTraceDataBase::SearchSliceName(const Protocol::SearchSliceParams &params,
     uint64_t endTime = resultSet->GetUint64("endTime");
     responseBody.duration = endTime >= responseBody.startTime ? endTime - responseBody.startTime : 0;
     responseBody.startTime -= minTimestamp; // 业务上 minTimestamp 是最小的时间，一定有 item.timestamp > minTimestamp
-    responseBody.depth = resultSet->GetUint32("depth");
     responseBody.id = resultSet->GetString("id");
+    std::string metaType = resultSet->GetString("metaType");
+    SliceQuery sliceQuery = CreateSliceQueryWithTimeRange({responseBody.rankId, responseBody.pid,
+        responseBody.tid, metaType, responseBody.startTime, responseBody.duration});
+    responseBody.depth = GetSliceDepthForJump(sliceQuery, NumberUtil::StringToUnsignedLongLong(responseBody.id));
     return true;
 }
 
@@ -464,7 +470,7 @@ bool DbTraceDataBase::QueryCommunicationKernelInfo(const std::string &name, cons
                                                    CommunicationKernelBody &body)
 {
     std::string sql = "SELECT info.ROWID as id, info.groupName||'group' as tid, info.opName as name, 'HCCL' as pid, "
-                      "0 as depth, info.startNs from COMMUNICATION_OP info ";
+                      "info.startNs from COMMUNICATION_OP info ";
     auto getDeviceStmt = CreatPreparedStatement();
     bool isDeviceIdUnique = TraceDatabaseHelper::IsDeviceIdUnique(rankId);
     if (!isDeviceIdUnique) {
@@ -487,8 +493,8 @@ bool DbTraceDataBase::QueryCommunicationKernelInfo(const std::string &name, cons
         return false;
     }
     if (resultSet->Next()) {
+        // 通信大算子depth恒定是0
         body.id = resultSet->GetString("id");
-        body.depth = resultSet->GetUint64("depth");
         body.threadId = resultSet->GetString("tid");
         body.pid = resultSet->GetString("pid");
         body.rankId = QueryHostInfo() + rankId;
@@ -503,33 +509,7 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
     Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {
     // 精度缺失，设置500的浮动区间
-    std::string sql = "select info.ROWID as id, groupName||'group' as tid, opName as name, 'HCCL' as pid,"
-          " 0 as depth from COMMUNICATION_OP info "
-          " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500 "
-          " UNION all "
-          " select T.ROWID as id, groupName || '_' || planeId as tid, info.taskType as name, 'HCCL' as pid, 0 AS depth "
-          " from COMMUNICATION_TASK_INFO info join TASK T on info.globalTaskId = T.globalTaskId "
-          " where info.taskType = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
-          " UNION all "
-          " select T.ROWID as id, T.streamId as tid, name, 'Ascend Hardware' as pid, depth "
-          " from COMPUTE_TASK_INFO info join TASK T on info.globalTaskId = T.globalTaskId "
-          " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
-          " UNION all "
-          " select info.ROWID as id, domainId as tid, message as name, globalTid AS pid,"
-          " depth from MSTX_EVENTS info"
-          " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
-          " UNION all "
-          " select ca.ROWID as id, ca.type AS tid, ca.name as name, ca.globalTid AS pid,"
-          " depth from CANN_API ca"
-          " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
-          " UNION all "
-          " SELECT pa.ROWID AS id, 'pytorch' AS tid, name, globalTid AS pid, depth "
-          " from PYTORCH_API pa "
-          " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
-          " UNION ALL "
-          " SELECT osrt.ROWID AS id, 'OSRT_API' AS tid, name, globalTid AS pid, 0 AS depth "
-          " FROM OSRT_API osrt "
-          " WHERE name = (SELECT id FROM STRING_IDS WHERE value = ?) AND abs(startNs - ?) <= 500";
+    std::string sql = QUERY_KERNEL_SQL;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql to query kernel depth and thread.");
@@ -545,10 +525,13 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
     }
     if (resultSet->Next()) {
         responseBody.id = resultSet->GetString("id");
-        responseBody.depth = resultSet->GetUint64("depth");
         responseBody.threadId = resultSet->GetString("tid");
         responseBody.pid = resultSet->GetString("pid");
         responseBody.rankId = params.rankId;
+        std::string metaType = resultSet->GetString("metaType");
+        SliceQuery sliceQuery = CreateSliceQueryWithTimeRange({responseBody.rankId, responseBody.pid,
+            responseBody.threadId, metaType, params.timestamp, params.duration});
+        responseBody.depth = GetSliceDepthForJump(sliceQuery, NumberUtil::StringToUnsignedLongLong(responseBody.id));
     }
     return true;
 }
