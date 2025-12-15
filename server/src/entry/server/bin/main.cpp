@@ -6,6 +6,7 @@
 #include "pch.h"
 #include "ParamsParser.h"
 #include "WsServer.h"
+#include "SocketUtil.h"
 
 using namespace std;
 using namespace Dic;
@@ -37,6 +38,21 @@ void SetResourceLimitForServer()
     ServerLog::Info("Set the soft limit of file descriptors to the hard limit / 2 successfully.");
     return;
 #endif
+}
+
+void PrintAvailablePort(int startPort)
+{
+    int port = startPort;
+    const int scanRange = 100;
+    while (port < startPort + scanRange) {
+        if (SocketUtil::PortIsUsed(port)) {
+            port++;
+        } else {
+            std::cout << "Available port: " << port << std::endl;
+            return;
+        }
+    }
+    std::cout << "[Error] Can't find port between " << startPort << " and " << port << std::endl;
 }
 
 void ParamsOptionInfo()
@@ -71,6 +87,10 @@ int main(int argc, const char *argv[])
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, "");
         ServerLog::Error(ParamsParser::Instance().GetError());
         return -1;
+    }
+    if (option.scanPort > 0) {
+        PrintAvailablePort(option.scanPort);
+        return 0;
     }
 
     ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));

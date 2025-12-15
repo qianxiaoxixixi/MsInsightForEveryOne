@@ -19,6 +19,7 @@ struct ParamsOption {
     string logLevel = "INFO";
     string logPath = "./";
     string eventDir;
+    int scanPort{-1};
 };
 
 class ParamsParser {
@@ -39,6 +40,7 @@ private:
     bool ParseLogSize(const std::string &logSize);
     bool ParseLogLevel(const std::string &logLevel);
     bool ParseEventDir(const string &eventDir);
+    void ParseScan(const string &scan);
 
     const string symbolWsPort = "--wsPort=";
     const string symbolWsHost = "--wsHost=";
@@ -46,6 +48,7 @@ private:
     const string symbolLogSize = "--logSize=";
     const string symbolLogLevel = "--logLevel=";
     const string symbolEventDir = "--eventDir=";
+    const string symbolScanPort = "--scanPort="; // vscode插件使用来获取端口
     const int minPortNum = 9000;
     const int maxPortNum = 9100;
 
