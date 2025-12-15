@@ -141,5 +141,14 @@ struct TrackQuery {
 
     std::string fileId;
 };
+
+struct SliceBaseInfo {
+    std::string rankId;
+    std::string pid;
+    std::string tid;
+    std::string metaType;
+    uint64_t startTime = 0;
+    uint64_t duration = 0;
+};
 }
 #endif // PROFILER_SERVER_SLICEQUERY_H

@@ -118,6 +118,22 @@ void DbTraceDataBase::ProcessHostCounterEventsMetadata(const std::string &fileId
     }
 }
 
+void DbTraceDataBase::FillFlowDepth(const Protocol::UnitFlowsParams &requestParams, FlowLocation &location,
+    std::unordered_map<uint64_t, std::unordered_map<uint64_t, uint32_t>> &trackIdDepthCache)
+{
+    SliceCacheManager &sliceCacheManager = SliceCacheManager::Instance();
+    uint64_t trackId = TrackInfoManager::Instance().GetTrackId(requestParams.rankId, location.pid, location.tid);
+    auto item = trackIdDepthCache.find(trackId);
+    if (item != trackIdDepthCache.end()) {
+        location.depth = item->second[NumberUtil::StringToLongLong(location.id)];
+    } else {
+        std::unordered_map<uint64_t, uint32_t> depthCache;
+        sliceCacheManager.QueryDepthInfoWithoutTimeRange(std::to_string(trackId), requestParams.rankId, depthCache);
+        trackIdDepthCache[trackId] = depthCache;
+        location.depth = depthCache[NumberUtil::StringToLongLong(location.id)];
+    }
+}
+
 std::vector<FlowLocation> DbTraceDataBase::ExecuteQueryUnitFlowsForTable(const Protocol::UnitFlowsParams &requestParams,
                                                                          const std::pair<std::string, std::string> &tableAndSql,
                                                                          uint64_t minTimestamp,
@@ -135,6 +151,7 @@ std::vector<FlowLocation> DbTraceDataBase::ExecuteQueryUnitFlowsForTable(const P
     }
 
     std::vector<FlowLocation> flowLocations;
+    std::unordered_map<uint64_t, std::unordered_map<uint64_t, uint32_t>> trackIdDepthCache;
     while (resultSet->Next()) {
         auto metaType = resultSet->GetString("metaType");
         auto rankId = resultSet->GetString("deviceId");
@@ -146,11 +163,11 @@ std::vector<FlowLocation> DbTraceDataBase::ExecuteQueryUnitFlowsForTable(const P
         rankId = rankId.empty() ? path : QueryHostInfo() + rankId;
         FlowLocation location {
             .tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
-            .metaType = metaType, .rankId = rankId,
-            .depth = resultSet->GetUint32("depth"), .timestamp = resultSet->GetUint64("startTime"),
+            .metaType = metaType, .rankId = rankId, .depth = 0, .timestamp = resultSet->GetUint64("startTime"),
             .duration = resultSet->GetUint64("duration"), .pid = resultSet->GetString("pid"),
             .name = stringsCache.at(path)[resultSet->GetString("name")]
         };
+        FillFlowDepth(requestParams, location, trackIdDepthCache);
         if (tableAndSql.first == "TASK") {
             std::string domainId = resultSet->GetString("domainId");
             if (!domainId.empty()) {
@@ -469,15 +486,13 @@ void DbTraceDataBase::ExecuteQueryDbThreadSameOperatorsDetails(const std::unique
         }
         sameOperatorsDetail.pid = resultSet->GetString(col++);
         uint64_t trackId = TrackInfoManager::Instance().GetTrackId(requestParams.rankId, sameOperatorsDetail.pid, sameOperatorsDetail.tid);
+        SliceCacheManager &sliceCacheManager = SliceCacheManager::Instance();
         auto item = trackIdDepthCache.find(trackId);
         if (item != trackIdDepthCache.end()) {
             sameOperatorsDetail.depth = item->second[NumberUtil::StringToLongLong(sameOperatorsDetail.id)];
         } else {
             std::unordered_map<uint64_t, uint32_t> depthCache;
-            SliceQuery sliceQuery;
-            sliceQuery.rankId = requestParams.rankId;
-            sliceQuery.trackId = trackId;
-            sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
+            sliceCacheManager.QueryDepthInfoWithoutTimeRange(std::to_string(trackId), requestParams.rankId, depthCache);
             trackIdDepthCache[trackId] = depthCache;
             sameOperatorsDetail.depth = depthCache[NumberUtil::StringToLongLong(sameOperatorsDetail.id)];
         }

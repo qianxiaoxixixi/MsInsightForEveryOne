@@ -15,8 +15,8 @@ public:
                                 std::vector<CompeteSliceDomain> &competeSliceVec) override;
     bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
 protected:
-    void QuerySimpleSliceWithOutNameByTrackIdExecuteSQL(std::shared_ptr<VirtualTraceDatabase> database,
-                                                        std::string &processId, std::vector<SliceDomain> &sliceVec);
+    static void QuerySimpleSliceWithOutNameByTrackIdExecuteSQL(const std::shared_ptr<VirtualTraceDatabase>& database,
+        std::string &processId, std::vector<SliceDomain> &sliceVec, const SliceQuery &sliceQuery);
     void QueryCompeteSliceByIdsExecuteSQL(std::shared_ptr<VirtualTraceDatabase> database,
                                           const std::vector<uint64_t> &sliceIds,
                                           std::vector<CompeteSliceDomain> &competeSliceVec);

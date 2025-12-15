@@ -7,6 +7,11 @@
 #include "ServerLog.h"
 #include "MetaDataCacheManager.h"
 #include "VirtualTraceDatabase.h"
+#include "TrackInfoManager.h"
+#include "RepositoryFactory.h"
+#include "FullDbEnumUtil.h"
+#include "TraceTime.h"
+#include "SliceAnalyzer.h"
 
 namespace Dic::Module::Timeline {
 using namespace Dic::Server;
@@ -215,5 +220,38 @@ std::vector<UnitCounterData> VirtualTraceDatabase::DownSampleUnitCounterData(con
     }
 
     return sampledData;
+}
+
+SliceQuery VirtualTraceDatabase::CreateSliceQueryWithTimeRange(const SliceBaseInfo &sliceInfo)
+{
+    auto curTrackId = TrackInfoManager::Instance().GetTrackId(sliceInfo.rankId, sliceInfo.pid, sliceInfo.tid);
+    SliceQuery sliceQuery;
+    sliceQuery.trackId = curTrackId;
+    sliceQuery.pid = sliceInfo.pid;
+    sliceQuery.tid = sliceInfo.tid;
+    sliceQuery.rankId = sliceInfo.rankId;
+    auto metaTypeEnum = STR_TO_ENUM<PROCESS_TYPE>(sliceInfo.metaType);
+    if (metaTypeEnum.has_value()) {
+        sliceQuery.metaType = metaTypeEnum.value();
+    }
+    sliceQuery.minTimestamp = TraceTime::Instance().GetStartTime();
+    sliceQuery.startTime = sliceInfo.startTime;
+    sliceQuery.endTime = sliceInfo.startTime + sliceInfo.duration;
+    SliceQuery newSliceQuery = SliceCacheManager::GetSlicePagedQueryForDb(sliceQuery);
+    return newSliceQuery;
+}
+
+uint64_t VirtualTraceDatabase::GetSliceDepthForJump(const SliceQuery &params, uint64_t sliceId)
+{
+    SliceAnalyzer sliceAnalyzer;
+    auto repositoryFactory = RepositoryFactory::Instance();
+    auto repo = repositoryFactory->GetSliceRespo(params.metaType);
+    if (repo == nullptr) {
+        return 0;
+    }
+    sliceAnalyzer.SetRepository(repo);
+    std::unordered_map<uint64_t, uint32_t> depthCache;
+    sliceAnalyzer.ComputeDepthInfoByTrackId(params, depthCache);
+    return depthCache[sliceId];
 }
 }

@@ -484,6 +484,7 @@ bool TextTraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestP
     sliceQuery.endTime = requestParams.endTime;
     sliceQuery.startDepth = requestParams.startDepth;
     sliceQuery.endDepth = requestParams.endDepth;
+    sliceQuery.metaType = PROCESS_TYPE::TEXT;
     /*
      遍历metaDataList,这里不在一个sql里查询出来是为了以后预留pid.tid删选
     */
@@ -1490,10 +1491,6 @@ bool TextTraceDatabase::QueryCommunicationKernelInfo(const std::string &name, co
         SliceQuery sliceQuery;
         sliceQuery.rankId = rankId;
         sliceQuery.trackId = trackId;
-        std::unordered_map<uint64_t, uint32_t> depthCache;
-        sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
-        body.id = std::to_string(id);
-        body.depth = depthCache[id];
         body.startTime = startTime > Timeline::TraceTime::Instance().GetStartTime() ?
             startTime - Timeline::TraceTime::Instance().GetStartTime() :
             startTime;

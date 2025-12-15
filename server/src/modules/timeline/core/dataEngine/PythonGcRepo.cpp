@@ -20,13 +20,15 @@ void PythonGcRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQ
         return;
     }
     std::string sql =
-        "SELECT ROWID as id, startNs, endNs from " + GC_RECORD + " where globalTid = ? order by startNs , id";
+        "SELECT ROWID as id, startNs, endNs from " + GC_RECORD + " where globalTid = ? "
+        " AND startNs <= ? AND endNs >= ? order by startNs , id";
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to parpare gcRecord query all slice");
         return;
     }
-    stmt->BindParams(trackInfo.processId);
+    stmt->BindParams(trackInfo.processId, sliceQuery.endTime + sliceQuery.minTimestamp,
+                     sliceQuery.startTime + sliceQuery.minTimestamp);
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to execute query gcRecord query all slice");

@@ -1866,10 +1866,10 @@ TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenPython)
     params.isMatchExact = true;
     std::string sql =
         Dic::Module::Timeline::TraceDatabaseHelper::GetSearchSliceNameWithLockRangeSql(params, trackQueryVec, path);
-    EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where value like ?)  SELECT api.ROWID as id, 'pytorch' as "
-        "tid, api.globalTid as pid, api.startNs as timestamp, api.endNs as endTime, api.depth from "
-        "PYTORCH_API  api join ids on ids.id = api.name WHERE api.globalTid = ? AND api.startNs >= ? AND "
-        "api.endNs <= ?  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
+    EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where value like ?)  SELECT api.ROWID as id, 'pytorch' "
+        "as tid, api.globalTid as pid, api.startNs as timestamp, api.endNs as endTime, api.depth, "
+        "'PYTORCH_API' as metaType from PYTORCH_API  api join ids on ids.id = api.name WHERE api.globalTid = ? "
+        "AND api.startNs >= ? AND api.endNs <= ?  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
 }
 
 TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenCann)
@@ -1885,10 +1885,10 @@ TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenCann)
     params.isMatchExact = false;
     std::string sql =
         Dic::Module::Timeline::TraceDatabaseHelper::GetSearchSliceNameWithLockRangeSql(params, trackQueryVec, path);
-    EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where value like '%'||?||'%')  SELECT cann.connectionId as "
-        "id, cann.globalTid as pid, cann.type as tid, cann.startNs as timestamp, cann.endNs as endTime, "
-        "cann.depth from CANN_API  cann join ids on ids.id = cann.name WHERE globalTid = ? AND type = ? AND "
-        "startNs >= ? AND endNs <= ?  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
+    EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where value like '%'||?||'%')  SELECT cann.connectionId "
+        "as id, cann.globalTid as pid, cann.type as tid, cann.startNs as timestamp, cann.endNs as endTime, "
+        "cann.depth, 'CANN_API' as metaType from CANN_API  cann join ids on ids.id = cann.name WHERE globalTid = ? "
+        "AND type = ? AND startNs >= ? AND endNs <= ?  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
 }
 
 TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenMstx)
@@ -1905,9 +1905,10 @@ TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenMstx)
     std::string sql =
         Dic::Module::Timeline::TraceDatabaseHelper::GetSearchSliceNameWithLockRangeSql(params, trackQueryVec, path);
     EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%'))  SELECT "
-        "mstx.ROWID as id, mstx.globalTid as pid, mstx.domainId as tid, mstx.startNs as timestamp, mstx.endNs as "
-        "endTime, mstx.depth from MSTX_EVENTS  mstx join ids on ids.id = mstx.message WHERE globalTid = ? "
-        "AND startNs >= ? AND endNs <= ?  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
+                   "mstx.ROWID as id, mstx.globalTid as pid, mstx.domainId as tid, mstx.startNs as timestamp, "
+                   "mstx.endNs as endTime, mstx.depth, 'MSTX_EVENTS' as metaType from MSTX_EVENTS  mstx join ids "
+                   "on ids.id = mstx.message WHERE globalTid = ? AND startNs >= ? AND endNs <= ?  ORDER BY timestamp "
+                   "ASC LIMIT 1 OFFSET ?");
 }
 
 TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenOsrt)
@@ -1924,10 +1925,10 @@ TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenOsrt)
     std::string sql =
         Dic::Module::Timeline::TraceDatabaseHelper::GetSearchSliceNameWithLockRangeSql(params, trackQueryVec, path);
     EXPECT_EQ(sql,
-        "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%'))  "
-        "SELECT osrt.ROWID AS id, 'OSRT_API' AS tid, osrt.globalTid AS pid, osrt.startNs AS timestamp, "
-        "osrt.endNs AS endTime, 0 AS depth FROM OSRT_API  osrt JOIN ids ON ids.id = osrt.name "
-        "WHERE osrt.globalTid = ? AND osrt.startNs >= ? AND osrt.endNs <= ?  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
+        "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%'))  SELECT osrt.ROWID AS id, "
+        "'OSRT_API' AS tid, osrt.globalTid AS pid, osrt.startNs AS timestamp, osrt.endNs AS endTime, 0 AS depth, "
+        "'OSRT_API' as metaType FROM OSRT_API  osrt JOIN ids ON ids.id = osrt.name WHERE osrt.globalTid = ? AND "
+        "osrt.startNs >= ? AND osrt.endNs <= ?  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
 }
 
 TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenHardWare)
@@ -1943,15 +1944,15 @@ TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenHardWare)
     std::string sql =
         Dic::Module::Timeline::TraceDatabaseHelper::GetSearchSliceNameWithLockRangeSql(params, trackQueryVec, path);
     EXPECT_EQ(sql,
-        "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%')) SELECT hadware.id as id, "
-        "hadware.pid as pid, hadware.tid as tid, hadware.timestamp as timestamp, hadware.endTime as endTime, "
-        "hadware.depth as depth  FROM (SELECT coalesce(c.name, m.message, s.name, main.taskType) as name, main.ROWID "
-        "AS id, 'Ascend Hardware' as pid, main.streamId as tid,main.startNs as timestamp, main.endNs as endTime, "
-        "main.depth as depth FROM TASK main left join COMPUTE_TASK_INFO c on c.globalTaskId = main.globalTaskId left "
-        "join MSTX_EVENTS m on  (m.connectionId = main.connectionId and  m.connectionId != 4294967295 ) left join "
-        "COMMUNICATION_SCHEDULE_TASK_INFO s on main.globalTaskId = s.globalTaskId WHERE main.deviceId = ? AND "
-        "main.streamId = ? AND main.startNs >= ? AND main.endNs <= ?) hadware  join ids on ids.id = hadware.name  "
-        "ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
+        "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%')) SELECT hadware.id as "
+        "id, hadware.pid as pid, hadware.tid as tid, hadware.timestamp as timestamp, hadware.endTime as endTime, "
+        "hadware.depth as depth, 'Ascend Hardware' as metaType  FROM (SELECT coalesce(c.name, m.message, s.name, "
+        "main.taskType) as name, main.ROWID AS id, 'Ascend Hardware' as pid, main.streamId as tid,main.startNs as "
+        "timestamp, main.endNs as endTime, main.depth as depth FROM TASK main left join COMPUTE_TASK_INFO c on "
+        "c.globalTaskId = main.globalTaskId left join MSTX_EVENTS m on  (m.connectionId = main.connectionId and  "
+        "m.connectionId != 4294967295 ) left join COMMUNICATION_SCHEDULE_TASK_INFO s on main.globalTaskId = "
+        "s.globalTaskId WHERE main.deviceId = ? AND main.streamId = ? AND main.startNs >= ? AND main.endNs <= ?) "
+        "hadware  join ids on ids.id = hadware.name  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
 }
 
 TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenHccl)
@@ -1967,10 +1968,11 @@ TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenHccl)
     params.isMatchExact = false;
     std::string sql =
         Dic::Module::Timeline::TraceDatabaseHelper::GetSearchSliceNameWithLockRangeSql(params, trackQueryVec, path);
-    EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%'))  SELECT op.opId "
-        "as id, 'HCCL' as pid, op.groupName||'group' as tid, op.startNs as timestamp, op.endNs as endTime, "
-        "0 as depth from COMMUNICATION_OP op join ids on id = op.opName WHERE op.groupName = ? AND "
-        "op.startNs >= ? AND op.endNs <= ?  ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
+    EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%'))  "
+                   "SELECT op.opId as id, 'HCCL' as pid, op.groupName||'group' as tid, op.startNs as timestamp, "
+                   "op.endNs as endTime, 0 as depth, 'HCCL' as metaType from COMMUNICATION_OP op join ids on id = "
+                   "op.opName WHERE op.groupName = ? AND op.startNs >= ? AND op.endNs <= ?  ORDER BY timestamp ASC "
+                   "LIMIT 1 OFFSET ?");
 }
 
 TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenPython)
@@ -2098,9 +2100,9 @@ TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenHcclPlane)
     EXPECT_EQ(sql,
         "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%')) SELECT main.ROWID as id, "
         "'HCCL' as pid, ci.groupName||'_'||ci.planeId as tid, main.startNs as timestamp, main.endNs as endTime, "
-        "main.depth from TASK main join COMMUNICATION_TASK_INFO ci on ci.globalTaskId = main.globalTaskId join ids on "
-        "ids.id = ci.taskType WHERE main.deviceId = ? and ci.groupName = ? AND ci.planeId = ? AND main.startNs >= ? "
-        "AND main.endNs <= ? ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
+        "main.depth, 'HCCL' as metaType from TASK main join COMMUNICATION_TASK_INFO ci on ci.globalTaskId = "
+        "main.globalTaskId join ids on ids.id = ci.taskType WHERE main.deviceId = ? and ci.groupName = ? AND "
+        "ci.planeId = ? AND main.startNs >= ? AND main.endNs <= ? ORDER BY timestamp ASC LIMIT 1 OFFSET ?");
 }
 
 TEST_F(DbTraceDatabaseTest, ProcessByteAlignmentAnalyzerDataForDbTest)

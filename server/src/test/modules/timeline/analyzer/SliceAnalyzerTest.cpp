@@ -26,7 +26,7 @@ TEST_F(SliceAnalyzerTest, test_ComputeSliceDomainVecAndSelfTimeByTimeRange_filte
     sliceAnalyzer.SetRepository(ptr);
     SliceQuery sliceQuery = { 3, 0, 23, 2 };
     SliceCacheFliterPythonMock();
-    SliceCacheManager::Instance().PutPythonFunctionIdVec(std::to_string(sliceQuery.trackId), { 1 });
+    SliceCacheManager::Instance().PutPythonFunctionIdVec(std::to_string(sliceQuery.trackId), { 1 }, sliceQuery);
     SliceCacheManager::Instance().UpdatePythonFilterSet(std::to_string(sliceQuery.trackId), true);
     std::vector<CompeteSliceDomain> sliceDomainVec;
     std::map<std::string, uint64_t> selfTimeKeyValue;

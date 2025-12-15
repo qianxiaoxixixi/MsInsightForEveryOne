@@ -20,13 +20,15 @@ void PythonApiRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &slice
         return;
     }
     std::string sql =
-        "SELECT ROWID as id, startNs, endNs from " + TABLE_API + " where globalTid = ? order by startNs , id";
+        "SELECT ROWID as id, startNs, endNs from " + TABLE_API + " where globalTid = ? "
+        " AND startNs <= ? AND endNs >= ? order by startNs , id";
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Warn("Failed to parpare python api query all slice");
         return;
     }
-    stmt->BindParams(trackInfo.processId);
+    stmt->BindParams(trackInfo.processId, sliceQuery.endTime + sliceQuery.minTimestamp,
+                     sliceQuery.startTime + sliceQuery.minTimestamp);
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Warn("Failed to execute query python api query all slice");
@@ -50,7 +52,7 @@ void PythonApiRepo::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector
     }
     std::string sql = "SELECT api.ROWID as id from " + TABLE_API + " api "
         " JOIN " + TABLE_ENUM_API_TYPE + " enum ON enum.id = api.type "
-        " where api.globalTid = ? and enum.name = 'trace'";
+        " where api.globalTid = ? and enum.name = 'trace' and startNs <= ? and endNs >= ? ";
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(sliceQuery.rankId);
     if (database == nullptr) {
         ServerLog::Warn("python api open database is failed");
@@ -61,7 +63,8 @@ void PythonApiRepo::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector
         ServerLog::Warn("Failed to parpare python api query slice by cat");
         return;
     }
-    stmt->BindParams(trackInfo.processId);
+    stmt->BindParams(trackInfo.processId, sliceQuery.endTime + sliceQuery.minTimestamp,
+                     sliceQuery.startTime + sliceQuery.minTimestamp);
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Warn("Failed to execute query python api query slice by cat");

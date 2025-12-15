@@ -100,7 +100,8 @@ inline void SliceCacheNotFliterPythonMock()
         }
         return (first.timestamp == second.timestamp) && first.id < second.id;
     });
-    SliceCacheManager::Instance().UpdateSliceCache("3", "", sliceVec);
+    SliceQuery sliceQuery = {3, 0, 23, 2 };
+    SliceCacheManager::Instance().UpdateSliceCache("3", sliceVec, sliceQuery);
 }
 
 inline void SliceCacheFliterPythonMock()
@@ -132,7 +133,8 @@ inline void SliceCacheFliterPythonMock()
         }
         return (first.timestamp == second.timestamp) && first.id < second.id;
     });
-    SliceCacheManager::Instance().UpdateSliceCache("3", "", sliceVec);
+    SliceQuery sliceQuery = {3, 0, 23, 2 };
+    SliceCacheManager::Instance().UpdateSliceCache("3", sliceVec, sliceQuery);
 }
 }
 #endif // PROFILER_SERVER_SLICEANALYZER_MOCK_DATA_H

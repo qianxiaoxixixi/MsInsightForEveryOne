@@ -43,7 +43,9 @@ TEST_F(OSRTApiRepoTest, QuerySimpleSliceWithOutNameByTrackIdExecuteSQLNormalTest
     database->ExecSql(stringIdsInsert);
     std::string processId{"885733925791211"};
     std::vector<SliceDomain> sliceVec;
-    QuerySimpleSliceWithOutNameByTrackIdExecuteSQL(database, processId, sliceVec);
+    SliceQuery sliceQuery;
+    sliceQuery.endTime = UINT64_MAX;
+    QuerySimpleSliceWithOutNameByTrackIdExecuteSQL(database, processId, sliceVec, sliceQuery);
     ASSERT_EQ(sliceVec.size(), 5); // 5
     EXPECT_EQ(sliceVec[0].id, 1);
     EXPECT_EQ(sliceVec[1].id, 2); // 2
@@ -52,7 +54,7 @@ TEST_F(OSRTApiRepoTest, QuerySimpleSliceWithOutNameByTrackIdExecuteSQLNormalTest
     EXPECT_EQ(sliceVec[4].id, 5); // 4, 5
     sliceVec.clear();
     processId = "885733925791213";
-    QuerySimpleSliceWithOutNameByTrackIdExecuteSQL(database, processId, sliceVec);
+    QuerySimpleSliceWithOutNameByTrackIdExecuteSQL(database, processId, sliceVec, sliceQuery);
     ASSERT_EQ(sliceVec.size(), 5); // 5
     EXPECT_EQ(sliceVec[0].id, 6); // 6
     EXPECT_EQ(sliceVec[1].id, 7); // 7
@@ -75,7 +77,9 @@ TEST_F(OSRTApiRepoTest, QuerySimpleSliceWithOutNameByTrackIdExecuteSQLFailedTest
     database->OpenDb(completePath, false);
     std::string processId{"885733925791211"};
     std::vector<SliceDomain> sliceVec;
-    QuerySimpleSliceWithOutNameByTrackIdExecuteSQL(database, processId, sliceVec);
+    SliceQuery sliceQuery;
+    sliceQuery.endTime = UINT64_MAX;
+    QuerySimpleSliceWithOutNameByTrackIdExecuteSQL(database, processId, sliceVec, sliceQuery);
     ASSERT_EQ(sliceVec.size(), 0);
     database->CloseDb();
     std::remove(completePath.c_str());

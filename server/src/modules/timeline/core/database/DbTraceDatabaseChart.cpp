@@ -24,16 +24,16 @@ std::string DbTraceDataBase::GetSearchSliceNameSql(bool isMatchExact, bool isMat
         associationTaskSql = "join tasks on op.connectionId = tasks.connectionId";
     }
     const std::string hostSql =
-        " SELECT name, globalTid as pid,  'HOST' as metaType,  type as tid, startNs - minTime.value as startTime,endNs "
+        " SELECT name, globalTid as pid, metaType,  type as tid, startNs - minTime.value as startTime,endNs "
         "- startNs as duration, depth, api.id "
-        " FROM (select globalTid, type, startNs, endNs, depth, cann.ROWID as id, name from " + TABLE_CANN_API +
-        " cann join ids on ids.id = cann.name "
-        " Union all select globalTid, domainId as type, startNs, endNs, depth, mstx.ROWID as id, message as name "
-        " from " + TABLE_MSTX_EVENTS + " mstx join ids on ids.id = mstx.message "
-        " UNION all select globalTid, 'pytorch' as type, startNs, endNs, depth, python.ROWID as id, name "
-        " from " + TABLE_API + " python join ids on ids.id = python.name" +
-        " UNION ALL SELECT globalTid, 'OSRT_API' AS type, startNs, endNs, 0 AS depth, osrt.ROWID AS id, name"
-        " FROM " + TABLE_OSRT_API + " osrt JOIN ids ON ids.id = osrt.name) api join minTime ";
+        " FROM (select globalTid, type, startNs, endNs, depth, cann.ROWID as id, name, 'CANN_API' as metaType from "
+        + TABLE_CANN_API + " cann join ids on ids.id = cann.name "
+        " Union all select globalTid, domainId as type, startNs, endNs, depth, mstx.ROWID as id, message as name, "
+        " 'MSTX_EVENTS' as metaType from " + TABLE_MSTX_EVENTS + " mstx join ids on ids.id = mstx.message "
+        " UNION all select globalTid, 'pytorch' as type, startNs, endNs, depth, python.ROWID as id, name, "
+        " 'PYTORCH_API' as metaType from " + TABLE_API + " python join ids on ids.id = python.name" +
+        " UNION ALL SELECT globalTid, 'OSRT_API' AS type, startNs, endNs, 0 AS depth, osrt.ROWID AS id, name,"
+        " 'OSRT_API' as metaType FROM " + TABLE_OSRT_API + " osrt JOIN ids ON ids.id = osrt.name) api join minTime ";
     std::string comSql = "select opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
                          " startNs - minTime.value as startTime, endNs - startNs as duration, 0 as depth, op.ROWID"
                          " as id from COMMUNICATION_OP op join minTime " +

@@ -15,6 +15,8 @@ void CannApiRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQu
     cannApiTable->Select(CannApiColumn::ID, CannApiColumn::TIMESTAMP, CannApiColumn::ENDTIME)
         .Eq(CannApiColumn::TYPE, trackInfo.threadId)
         .Eq(CannApiColumn::GLOBAL_TID, trackInfo.processId)
+        .LessEq(CannApiColumn::TIMESTAMP, sliceQuery.endTime + sliceQuery.minTimestamp)
+        .GreaterEq(CannApiColumn::ENDTIME, sliceQuery.startTime + sliceQuery.minTimestamp)
         .ExcuteQuery(trackInfo.cardId, cannApipoVec);
     for (const auto &item : cannApipoVec) {
         SliceDomain sliceDomain;

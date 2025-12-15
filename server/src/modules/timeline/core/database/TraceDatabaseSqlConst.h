@@ -121,6 +121,35 @@ const std::string QUERY_HOST_METADATA_PYTHONGC_SQL =
     "select 'Python GC' as name, globalTid,'Python GC' as type,  0 as maxDepth from GC_RECORD a "
     " group by globalTid order by globalTid";
 
+const std::string QUERY_KERNEL_SQL =
+    "select info.ROWID as id, groupName||'group' as tid, opName as name, 'HCCL' as pid,"
+    " 0 as depth, 'HCCL' as metaType from COMMUNICATION_OP info "
+    " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500 "
+    " UNION all "
+    " select T.ROWID as id, groupName || '_' || planeId as tid, info.taskType as name, 'HCCL' as pid, 0 AS depth,"
+    " 'HCCL' as metaType from COMMUNICATION_TASK_INFO info join TASK T on info.globalTaskId = T.globalTaskId "
+    " where info.taskType = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
+    " UNION all "
+    " select T.ROWID as id, T.streamId as tid, name, 'Ascend Hardware' as pid, depth, "
+    " 'Ascend Hardware' as metaType from COMPUTE_TASK_INFO info join TASK T on info.globalTaskId = T.globalTaskId"
+    " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
+    " UNION all "
+    " select info.ROWID as id, domainId as tid, message as name, globalTid AS pid,"
+    " depth, 'MSTX_EVENTS' as metaType from MSTX_EVENTS info"
+    " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
+    " UNION all "
+    " select ca.ROWID as id, ca.type AS tid, ca.name as name, ca.globalTid AS pid,"
+    " depth, 'CANN_API' as metaType from CANN_API ca"
+    " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
+    " UNION all "
+    " SELECT pa.ROWID AS id, 'pytorch' AS tid, name, globalTid AS pid, depth, "
+    " 'PYTORCH_API' as metaType from PYTORCH_API pa "
+    " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
+    " UNION ALL "
+    " SELECT osrt.ROWID AS id, 'OSRT_API' AS tid, name, globalTid AS pid, 0 AS depth, "
+    " 'OSRT_API' as metaType FROM OSRT_API osrt "
+    " WHERE name = (SELECT id FROM STRING_IDS WHERE value = ?) AND abs(startNs - ?) <= 500";
+
 // 兼容老版本（1.0.0）
 const std::string QUERY_COMMUNICATION_GROUP_MAP_DB_1_0_SQL =
     "SELECT groupName, planeId, 'Plane ' || planeId as threadName FROM " + TABLE_COMMUNICATION_TASK_INFO + " cti "
