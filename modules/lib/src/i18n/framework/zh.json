@@ -106,6 +106,14 @@
     },
     "Or": "或",
     "Documentation": "帮助文档",
-    "ImportExpertHotspotDataTips": "请选择含有MoE专家热点数据的目录或文件"
+    "ImportExpertHotspotDataTips": "请选择含有MoE专家热点数据的目录或文件",
+    "error": {
+      "ConnectionError": "连接异常",
+      "ConnectionErrorMessage": "WebSocket 出现异常，请检查网络并重试",
+      "ConnectionClosed": "连接已关闭",
+      "ConnectionClosedMessage": "WebSocket 连接已关闭，请重新连接或重启 MindStudio Insight",
+      "Reconnect": "重新连接",
+      "ConnectionNotAvailable": "WebSocket 连接不可用，请重启 MindStudio Insight"
+    }
   }
 }

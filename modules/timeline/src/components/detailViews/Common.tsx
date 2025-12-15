@@ -229,7 +229,7 @@ export const querySystemViewDetails = async (param: {
 };
 
 export const queryTableDataNameList = async (param: { rankId: string; dbPath: string }): Promise<any> => {
-    return window.requestData('tableData/nameList', param, 'timeline');
+    return window.requestData('tableData/nameList', param, 'timeline', { silent: true });
 };
 
 export const queryTableDataDetails = async (param: {

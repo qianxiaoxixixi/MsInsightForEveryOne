@@ -5,7 +5,7 @@ import { ServerConnector } from '@insight/lib/connection';
 import { INTERCEPTOR_HANDLERS, NOTIFICATION_INTERCEPTOR_HANDLERS, NOTIFICATION_STATISTIC_HANDLERS } from './interceptor';
 import { listenerMap } from './notification';
 import { store } from '@/store';
-import { request } from '@/centralServer/server';
+import { requestModule } from '@/centralServer/server';
 import { GLOBAL_HOST } from '@/centralServer/websocket/defs';
 
 type TargetWindow = Window;
@@ -45,8 +45,8 @@ export function registerEventListeners(): void {
     // 转发ws消息到模块
     connector.registerAwaitFetch(async (e) => {
         const currentRemote = store.sessionStore.activeSession?.activeDataSource ?? GLOBAL_HOST;
-        const { remote = currentRemote, args, module, voidResponse } = e.data;
-        const result = await request(module, args, voidResponse);
+        const { remote = currentRemote, args, module } = e.data;
+        const result = await requestModule(module, args);
         return { dataSource: remote, body: result };
     });
 }

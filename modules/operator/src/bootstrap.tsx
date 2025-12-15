@@ -11,7 +11,7 @@ import { store } from './store';
 import App from './App';
 import { NOTIFICATION_HANDLERS } from './interface';
 import connector from './connection';
-import { disableShortcuts } from '@insight/lib/utils';
+import { createRequest, disableShortcuts } from '@insight/lib/utils';
 
 // 禁用右键刷新以及F5、Ctrl+R刷新
 document.oncontextmenu = (): boolean => false;
@@ -32,13 +32,7 @@ declare global {
         dataPath: string[];
     }
 };
-window.requestData = async (command, params, module): Promise<unknown> => {
-    const data = await connector.fetch({
-        args: { command, params },
-        module: module !== undefined ? module : String(command).split('/')[0]?.toLowerCase(),
-    });
-    return (data as any).body;
-};
+window.requestData = createRequest(connector);
 
 Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
     connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {

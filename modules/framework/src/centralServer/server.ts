@@ -10,7 +10,7 @@ import {
     FileOrDirectory,
     ImportResultBody,
     DataSource,
-    LayerType, ImportTreeInfo,
+    LayerType, ImportTreeInfo, type Response,
 } from './websocket/defs';
 import { Connection, ErrorMsg } from './websocket/connection';
 import connector from '@/connection';
@@ -24,6 +24,7 @@ import { transformFile, updateProject } from '@/utils/Project';
 import { closeLoading } from '@/utils/useLoading';
 import { updateDataScene } from '@/components/TabPane/Index';
 import { Session } from '@/entity/session';
+import { errorCenter, RequestOptions, WsError } from '@insight/lib';
 
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
@@ -69,12 +70,18 @@ export const addDataPath = async function(project: Project, action: ProjectActio
             projectAction: action,
             isConflict,
         };
-        const result = await importProject(params);
-        if (!result || (result as ErrorMsg).error !== undefined) {
+        const { body: result, error } = await importProject(params) as Response<ImportResultBody>;
+
+        if (error) {
+            const { code, message } = error;
+            errorCenter.handleError(new WsError(code, message));
+        }
+
+        if (!result) {
             connector.send({ event: 'remote/reset', body: {}, target: 'plugin' }); // 由于发送时页签应该只有 时间线、内存、算子 存在，所以这个事件只能被这三个页签收到
             return false;
         }
-        const res = result as ImportResultBody;
+        const res = result;
         // 这里添加 session.actionListener.type !== SessionAction.ADD_DATA_UNDER_PROJECT 条件，防止在项目中添加卡的场景下，集群页面被重置
         // 这里添加 res.isCluster 判断导入数据是否是集群，如果是集群数据，也要重置 session 使 clusterCompleted = false, 确保 Summary 和 Communication 模块正常加载
         if (session.actionListener.type !== SessionAction.ADD_DATA_UNDER_PROJECT && (res.reset || res.isCluster)) {
@@ -153,12 +160,47 @@ const afterImportProject = (params: ImportProjectParams, data: ImportResultBody)
     closeLoading();
 };
 
-export const request = function <T>(
+// framework发送的请求
+export const request = async <T>(
     moduleName: ModuleName,
     args: DataRequest,
-    voidResponse?: boolean,
+    options?: RequestOptions,
+): Promise<T | ErrorMsg> => {
+    const connection: Connection | undefined = CONNECTION_MAP.get(getConnectionMapKey(GLOBAL_HOST));
+
+    if (connection === undefined) {
+        return Promise.reject(Error('no connection'));
+    }
+
+    const res = await connection?.fetch<T>(moduleName, args);
+
+    if ((res as Response)?.command === 'import/action') {
+        return res;
+    }
+
+    if ((res as ErrorMsg).error) {
+        const { error: { code, message } } = res as ErrorMsg;
+        const wsError = new WsError(code, message);
+        if (!options?.silent) {
+            errorCenter.handleError(wsError);
+        }
+
+        throw wsError;
+    }
+
+    return res;
+};
+
+// 子模块发送的请求
+export const requestModule = function <T>(
+    moduleName: ModuleName,
+    args: DataRequest,
 ): Promise<T | ErrorMsg> {
     const connection: Connection | undefined = CONNECTION_MAP.get(getConnectionMapKey(GLOBAL_HOST));
-    if (connection === undefined) { return Promise.reject(Error('no connection')); }
-    return new Promise((resolve: (v: T | ErrorMsg) => void, reject) => connection?.fetch<T>(moduleName, args, voidResponse)?.then(resolve, reject));
+
+    if (connection === undefined) {
+        return Promise.reject(Error('no connection'));
+    }
+
+    return connection?.fetch<T>(moduleName, args);
 };

@@ -72,6 +72,15 @@ const antdFormCss = css`
     }
 `;
 
+const modalConfirmCss = (theme: Theme): SerializedStyles => css`
+    .ant-modal-confirm-body {
+        .ant-modal-confirm-title {
+            font-weight: bold;
+            color: ${theme.textColorPrimary}
+        }
+    }
+`;
+
 export const GlobalStyles = (): JSX.Element => {
     const theme = useTheme();
     return <Global
@@ -119,6 +128,7 @@ export const GlobalStyles = (): JSX.Element => {
             ${antdTooltipCss(theme)};
             ${formatterCss};
             ${antdFormCss};
+            ${modalConfirmCss(theme)};
         `}
     />;
 };

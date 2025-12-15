@@ -12,7 +12,7 @@ import styled from '@emotion/styled';
 import { FormInstance } from 'antd/lib/form';
 import { Loading, ParallelismGraph } from './ParallelismGraph';
 import { getParallelStrategy, setParallelStrategy } from '../../utils/RequestUtils';
-import { ErrorInfo, ParallelismArrangementParams } from '../../utils/interface';
+import { ParallelismArrangementParams } from '../../utils/interface';
 import { ParallelSwitchConditionsProvider, useParallelSwitchConditions } from './Context';
 import type { TFunction } from 'i18next';
 import { COLOR } from '../Common';
@@ -242,18 +242,11 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, isNoData,
             }
         }
 
-        try {
-            await setParallelStrategy({ ...values });
-            parallelismStore.updateGenerateConditions({ ...values, dimension: generateConditions.dimension });
-            setShowRank(true);
-            setIsNoData(false);
-            eventBus.emit('activeCommunicator', undefined);
-        } catch (e) {
-            const errMsg = (e as ErrorInfo)?.message;
-            if (errMsg !== undefined) {
-                message.error(errMsg);
-            }
-        }
+        await setParallelStrategy({ ...values });
+        parallelismStore.updateGenerateConditions({ ...values, dimension: generateConditions.dimension });
+        setShowRank(true);
+        setIsNoData(false);
+        eventBus.emit('activeCommunicator', undefined);
     };
 
     const handleTabChange = (key: string): void => {

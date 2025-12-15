@@ -7,7 +7,7 @@ import './index.css';
 import connector from './connection';
 import { NOTIFICATION_HANDLERS } from './interface';
 import React from 'react';
-import { customConsole as console, disableShortcuts } from '@insight/lib/utils';
+import { createRequest, disableShortcuts } from '@insight/lib/utils';
 import { store } from './store';
 
 Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
@@ -62,10 +62,4 @@ declare global {
     }
 };
 
-window.requestData = async (command, params, module): Promise<any> => {
-    const data = await connector.fetch({
-        args: { command, params },
-        module: module !== undefined ? module : String(command).split('/')[0]?.toLowerCase(),
-    });
-    return (data as any)?.body;
-};
+window.requestData = createRequest(connector);

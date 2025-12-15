@@ -3,7 +3,6 @@
  */
 
 import type { TableProps } from 'antd/es/table';
-import { message as Message } from 'antd';
 import type { SortOrder, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { forwardRef, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -181,26 +180,22 @@ const getTableColumns = function ({ columns, theme, t, isCompare, setExpandedKey
 };
 
 async function redirectToTimeline(record: OperatorDetail, card: CardInfo): Promise<void> {
-    try {
-        const res = await fetchOperatorPosition({
-            id: record.id,
-            name: record.name,
-            rankId: card.cardId,
-            dbPath: card.dbPath,
-        });
-        connector.send({
-            event: 'switchModule',
-            body: {
-                switchTo: 'timeline',
-                toModuleEvent: 'locateUnit',
-                params: {
-                    ...res,
-                },
+    const res = await fetchOperatorPosition({
+        id: record.id,
+        name: record.name,
+        rankId: card.cardId,
+        dbPath: card.dbPath,
+    });
+    connector.send({
+        event: 'switchModule',
+        body: {
+            switchTo: 'timeline',
+            toModuleEvent: 'locateUnit',
+            params: {
+                ...res,
             },
-        });
-    } catch (e: any) {
-        Message.error(e.message);
-    }
+        },
+    });
 }
 
 // eslint-disable-next-line max-lines-per-function

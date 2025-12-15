@@ -18,8 +18,7 @@ import { calculateDomainRange } from '../components/CategorySearch';
 import i18n from '@insight/lib/i18n';
 import { forEach, groupBy, isEmpty, cloneDeep } from 'lodash';
 import { savePageSetting, recoverPageSetting, updatePageSetting } from '../utils/PageSetting';
-import { getRankInfoKey } from '@insight/lib/utils';
-import React from 'react';
+import { errorCenter, getRankInfoKey, WsError, ErrorCode } from '@insight/lib/utils';
 import { RankInfo } from '../api/interface';
 import { queryOneKernel } from '../components/detailViews/Common';
 
@@ -230,21 +229,7 @@ export const parseFailHandler: NotificationHandler = (data): void => {
         }
         setUnitPhaseByCardId((data as any).rankId, session, 'error');
     });
-    const msgList = (data.error as string).split(';');
-    const children: any[] = [];
-    msgList.forEach(msg => {
-        children.push(msg);
-        children.push(React.createElement('br'));
-    });
-
-    const content = React.createElement(
-        'div',
-        {
-            style: { 'text-align': 'left' },
-        },
-        ...children,
-    );
-    message.error(content);
+    errorCenter.handleError(new WsError(ErrorCode.PARSE_FAIL, data.error as string));
 };
 
 const getRootUnit = (session: Session, host: string, dataSource: DataSource): InsightUnit | undefined => {

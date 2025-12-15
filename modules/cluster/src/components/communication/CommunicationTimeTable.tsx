@@ -6,11 +6,11 @@ import React, { CSSProperties, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Button, CollapsiblePanel } from '@insight/lib/components';
-import { message, type TableColumnsType } from 'antd';
+import { type TableColumnsType } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { getPageConfigWithAllData, getPageConfigWithPageData } from '../Common';
-import { type ErrorInfo, VoidFunction } from '../../utils/interface';
+import { VoidFunction } from '../../utils/interface';
 import { queryOperatorDetails, queryTimelineUnitKernelDetail } from '../../utils/RequestUtils';
 import { type ConditionDataType, totalOperator, updateData } from './Filter';
 import { ResizeTable } from '@insight/lib/resize';
@@ -120,31 +120,24 @@ async function redirectToTimeline(): Promise<void> {
         rankId: rankId.toString(),
         dbPath,
     };
-    try {
-        const res = await queryTimelineUnitKernelDetail(params);
-        const resObj = res ?? {};
-        connector.send({
-            event: 'switchModule',
-            body: {
-                switchTo: 'timeline',
-                toModuleEvent: 'locateUnit',
-                params: {
-                    ...resObj,
-                    ...params,
-                    processId: resObj.pid,
-                    startTime: resObj.startTime,
-                    rankId: resObj.rankId,
-                    dbPath,
-                    duration,
-                },
+    const res = await queryTimelineUnitKernelDetail(params);
+    const resObj = res ?? {};
+    connector.send({
+        event: 'switchModule',
+        body: {
+            switchTo: 'timeline',
+            toModuleEvent: 'locateUnit',
+            params: {
+                ...resObj,
+                ...params,
+                processId: resObj.pid,
+                startTime: resObj.startTime,
+                rankId: resObj.rankId,
+                dbPath,
+                duration,
             },
-        });
-    } catch (e) {
-        const errMsg = (e as ErrorInfo)?.message;
-        if (errMsg !== undefined) {
-            message.error(errMsg);
-        }
-    }
+        },
+    });
 }
 
 async function findInCommunication(condition: ConditionDataType): Promise<void> {

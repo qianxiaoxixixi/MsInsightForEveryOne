@@ -6,7 +6,7 @@ import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
-import { Button, message } from '@insight/lib/components';
+import { Button } from '@insight/lib/components';
 import type { SelectContentViewProps } from './SystemView';
 import jumpToCorrespondingLane from '../../utils/jumpToCorrespondingLane';
 
@@ -33,15 +33,14 @@ export const ExpertSummary = observer((props: SelectContentViewProps & { request
     const [number, setNumber] = useState(0);
     const [res, setRes] = useState<ResType>({ cardId: '', pid: '', propsCardId: '' });
     const req = async (): Promise<void> => {
-        const res = await props.request({ rankId: props.card.cardId, dbPath: props.card.dbPath });
-        if (res.error !== undefined) {
+        try {
+            const res = await props.request({ rankId: props.card.cardId, dbPath: props.card.dbPath });
+            setProblem(res.hasProblem);
+            setNumber(res.percent);
+            setRes({ cardId: res.rankId, pid: res.pid, propsCardId: props.card.cardId });
+        } catch (e) {
             setProblem(false);
-            message.error(t('expertSummary.AI Core Request Error'));
-            return;
         }
-        setProblem(res.hasProblem);
-        setNumber(res.percent);
-        setRes({ cardId: res.rankId, pid: res.pid, propsCardId: props.card.cardId });
     };
 
     useEffect(() => {

@@ -108,6 +108,14 @@
     },
     "Or": "Or",
     "Documentation": "Documentation",
-    "ImportExpertHotspotDataTips": "Please select the directory or file containing MoE expert heatmap data"
+    "ImportExpertHotspotDataTips": "Please select the directory or file containing MoE expert heatmap data",
+    "error": {
+      "ConnectionError": "Connection Error",
+      "ConnectionErrorMessage": "A WebSocket error occurred. Please check your network and try again.",
+      "ConnectionClosed": "Connection Closed",
+      "ConnectionClosedMessage": "The WebSocket connection has been closed. Please reconnect or restart MindStudio Insight.",
+      "Reconnect": "Reconnect",
+      "ConnectionNotAvailable": "The WebSocket connection is not available. Please restart MindStudio Insight."
+    }
   }
 }

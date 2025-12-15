@@ -187,9 +187,13 @@ const fetchLinkLineForCard = async (viewedCardIdSet: Set<string>, session: Sessi
         lockStartTime,
         lockEndTime,
     };
-    return (await window.request(dataSource,
-        { command: 'flow/categoryEvents', params }) as CategoryEvents).flowDetailList
-        .map(data => ({ ...data, cardId }));
+
+    try {
+        const res = await window.request(dataSource, { command: 'flow/categoryEvents', params });
+        return (res as CategoryEvents).flowDetailList.map(data => ({ ...data, cardId }));
+    } catch (e) {
+        return [];
+    }
 };
 /**
  * 查询 host 下打开的卡的连线

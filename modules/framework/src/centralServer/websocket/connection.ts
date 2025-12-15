@@ -4,11 +4,12 @@
 import type { ConnectHost, DataRequest, ModuleName, Notification, Request, Response, ResponseHandler } from './defs';
 import { CONTENT_LENGTH_PREFIX, isResponse, LOCAL_HOST, PORT } from './defs';
 import connector from '@/connection';
-import { message as Message, Modal } from 'antd';
-import { customConsole as console } from '@insight/lib/utils';
+import { Modal } from 'antd';
+import { errorCenter, WsError, ErrorCode } from '@insight/lib/utils';
 import { connectRemote } from '../server';
 import { store } from '../../store';
 import { runInAction } from 'mobx';
+import i18n from '@insight/lib/i18n';
 
 const createRequestHead = function (
     id: number,
@@ -117,14 +118,15 @@ export class Connection {
             };
 
             this._ws.onerror = (ev: Event): void => {
-                Message.error('WebSocket connection failed! You are advised to restart MindStudio Insight.');
+                errorCenter.handleError(new WsError(ErrorCode.WS_ERROR, i18n.t('framework:error.ConnectionErrorMessage')));
                 console.error('[connector]', ev);
                 reject(new Error('connect failed.'));
             };
             this._ws.onclose = (ev: Event): void => {
-                Modal.warning({
-                    content: 'WebSocket is already in CLOSING or CLOSED state! Please try to reconnect or restart MindStudio Insight.',
-                    okText: 'Reconnect',
+                Modal.error({
+                    title: i18n.t('framework:error.ConnectionClosed'),
+                    content: i18n.t('framework:error.ConnectionClosedMessage'),
+                    okText: i18n.t('framework:error.Reconnect'),
                     onOk: () => connectRemote(this._host),
                     closable: true,
                 });
@@ -132,12 +134,12 @@ export class Connection {
         }) as Promise<void>;
     }
 
-    async fetch<T>(module: ModuleName, dataRequest: DataRequest, voidResponse: boolean = false): Promise<T | ErrorMsg> {
+    async fetch<T>(module: ModuleName, dataRequest: DataRequest): Promise<T | ErrorMsg> {
         if (!this.isConnected) {
-            Message.error('WebSocket is already in CLOSING or CLOSED state! You are advised to restart MindStudio Insight.');
+            return Promise.reject(new Error(i18n.t('framework:error.ConnectionNotAvailable')));
         }
         if (this._ws === undefined) {
-            return Promise.reject(new Error('connection not initialized'));
+            return Promise.reject(new Error('connection is not initialized'));
         }
         if (this._ws.onmessage !== null && this._fetchFlag) {
             this._fetchFlag = false;
@@ -154,9 +156,6 @@ export class Connection {
             );
             this.request(msg);
             const reqCallback = this.getCallback(resolve);
-            if (voidResponse) {
-                return;
-            }
             if (this._responseHandlers.size > MAX_RESPONSE_HANDLERS) {
                 const firstKey = this._responseHandlers.keys().next().value;
                 this._responseHandlers.delete(firstKey);
@@ -167,7 +166,10 @@ export class Connection {
 
     getCallback<T>(resolve: (p: T | ErrorMsg) => void): (res: Response) => void {
         return (res: Response): void => {
-            if (res.result && res.body !== undefined) {
+            if (res.command === 'import/action') {
+                // 兼容 import/action
+                resolve(res as any);
+            } else if (res.result && res.body !== undefined) {
                 // wedge: return cache resolve
                 resolve(res.body as T);
             } else {

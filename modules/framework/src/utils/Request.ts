@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import { request } from '@/centralServer/server';
-import { ImportResultBody, LayerType, Project, ProjectDirectory } from '@/centralServer/websocket/defs';
+import { ImportResultBody, LayerType, Project, ProjectDirectory, Response } from '@/centralServer/websocket/defs';
 import { ClusterFile } from '@/entity/session';
 import { ProjectAction } from '@/utils/enum';
 import { ErrorMsg } from '@/centralServer/websocket/connection';
@@ -65,8 +65,8 @@ export const resetTimeline = async (): Promise<unknown> => {
     return request('timeline', { command: 'remote/reset' });
 };
 
-export const importProject = async (params: ImportProjectParams): Promise<ImportResultBody | ErrorMsg> => {
-    return request<ImportResultBody>('timeline', {
+export const importProject = async (params: ImportProjectParams): Promise<Response<ImportResultBody> | ErrorMsg> => {
+    return request<Response<ImportResultBody>>('timeline', {
         command: 'import/action',
         params,
     });
