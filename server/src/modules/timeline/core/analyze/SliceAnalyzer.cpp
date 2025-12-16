@@ -213,6 +213,7 @@ void SliceAnalyzer::ComputeScreenSliceIds(const SliceQuery &sliceQuery, std::set
         repository->QuerySimpleSliceWithOutNameByTrackId(slicePagedQuery, sliceDomainVec);
     }
     std::vector<uint64_t> pythonFunctionIds;
+    SliceCacheManager::Instance().SetPythonFunctionFilterStatus(sliceQuery.trackId, sliceQuery.isFilterPythonFunction);
     QueryPythonFuncIds(sliceQuery, pythonFunctionIds);
     std::vector<DepthHelper> endList;
     std::set<std::pair<uint64_t, uint32_t>> idPairVec = ComputeResultIds(sliceQuery.startTime + sliceQuery.minTimestamp,
@@ -341,7 +342,7 @@ void SliceAnalyzer::ComputeDepthInfoFromDB(const SliceQuery &sliceQuery,
     SliceCacheManager &simpleSliceCache = SliceCacheManager::Instance();
     std::string pythonFunctionKey = std::to_string(sliceQuery.trackId);
     std::vector<uint64_t> pythonFunctionIds = simpleSliceCache.GetPythonFunctionIdVec(pythonFunctionKey, sliceQuery);
-    if (std::empty(pythonFunctionIds)) {
+    if (sliceQuery.isFilterPythonFunction && std::empty(pythonFunctionIds)) {
         QueryPythonFuncFromDBAndUpdateCache(pythonFunctionKey, sliceQuery, pythonFunctionIds);
     }
     SliceQuery slicePagedQuery = SliceCacheManager::GetSlicePagedQuery(sliceQuery);

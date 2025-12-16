@@ -105,6 +105,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
         }
         database->InitStringsCache();
         // 全量db解析优化，无需depth预计算，删除BuildProfilingInitTask
+        BuildProfilingInitTask(futures, dbId, threadPool);
     }
     // EndParseTask中会等待所有future执行完成，然后发送parse/success事件，最后在执行一些需要异步完成的解析任务
     threadPool->AddTask(EndParseTask, TraceIdManager::GetTraceId(), rankIds, filePath, futures, start);
@@ -146,17 +147,6 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
             return;
         }
         database->InitMetaDataInfo();
-    }, TraceIdManager::GetTraceId()));
-    futures->emplace_back(pool->AddTask([dbId]() {
-        std::shared_ptr<DbTraceDataBase> database = GetTraceDatabase(dbId);
-        if (!database) {
-            return;
-        }
-        if (!database->InitStmt()) {
-            return;
-        }
-        // sqlite同一时刻只支持一个数据库连接进行写操作，以下4个线程都是写操作，并发可能导致某个线程写失败
-        database->UpdateAllDepth();
     }, TraceIdManager::GetTraceId()));
 }
 
