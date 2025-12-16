@@ -198,7 +198,7 @@ const handleSelected = async(rowData: any, props: SelectContentViewProps): Promi
         dbPath,
         name: rowData.name,
         timestamp: rowData.start,
-        duration: Number((rowData.duration * 1000).toFixed(0)),
+        duration: rowData.duration,
     });
     const depth = rowData.depth > res.depth ? rowData.depth : res.depth;
     jumpToUnitOperator({
