@@ -159,8 +159,6 @@ export const queryRoofline = async(): Promise<IRooflineData | undefined> => {
 
 /**
  * 查询内存流量图
- *
- * @param {}
  * @return {cacheRecords:[]}
  */
 export const queryCacheRecord = async(): Promise<QueryCacheRecordReturn> => {

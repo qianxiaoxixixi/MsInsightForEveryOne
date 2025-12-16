@@ -50,12 +50,20 @@ const baseOption: any = {
                 return div;
             },
         },
+        formatter: (name: string) => {
+            name = safeStr(name);
+            if (name.startsWith('X(') || name.startsWith('Y(')) {
+                return name.slice(2, -1);
+            }
+            return name;
+        },
         textStyle: {
             color: COLOR.Grey20,
         },
         top: 30,
         left: 'center',
-        itemGap: 15,
+        itemGap: 16,
+        icon: 'circle',
     },
     grid: {
         bottom: '30',
@@ -88,72 +96,138 @@ const baseOption: any = {
     },
 };
 
+function setCustomLegendOption(theme: Theme): any {
+    return {
+        icon: 'roundRect',
+        top: 62,
+        left: 'center',
+        right: '12px',
+        orient: 'horizontal',
+        itemWidth: 16,
+        itemHeight: 12,
+        itemGap: 16,
+        itemStyle: { color: '#6DB9E8' },
+        textStyle: { color: theme.textColorTertiary },
+        formatter: (name: string): string => {
+            name = safeStr(name).slice(2, -1);
+            if (name.length > 30) {
+                return `${name.slice(0, 28)}...`;
+            }
+            return name;
+        },
+        tooltip: {
+            show: true,
+            formatter: (params: any): string => `<div class="legend-tooltip">${safeStr(params.name).slice(2, -1) ?? ''}</div>`,
+        },
+    };
+}
+
 type Option = typeof baseOption;
 
-function wrapData(originData: IRooflineChart, theme: Theme): Option {
+interface GetActiveLegendItem {
+    selectedOfX: { selected?: {[key: string]: boolean}};
+    selectedOfMix: { selected?: {[key: string]: boolean}};
+}
+
+/**
+ * 初始化时仅展示一个组类的折线和散点
+ * @param isInit
+ * @param xLegend
+ * @param mixLegend
+ */
+function getActiveLegendWhenInit(isInit: boolean, xLegend: Array<{ [key: string]: any}>, mixLegend: string[]): GetActiveLegendItem {
+    const selectedOfXName: { [key: string]: boolean } = {};
+    const selectedOfMixName: { [key: string]: boolean } = {};
+    if (isInit) {
+        let activeName = xLegend[0]?.name ?? '';
+        xLegend.forEach(item => {
+            selectedOfXName[item.name] = item.name === activeName;
+        });
+        activeName = activeName.slice(2, -1);
+        mixLegend.forEach(name => {
+            selectedOfMixName[name] = name.startsWith(activeName);
+        });
+    }
+    const selectedOfX = isInit ? { selected: selectedOfXName } : {};
+    const selectedOfMix = isInit ? { selected: selectedOfMixName } : {};
+    return { selectedOfX, selectedOfMix };
+}
+
+function wrapData(originData: IRooflineChart, theme: Theme, isInit: boolean): Option {
     const series: any[] = [];
-    const legendData: any[] = [];
+    const xLegend: Array<{ [key: string]: any }> = [];
+    const yLegend: Array<{ [key: string]: any }> = [];
+    const mixLegend: string[] = [];
     const transInfo = getRoofInfo(originData);
+    const bwNameList: string[] = [];
+    const option = cloneDeep(baseOption);
     if (transInfo !== null) {
         const { maxAxisX, minAxis } = transInfo;
         // 算力名
         let labelPoint: Point | undefined;
-        let computilityNameLabel: string | undefined;
         originData.rooflines.forEach((roofline, index) => {
             const { bw, computility, bwName, point, ratio, computilityName } = roofline;
+            !bwNameList.includes(bwName) && bwNameList.push(bwName);
             const allPositive = bw > 0 && computility > 0 && point?.[0] > 0 && point?.[1] > 0;
-            if (!allPositive) {
-                return;
-            }
+            if (!allPositive) { return; }
             // 斜线公式 y = kx
             const crossPoint: Point = bw > 1 ? [minAxis, bw * minAxis] : [minAxis / bw, minAxis];
             const turningPoint: Point = [computility / bw, computility];
             const rightPoint: Point = [maxAxisX, computility];
             const rooflinePoints: Point[] = [crossPoint, turningPoint, rightPoint];
-            series.push(getPointSerie(bwName, index, [...point, bw, bwName, ratio, point, computilityName]));
-            series.push(getRooflineSerie(bwName, index, rooflinePoints));
-            legendData.push({ name: bwName });
-            // 算力名
-            if (labelPoint === undefined) {
-                labelPoint = rightPoint;
-                computilityNameLabel = roofline.computilityName;
-            }
+            series.push(getPointSerie(bwName, [...point, bw, bwName, ratio, point, computilityName], bwNameList));
+            series.push(getRooflineSerie(bwName, rooflinePoints, bwNameList, computilityName));
+            mixLegend.push(`${bwName}(${computilityName})`);
+            !xLegend.find(item => item.name === `X(${bwName})`) && xLegend.push({ name: `X(${bwName})`, itemStyle: { color: getColorByBwName(bwName, bwNameList) } });
+            !yLegend.find(item => item.name === `Y(${computilityName})`) && yLegend.push({ name: `Y(${computilityName})` });
+            if (labelPoint === undefined) { labelPoint = rightPoint; }
         });
-
-        // 算力名
-        if (labelPoint !== undefined && computilityNameLabel !== undefined) {
-            series.push(getComputilityNameSerie(labelPoint, computilityNameLabel ?? '', theme));
+        if (yLegend.length === 1 && labelPoint !== undefined) {
+            series.push(getComputilityNameSerie(labelPoint, yLegend[0].name.slice(2, -1) ?? '', theme));
         }
+        option.xAxis.min = minAxis;
+        option.xAxis.max = maxAxisX;
     }
-
-    const option = cloneDeep(baseOption);
     option.title.text = originData.title;
-    option.series = series;
-    option.legend.data = legendData;
+    option.series = [...series, ...[...xLegend, ...yLegend].map(item => ({ ...getRooflineSerie(item.name, [], bwNameList, ''), show: false }))];
+    const { selectedOfX, selectedOfMix } = getActiveLegendWhenInit(isInit, xLegend, mixLegend);
+    // 设置图例
+    option.legend = [
+        { ...baseOption.legend, ...selectedOfMix, data: mixLegend, show: false },
+        { ...baseOption.legend, ...selectedOfX, data: xLegend },
+        { ...baseOption.legend, data: yLegend, ...setCustomLegendOption(theme), show: yLegend.length > 1 },
+    ];
     option.tooltip.formatter = getTooltipFormatter();
     return getOptionStyle(option, theme);
 }
 
-function getPointSerie(bwName: string, index: number, data: Array<number | string | Point>): any {
+function getColorByBwName(name: string, list: string[]): string {
+    const _name = name.startsWith('X(') || name.startsWith('Y(') ? name.slice(2, -1) : name;
+    const idx = list.findIndex(item => item === _name) ?? 0;
+    return chartColors[(idx % chartColors.length)];
+}
+
+function getPointSerie(bwName: string, data: Array<number | string | Point>, bwNameList: string[]): any {
+    const computilityName = data[data.length - 1];
     return {
-        name: bwName,
-        itemStyle: {
-            color: chartColors[(index % chartColors.length)],
-        },
+        name: `${bwName}(${computilityName})`,
+        itemStyle: { color: getColorByBwName(bwName, bwNameList) },
         data: [data],
         type: 'scatter',
         symbolSize: 16,
-        emphasis: {
-            scale: 1.2,
-        },
+        emphasis: { scale: 1.2 },
         zlevel: 2,
     };
 }
 
-function getRooflineSerie(bwName: string, index: number, rooflinePoints: Point[]): any {
+function getRooflineSerie(bwName: string, rooflinePoints: Point[], bwNameList: string[], computilityName: string): any {
+    const compName = computilityName ? `(${computilityName})` : '';
+    const color = getColorByBwName(bwName, bwNameList);
     return {
-        name: bwName,
-        lineStyle: { width: 2, color: chartColors[(index % chartColors.length)] },
+        name: `${bwName}${compName}`,
+        lineStyle: { width: 2, color },
+        symbol: 'emptyCircle',
+        color,
         data: rooflinePoints,
         type: 'line',
         emphasis: {
@@ -182,9 +256,10 @@ function getComputilityNameSerie(labelPoint: Point, computilityNameLabel: string
         },
     };
 }
+
 function getOptionStyle(option: Option, theme: Theme): Option {
     option.title.textStyle.color = theme.textColorSecondary;
-    option.legend = { ...option.legend, ...getLegendStyle(theme) };
+    option.legend = option.legend.map((item: any) => ({ ...item, ...getLegendStyle(theme) }));
     option.xAxis.nameTextStyle.color = theme.textColorTertiary;
     option.yAxis.nameTextStyle.color = theme.textColorTertiary;
     // 网格样式
@@ -261,9 +336,9 @@ function getTooltipFormatter(): (p: any) => string {
 const getTipText = (params: any): any => {
     if (params.data !== undefined && params.seriesType === 'scatter' && params.seriesName !== 'computilityName') {
         const keepDecimalNum = 3;
-        const [, , bw, bwName, ratio, point] = params.data;
+        const [, , bw, bwName, ratio, point, computilityName] = params.data;
         return `<div>
-        <div>${params.marker}${safeStr(bwName)}</div>
+        <div>${params.marker}${safeStr(bwName)}(${computilityName})</div>
         <div>${i18n.t('Bandwidth', { ns: 'details' })}: ${safeStr(formatDecimal(bw, keepDecimalNum))}TB/s</div>
         <div>${i18n.t('Intensity', { ns: 'details' })}: ${safeStr(formatDecimal(point[0], keepDecimalNum))}Ops/Byte</div>
         <div>${i18n.t('Performance', { ns: 'details' })}: ${safeStr(formatDecimal(point[1], keepDecimalNum))}TOps/s</div>
@@ -274,14 +349,53 @@ const getTipText = (params: any): any => {
     }
 };
 
-function InitChart(data: IRooflineChart, chartDom: HTMLElement | null, theme: Theme): void {
+function InitChart(data: IRooflineChart, chartDom: HTMLElement | null, theme: Theme, isInit: boolean, setIsInit: React.Dispatch<React.SetStateAction<boolean>>): void {
     if (!chartDom) {
         return;
     }
     const newChart = echarts.getInstanceByDom(chartDom)
         ? echarts.getInstanceByDom(chartDom)
         : echarts.init(chartDom);
-    newChart?.setOption(wrapData(data, theme), { replaceMerge: ['series'] });
+    const chartOption = wrapData(data, theme, isInit);
+    newChart?.setOption(chartOption, { replaceMerge: ['series'] });
+    if (isInit) {
+        // 同步默认不高亮图例状态，解决默认设置为不高亮图例图例手动切换到高亮需要点击两次问题
+        setTimeout(() => {
+            const xLegend = [...chartOption.legend[1].data];
+            for (let i = 1; i < xLegend.length; i++) {
+                newChart?.dispatchAction({ name: xLegend[i].name, type: 'legendUnSelect' });
+            }
+        });
+        setIsInit(false);
+    }
+    // 监听图例(legend)的选中状态变化
+    newChart?.on('legendselectchanged', (params: any) => {
+        const isBwName = params.name.startsWith('X(');
+        const status = params.selected[params.name] as boolean;
+        const nameOfLines: string[] = [];
+        const selectedList: string[] = [];
+        Object.keys(params.selected).forEach(name => {
+            const isStartX = name.startsWith('X(');
+            const isStartY = name.startsWith('Y(');
+            if (!isStartX && !isStartY) {
+                nameOfLines.push(name);
+            } else {
+                if (((isBwName && isStartY) || (!isBwName && isStartX)) && params.selected[name]) {
+                    selectedList.push(name.slice(2, -1));
+                }
+            }
+        });
+        const _name = params.name.slice(2, -1);
+        const listOfChanged: string[] = selectedList.map(item => isBwName ? `${_name}(${item})` : `${item}(${_name})`);
+        const selected: { [key: string]: boolean } = {};
+        // 根据选中的图例的name匹配折线&散点的name来设置线和点显示/隐藏
+        nameOfLines.forEach(name => {
+            selected[name] = listOfChanged.includes(name) ? status : params.selected[name];
+        });
+        const chartOption = newChart?.getOption() as any;
+        chartOption.legend[0].selected = selected;
+        newChart?.setOption(chartOption);
+    });
 }
 
 const MAX_ROOFLINE_NUM = 100;
@@ -291,6 +405,7 @@ const RooflineChart = observer(({ dataSource: orginDataSource }: { dataSource: I
     const [width, ref] = useWatchDomResize<HTMLDivElement>('width');
     // 超大数据量防护
     const [limit, setLimit] = useState({ maxSize: MAX_ROOFLINE_NUM, overlimit: false, current: 0 });
+    const [isInit, setIsInit] = useState(true);
     const size = orginDataSource?.rooflines?.length ?? 0;
     const dataSource = useMemo(() => ({
         ...orginDataSource,
@@ -302,7 +417,7 @@ const RooflineChart = observer(({ dataSource: orginDataSource }: { dataSource: I
     }, [size]);
 
     useEffect(() => {
-        InitChart(dataSource, ref.current, theme);
+        InitChart(dataSource, ref.current, theme, isInit, setIsInit);
     }, [dataSource, theme]);
     useEffect(() => {
         if (ref.current === null || width <= 0) {
