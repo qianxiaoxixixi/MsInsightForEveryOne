@@ -108,7 +108,7 @@ export function addResizeEvent(echart?: EChartsTypeExtends): void {
         if (domId !== '') {
             listenerList.push({
                 id: domId,
-                type:'resize',
+                type: 'resize',
                 value: resizeFunc,
             });
         }
@@ -124,7 +124,7 @@ export function addResizeEvent(echart?: EChartsTypeExtends): void {
         if (domId !== '') {
             listenerList.push({
                 id: domId,
-                type:'load',
+                type: 'load',
                 value: loadFunc,
             });
         }
@@ -184,7 +184,7 @@ export const getLegendStyle = (theme: Theme): any => {
         textStyle: {
             color: theme.textColorTertiary,
         },
-        pageTextStyle: {color: theme.textColorTertiary},
+        pageTextStyle: { color: theme.textColorTertiary },
         pageIconColor: theme.primaryColorLight2,
         pageIconInactiveColor: theme.disableButtonBackgroundColor,
     };
