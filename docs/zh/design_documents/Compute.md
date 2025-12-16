@@ -214,7 +214,7 @@ json部分数据内容示例：
     "traceEvents": [
 		{    
 			"args": {
-                "code": "/home/yanyuwei/workspace/samples-master/operator/AddCustomSample/FrameworkLaunch/AddCustom/build_out/op_kernel/binary/ascend310p/kernel_meta_AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b/kernel_meta/AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b_413903_kernel.cpp:23",
+                "code": "/home/yanyuwei/workspace/samples-master/operator/AddCustomSample/FrameworkLaunch/AddCustom/build_out/op_kernel/binary/xxxx/kernel_meta_AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b/kernel_meta/AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b_413903_kernel.cpp:23",
                 "detail": "x[1]=0x0,imme16:0x4000",
                 "pc_addr": "0x10cfa004"
             },
@@ -228,7 +228,7 @@ json部分数据内容示例：
         },
         {    
 			"args": {
-                "code": "/home/yanyuwei/workspace/samples-master/operator/AddCustomSample/FrameworkLaunch/AddCustom/build_out/op_kernel/binary/ascend310p/kernel_meta_AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b/kernel_meta/AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b_413903_kernel.cpp:23",
+                "code": "/home/yanyuwei/workspace/samples-master/operator/AddCustomSample/FrameworkLaunch/AddCustom/build_out/op_kernel/binary/xxxx/kernel_meta_AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b/kernel_meta/AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b_413903_kernel.cpp:23",
                 "detail": "x[1]=0x0,imme16:0x4000",
                 "pc_addr": "0x10cfa004"
             },
@@ -242,7 +242,7 @@ json部分数据内容示例：
         },
 		{    
 			"args": {
-                "code": "/home/yanyuwei/workspace/samples-master/operator/AddCustomSample/FrameworkLaunch/AddCustom/build_out/op_kernel/binary/ascend310p/kernel_meta_AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b/kernel_meta/AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b_413903_kernel.cpp:23",
+                "code": "/home/yanyuwei/workspace/samples-master/operator/AddCustomSample/FrameworkLaunch/AddCustom/build_out/op_kernel/binary/xxxx/kernel_meta_AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b/kernel_meta/AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b_413903_kernel.cpp:23",
                 "detail": "x[1]=0x0,imme16:0x4000",
                 "pc_addr": "0x10cfa004"
             },
@@ -624,7 +624,7 @@ struct CacheRecord {
         }
     ],
     "op_type": "mix",
-    "soc": "Ascend910B4"
+    "soc": "xxxx"
 }
 ```
 
@@ -980,7 +980,7 @@ struct CacheRecord {
     "traceEvents": [
 		{    
 			"args": {
-                "code": "/home/yanyuwei/workspace/samples-master/operator/AddCustomSample/FrameworkLaunch/AddCustom/build_out/op_kernel/binary/ascend310p/kernel_meta_AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b/kernel_meta/AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b_413903_kernel.cpp:23",
+                "code": "/home/yanyuwei/workspace/samples-master/operator/AddCustomSample/FrameworkLaunch/AddCustom/build_out/op_kernel/binary/xxxx/kernel_meta_AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b/kernel_meta/AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b_413903_kernel.cpp:23",
                 "detail": "x[1]=0x0,imme16:0x4000",
                 "pc_addr": "0x10cfa004"
             },
@@ -994,7 +994,7 @@ struct CacheRecord {
         },
         {    
 			"args": {
-                "code": "/home/yanyuwei/workspace/samples-master/operator/AddCustomSample/FrameworkLaunch/AddCustom/build_out/op_kernel/binary/ascend310p/kernel_meta_AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b/kernel_meta/AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b_413903_kernel.cpp:23",
+                "code": "/home/yanyuwei/workspace/samples-master/operator/AddCustomSample/FrameworkLaunch/AddCustom/build_out/op_kernel/binary/xxxx/kernel_meta_AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b/kernel_meta/AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b_413903_kernel.cpp:23",
                 "detail": "x[1]=0x0,imme16:0x4000",
                 "pc_addr": "0x10cfa004"
             },
@@ -1008,7 +1008,7 @@ struct CacheRecord {
         },
 		{    
 			"args": {
-                "code": "/home/yanyuwei/workspace/samples-master/operator/AddCustomSample/FrameworkLaunch/AddCustom/build_out/op_kernel/binary/ascend310p/kernel_meta_AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b/kernel_meta/AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b_413903_kernel.cpp:23",
+                "code": "/home/yanyuwei/workspace/samples-master/operator/AddCustomSample/FrameworkLaunch/AddCustom/build_out/op_kernel/binary/xxxx/kernel_meta_AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b/kernel_meta/AddCustom_1e04ee05ab491cc5ae9c3d5c9ee8950b_413903_kernel.cpp:23",
                 "detail": "x[1]=0x0,imme16:0x4000",
                 "pc_addr": "0x10cfa004"
             },
@@ -1237,7 +1237,7 @@ struct CacheRecord {
     "lines": [
       {
         "Line": 0,
-        "Instruction Executed": 15,
+        "Instructions Executed": 15,
         "Cycle": 15,
         "Address Range": [
           [
@@ -1320,7 +1320,7 @@ struct CacheRecord {
     "moduleName": "source",
     "body": {
         "name": "sin_custom",
-        "soc": "Ascend910B4",
+        "soc": "xxxx",
         "opType": "vector",
         "blockDim": "32",
         "mixBlockDim": "-1",
@@ -1447,7 +1447,7 @@ struct CacheRecord {
                     "miss": "64"
                 },
                 "blockType": "vector",
-                "chipType": "910B",
+                "chipType": "xxxx",
                 "memoryUnit": [
                     {
                         "request": 257,
