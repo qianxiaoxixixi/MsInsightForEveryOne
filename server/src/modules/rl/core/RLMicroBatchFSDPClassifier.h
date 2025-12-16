@@ -15,7 +15,6 @@ protected:
                                                                 const Protocol::RLPipelineNode &taskNode) override;
 
     std::vector<Protocol::RLPipelineNode> MicroBatchClassifier(std::vector<Protocol::RLPipelineNode> &nodes) override;
-private:
 
     std::vector<RLPipelineNode> QueryFPSlices(const std::string &rankId, const RLPipelineNode &taskNode);
 

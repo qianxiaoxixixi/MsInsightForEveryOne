@@ -497,7 +497,7 @@ bool DataBaseManager::ResetBaseline()
     EraseClusterDb(BASELINE);
     summaryBaselineDatabaseMap.clear();
     auto baselineRankId = BaselineManager::Instance().GetBaselineId();
-    if (!baselineRankId.empty()) {
+    if (!baselineRankId.empty() && baselineRankId.find("Baseline") != std::string::npos) {
         auto baseFileId = GetFileIdByRankId(baselineRankId);
         traceDatabaseMap.erase(baseFileId);
         rankId2FileIdMap.erase(baselineRankId);

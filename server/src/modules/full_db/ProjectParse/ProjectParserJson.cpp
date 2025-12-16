@@ -583,7 +583,8 @@ void ProjectParserJson::ParserSingleCardBaseline(const Global::ProjectExplorerIn
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos.projectType);
     // 创建db连接池
     std::string dbPath = FileUtil::GetDbPath(jsonFiles[0]);
-    std::map<std::string, RankEntry> rankListMap = GetRankEntryMap({projectInfos}, true);
+    bool isParsed = DataBaseManager::Instance().IsContainDatabasePath(dbPath);
+    std::map<std::string, RankEntry> rankListMap = GetRankEntryMap({projectInfos}, !isParsed);
     // 过滤非目标目录下的节点
     for (auto it = rankListMap.begin(); it != rankListMap.end();) {
         if (it->second.parseFolder != filePath) {
@@ -602,7 +603,6 @@ void ProjectParserJson::ParserSingleCardBaseline(const Global::ProjectExplorerIn
     baselineInfo.cardName = rankId;
     baselineInfo.fileId = dbPath;
     Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
-    bool isParsed = DataBaseManager::Instance().IsContainDatabasePath(dbPath);
     UpdateRankIdToDevice(rankListMap);
     if (isParsed) {
         ServerLog::Warn("Init Baseline, Already parsed.");

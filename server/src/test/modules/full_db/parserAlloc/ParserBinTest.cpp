@@ -115,3 +115,11 @@ TEST_F(ParserBinTest, ResponseHasRankList)
     BinFileGenerator::RemoveFile(fileName);
     SourceFileParser::Instance().Reset();
 }
+
+TEST_F(ParserBinTest, get_import_file)
+{
+    ProjectParserBin bin;
+    std::string error;
+    auto res = bin.GetParseFileByImportFile("test", error);
+    EXPECT_EQ(res.size(), 1);
+}
