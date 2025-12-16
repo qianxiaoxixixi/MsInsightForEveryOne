@@ -610,7 +610,7 @@ config.json
     {
         "pluginName":"xxxx",  // 插件名称
         "frontend":"xxx.zip",  // 前端产物
-        "backend_${platfrom}_${machine}":"xx.so", //后端产物, ${platform}和${machine}为平台相关变量，通过python的platform模块获取
+        "backend_${platform}_${machine}":"xx.so", //后端产物, ${platform}和${machine}为平台相关变量，通过python的platform模块获取
     }
 ```
 前端文件：前端构建产物的zip包，解压后为前端产物
