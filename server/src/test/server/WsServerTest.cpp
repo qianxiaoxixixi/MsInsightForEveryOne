@@ -83,3 +83,9 @@ TEST_F(WsServerTest, ws_server_on_message_cb_test_002)
     wsServer.OnMessageCb(&wsChannel, "test message", uWS::OpCode::TEXT);
     // No assertions needed as the function should log an error
 }
+
+TEST_F(WsServerTest, server_def_WsUserData_init)
+{
+    WsUserData data;
+    data.reqUrl = "test";
+}

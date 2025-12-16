@@ -30,3 +30,18 @@ TEST_F(SafeFileTest, testOpenReadFileSafelyWhenFileCanNotBeWrittenByOthers)
     // 删除文件
     std::remove(path.c_str());
 }
+
+TEST_F(SafeFileTest, testOpenWithReadMode)
+{
+    std::string path = "FileCanNotBeWrittenByOthers.tmp";
+    std::string content = "test";
+    std::ofstream out(path);
+    out.write(content.c_str(), content.size());
+    out.close();
+    // 设置仅owner拥有写权限
+    fs::permissions(path, fs::perms::owner_all);
+
+    // 读取文件并比较内容
+    auto in = Dic::OpenReadFileSafely(path, std::ios::out);
+    EXPECT_FALSE(in);
+}

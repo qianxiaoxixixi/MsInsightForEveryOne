@@ -3,6 +3,7 @@
  */
 
 #include "RLMicroBatchMegatronClassifier.h"
+#include "RLMicroBatchFSDPClassifier.h"
 #include "gtest/gtest.h"
 
 using namespace Dic::Module::RL;
@@ -14,6 +15,20 @@ protected:
         std::vector<RLPipelineNode> Classifier(std::vector<RLPipelineNode> &items)
         {
             return RLMicroBatchMegatronClassifier::MicroBatchClassifier(items);
+        }
+    };
+
+    class MicroBatchFSDPTest : public RLMicroBatchFSDPClassifier {
+    public:
+        std::vector<RLPipelineNode> Classifier(std::vector<RLPipelineNode> &items)
+        {
+            return RLMicroBatchFSDPClassifier::MicroBatchClassifier(items);
+        }
+
+        std::vector<RLPipelineNode> NodeSortMerge(const std::vector<RLPipelineNode> &left,
+                                                  const std::vector<RLPipelineNode> &right)
+        {
+            return RLMicroBatchFSDPClassifier::NodeSortMerge(left, right);
         }
     };
     std::vector<RLPipelineNode> generatorOneByOneData()
@@ -47,6 +62,16 @@ protected:
         res.push_back(bp4);
         RLPipelineNode bp5{"", "BP", 69, 10, "transformerLayer", "rollout"};  // set [69, 10]
         res.push_back(bp5);
+        return res;
+    }
+
+    std::vector<RLPipelineNode> generatorFPOverData()
+    {
+        std::vector<RLPipelineNode> res;
+        RLPipelineNode fp1{"", "FP", 0, 10, "transformerBlock", "rollout"};    // set [0,10]
+        res.push_back(fp1);
+        RLPipelineNode bp1{"", "FP", 2, 8, "transformerLayer", "rollout"}; // set [12, 22]
+        res.push_back(bp1);
         return res;
     }
 };
@@ -97,4 +122,71 @@ TEST_F(MicroBatchTest, timeCover)
     EXPECT_EQ(node4.nodeType, "BP");
     EXPECT_EQ(node4.startTime, 69);     // expect start time 69
     EXPECT_EQ(node4.duration, 10);      // expect duration 10
+}
+
+TEST_F(MicroBatchTest, fsdp_normalOnebyOne)
+{
+    auto originalData = generatorOneByOneData();
+    MicroBatchFSDPTest classifier;
+    auto res = classifier.Classifier(originalData);
+    EXPECT_EQ(res.size(), 4);       // expect size 4
+    auto node1 = res[0];
+    EXPECT_EQ(node1.nodeType, "FP");
+    EXPECT_EQ(node1.startTime, 0);
+    EXPECT_EQ(node1.duration, 10);      // expect duration 10
+    auto node2 = res[1];                // get 1
+    EXPECT_EQ(node2.nodeType, "BP");
+    EXPECT_EQ(node2.startTime, 12);     // expect startTime 12
+    EXPECT_EQ(node2.duration, 10);      // expect duration 10
+    auto node3 = res[2];                // get 2
+    EXPECT_EQ(node3.nodeType, "FP");
+    EXPECT_EQ(node3.startTime, 24);     // expect startTime 24
+    EXPECT_EQ(node3.duration, 10);      // expect duration 10
+    auto node4 = res[3];                // get 3
+    EXPECT_EQ(node4.nodeType, "BP");
+    EXPECT_EQ(node4.startTime, 35);     // expect start time 35
+    EXPECT_EQ(node4.duration, 2);       // expect duration 2
+}
+
+TEST_F(MicroBatchTest, fsdp_timeCover)
+{
+    auto original = generatorData1();
+    MicroBatchFSDPTest classifier;
+    auto res = classifier.Classifier(original);
+    EXPECT_EQ(res.size(), 4);  // expect size 4
+    auto node1 = res[0];
+    EXPECT_EQ(node1.nodeType, "FP");
+    EXPECT_EQ(node1.startTime, 0);
+    EXPECT_EQ(node1.duration, 50);      // expect duration is 50ns
+    auto node2 = res[1];
+    EXPECT_EQ(node2.nodeType, "BP");
+    EXPECT_EQ(node2.startTime, 1);     // expect start time 1ns
+    EXPECT_EQ(node2.duration, 7);      // expect duration 10ns
+    auto node3 = res[2];                // get 2
+    EXPECT_EQ(node3.nodeType, "FP");
+    EXPECT_EQ(node3.startTime, 51);     // expect start time is 62ns
+    EXPECT_EQ(node3.duration, 10);       // expect duration time 6ns
+    auto node4 = res[3];                // get 3
+    EXPECT_EQ(node4.nodeType, "BP");
+    EXPECT_EQ(node4.startTime, 62);     // expect start time 69
+    EXPECT_EQ(node4.duration, 17);      // expect duration 17
+}
+
+TEST_F(MicroBatchTest, fsdp_fp_timer_cover)
+{
+    auto original = generatorFPOverData();
+    MicroBatchFSDPTest classifier;
+    auto res = classifier.Classifier(original);
+    EXPECT_EQ(res.size(), 1); // expect size 1
+    EXPECT_EQ(res[0].startTime, 0);
+    EXPECT_EQ(res[0].duration, 10); // expect dur 10
+}
+
+TEST_F(MicroBatchTest, fsdp_node_sort_merge)
+{
+    auto left = generatorData1();
+    auto right = generatorFPOverData();
+    MicroBatchFSDPTest classifier;
+    auto res = classifier.NodeSortMerge(left, right);
+    EXPECT_EQ(res.size(), 9); // expect  get 9
 }

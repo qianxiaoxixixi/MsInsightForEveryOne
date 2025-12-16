@@ -180,3 +180,13 @@ TEST_F(ProjectParserDbNPUMonitorTest, BuildProjectExploreInfoTest)
     EXPECT_EQ(info.subParseFileInfo[0]->fileId, "/home/Data/npumonitor/msmonitor_99092_20250901114924883_0.db");
     EXPECT_EQ(info.subParseFileInfo[1]->fileId, "/home/Data/npumonitor/msmonitor_99093_20250901114924876_1.db");
 }
+
+TEST_F(ProjectParserDbNPUMonitorTest, parse_baseline)
+{
+    ProjectExplorerInfo project;
+    project.fileInfoMap.emplace("test", std::make_shared<ParseFileInfo>());
+    BaselineInfo baselineInfo;
+    baselineInfo.isCluster = true;
+    ProjectParserDbNPUMonitor dbParser;
+    EXPECT_NO_THROW(dbParser.ParserBaseline(project, baselineInfo));
+}

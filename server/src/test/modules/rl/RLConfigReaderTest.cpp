@@ -5,12 +5,39 @@
 #include "RLMstxConfigReader.h"
 #include "FileUtil.h"
 #include "gtest/gtest.h"
+#include <fstream>
 
 using namespace Dic::Module::RL;
 using namespace Dic;
 
 class RLConfigReaderTest : public testing::Test {
+public:
+    static std::string tempConfigPath;
+
+protected:
+    static void SetUpTestSuite()
+    {
+        std::string currentPath = FileUtil::GetCurrPath();
+        auto pos = currentPath.find("server");
+        std::string srcPath = currentPath.substr(0, pos);
+        tempConfigPath =
+            FileUtil::SplicePath(srcPath, "server", "src", "test", "test_data", "rl", "RLConfig_tmp_test.json");
+    }
+
+    void WriteJsonIntoTestFile(const std::string &jsonStr)
+    {
+        auto file = std::ofstream(RLConfigReaderTest::tempConfigPath, std::ios::out);
+        file.write(jsonStr.c_str(), jsonStr.size());
+        file.close();
+    }
+
+    static void TearDownTestSuite()
+    {
+        FileUtil::RemoveFile(tempConfigPath);
+    }
 };
+
+std::string RLConfigReaderTest::tempConfigPath = "";
 
 TEST_F(RLConfigReaderTest, emptyConfigPath)
 {
@@ -45,4 +72,63 @@ TEST_F(RLConfigReaderTest, Normal)
     EXPECT_EQ(config1.taskConfigs[0].microBatchConfigs.size(), 2); // stage contains 2 microbatch
     EXPECT_EQ(config1.taskConfigs[0].microBatchConfigs[0].batchName, "actor_micro_batch1");
     EXPECT_EQ(config1.taskConfigs[0].microBatchConfigs[0].type, "FP");
+}
+
+TEST_F(RLConfigReaderTest, read_config_null)
+{
+    RLMstxConfigReader reader;
+    WriteJsonIntoTestFile("");
+    reader.SetConfigPath(RLConfigReaderTest::tempConfigPath);
+    auto res = reader.ReadConfigFile();
+    EXPECT_EQ(res.size(), 0);
+}
+
+TEST_F(RLConfigReaderTest, read_config_array)
+{
+    RLMstxConfigReader reader;
+    WriteJsonIntoTestFile("[]");
+    reader.SetConfigPath(RLConfigReaderTest::tempConfigPath);
+    auto res = reader.ReadConfigFile();
+    EXPECT_EQ(res.size(), 0);
+}
+
+TEST_F(RLConfigReaderTest, read_config_no_config_key)
+{
+    RLMstxConfigReader reader;
+    WriteJsonIntoTestFile("{}");
+    reader.SetConfigPath(RLConfigReaderTest::tempConfigPath);
+    auto res = reader.ReadConfigFile();
+    EXPECT_EQ(res.size(), 0);
+}
+
+TEST_F(RLConfigReaderTest, read_config_no_role_key)
+{
+    RLMstxConfigReader reader;
+    WriteJsonIntoTestFile(R"({
+  "config":[
+    {
+      "framework":"verl",
+      "algorithm":"grpo",
+      "tasks":[
+        {
+          "roleName":"actor",
+          "taskName":"generator_sequence",
+          "microBatches":[
+            {
+              "name":  "actor_micro_batch1",
+              "type": "FP"
+            },
+            {
+              "name": "actor_micro_batch2",
+              "type": "BP"
+            }
+          ]
+        },
+      ]
+    },
+  ]
+})");
+    reader.SetConfigPath(RLConfigReaderTest::tempConfigPath);
+    auto res = reader.ReadConfigFile();
+    EXPECT_EQ(res.size(), 0);
 }
