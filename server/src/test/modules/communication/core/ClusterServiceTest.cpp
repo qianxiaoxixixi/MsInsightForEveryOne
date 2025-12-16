@@ -34,6 +34,8 @@ class ClusterServiceTest : public ::testing::Test {
 protected:
     std::string filePath;
     std::string baselineFilePath;
+    std::string dbPath;
+    std::string dbBaselinePath;
 
     void SetUp() override
     {
@@ -42,6 +44,8 @@ protected:
         currPath = currPath.substr(0, index + 1);
         filePath = currPath + R"(/src/test/test_data/cluster_analysis_output)";
         baselineFilePath = currPath + R"(/src/test/test_data/baseline_cluster/cluster_analysis_output)";
+        dbPath = filePath + FILE_SEPARATOR + "cluster.db";
+        dbBaselinePath = baselineFilePath + FILE_SEPARATOR + "cluster.db";
     }
 
     static void InitParser(const std::string &dataPath)
@@ -59,6 +63,30 @@ protected:
         Dic::Module::FullDb::DataBaseManager::Instance().ClearClusterDb();
     }
 };
+
+TEST_F(ClusterServiceTest, TestEraseClusterDb)
+{
+    InitParser(filePath);
+    auto res = Dic::Module::FullDb::DataBaseManager::Instance().GetAllClusterDatabase();
+    EXPECT_EQ(res.size(), 1);
+    res[0].reset();
+    Dic::Module::FullDb::DataBaseManager::Instance().EraseClusterDb(dbPath);
+    auto res2 = Dic::Module::FullDb::DataBaseManager::Instance().GetAllClusterDatabase();
+    EXPECT_EQ(res2.size(), 0);
+}
+
+TEST_F(ClusterServiceTest, TestClearClusterDb)
+{
+    InitParser(filePath);
+    InitParser(baselineFilePath);
+    auto res = Dic::Module::FullDb::DataBaseManager::Instance().GetAllClusterDatabase();
+    EXPECT_EQ(res.size(), 2); // 2
+    res[0].reset();
+    res[1].reset();
+    Dic::Module::FullDb::DataBaseManager::Instance().ClearClusterDb();
+    auto res2 = Dic::Module::FullDb::DataBaseManager::Instance().GetAllClusterDatabase();
+    EXPECT_EQ(res2.size(), NUMBER_ZERO);
+}
 
 TEST_F(ClusterServiceTest, QueryIterationsAllFail)
 {

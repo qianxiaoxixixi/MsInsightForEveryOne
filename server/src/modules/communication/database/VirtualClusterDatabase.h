@@ -38,7 +38,7 @@ namespace Module {
 class VirtualClusterDatabase : public Database {
 public:
     explicit VirtualClusterDatabase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};
-    ~VirtualClusterDatabase() override = default;
+    ~VirtualClusterDatabase() override;
 
     virtual std::string QueryParseClusterStatus() = 0;
     virtual void UpdateClusterParseStatus(std::string status) = 0;

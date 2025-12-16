@@ -303,11 +303,6 @@ void DataBaseManager::EraseClusterDb(const std::string &uniqueKey)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     if (clusterDatabaseMap.count(uniqueKey) != 0) {
-        auto clusterConnectionPtr = clusterDatabaseMap[uniqueKey]->GetConnection();
-        if (clusterConnectionPtr != nullptr) {
-            clusterConnectionPtr->ReleaseStmt();
-            clusterConnectionPtr->CloseDb();
-        }
         clusterDatabaseMap.erase(clusterDatabaseMap.find(uniqueKey));
         // erase clusterProject2DbPathMap on value of uniqueKey
         auto it = std::find_if(clusterProject2DbPathMap.begin(), clusterProject2DbPathMap.end(),
@@ -323,13 +318,6 @@ void DataBaseManager::EraseClusterDb(const std::string &uniqueKey)
 void DataBaseManager::ClearClusterDb()
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    for (const auto &item: clusterDatabaseMap) {
-        auto clusterConnectionPtr = item.second->GetConnection();
-        if (clusterConnectionPtr != nullptr) {
-            clusterConnectionPtr->ReleaseStmt();
-            clusterConnectionPtr->CloseDb();
-        }
-    }
     clusterDatabaseMap.clear();
     clusterProject2DbPathMap.clear();
 }
@@ -356,11 +344,11 @@ void DataBaseManager::CreateClusterConnectionPool(const std::string &projectPath
 {
     const static unsigned int CPU_CORE_COUNT = SystemUtil::GetCpuCoreCount();
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    SetClusterProjectDbPathMapping(projectPath, dbPath);
     // 如果连接池已存在, 则清除重新创建
     if (clusterDatabaseMap.count(dbPath) != 0) {
         EraseClusterDb(dbPath);
     }
+    SetClusterProjectDbPathMapping(projectPath, dbPath);
     std::recursive_mutex &dbMutex = GetDbMutex(dbPath);
     std::shared_ptr<DBConnectionPool<VirtualClusterDatabase>> conn;
     switch (type) {
@@ -508,7 +496,6 @@ bool DataBaseManager::ResetBaseline()
             item.second->CloseDb();
         }
     }
-    EraseClusterDb(BASELINE);
     summaryBaselineDatabaseMap.clear();
     auto baselineRankId = BaselineManager::Instance().GetBaselineId();
     if (!baselineRankId.empty() && baselineRankId.find("Baseline") != std::string::npos) {
