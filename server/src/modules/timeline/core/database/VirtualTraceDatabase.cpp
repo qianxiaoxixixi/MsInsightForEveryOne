@@ -237,6 +237,7 @@ SliceQuery VirtualTraceDatabase::CreateSliceQueryWithTimeRange(const SliceBaseIn
     sliceQuery.minTimestamp = TraceTime::Instance().GetStartTime();
     sliceQuery.startTime = sliceInfo.startTime;
     sliceQuery.endTime = sliceInfo.startTime + sliceInfo.duration;
+    sliceQuery.isFilterPythonFunction = SliceCacheManager::Instance().GetPythonFunctionFilterStatus(curTrackId);
     SliceQuery newSliceQuery = SliceCacheManager::GetSlicePagedQueryForDb(sliceQuery);
     return newSliceQuery;
 }

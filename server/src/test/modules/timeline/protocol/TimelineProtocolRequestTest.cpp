@@ -147,6 +147,45 @@ TEST_F(TimelineProtocolRequestTest, TestUnitCounterParams)
     EXPECT_EQ(res, true);
 }
 
+
+TEST_F(TimelineProtocolRequestTest, EventsViewParams)
+{
+    Dic::Protocol::EventsViewParams params;
+    params.pid = "test";
+    params.pageSize = 0;
+    std::string msg;
+    bool res = params.CheckParams(0, msg);
+    EXPECT_EQ(res, false);
+    params.pageSize = 1;
+    params.currentPage = 1;
+    params.filters.emplace_back("--", "");
+    res = params.CheckParams(0, msg);
+    EXPECT_EQ(res, false);
+    params.filters.clear();
+    params.startTime = 100;
+    params.endTime = 1;
+    res = params.CheckParams(0, msg);
+    EXPECT_EQ(res, false);
+}
+
+TEST_F(TimelineProtocolRequestTest, SystemViewOverallReqParams)
+{
+    Dic::Protocol::SystemViewOverallReqParam params;
+    params.page.pageSize = 0;
+    std::string msg;
+    bool res = params.CheckParams(0, msg);
+    EXPECT_EQ(res, false);
+    params.page.pageSize = 1;
+    params.page.current = 0;
+    res = params.CheckParams(0, msg);
+    EXPECT_EQ(res, false);
+    params.page.current = 1;
+    params.startTime = 100;
+    params.endTime = 1;
+    res = params.CheckParams(0, msg);
+    EXPECT_EQ(res, false);
+}
+
 TEST_F(TimelineProtocolRequestTest, TestUnitThreadsOperatorsParams)
 {
     Dic::Protocol::UnitThreadsOperatorsParams params;

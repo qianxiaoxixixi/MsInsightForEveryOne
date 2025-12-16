@@ -141,7 +141,6 @@ public:
     bool CheckTableDataInvalid(std::string tableName);
 
     void UpdateStartTime(const std::string &fileId);
-    void UpdateAllDepth();
     static void ClearStringsCache();
     void InitStringsCache();
     void InitMetaDataInfo();
@@ -226,8 +225,6 @@ private:
     bool SetConfig() override;
     void CreateTemporaryTable();
 
-    void UpdateDepth(const std::string &sql, std::unique_ptr<SqlitePreparedStatement> &updateStmt);
-    bool UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &stmt);
     std::string GetHcclOperatorMetaData(const std::string &fileId);
     bool QueryAscendHardwareOperatorMetadata(const std::string &fileId,
                                              std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
@@ -238,7 +235,6 @@ private:
     bool QueryCounterMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool QueryCounterMetadataGenerateInfo(const PROCESS_TYPE &type,
         std::string &processName, std::string &metaType, std::string &sql);
-    bool NeedUpdateDepth(const std::string &table);
 
     static std::unique_ptr<Protocol::UnitTrack> GenerateBaseUnitTrack(const std::string &type,
         const std::string &cardId, const std::string &processId, const std::string &processName,

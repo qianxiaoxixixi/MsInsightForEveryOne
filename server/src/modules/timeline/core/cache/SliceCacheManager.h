@@ -248,6 +248,22 @@ public:
         trackIdAndPythonFunctionMap[trackId] = status;
     }
 
+    bool GetPythonFunctionFilterStatus(const uint64_t trackId)
+    {
+        SpinLockGuard lock(mutex);
+        if (pythonFunctionFilterStatus.count(trackId) > 0) {
+            return pythonFunctionFilterStatus[trackId];
+        }
+        // python调用栈默认不过滤
+        return false;
+    }
+
+    void SetPythonFunctionFilterStatus(const uint64_t trackId, bool status)
+    {
+        SpinLockGuard lock(mutex);
+        pythonFunctionFilterStatus[trackId] = status;
+    }
+
     void UpdatePythonFilterSet(const std::string &key, bool isFilter)
     {
         SpinLockGuard lock(mutex);
@@ -266,6 +282,7 @@ public:
         pythonCacheDuration.clear();
         used.clear();
         trackIdAndPythonFunctionMap.clear();
+        pythonFunctionFilterStatus.clear();
         pythonFunctionIDCache.clear();
         pythonFunctionIdUsed.clear();
         pythonFilterSet.clear();
@@ -305,6 +322,8 @@ private:
     const size_t pythonCapacity = 3;
     // 过滤了python function的trackId集合
     std::set<std::string> pythonFilterSet;
+    // python调用栈是否显示的状态信息
+    std::unordered_map<uint64_t, bool> pythonFunctionFilterStatus;
 
     // 更新算子缓存使用记录
     void Touch(CacheMap::iterator it)
