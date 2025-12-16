@@ -1,0 +1,13 @@
+{
+    "task": "tensor",
+    "dump_path": "./dump_path",
+    "rank": [],
+    "step": [],
+    "level": "L2",
+
+    "tensor": {
+        "list":[],
+        "data_mode": ["all"],
+        "file_format": "npy"
+    }
+}
