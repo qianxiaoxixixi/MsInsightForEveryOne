@@ -220,6 +220,9 @@ function compareStageInfo(stageA: string, stageB: string): number {
 const getStageOptions = async (condition: {iterationId: string;baselineIterationId: string}, session: Session): Promise<optionDataType[]> => {
     const res: {data: [{group: string; parallelStrategy: string; groupIdHash: {compare: string; baseline: string}}] } = await queryStages({ ...condition, isCompare: session.isCompare });
     const list = res?.data ?? [];
+    const isSingleItem = list.length === 1;
+    let unknownCounter = 1; // 初始化计数器
+
     const options: optionDataType[] = list
         .map(item => {
             // 如果stage是由数字组成，则对数据进行重排序，否则不做任何处理（p2p的情况）
@@ -229,7 +232,9 @@ const getStageOptions = async (condition: {iterationId: string;baselineIteration
             // value使用group id的hash值，考虑对比场景，使用两个hash值拼接而成，
             const value = generateStageKeyValue(item.groupIdHash.compare, item.groupIdHash.baseline);
             // label的显示格式为 并行策略：通信域，如果并行策略不存在，则在通信域后面加上groupId的hash值信息
-            const label = strategy.length === 0 ? `${stageAfterSort}:${value}` : `${strategy}:${stageAfterSort}`;
+            // 若相同RankSet通信域不唯一，则不展示哈希值，以unknown代替
+            const hash = isSingleItem ? value : `unknown_${unknownCounter++}`;
+            const label = strategy.length === 0 ? `${stageAfterSort}:${hash}` : `${strategy}:${stageAfterSort}`;
             return { value, strategy, label, stageAfterSort, groupIdHash: item.groupIdHash, stage: item.group };
         })
         .sort((a, b) => {
