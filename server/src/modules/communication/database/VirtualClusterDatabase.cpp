@@ -27,6 +27,12 @@
 namespace Dic {
 namespace Module {
 using namespace Dic::Server;
+
+VirtualClusterDatabase::~VirtualClusterDatabase()
+{
+    ReleaseStmt();
+}
+
 bool VirtualClusterDatabase::HasColumn(const std::string &tableName, const std::string &columnName)
 {
     if (!Database::CheckTableExist(tableName)) {
