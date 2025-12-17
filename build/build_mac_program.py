@@ -49,7 +49,8 @@ EXCLUDE_DIRS = [
     ".idea",
     ".git",
     "cmake-build-debug-mingw",
-    "output"
+    "output",
+    "smoke-test"
 ]
 
 MANIFEST_DIR = 'manifest'
