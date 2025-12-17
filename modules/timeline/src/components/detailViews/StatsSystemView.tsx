@@ -120,12 +120,13 @@ const KernelDetails = observer((props: SelectContentViewProps) => {
         let endTime = props.session.timeAnalysisRange?.[1] ?? 0;
         endTime = endTime < 0 ? 0 : endTime;
         const timestampoffset = getTimeOffset(props.session, props.card);
+        const sortedField = sorters.field === 'startTimeLabel' ? 'startTime' : sorters.field;
         const res = await queryKernelDetails({
             rankId: props.card.cardId,
             dbPath: props.card.dbPath,
             pageSize: pages.pageSize,
             current: pages.current,
-            orderBy: sorters.field === 'startTimeLabel' ? 'startTime' : sorters.field ?? defaultSorter.field,
+            orderBy: sorters.order ? sortedField : defaultSorter.field,
             order: sorters.order ?? defaultSorter.order,
             startTime: Math.floor(startTime + timestampoffset),
             endTime: Math.ceil(endTime + timestampoffset),
