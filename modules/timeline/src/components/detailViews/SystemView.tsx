@@ -440,12 +440,13 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
         let endTime = prop.session.timeAnalysisRange?.[1] ?? 0;
         endTime = endTime < 0 ? 0 : endTime;
         const timestampOffset = getTimeOffset(prop.session, { cardId: prop.card.cardId });
+        const sortedField = sorters.field === 'startTimeLabel' ? 'startTime' : sorters.field;
         let params: IQueryCondition = {
             rankId: prop.card.cardId,
             dbPath: prop.card.dbPath,
             pageSize: pages.pageSize,
             current: pages.current,
-            orderBy: sorters.field === 'startTimeLabel' ? 'startTime' : sorters.field ?? defaultSorter.field,
+            orderBy: sorters.order ? sortedField : defaultSorter.field,
             order: sorters.order ?? defaultSorter.order,
             startTime: Math.floor(startTime + timestampOffset),
             endTime: Math.ceil(endTime + timestampOffset),
