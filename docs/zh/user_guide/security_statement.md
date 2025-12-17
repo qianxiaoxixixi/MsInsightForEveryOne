@@ -43,15 +43,12 @@
 - 如企业客户须获取漏洞信息，请查看[安全通知](https://securitybulletin.huawei.com/enterprise/cn/security-advisory)。
 - Windows/macOS/Linux版本安装依赖时，请注意使用满足条件的较新版本软件包，关注并修补存在的漏洞，尤其是已公开的CVSS打分大于7分的高危漏洞。
 
-## 数据安全声明（//TODO: 补充输出）
+## 数据安全声明
 
 MindStudio Insight支持导入包括pytorch profiler、msprof、memscope、msServiceProfiler等调优工具采集的调优数据，在导入前请自行确保数据来源可信及环境安全。
 
-## 运行安全声明 ( //TODO: 需要补充规格说明 )
-
-
-## 公网地址声明 （ //TODO: 需要补充 ）
-
+## 运行安全声明
+MindStudio Insight 在运行异常时会退出进程并打印报错信息，建议根据报错提示定位具体错误原因，错误信息覆盖文件权限，文件解析，数据落盘，数据查询等方面。
 
 ## 通信安全加固
 
