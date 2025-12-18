@@ -45,6 +45,11 @@ bool BaselineManagerService::CheckIsSupportCompare(const std::vector<ProjectExpl
     if (baseline.empty() || cur.empty()) {
         return false;
     }
+
+    if (baseline.size() > 1 || cur.size() > 1) {
+        errorMsg = "Multi data type sense not support compare yet.";
+        return false;
+    }
     // 多device场景不允许设置基线
     bool isAllSamePath = std::all_of(baseline[0].subParseFileInfo.begin(),
                                      baseline[0].subParseFileInfo.end(),
@@ -107,25 +112,6 @@ bool BaselineManagerService::InitBaselineData(const Protocol::BaselineSettingReq
         return false;
     }
 
-    // 对于联合导入场景，需要准确找到子工程, 根据parseFilePath过滤，如果仍有多项，则以第一项为准
-    auto projectFilter = [&request](const ProjectExplorerInfo &project) {
-        bool isParseFile = std::any_of(project.subParseFileInfo.begin(),
-                                       project.subParseFileInfo.end(),
-                                       [&request](const auto fileInfo) {
-                                           return fileInfo->parseFilePath == request.params.filePath;
-                                       });
-        auto clusterInfos = project.GetClusterInfos();
-        bool isCluster = std::any_of(clusterInfos.begin(), clusterInfos.end(), [&request](const auto clusterInfo) {
-            return clusterInfo->parseFilePath == request.params.baselineClusterPath;
-        });
-        isCluster |= (request.params.baselineClusterPath == request.projectName);
-        return !(isParseFile || isCluster);
-    };
-    projectExplorerList.erase(
-        std::remove_if(projectExplorerList.begin(), projectExplorerList.end(),
-                       projectFilter),
-        projectExplorerList.end()
-    );
     // 检查是否支持对比，返回true是因为目前如果返回false则错误信息前端获取不到，返回false但errorMessage不为空，前端能正确识别到错误并提示
     if (!CheckIsSupportCompare(projectExplorerList, curProject, baselineInfo.errorMessage, request.params.filePath)) {
         return true;
