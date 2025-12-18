@@ -118,7 +118,6 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
             database->UpdateStartTime(item);
         }
         database->InitStringsCache();
-        // 全量db解析优化，无需depth预计算，删除BuildProfilingInitTask
         BuildProfilingInitTask(futures, dbId, threadPool);
     }
     // EndParseTask中会等待所有future执行完成，然后发送parse/success事件，最后在执行一些需要异步完成的解析任务

@@ -177,5 +177,11 @@ struct ParallelGroupInfo {
     std::string groupName;
     std::vector<std::string> globalRanks;
 };
+
+enum class PYTHON_FUNCTION_STATUS {
+    UNKNOWN,
+    EXIST,
+    NOT_EXIST,
+};
 }
 #endif // PROFILER_SERVER_DOMAINOBJECT_H

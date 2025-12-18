@@ -189,7 +189,7 @@ const static std::string FULL_DB_UPDATE_TIME =
 
 // QueryThreadsByPid
 const static std::string ASCEND_THREADS_EXCLUDING_MSTX_BY_PID =
-    "select main.startNs,main.endNs - main.startNs as duration,main.endNs, "
+    "select main.ROWID as id, main.startNs,main.endNs - main.startNs as duration,main.endNs, "
     " coalesce(c.name, s.name, main.taskType) as name, main.depth "
     " from " + TABLE_TASK + " main left join " + TABLE_COMPUTE_TASK_INFO +
     " c on c.globalTaskId = main.globalTaskId "
@@ -198,50 +198,50 @@ const static std::string ASCEND_THREADS_EXCLUDING_MSTX_BY_PID =
     " and connectionId not in (select connectionId from " + TABLE_MSTX_EVENTS + ")"
     " ORDER BY main.depth ASC, main.startNs ASC;";
 const static std::string ASCEND_THREADS_MSTX_BY_PID =
-    "SELECT main.startNs, main.endNs - main.startNs as duration, main.endNs, m.message AS name, main.depth "
-    "FROM " + TABLE_TASK + " AS main "
+    "SELECT main.ROWID as id,main.startNs, main.endNs - main.startNs as duration, main.endNs, m.message AS name, "
+    "main.depth FROM " + TABLE_TASK + " AS main "
     "INNER JOIN " + TABLE_MSTX_EVENTS + " AS m ON main.connectionId = m.connectionId "
     "WHERE main.deviceId = ? AND main.streamId = ? AND m.domainId = ? AND main.endNs >= ? AND main.startNs <= ? "
     "ORDER BY main.depth ASC, main.startNs ASC";
 
 const static std::string HCCL_THREADS_BY_PID =
             "with sub as ("
-            "select startNs, endNs-startNs as duration, endNs, info.taskType as name from " + TABLE_TASK +
+            "select main.ROWID as id, startNs, endNs-startNs as duration, endNs, info.taskType as name from " + TABLE_TASK +
             " main join " + TABLE_COMMUNICATION_TASK_INFO +
             " info on info.globalTaskId = main.globalTaskId\n"
             " where deviceId = ? and groupName || '_' || planeId = ?\n"
-            " UNION select startNs,endNs-startNs as duration,endNs,opInfo.opName"
+            " UNION select opInfo.opId as id, startNs,endNs-startNs as duration,endNs,opInfo.opName"
             " from COMMUNICATION_OP opInfo"
             " where groupName||'group' = ?) select * from sub where sub.endNs >= ? "
             " and sub.startNs <= ?;";
 
 const static std::string CANN_API_THREADS_BY_PID =
-              "select startNs, endNs - startNs as duration, endNs, name, depth from CANN_API"
+              "select main.ROWID as id, startNs, endNs - startNs as duration, endNs, name, depth from CANN_API"
               " main where type = ? and globalTid = ? and endNs >= ? AND startNs <= ?"
               " ORDER BY depth ASC, startNs ASC;";
 
 const static std::string API_THREADS_BY_PID =
-        "select startNs, endNs - startNs as duration, endNs, name, depth from PYTORCH_API "
+        "select main.ROWID as id, startNs, endNs - startNs as duration, endNs, name, depth from PYTORCH_API "
         " main where globalTid = ? and endNs >= ? AND startNs <= ?"
         " ORDER BY depth ASC, startNs ASC;";
 
 const static std::string API_THREADS_BY_PID_AND_NO_PYTHON_FUNCTION =
-        "select startNs, endNs - startNs as duration, endNs, name, depth from PYTORCH_API "
+        "select main.ROWID as id, startNs, endNs - startNs as duration, endNs, name, depth from PYTORCH_API "
         " main where globalTid = ? and endNs >= ? AND startNs <= ? and type != 50003 " // 50003 is the python function
         " ORDER BY depth ASC, startNs ASC;";
 
 const static std::string OVERLAP_ANALYSIS_THREAD_BY_PID =
-        "select startNs, endNs - startNs as duration, endNs, 'OVERLAP_ANALYSIS'||type as name, "
+        "select ROWID as id, startNs, endNs - startNs as duration, endNs, 'OVERLAP_ANALYSIS'||type as name, "
         " 0 as depth from " + TABLE_OVERLAP_ANALYSIS + " where deviceId = ? and type = ? "
         " and endNs >= ? AND startNs <= ? ORDER BY startNs;";
 
 const static std::string MS_TX_THREAD_BY_PID =
-        "select startNs, endNs - startNs as duration,endNs,message as name,depth from " +
+        "select ROWID as id, startNs, endNs - startNs as duration,endNs,message as name,depth from " +
         TABLE_MSTX_EVENTS +
         " where globalTid = ? and domainId = ? and endNs >= ? AND startNs <= ? ORDER BY startNs";
 
 const static std::string OSRT_API_THREADS_BY_PID =
-    "SELECT startNs, endNs - startNs AS duration, endNs, name, 0 AS depth FROM " + TABLE_OSRT_API +
+    "SELECT ROWID as id, startNs, endNs - startNs AS duration, endNs, name, 0 AS depth FROM " + TABLE_OSRT_API +
     " WHERE globalTid = ? AND endNs >= ? AND startNs <= ? ORDER BY startNs ASC;";
 
 // QueryEventsViewData4Db

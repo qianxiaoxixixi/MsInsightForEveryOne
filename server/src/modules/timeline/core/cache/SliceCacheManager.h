@@ -247,16 +247,16 @@ public:
         }
     }
 
-    bool HavePythonFunction(const uint64_t trackId)
+    PYTHON_FUNCTION_STATUS GetPythonFunctionStatus(const uint64_t trackId)
     {
         SpinLockGuard lock(mutex);
         if (trackIdAndPythonFunctionMap.count(trackId) > 0) {
             return trackIdAndPythonFunctionMap[trackId];
         }
-        return true;
+        return PYTHON_FUNCTION_STATUS::UNKNOWN;
     }
 
-    void SetPythonFunctionStatus(const uint64_t trackId, bool status)
+    void SetPythonFunctionStatus(const uint64_t trackId, PYTHON_FUNCTION_STATUS status)
     {
         SpinLockGuard lock(mutex);
         trackIdAndPythonFunctionMap[trackId] = status;
@@ -326,7 +326,7 @@ private:
     uint64_t curCapacity = 0;
 
     // trackId 是否存在python function
-    std::unordered_map<uint64_t, bool> trackIdAndPythonFunctionMap;
+    std::unordered_map<uint64_t, PYTHON_FUNCTION_STATUS> trackIdAndPythonFunctionMap;
 
     // 算子调用栈id缓存
     PythonFunctionMap pythonFunctionIDCache;

@@ -237,7 +237,7 @@ void SliceAnalyzer::ComputeScreenSliceIds(const SliceQuery &sliceQuery, std::set
         depthMap[item.first] = item.second;
     }
     maxDepth = endList.size();
-    havePythonFunction = instance.HavePythonFunction(sliceQuery.trackId);
+    havePythonFunction = instance.GetPythonFunctionStatus(sliceQuery.trackId) == PYTHON_FUNCTION_STATUS::EXIST;
     // 此处不管是否命中缓存，都需要刷新，是因为显示/隐藏python调用栈时，depth信息可能会被更新, 而QueryDepthInfo会查询缓存中的depth信息
     // todo: 后续可以将python调用栈单独提取出一个泳道，以避免depth反复刷新
     instance.UpdateSliceCache(sliceCacheKey, sliceDomainVec, slicePagedQuery);
@@ -248,13 +248,13 @@ void SliceAnalyzer::QueryPythonFuncIds(const SliceQuery &sliceQuery, std::vector
     auto &instance = SliceCacheManager::Instance();
     std::string sliceCacheKey = std::to_string(sliceQuery.trackId);
     const auto pythonFuncRepo = dynamic_cast<IPythonFuncSlice*>(repository.get());
-    if (instance.HavePythonFunction(sliceQuery.trackId)) {
+    if (instance.GetPythonFunctionStatus(sliceQuery.trackId) == PYTHON_FUNCTION_STATUS::UNKNOWN) {
         uint64_t count = pythonFuncRepo != nullptr ? pythonFuncRepo->QueryPythonFunctionCountByTrackId(sliceQuery) : 0;
-        if (count == 0) {
-            instance.SetPythonFunctionStatus(sliceQuery.trackId, false);
-        }
+        PYTHON_FUNCTION_STATUS status = count == 0 ? PYTHON_FUNCTION_STATUS::NOT_EXIST : PYTHON_FUNCTION_STATUS::EXIST;
+        instance.SetPythonFunctionStatus(sliceQuery.trackId, status);
     }
-    if (sliceQuery.isFilterPythonFunction && instance.HavePythonFunction(sliceQuery.trackId)) {
+    if (sliceQuery.isFilterPythonFunction &&
+        instance.GetPythonFunctionStatus(sliceQuery.trackId) == PYTHON_FUNCTION_STATUS::EXIST) {
         pythonFunctionIds = instance.GetPythonFunctionIdVec(sliceCacheKey, sliceQuery);
         if (std::empty(pythonFunctionIds)) {
             QueryPythonFuncFromDBAndUpdateCache(sliceCacheKey, sliceQuery, pythonFunctionIds);

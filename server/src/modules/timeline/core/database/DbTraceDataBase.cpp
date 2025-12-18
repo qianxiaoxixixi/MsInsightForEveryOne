@@ -62,8 +62,7 @@ bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestPar
     std::vector<SimpleSlice> simpleSliceVec;
     std::map<std::string, uint64_t> selfTimeKeyValue;
     for (auto &&metadata: requestParams.metadataList) {
-        std::string rankId = GetDeviceId(requestParams.rankId);
-        std::vector<Protocol::SimpleSlice> completeSlice = QueryThreadByPid(metadata, startTime, endTime, rankId,
+        std::vector<Protocol::SimpleSlice> completeSlice = QueryThreadByPid(metadata, startTime, endTime, requestParams.rankId,
                                                                             selfTimeKeyValue);
         simpleSliceVec.insert(simpleSliceVec.end(), completeSlice.begin(), completeSlice.end());
     }
@@ -1704,12 +1703,15 @@ std::vector<Protocol::SimpleSlice> DbTraceDataBase::QueryThreadByPid(const Metad
         ServerLog::Error("Query_threads. Failed to prepare sql.", sqlite3_errmsg(db));
         return {};
     }
+    std::string deviceId = GetDeviceId(rankId);
     std::vector<Protocol::SimpleSlice> completeSlice;
     try {
-        auto resultSet = TraceDatabaseHelper::QueryThreadsByPid(stmt, startTime, endTime, metaData, rankId);
+        auto resultSet = TraceDatabaseHelper::QueryThreadsByPid(stmt, startTime, endTime, metaData, deviceId);
+        std::unordered_map<uint64_t, std::unordered_map<uint64_t, uint32_t>> trackIdDepthCache;
         while (resultSet->Next()) {
             int col = resultStartIndex;
             Protocol::SimpleSlice simpleSlice{};
+            uint64_t id = resultSet->GetUint64(col++);
             simpleSlice.timestamp = resultSet->GetUint64(col++);
             simpleSlice.duration = resultSet->GetUint64(col++);
             simpleSlice.endTime = resultSet->GetUint64(col++);
@@ -1718,6 +1720,17 @@ std::vector<Protocol::SimpleSlice> DbTraceDataBase::QueryThreadByPid(const Metad
             simpleSlice.tid = metaData.tid;
             simpleSlice.pid = metaData.pid;
             simpleSlice.metaType = metaData.metaType;
+            uint64_t trackId = TrackInfoManager::Instance().GetTrackId(rankId, metaData.pid, metaData.tid);
+            SliceCacheManager &sliceCacheManager = SliceCacheManager::Instance();
+            auto item = trackIdDepthCache.find(trackId);
+            if (item != trackIdDepthCache.end()) {
+                simpleSlice.depth = item->second[id];
+            } else {
+                std::unordered_map<uint64_t, uint32_t> depthCache;
+                sliceCacheManager.QueryDepthInfoWithoutTimeRange(std::to_string(trackId), rankId, depthCache);
+                trackIdDepthCache[trackId] = depthCache;
+                simpleSlice.depth = depthCache[id];
+            }
             completeSlice.emplace_back(simpleSlice);
         }
     } catch (DatabaseException &e) {
