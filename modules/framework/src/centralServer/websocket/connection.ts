@@ -187,12 +187,8 @@ export class Connection {
                 // wedge: return cache resolve
                 resolve(res.body as T);
             } else {
-                if (res.error === undefined) {
-                    throw new Error('malformed response');
-                }
-                const { code, message } = res.error;
-                console.error('[connector]', 'errorCode:', code, 'msg:', message || res.message);
-                resolve({ error: { code, message: message || res.message } } as ErrorMsg);
+                const { code, message } = res.error ?? { code: -1, message: 'Unknown error' };
+                resolve({ error: { code, message } } as ErrorMsg);
             }
         };
     }
