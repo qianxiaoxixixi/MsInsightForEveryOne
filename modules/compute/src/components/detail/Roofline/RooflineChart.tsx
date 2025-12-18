@@ -49,7 +49,7 @@ const baseOption: any = {
         axisPointer: {
             type: 'cross',
         },
-        trigger: 'axis',
+        trigger: 'item',
         enterable: true,
     },
     legend: {
@@ -65,7 +65,6 @@ const baseOption: any = {
             },
         },
         formatter: (name: string) => {
-            name = safeStr(name);
             if (name.startsWith('X(') || name.startsWith('Y(')) {
                 return name.slice(2, -1);
             }
@@ -123,7 +122,7 @@ function setCustomLegendOption(theme: Theme): any {
         itemStyle: { color: '#6DB9E8' },
         textStyle: { color: theme.textColorTertiary },
         formatter: (name: string): string => {
-            name = safeStr(name).slice(2, -1);
+            name = name.slice(2, -1);
             if (name.length > 30) {
                 return `${name.slice(0, 28)}...`;
             }
@@ -211,7 +210,6 @@ function wrapData(originData: IRooflineChart, theme: Theme, isInit: boolean): Op
         { ...baseOption.legend, ...selectedOfX, data: xLegend },
         { ...baseOption.legend, data: yLegend, ...setCustomLegendOption(theme), show: yLegend.length > 1 },
     ];
-    option.tooltip.formatter = getTooltipFormatter();
     return getOptionStyle(option, theme);
 }
 
@@ -231,6 +229,10 @@ function getPointSerie(bwName: string, data: Array<number | string | Point>, bwN
         symbolSize: 16,
         emphasis: { scale: 1.2 },
         zlevel: 2,
+        tooltip: {
+            trigger: 'item',
+            formatter: getTooltipFormatter(),
+        },
     };
 }
 
@@ -248,6 +250,13 @@ function getRooflineSerie(bwName: string, rooflinePoints: Point[], bwNameList: s
             lineStyle: { width: 4 },
         },
         zlevel: 1,
+        tooltip: {
+            trigger: 'item',
+            formatter: (params: any) => {
+                const compName = params.seriesName.split(bwName)?.[1]?.slice(1, -1);
+                return `<span>${safeStr(compName ?? '')}</span>`;
+            },
+        },
     };
 }
 
@@ -268,6 +277,7 @@ function getComputilityNameSerie(labelPoint: Point, computilityNameLabel: string
             color: theme.textColor,
             fontWeight: 'bold',
         },
+        tooltip: { show: false },
     };
 }
 
@@ -341,8 +351,8 @@ export function getDigit(num: number, diff = 0): number {
 }
 
 function getTooltipFormatter(): (p: any) => string {
-    return (params: any[]) => {
-        const tips = params.map(item => getTipText((item))).join('');
+    return (params: any) => {
+        const tips = getTipText(params);
         return tips === '' ? '' : `<div style="max-height:400px;overflow-y:auto;">${tips}</div>`;
     };
 }
