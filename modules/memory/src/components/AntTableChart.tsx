@@ -35,6 +35,7 @@ import type { CardInfo, Session } from '../entity/session';
 import { handleOperatorDetails } from './MemoryDetailTable';
 import connector from '../connection';
 import type { ResizeTableRef } from '@insight/lib/src/resize';
+import { MemoryGraphType } from '../entity/memorySession';
 
 interface IProps {
     tableData: MemoryTable;
@@ -48,8 +49,8 @@ interface IProps {
     isCompare: boolean;
     selectedCard: CardInfo;
     onFiltersChange: (filter: any) => void;
-    needUseKeyMap: boolean;
     ref: React.ForwardedRef<ResizeTableRef>;
+    memoryType: MemoryGraphType;
 }
 
 interface IColName {
@@ -81,6 +82,7 @@ interface GetColumnsParams {
     setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>;
     selectedCard?: CardInfo;
     isComp?: boolean;
+    memoryType: MemoryGraphType;
 }
 
 const orderByColName: IColName = {
@@ -142,7 +144,7 @@ const renderExpandColumn = (
         : <></>;
 };
 
-const getTableColumns = function ({ columns, theme, t, isCompare, setExpandedKeys, selectedCard, isComp }: GetColumnsParams): TableColumnsType<RenderExpandRecord> {
+const getTableColumns = function ({ columns, theme, t, isCompare, setExpandedKeys, selectedCard, isComp, memoryType }: GetColumnsParams): TableColumnsType<RenderExpandRecord> {
     const useTextColor = (data: string | number, record: RenderExpandRecord): JSX.Element | number | string => {
         return (isCompare && record.source === t('Difference')) ? getCompareRows(data, theme) : data;
     };
@@ -178,7 +180,7 @@ const getTableColumns = function ({ columns, theme, t, isCompare, setExpandedKey
             },
         });
     }
-    if (!isComp && !isCompare) {
+    if (!isComp && !isCompare && memoryType !== MemoryGraphType.STATIC) {
         dataColumns.push({
             key: `operation_${selectedCard?.cardId}`,
             title: t('Operation', { defaultValue: 'Operation', keyPrefix: 'tableHead' }),
@@ -218,13 +220,13 @@ export const AntTableChart: React.FC<IProps> = forwardRef((props, ref: React.For
     const {
         tableData, onRowSelected, current, pageSize,
         onPageChange, total, onOrderChange, onOrderByChange, isCompare, selectedCard,
-        onFiltersChange, needUseKeyMap = true,
+        onFiltersChange, memoryType,
     } = props;
     const theme = useTheme();
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
 
     const columns = useMemo(
-        () => getTableColumns({ columns: tableData.columns, theme, t, isCompare, setExpandedKeys, selectedCard }),
+        () => getTableColumns({ columns: tableData.columns, theme, t, isCompare, setExpandedKeys, selectedCard, memoryType }),
         [tableData.columns, t, isCompare, selectedCard],
     );
 
@@ -240,7 +242,7 @@ export const AntTableChart: React.FC<IProps> = forwardRef((props, ref: React.For
         if ((sorter as SorterResult<OperatorDetail>).order) {
             const orderByCol = `${(sorter as SorterResult<OperatorDetail>).field}`;
             onOrderChange((sorter as SorterResult<OperatorDetail>).order as SortOrder);
-            needUseKeyMap ? onOrderByChange(orderByColName[orderByCol as keyof IColName]) : onOrderByChange(orderByCol);
+            memoryType === MemoryGraphType.STATIC ? onOrderByChange(orderByColName[orderByCol as keyof IColName]) : onOrderByChange(orderByCol);
         } else {
             onOrderChange(null);
         }
@@ -351,7 +353,7 @@ export const TableByComponent = ({ session }: { session: Session }): JSX.Element
     }, [memorySession?.selectedRankId, session.compareRank.isCompare, session.isAllMemoryCompletedSwitch]);
     useEffect(() => {
         pagination = { ...pagination, total: response.totalNum };
-        setColumns(getTableColumns({ columns: response.columnAttr, theme, t, isCompare: session.compareRank.isCompare, setExpandedKeys, isComp: true }) as TableColumnsType<ComponentMemory>);
+        setColumns(getTableColumns({ columns: response.columnAttr, theme, t, isCompare: session.compareRank.isCompare, setExpandedKeys, isComp: true, memoryType: memorySession?.memoryType as MemoryGraphType }) as TableColumnsType<ComponentMemory>);
         setTableData(handleOperatorDetails(response.componentDetail, session.compareRank.isCompare, t));
     }, [response, session.language]);
 

@@ -370,7 +370,7 @@ const MemoryDetailTable = observer(({ session, memorySession }:
                                 columns: memoryTableHead,
                                 rows: memoryTableData,
                             }}
-                            needUseKeyMap={memorySession.memoryType !== MemoryGraphType.DYNAMIC}
+                            memoryType={memorySession.memoryType as MemoryGraphType}
                             onRowSelected={onRowSelected}
                             current={memorySession.current}
                             pageSize={memorySession.pageSize}
