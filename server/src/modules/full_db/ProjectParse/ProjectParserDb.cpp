@@ -50,7 +50,7 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
         }
     }
     auto hostInfoMap = GetReportFiles(projectInfos);
-    SetHostInfo(hostInfoMap, response);
+    SetHostInfo(hostInfoMap, response, projectInfos[0].projectType);
     SetParseCallBack();
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = MODULE_TIMELINE;
@@ -83,14 +83,16 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
     ParseClusterInfo(projectInfos, isCluster, curProjectTypeEnum);
 }
 
-void ProjectParserDb::SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, ImportActionResponse &response)
+void ProjectParserDb::SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap,
+                                  ImportActionResponse &response,
+                                  int64_t projectType)
 {
     uint32_t rankSize = 0;
     for (auto &hostInfo : hostInfoMap) {
         rankSize += hostInfo.second.size();
         for (auto &ranks : hostInfo.second) {
             for (auto &rank : ranks.second) {
-                SetBaseActionOfResponse(response, rank, hostInfo.first, ranks.first);
+                SetBaseActionOfResponse(response, rank, hostInfo.first, ranks.first, projectType);
                 rank = hostInfo.first + rank;
             }
         }
@@ -213,8 +215,11 @@ void ProjectParserDb::SetParseCallBack()
     FullDb::FullDbParser::Instance().SetParseEndCallBack(func);
 }
 
-void ProjectParserDb::SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
-    const std::string &host, const std::string &dbFile)
+void ProjectParserDb::SetBaseActionOfResponse(ImportActionResponse &response,
+                                              const std::string &rankId,
+                                              const std::string &host,
+                                              const std::string &dbFile,
+                                              int64_t projectType)
 {
     Action action;
     action.cardName = rankId;
@@ -223,6 +228,7 @@ void ProjectParserDb::SetBaseActionOfResponse(ImportActionResponse &response, co
     action.host = host.length() >= 1 ? host.substr(0, host.length() - 1) : "";
     action.result = true;
     action.fileId = dbFile;
+    action.projectType = projectType;
     if (!dbFile.empty()) {
         action.cardPath = "Directory: " + FileUtil::GetRankIdFromPath(dbFile);
         action.dataPathList.push_back(FileUtil::GetParentPath(dbFile));
@@ -419,6 +425,7 @@ void ProjectParserDb::BuildProjectFromParseFile(Dic::Module::Global::ProjectExpl
     parseFileInfoRank->subId = parsedFile;
     parseFileInfoRank->curDirName = FileUtil::GetFileName(parsedFile);
     parseFileInfoRank->fileId = GetFileIdWithDb(parsedFile);
+    parseFileInfoRank->projectType = info.projectType;
     // import single file
     if (FileUtil::IsRegularFile(parsedFile) && parseFileInfoRank->subId == info.fileName) {
         parseFileInfoRank->subId = FileUtil::GetFileName(parsedFile);
@@ -438,6 +445,7 @@ void ProjectParserDb::BuildProjectFromParseFile(Dic::Module::Global::ProjectExpl
             clusterInfo->clusterId = FileUtil::GetFileName(cluster);
             clusterInfo->parseFilePath = clusterPrefix;
             clusterInfo->curDirName = FileUtil::GetFileName(cluster);
+            clusterInfo->projectType = info.projectType;
             info.AddSubParseFileInfo(info.fileName, ParseFileType::PROJECT, clusterInfo);
         }
         parentFolders.erase(parentFolders.begin());

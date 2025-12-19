@@ -43,7 +43,7 @@ bool SystemMemoryDatabase::CreateTable()
          "CREATE TABLE " + parseFileInfoTable + " ( id INTEGER PRIMARY KEY AUTOINCREMENT, "
                                                 "projectExplorerId INTEGER, parseFilePath TEXT, fileId Text, "
                                                 "subId TEXT,type INTEGER, clusterPath TEXT, "
-                                                "host TEXT, rankId TEXT, deviceId TEXT, "
+                                                "host TEXT, rankId TEXT, deviceId TEXT, projectType INTEGER, "
                                                 "UNIQUE (projectExplorerId, parseFilePath, subId, type));";
     std::unique_lock<std::recursive_mutex> lock(mutex);
     return ExecSql(sql);
@@ -98,10 +98,11 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateParsedFile(const std::vector<std
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
     std::string sql = "INSERT OR REPLACE INTO " + parseFileInfoTable +
-                        "(projectExplorerId, parseFilePath, fileId, subId, type, clusterPath, host, rankId, deviceId)"
-                        " VALUES(?, ?, ?, ? ,? ,? ,? , ? ,?)";
+                        "(projectExplorerId, parseFilePath, fileId, subId, type, "
+                        "clusterPath, host, rankId, deviceId, projectType)"
+                        " VALUES(?, ?, ?, ? ,? ,? ,? , ? ,?, ?)";
     for (size_t i = 1; i < parseFileInfoList.size(); ++i) {
-        sql += ",(?, ?, ?, ? ,? ,? ,? , ? ,?)";
+        sql += ",(?, ?, ?, ? ,? ,? ,? , ? ,?, ?)";
     }
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -110,7 +111,7 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateParsedFile(const std::vector<std
     }
     for (const auto &item: parseFileInfoList) {
         stmt->BindParams(item->projectExplorerId, item->parseFilePath, item->fileId, item->subId, item->type,
-                         item->clusterId, item->host, item->rankId, item->deviceId);
+                         item->clusterId, item->host, item->rankId, item->deviceId, item->projectType);
     }
     if (!stmt->Execute()) {
         ServerLog::Error("Failed to save FileMenuData, stmt execute failed.");
@@ -316,6 +317,7 @@ std::map<int64_t, std::vector<std::shared_ptr<ParseFileInfo>>> SystemMemoryDatab
         info->host = resultSet->GetString("host");
         info->rankId = resultSet->GetString("rankId");
         info->deviceId = resultSet->GetString("deviceId");
+        info->projectType = resultSet->GetInt64("projectType");
         res[info->projectExplorerId].push_back(info);
     }
     return res;
