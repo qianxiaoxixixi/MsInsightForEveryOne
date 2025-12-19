@@ -62,7 +62,7 @@ void ProjectParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &p
     });
 
     // 设置基础响应内容
-    SetBaseAction(rankListMap, response);
+    SetBaseAction(rankListMap, response, projectInfos[0].projectType);
     // 解析内容
     auto projectTypeEnum = Global::ProjectExplorerManager::GetProjectType(projectInfos);
     if (projectTypeEnum == ProjectTypeEnum::SIMULATION) {
@@ -763,6 +763,7 @@ void ProjectParserJson::BuildProjectFromParseFile(ProjectExplorerInfo &info, con
     parseFileInfoRank->subId = parseFile;
     parseFileInfoRank->curDirName = FileUtil::GetFileName(parseFile);
     parseFileInfoRank->fileId = GetFileIdWithDb(parseFile);
+    parseFileInfoRank->projectType = info.projectType;
     // import single file
     if (FileUtil::IsRegularFile(parseFile) || parseFileInfoRank->subId == info.fileName) {
         parseFileInfoRank->subId = FileUtil::GetFileName(parseFile);
@@ -782,6 +783,7 @@ void ProjectParserJson::BuildProjectFromParseFile(ProjectExplorerInfo &info, con
             clusterInfo->clusterId = FileUtil::GetFileName(cluster);
             clusterInfo->parseFilePath = clusterPrefix;
             clusterInfo->curDirName = FileUtil::GetFileName(cluster);
+            clusterInfo->projectType = info.projectType;
             info.AddSubParseFileInfo(info.fileName, ParseFileType::PROJECT, clusterInfo);
         }
         parentFolders.erase(parentFolders.begin());
@@ -815,12 +817,18 @@ void ProjectParserJson::UpdateRankIdToDevice(std::map<std::string, RankEntry> &r
 }
 
 void ProjectParserJson::SetBaseAction(const std::map<std::string, RankEntry> &rankListMap,
-                                      ImportActionResponse &response)
+                                      ImportActionResponse &response,
+                                      int64_t projectType)
 {
     for (const auto &rankEntry : rankListMap) {
         auto folder = rankEntry.second.parseFolder;
         std::string fileId = rankEntry.second.fileId;
-        SetBaseActionOfResponse(response, rankEntry.first, fileId, FileUtil::GetRankIdFromPath(fileId), {folder});
+        SetBaseActionOfResponse(response,
+                                rankEntry.first,
+                                fileId,
+                                FileUtil::GetRankIdFromPath(fileId),
+                                {folder},
+                                projectType);
         if (rankEntry.second.isDevice) {
             response.body.isMultiDevice = true;
         }

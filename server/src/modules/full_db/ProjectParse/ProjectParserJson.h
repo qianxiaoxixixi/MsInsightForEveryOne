@@ -118,7 +118,9 @@ private:
 
     static void UpdateRankIdToDevice(std::map<std::string, RankEntry> &rankEntry);
 
-    void SetBaseAction(const std::map<std::string, RankEntry> &rankListMap, ImportActionResponse &response);
+    void SetBaseAction(const std::map<std::string, RankEntry> &rankListMap,
+                       ImportActionResponse &response,
+                       int64_t projectType);
 
     void ParseBaselineTraceFile(const std::vector<std::string> &jsonFiles, const std::string &rankId,
                                 const std::string &fileId, const std::string &filePath);

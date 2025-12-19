@@ -41,6 +41,7 @@ static void BuildImportActionJson(const std::vector<Action> &actions,
         JsonUtil::AddMember(actionJson, "result", action.result, allocator);
         JsonUtil::AddMember(actionJson, "dbPath", action.fileId, allocator);
         JsonUtil::AddMember(actionJson, "cluster", action.cluster, allocator);
+        JsonUtil::AddMember(actionJson, "projectType", action.projectType, allocator);
         json_t dataPathList(kArrayType);
         for (const auto &item: action.dataPathList) {
             dataPathList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);

@@ -111,7 +111,12 @@ void ProjectParserBin::HandleCompute(ImportActionResponse &response, const std::
             continue;
         }
         std::string cardPath = FileUtil::GetRankIdFromPath(rankEntry.second[0]);
-        SetBaseActionOfResponse(response, rankEntry.second[0], fileId, cardPath, std::vector<std::string>{});
+        SetBaseActionOfResponse(response,
+                                rankEntry.second[0],
+                                fileId,
+                                cardPath,
+                                std::vector<std::string>{},
+                                static_cast<int>(ProjectTypeEnum::BIN));
     }
     ModuleRequestHandler::SetResponseResult(response, true);
     response.body.isBinary = true;

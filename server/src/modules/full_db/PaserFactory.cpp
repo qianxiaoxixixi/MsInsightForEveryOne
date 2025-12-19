@@ -116,7 +116,8 @@ void ProjectParserBase::SetBaseActionOfResponse(ImportActionResponse &response,
                                                 const std::string &rankId,
                                                 const std::string &fileId,
                                                 const std::string &cardPath,
-                                                std::vector<std::string> dataPath)
+                                                std::vector<std::string> dataPath,
+                                                int64_t projectType)
 {
     auto rankList = TrackInfoManager::Instance().GetRankListByFileId(fileId, rankId);
     Action action;
@@ -131,6 +132,7 @@ void ProjectParserBase::SetBaseActionOfResponse(ImportActionResponse &response,
     action.dataPathList = dataPath;
     // 将文件所在路径的三级目录名称作为rank的tooltip信息
     action.cardPath = "Directory: " + cardPath;
+    action.projectType = projectType;
     response.body.result.emplace_back(action);
 }
 
@@ -430,6 +432,7 @@ void ProjectParserBase::BuildProjectExploreInfo(ProjectExplorerInfo &projectInfo
     parseInfo->parseFilePath = projectInfo.fileName;
     parseInfo->subId = projectInfo.fileName;
     parseInfo->curDirName = FileUtil::GetFileName(projectInfo.fileName);
+    parseInfo->projectType = projectInfo.projectType;
     projectInfo.projectFileTree.emplace_back(parseInfo);
     projectInfo.fileInfoMap.emplace(parseInfo->subId, parseInfo);
 }
@@ -518,6 +521,7 @@ void ProjectParserBase::AddRankDeviceParseFileInfo(ProjectExplorerInfo &info, st
                       deviceInfo->fileId = rankInfo->fileId;
                       deviceInfo->clusterId = rankInfo->clusterId;
                       deviceInfo->deviceId = deviceId;
+                      deviceInfo->projectType = info.projectType;
                       info.AddSubParseFileInfo(deviceInfo);
                   });
 }

@@ -60,6 +60,7 @@ void ProjectParserDbNPUMonitor::BuildProjectExploreInfo(Dic::Module::Global::Pro
         parseFileInfoRank->subId = parsedFile;
         parseFileInfoRank->curDirName = FileUtil::GetFileName(parsedFile);
         parseFileInfoRank->fileId = parsedFile;
+        parseFileInfoRank->projectType = static_cast<int>(ProjectTypeEnum::DB_NPUMONITOR);
         info.AddSubParseFileInfo(info.fileName, ParseFileType::PROJECT, parseFileInfoRank);
     }
 }

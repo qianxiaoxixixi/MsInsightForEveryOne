@@ -44,6 +44,7 @@ struct Action {
     std::string fileId;
     std::string cluster;
     bool result = true;
+    int64_t projectType;
     std::vector<std::string> dataPathList;
 };
 

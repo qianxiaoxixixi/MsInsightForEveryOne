@@ -130,7 +130,8 @@ protected:
                                  const std::string &rankId,
                                  const std::string &fileId,
                                  const std::string &cardPath,
-                                 std::vector<std::string> dataPath);
+                                 std::vector<std::string> dataPath,
+                                 int64_t projectType);
     static void SaveDbPath(const std::string &curProjectName,
         std::map<std::string, std::vector<std::string>> &dataPathToDbMap);
 

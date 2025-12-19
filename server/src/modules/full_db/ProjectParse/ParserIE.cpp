@@ -46,7 +46,8 @@ void ParserIE::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
             continue;
         }
         std::string cardPath = FileUtil::GetRankIdFromPath(rankEntry.second);
-        SetBaseActionOfResponse(response, rankEntry.first, rankEntry.second, cardPath, {folders});
+        SetBaseActionOfResponse(response, rankEntry.first, rankEntry.second, cardPath, {folders},
+                                static_cast<int>(ProjectTypeEnum::IE));
     }
     // 解析内容
     SetParseCallBack(Timeline::TraceFileParser::Instance());
@@ -200,6 +201,7 @@ void ParserIE::BuildProjectExploreInfo(ProjectExplorerInfo &projectInfo, const s
         parseFileInfoRank->type = ParseFileType::RANK;
         parseFileInfoRank->subId = FileUtil::GetFileName(file);
         parseFileInfoRank->curDirName = FileUtil::GetFileName(file);
+        parseFileInfoRank->projectType = static_cast<int>(ProjectTypeEnum::IE);
         projectInfo.AddSubParseFileInfo(projectInfo.fileName, ParseFileType::PROJECT, parseFileInfoRank);
     });
 }

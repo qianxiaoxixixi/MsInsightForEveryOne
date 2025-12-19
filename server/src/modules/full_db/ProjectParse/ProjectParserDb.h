@@ -57,9 +57,14 @@ protected:
                           const std::string &rank);
     static std::vector<std::string> GetDbFilesInDir(const std::string& filePath);
     void SetParseCallBack();
-    static void SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
-        const std::string &host, const std::string &dbFile);
-    static void SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, ImportActionResponse &response);
+    static void SetBaseActionOfResponse(ImportActionResponse &response,
+                                        const std::string &rankId,
+                                        const std::string &host,
+                                        const std::string &dbFile,
+                                        int64_t projectType);
+    static void SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap,
+                            ImportActionResponse &response,
+                            int64_t projectType);
 
     static void ClusterProcess(std::shared_ptr<ParseFileInfo> clusterInfo,
                                bool isCluster,
