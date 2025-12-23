@@ -337,10 +337,16 @@ void BaseParallelStrategyAlgorithm::CalculatePerformanceDataWithTpDimension(
     const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
     std::vector<IndicatorDataStruct> &indicatorData)
 {
-    // 为了兼容缺卡的情况，例如profiling时采样，每8张卡只有1张有数据,
-    // 即wordSize可能大于statistic.size()，此处需取较大值，并用map映射
-    uint32_t dataSize = std::max(wordSize, static_cast<uint32_t>(statistic.size()));
-    for (uint32_t i = 0; i < dataSize; ++i) {
+    uint32_t maxRankId = 0;
+    auto it = std::max_element(statistic.begin(), statistic.end(), [](const auto&a, const auto&b) {
+        return a.first < b.first;
+    });
+    if (it != statistic.end()) {
+        maxRankId = NumberSafe::Add(it->first, 1);
+    }
+    // 为了兼容所采集性能数据未包含实际集群所有卡的情况，此处需取较大值，并用map映射
+    maxRankId = std::max(wordSize, maxRankId);
+    for (uint32_t i = 0; i < maxRankId; ++i) {
         if (statistic.find(i) == statistic.end()) {
             continue;
         }
