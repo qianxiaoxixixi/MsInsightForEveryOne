@@ -286,7 +286,7 @@ const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSo
             const curDataSource = cloneDeep(dataSource);
             curDataSource.dataPath = item.dataPathList;
             const { rankId, dbPath, cluster, cardName, cardPath } = item;
-            const cardUnit = new CardUnit({ dataSource: curDataSource, cardId: rankId, dbPath, cluster, cardName, cardPath });
+            const cardUnit = new CardUnit({ dataSource: curDataSource, cardId: rankId, dbPath, cluster, cardName, cardPath }, item.projectType);
             if (item.result as boolean) {
                 cardUnit.isParseLoading = !(result.isPending as boolean);
                 cardUnit.shouldParse = item.cardName !== 'Host';

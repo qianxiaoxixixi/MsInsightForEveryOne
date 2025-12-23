@@ -51,3 +51,16 @@ export enum Language {
     ZH = 'zhCN',
     EN = 'enUS',
 }
+
+export enum ProjectType {
+    DB = 0,
+    BIN = 1,
+    IPYNB = 2,
+    TEXT_CLUSTER = 3,
+    SIMULATION = 4,
+    TRACE = 5,
+    DB_CLUSTER = 6,
+    IE = 7,
+    DB_NPUMONITOR = 8,
+    OTHER = 9,
+}

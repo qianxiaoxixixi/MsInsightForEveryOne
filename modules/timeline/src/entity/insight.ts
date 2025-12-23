@@ -45,6 +45,19 @@ export interface ChartDesc<T extends ChartType> {
     error?: boolean;
 }
 
+export enum ProjectType {
+    DB = 0,
+    BIN = 1,
+    IPYNB = 2,
+    TEXT_CLUSTER = 3,
+    SIMULATION = 4,
+    TRACE = 5,
+    DB_CLUSTER = 6,
+    IE = 7,
+    DB_NPUMONITOR = 8,
+    OTHER = 9,
+}
+
 export const isGetChartConfig = <T extends ChartType>(config: ChartDesc<T>['config']): config is GetChartConfig<T> => {
     return typeof config === 'function';
 };
@@ -260,6 +273,7 @@ export interface InsightUnit extends InsightUnitParams<MetaDataBase, Record<stri
     showProgress: boolean; // 解析进度：是否显示进度条
     havePythonFunction?: boolean;
     onceExpand?: boolean; // 只展开一次
+    projectType?: ProjectType;
 }
 // recursiveSpreadUnits 已被删除，rendering 似乎不再使用 - 增加rendering状态，用于unit analyze完成后、session变为download之前的状态设置(主要是进行await recursiveSpreadUnits)
 // 增加initializing状态，用于用户点击session start按钮后，unit plugin start完成之前的状态设置
@@ -351,10 +365,14 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         progress: number = 0; // 解析进度：实际解析进度
         showProgress: boolean = false; // 解析进度：是否显示进度条
         havePythonFunction: boolean = false; // 是否采集了调用栈信息
-        constructor(metadata: T) {
-            const excludeAttrs = ['searchConfig', 'parent', 'renderInfo', 'height', 'type', 'configBar'];
+        projectType?: ProjectType;
+        constructor(metadata: T, projectType?: ProjectType) {
+            const excludeAttrs = ['searchConfig', 'parent', 'renderInfo', 'height', 'type', 'configBar', 'projectType'];
             makeAutoObservable(this, { _children: observable.shallow, ...Object.fromEntries(excludeAttrs.map(k => [k, false])) });
             this.metadata = metadata;
+            if (projectType !== undefined) {
+                this.projectType = projectType;
+            }
             this.children = params.spreadUnits ? [] : undefined;
             const spreadUnits = params.spreadUnits;
             if (spreadUnits?.phase === 'create') { spreadUnits.action(this); }

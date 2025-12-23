@@ -21,6 +21,7 @@ import type { Session } from '../entity/session';
 import styled from '@emotion/styled';
 import { StyledSelect } from './base/StyledSelect';
 import { observer } from 'mobx-react';
+import { ProjectType } from '../entity/insight';
 
 const ChildrenContainer = styled.div`
     color: ${(props): string => props.theme.fontColor};
@@ -61,6 +62,7 @@ export interface ImportCardInfo {
     cardPath: string;
     host?: string;
     dataPathList: string[];
+    projectType?: ProjectType;
 }
 
 export default ImportModeSelect;
