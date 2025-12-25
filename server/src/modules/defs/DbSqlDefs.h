@@ -172,7 +172,7 @@ const static std::string TASK_UNIT_FLOW_SQL =
 const static std::string COM_OP_UNIT_FLOW_SQL =
       " select op.ROWID as id,groupName||'group' as tid,0 as depth,op.startNs-constValue.minTime as startTime,"
       "     op.endNs - op.startNs as duration, 'HCCL' as pid, 'HCCL' as metaType, opName as name, "
-      "     deviceId from COMMUNICATION_OP op join constValue join TASK task on task.connectionId = op.connectionId "
+      " task.deviceId from COMMUNICATION_OP op join constValue join TASK task on task.connectionId = op.connectionId "
       "     where op.connectionId = constValue.connectionId group by opId ";
 const static std::string COM_OP_UNIT_FLOW_SQL_UNIQUE_DEVICE =
       " select op.ROWID as id,groupName||'group' as tid,0 as depth,op.startNs-constValue.minTime as startTime,"
