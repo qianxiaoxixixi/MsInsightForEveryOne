@@ -266,6 +266,7 @@ export interface InsightUnit extends InsightUnitParams<MetaDataBase, Record<stri
     isUnitVisible: boolean;
     isMerged: boolean; // 是否被合并
     isSummaryLoading: boolean; // 泳道缩略图是否加载中
+    isTraceLoading: boolean; // 泳道内容是否加载中
     parent?: InsightUnit;
     isParseLoading: boolean;
     shouldParse: boolean; // 判断timeline卡是否需要解析
@@ -337,6 +338,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         isUnitVisible = true;
         isMerged = false;
         isSummaryLoading: boolean = false; // 泳道缩略图是否加载中
+        isTraceLoading: boolean = false;
         type = 'basic' as const;
         pinType = params.pinType ?? 'copied';
         name = params.name;

@@ -185,6 +185,8 @@
     "KeyInfo": {
       "Press": "Press",
       "Create": "Create"
-    }
+    },
+    "zoomOutLimitWarning": "Zoom-out limit reached. Maximum visible range is {{maxDuration}} minutes",
+    "zoomTooltips": "Visible time range: {{zoom}} ( total data duration: {{totalDuration}} )"
   }
 }

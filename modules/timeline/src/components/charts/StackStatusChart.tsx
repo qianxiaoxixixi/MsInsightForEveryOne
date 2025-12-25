@@ -28,6 +28,7 @@ import { Canvas, CanvasContainer, zipStatusData } from './common';
 import { useBatchedRender, useClick, useData, useHoverPos, useRangeAndDomain } from './hooks';
 import { TooltipComponent, type TooltipProps } from './TooltipComp';
 import type { ThreadMetaData } from '../../entity/data';
+import { Spin } from 'antd';
 
 type StackStatusChartProps = ChartProps<'stackStatus'>;
 type OverflowType = 'hidden' | 'ellipsis';
@@ -349,6 +350,8 @@ export const StackStatusChart = observer(({ // 绘制 slice 的画布
 
     return <CanvasContainer ref={canvasContainer} className={'canvasContainer'} width={width} height={height} style={{ pointerEvents: `${isCollapse ? 'none' : 'auto'}` }}>
         { !isCollapse && <TooltipComponent {...tooltipProp} /> }
-        <Canvas className={'drawCanvas'} ref={canvas} width={width * devicePixelRatio} height={height * devicePixelRatio}/>
+        <Spin spinning={unit.isTraceLoading} delay={2500} size="small">
+            <Canvas className={'drawCanvas'} ref={canvas} width={width * devicePixelRatio} height={height * devicePixelRatio}/>
+        </Spin>
     </CanvasContainer>;
 });

@@ -24,10 +24,11 @@ import { useRenderEngine } from '../../context/context';
 import type { SizePx } from '../../entity/chart';
 import type { Session } from '../../entity/session';
 import type { TimeUnit } from '../../utils/adaptTimeForLength';
-import { getTimestamp } from '../../utils/humanReadable';
+import { getDuration, getTimestamp } from '../../utils/humanReadable';
 import { useWatchResize } from '../../utils/useWatchDomResize';
 import { RangeMarkerButtonCanvas } from '../TimeMakerButton';
 import { adaptDpr } from '@insight/lib/utils';
+import { MAX_ZOOM_DURATION } from '../../entity/domain';
 
 export const BASE_TICKS_SPACE_PX = 50;
 export const BASE_DOMAIN_STEP = 1;
@@ -335,6 +336,29 @@ export const getTextParser = (isNsMode: boolean): TextParser => {
     };
 };
 
+const StyledTotalDuration = styled.div`
+    position: absolute;
+    right: 0;
+    bottom: 1px;
+    padding: 0 4px;
+    background: ${(props): string => props.theme.bgColorLight};
+    border-radius: 4px;
+    border: 1px solid ${(props): string => props.theme.borderColor};
+    font-size: 12px;
+`;
+
+const TotalDuration = observer(({ session }: { session: Session }): JSX.Element => {
+    if (session.endTimeAll === undefined || session.endTimeAll < MAX_ZOOM_DURATION) {
+        return <></>;
+    }
+
+    const duration = getDuration(session.endTimeAll, { maxChars: 4 });
+
+    return <StyledTotalDuration>
+        {duration}
+    </StyledTotalDuration>;
+});
+
 const TimelineAxis = observer(({ session, margin, timelineHeight }: TimelineAxisProps): JSX.Element => {
     const canvas = React.useRef<HTMLCanvasElement>(null);
     const [width, ref] = useWatchResize<HTMLDivElement>('width');
@@ -377,6 +401,7 @@ const TimelineAxis = observer(({ session, margin, timelineHeight }: TimelineAxis
             style={{ width, height: timelineHeight }}
         />
         <RangeMarkerButtonCanvas session={ session } timelineHeight={timelineHeight}/>
+        <TotalDuration session={session}></TotalDuration>
     </CanvasContainer>;
 });
 

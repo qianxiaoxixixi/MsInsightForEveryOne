@@ -185,6 +185,8 @@
     "KeyInfo": {
       "Press": "按",
       "Create": "创建"
-    }
+    },
+    "zoomOutLimitWarning": "已达到缩小上限，最多可查看 {{maxDuration}} 分钟的数据",
+    "zoomTooltips": "当前可视时间范围：{{zoom}}（数据总时长：{{totalDuration}}）"
   }
 }

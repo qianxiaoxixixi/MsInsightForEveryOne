@@ -19,7 +19,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { useDetailUpdater, useSelectedParamsDetailUpdater, useExtraDataUpdater, useSelectedDataDetailUpdater } from './hooks';
 import { EMPTY_TABLE_STATE } from './types';
-import type { ColumnDef, DetailDescriptor, InsightUnit, MoreDescriptor, SingleDataDesc } from '../../entity/insight';
+import type { ColumnDef, DetailDescriptor, InsightUnit, SingleDataDesc } from '../../entity/insight';
 import { FilterType, TabState } from '../../entity/tabDependency';
 import { MetaDataBase } from '../../entity/data';
 
@@ -36,6 +36,7 @@ describe('hooks test', () => {
         isUnitVisible: true,
         isMerged: false,
         isSummaryLoading: false,
+        isTraceLoading: false,
         type: 'basic',
         phase: 'download',
         isParseLoading: false,

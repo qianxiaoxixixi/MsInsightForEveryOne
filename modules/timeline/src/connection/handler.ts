@@ -161,10 +161,10 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             });
             // 重置记录时间
             session.startRecordTime = 0;
-            // 计算默认结束时间  如果时间超出 MAX_SAFE_INTEGER , 会取 MAX_SAFE_INTEGER *2 为最大值
-            const defaultEndTimeAll = (typeof unitData.maxTimeStamp === 'number' ? Math.min(Number.MAX_SAFE_INTEGER, unitData.maxTimeStamp) : 1000000000) * 2;
+            // 计算默认结束时间  如果时间超出 MAX_SAFE_INTEGER , 会取 MAX_SAFE_INTEGER *1.1（*1.1是为了给右侧一些空间） 为最大值
+            const defaultEndTimeAll = (typeof unitData.maxTimeStamp === 'number' ? Math.min(Number.MAX_SAFE_INTEGER, unitData.maxTimeStamp) : 1000000000) * 1.1;
             // 如果 defaultEndTimeAll 等于最大值（MAX_SAFE_INTEGER *2） 给出提示
-            if (defaultEndTimeAll === Number.MAX_SAFE_INTEGER * 2) {
+            if (defaultEndTimeAll === Number.MAX_SAFE_INTEGER * 1.1) {
                 session.isOverflowMaxSafeNumber = true;
             }
             // 更新会话的 endTimeAll 属性
