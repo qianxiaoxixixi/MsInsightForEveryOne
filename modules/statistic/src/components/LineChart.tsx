@@ -125,7 +125,7 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.ECh
         {
             source: [graph.columns, ...graph.rows],
         },
-        series: Array(graph.columns.length - 1).fill(lineSerie),
+        series: graph.columns.length ? Array(graph.columns.length - 1).fill(lineSerie) : [],
     };
     return newOption;
 };

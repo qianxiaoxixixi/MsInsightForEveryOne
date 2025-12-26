@@ -53,6 +53,7 @@ import { useComplexMouseEvent } from './mouseEvent';
 import { CardMetaData, ThreadMetaData } from '../../../entity/data';
 import { getTimeOffset, bigSubtract } from '../../../insight/units/utils';
 import connector from '../../../connection/index';
+import { useEffect } from 'react';
 
 const DefaultInfoContainer = styled.div`
     display: flex;
@@ -529,23 +530,25 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
     const [isLoading, setLoading] = React.useState(false);
     const dbPath: string = unit.metadata.dbPath as string;
 
-    if (
-        // 如果是 Overlap Analysis 泳道
-        unit.metadata.processName === 'Overlap Analysis' &&
-        // 如果有卡地址
-        dbPath &&
-        // 如果卡的地址状态有被赋值
-        session.asyncDataLoadingList[dbPath] &&
-        // 如果 Overlap Analysis 正在加载中
-        !session.asyncDataLoadingList[dbPath].OVERLAP_ANALYSIS) {
-        setLoading(true);
-        connector.addListener('updateAnalysisLoading', (e: any) => {
-            if (e?.data?.body?.data?.dbId !== unit.metadata.dbPath) {
-                return;
-            }
-            setLoading(false);
-        });
-    }
+    useEffect(() => {
+        if (
+            // 如果是 Overlap Analysis 泳道
+            unit.metadata.processName === 'Overlap Analysis' &&
+            // 如果有卡地址
+            dbPath &&
+            // 如果卡的地址状态有被赋值
+            session.asyncDataLoadingList[dbPath] &&
+            // 如果 Overlap Analysis 正在加载中
+            !session.asyncDataLoadingList[dbPath].OVERLAP_ANALYSIS) {
+            setLoading(true);
+            connector.addListener('updateAnalysisLoading', (e: any) => {
+                if (e?.data?.body?.data?.dbId !== unit.metadata.dbPath) {
+                    return;
+                }
+                setLoading(false);
+            });
+        }
+    }, [unit.metadata.processName, session.asyncDataLoadingList[dbPath]?.OVERLAP_ANALYSIS]);
 
     const selectSelf = React.useCallback(() => {
         if (isSelected) { return; }
