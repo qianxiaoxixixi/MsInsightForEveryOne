@@ -149,6 +149,7 @@ async function redirectToTimeline(): Promise<void> {
                 rankId: resObj.rankId,
                 dbPath,
                 duration,
+                showSelectedData: true,
             },
         },
     });

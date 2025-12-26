@@ -916,6 +916,7 @@ export const locateUnitHandler: NotificationHandler = (data): void => {
                     processId: slice.processId as string,
                     cardId: slice.rankId as string,
                     metaType: (unit.metadata as ThreadMetaData).metaType,
+                    showSelectedData: (slice.showSelectedData as boolean) ?? false,
                 };
             },
             showDetail: true, // 显示详细信息
