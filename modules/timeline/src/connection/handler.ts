@@ -108,29 +108,18 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
         const { sessionStore } = store;
         // 获取当前活跃的会话
         const session = sessionStore.activeSession;
-
         // 如果没有活跃的会话，直接返回
         if (!session) { return; }
-
         // 第一次 parse/success 返回时，更新 isRL 字段
-        if (session.rankCardInfoMap.size === 0) {
-            connector.send({
-                event: 'updateSession',
-                body: {
-                    isRL: data.isRl,
-                },
-            });
-        }
+        session.rankCardInfoMap.size === 0 && connector.send({ event: 'updateSession', body: { isRL: data.isRl } });
         // 更新排名数据库路径映射
         updateRankDbPathMap(unitData.rankList ?? [], unitData.dbPath);
         runInAction(() => {
             // 更新会话的 isFullDb 和 startTime 属性
             session.isFullDb = unitData.isFullDb;
             session.startTime = unitData.startTime;
-
             // 判断是否为全局解析模式
             const isGlobal = session.modeOfParse === 'global_parse';
-
             // parse success之后关闭进度条
             setUnitProgressByFileId(unitData, session);
             session.units.forEach((unit) => {
@@ -168,11 +157,7 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                 session.isOverflowMaxSafeNumber = true;
             }
             // 更新会话的 endTimeAll 属性
-            if (session.endTimeAll === undefined) {
-                session.endTimeAll = defaultEndTimeAll;
-            } else {
-                session.endTimeAll = Math.max(session.endTimeAll, defaultEndTimeAll);
-            }
+            session.endTimeAll = session.endTimeAll === undefined ? defaultEndTimeAll : Math.max(session.endTimeAll, defaultEndTimeAll);
             // 更新远程属性
             const remoteAttrs = session.remoteAttrs.get(dataSource.remote);
             if (remoteAttrs === undefined) {
@@ -188,7 +173,6 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             }
             // 设置会话的域范围
             session.setDomainWithoutHistory({ domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration });
-
             // 检查所有卡是否解析完成
             const parseCompleted = !(session.units.find(item => item.phase === 'analyzing'));
             if (parseCompleted) {
@@ -200,13 +184,7 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                 // 如果是全局解析模式，设置观察动作
                 isGlobal && setObserveAction(session);
                 // 发送更新会话通知
-                connector.send({
-                    event: 'updateSession',
-                    body: {
-                        parseCompleted,
-                        isFullDb: session.isFullDb,
-                    },
-                });
+                connector.send({ event: 'updateSession', body: { parseCompleted, isFullDb: session.isFullDb } });
                 // 恢复上次页面设置
                 recoverPageSetting();
             }
@@ -215,6 +193,7 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
         console.error(error);
     }
 };
+
 export const parseProgressHandler: NotificationHandler = (data): void => {
     try {
         const unitData = data as any;
