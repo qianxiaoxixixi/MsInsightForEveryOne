@@ -198,24 +198,24 @@ export interface SystemViewItem {
 }
 export const statsSystemViewItems: SystemViewItem[] = [
     { name: 'Overall Metrics', tips: 'OverallMetricsTips' },
-    { name: 'Python API Summary' },
-    { name: 'CANN API Summary' },
-    { name: 'Ascend HardWare Task Summary' },
-    { name: 'Communication Summary' },
-    { name: 'Overlap Analysis' },
-    { name: 'Kernel Details' },
+    { name: 'Python API Summary', tips: 'PythonAPISummaryTips' },
+    { name: 'CANN API Summary', tips: 'CANNAPISummaryTips' },
+    { name: 'Ascend HardWare Task Summary', tips: 'AscendHardWareTaskSummaryTips' },
+    { name: 'Communication Summary', tips: 'CommunicationSummaryTips' },
+    { name: 'Overlap Analysis', tips: 'OverlapAnalysisTips' },
+    { name: 'Kernel Details', tips: 'KernelDetailsTips' },
 ];
 
 export const layerTypes: string[] = ['Python', 'CANN', 'Ascend Hardware', 'HCCL', 'Overlap Analysis'];
 
 export const expertSystemViewItems: SystemViewItem[] = [
-    { name: 'Expert Analysis' },
-    { name: 'Affinity API' },
-    { name: 'Affinity Optimizer' },
-    { name: 'AICPU Operators' },
-    { name: 'ACLNN Operators' },
-    { name: 'Operators Fusion' },
-    { name: 'Operators Dispatch' },
+    { name: 'Expert Analysis', tips: 'ExpertAnalysisTips' },
+    { name: 'Affinity API', tips: 'AffinityAPITips' },
+    { name: 'Affinity Optimizer', tips: 'AffinityOptimizerTips' },
+    { name: 'AICPU Operators', tips: 'AICPUOperatorsTips' },
+    { name: 'ACLNN Operators', tips: 'ACLNNOperatorsTips' },
+    { name: 'Operators Fusion', tips: 'OperatorsFusionTips' },
+    { name: 'Operators Dispatch', tips: 'OperatorsDispatchTips' },
 ];
 
 export interface PageType {
