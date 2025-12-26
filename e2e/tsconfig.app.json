@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "baseUrl": ".",
+    "moduleResolution": "Node",
+    "paths": {
+      "@/*": ["./src/*"],
+    }
+  }
+}

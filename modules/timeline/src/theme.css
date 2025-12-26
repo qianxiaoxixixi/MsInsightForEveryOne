@@ -1,0 +1,136 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+
+.theme_dark .ant-pagination{
+    color:white;
+}
+
+.theme_dark .ant-notification-notice{
+    background: var(--grey85);
+    color: var(--grey0);
+}
+.theme_dark .ant-notification-notice-message{
+    color: var(--grey0);
+}
+.theme_dark .ant-notification-notice-close{
+    color: var(--grey10);
+}
+
+.icon_pin_to_top{
+    background: no-repeat center url('./assets/images/pin_to_top_light.svg');
+    height: 30px;
+    width: 20px;
+}
+.theme_dark .icon_pin_to_top{
+    background: no-repeat center url('./assets/images/pin_to_top_dark.svg');
+    height: 30px;
+    width: 20px;
+}
+.icon_un_pin{
+    background: no-repeat center url('./assets/images/un_pin_light.svg');
+    height: 30px;
+    width: 20px;
+}
+.theme_dark .icon_un_pin{
+    background: no-repeat center url('./assets/images/un_pin_dark.svg');
+    height: 30px;
+    width: 20px;
+}
+
+.icon_case_match{
+    background: no-repeat center url('./assets/images/case_match_light.svg');
+    height: 16px;
+    width: 16px;
+}
+.theme_dark .icon_case_match{
+    background: no-repeat center url('./assets/images/case_match_dark.svg');
+    height: 16px;
+    width: 16px;
+}
+.icon_exact_match{
+    background: no-repeat center url('./assets/images/exact_match_light.svg');
+    height: 16px;
+    width: 16px;
+}
+.theme_dark .icon_exact_match{
+    background: no-repeat center url('./assets/images/exact_match_dark.svg');
+    height: 16px;
+    width: 16px;
+}
+
+.icon_selected_exact_match{
+    background: no-repeat center url('./assets/images/selected_exact_match.svg');
+    height: 16px;
+    width: 16px;
+}
+
+.icon_selected_case_match{
+    background: no-repeat center url('./assets/images/selected_case_match.svg');
+    height: 16px;
+    width: 16px;
+}
+
+.laneView{
+    --selectedChartBorderColor: #0959f4;
+}
+
+.theme_dark .laneView{
+    --selectedChartBorderColor: #5391ff;
+}
+
+.laneView .invisible-units-placeholder + .unit-selected:has(+ .unit-selected) .chart-selected,
+.laneView .unit:not(.unit-selected) + .unit-selected:has(+ .unit-selected) .chart-selected{
+    box-shadow: inset 3px 0 0 0 var(--selectedChartBorderColor),
+    inset -3px 0 0 0 var(--selectedChartBorderColor),
+    inset 0 3px 0 0 var(--selectedChartBorderColor);
+}
+
+.laneView .unit-selected + .unit-selected .chart-selected{
+    box-shadow: inset 3px 0 0 0 var(--selectedChartBorderColor),
+    inset -3px 0 0 0 var(--selectedChartBorderColor);
+}
+
+.laneView .unit-selected + .unit-selected:has(+ .unit:not(.unit-selected)) .chart-selected{
+    box-shadow: inset 3px 0 0 0 var(--selectedChartBorderColor),
+    inset -3px 0 0 0 var(--selectedChartBorderColor),
+    inset 0 -3px 0 0 var(--selectedChartBorderColor);
+}
+
+.in-time-line-load {
+    position: relative;
+    padding-right: 20px;
+}
+
+.in-time-line-load::after {
+    content: '';
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border: 2px solid #ddd;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}

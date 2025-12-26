@@ -1,0 +1,94 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+.ant-tooltip {
+    max-width: fit-content;
+}
+
+.ant-breadcrumb {
+    height: 36px;
+    line-height: 36px;
+}
+
+.ant-pagination-jump-prev .ant-pagination-item-container .ant-pagination-item-ellipsis,
+.ant-pagination-jump-next .ant-pagination-item-container .ant-pagination-item-ellipsis {
+    color: var(--grey20);
+}
+
+.ant-message-custom-content > span {
+    color: var(--grey90);
+}
+
+body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
+    background-color: transparent;
+    box-shadow: none;
+}
+
+.insight-category-search-overlay div.ant-tooltip-arrow {
+    display: none;
+}
+
+/*
+ * progress组件相关配置
+ */
+.ant-progress.ant-progress-line {
+    width: 100px;
+}
+
+.ant-progress .ant-progress-outer .ant-progress-inner {
+    height: 4px;
+    background-color: #bfbfbf;
+}
+
+.ant-progress .ant-progress-text {
+    color: #40a9ff;
+}
+
+.rc-virtual-list-holder{
+    overflow-y: auto!important;
+}
+.rc-virtual-list-scrollbar{
+    display: none!important;
+}
+
+.width-auto .ant-tooltip-inner {
+    width: auto;
+    max-width: none!important;
+}
+
+/*弹窗确认框*/
+.ant-popover-inner {
+    background: var(--mi-bg-color-common);
+    color: var(--mi-text-color-primary);
+    border-color: var(--mi-border-color-light);
+}
+.ant-popover-message{
+    color: var(--mi-text-color-primary);
+}
+.ant-popover-buttons button{
+    font-size: 12px;
+    color: var(--mi-text-color-fourth);
+}
+.ant-popover-buttons button.ant-btn-default{
+    color: var(--mi-text-color-primary);
+    border: 0 solid transparent;
+    background-color: transparent;
+}
+.ant-popover-arrow-content:before {
+    background: var(--mi-bg-color-common);
+}
+

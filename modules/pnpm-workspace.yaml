@@ -1,0 +1,11 @@
+packages:
+  - 'lib'
+  - 'compute'
+  - 'cluster'
+  - 'framework'
+  - 'leaks'
+  - 'memory'
+  - 'operator'
+  - 'statistic'
+  - 'timeline'
+  - 'reinforcement-learning'

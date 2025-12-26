@@ -1,0 +1,6 @@
+{
+    "task": "acc_check",
+    "acc_check": {
+        "white_list": ["__mul__"]
+    }
+}

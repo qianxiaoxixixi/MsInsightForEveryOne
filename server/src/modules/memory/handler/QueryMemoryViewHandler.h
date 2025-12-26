@@ -1,0 +1,56 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+
+#ifndef PROFILER_SERVER_QUERY_MEMORY_VIEW_HANDLER_H
+#define PROFILER_SERVER_QUERY_MEMORY_VIEW_HANDLER_H
+#include "MemoryRequestHandler.h"
+#include "MemoryProtocolRespose.h"
+
+namespace Dic {
+namespace Module {
+namespace Memory {
+class QueryMemoryViewHandler : public MemoryRequestHandler {
+public:
+    QueryMemoryViewHandler()
+    {
+        async = true;
+        command = Protocol::REQ_RES_MEMORY_VIEW;
+    };
+    ~QueryMemoryViewHandler() override = default;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
+                           MemoryViewData &compareData, MemoryViewData &baselineData,
+                           MemoryViewRequest &request, std::string &errorMsg);
+    void ExecuteComparisonAlgorithm(const MemoryViewData &compareData, const MemoryViewData &baselineData,
+                                    MemoryViewResponse &response);
+    void GetCompareGraphLines(const Protocol::MemoryViewData &compareData,
+                              const Protocol::MemoryViewData &baselineData,
+                              Protocol::MemoryViewData &resultData);
+    void GetCompareGraphLegends(const Protocol::MemoryViewData &compareData,
+                                const Protocol::MemoryViewData &baselineData,
+                                Protocol::MemoryViewData &resultData);
+
+    bool QueryCurveData(MemoryViewResponse &response, std::string &errorMsg, MemoryViewRequest &request,
+                        std::unique_ptr<MemoryViewResponse> &responsePtr);
+
+    void AddBaseLineData(const MemoryViewData &baselineData, MemoryViewData &resultData, size_t indexBaseline) const;
+};
+} // end of namespace Memory
+} // end of namespace Module
+} // end of namespace Dic
+#endif // PROFILER_SERVER_QUERY_MEMORY_VIEW_HANDLER_H

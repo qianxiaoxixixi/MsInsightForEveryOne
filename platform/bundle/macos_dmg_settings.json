@@ -1,0 +1,50 @@
+{
+  "title": "MindStudio-Insight Installer",
+  "background": "builtin-arrow",
+  "contents": [
+    {
+      "x": 130,
+      "y": 120,
+      "type": "file",
+      "path": "../../platform/preview/MindStudioInsight.app"
+    },
+    {
+      "x": 500,
+      "y": 120,
+      "type": "link",
+      "path": "/Applications"
+    }
+  ],
+  "window": {
+    "rect": [
+      100,
+      100,
+      640,
+      280
+    ],
+    "size": {
+      "width": 640,
+      "height": 200
+    }
+  },
+  "icon_location": {
+    "x": 140,
+    "y": 120
+  },
+  "license": {
+    "default-language": "en_US",
+    "licenses": {
+      "en_US": "../../platform/resources/license/hwEulaCommunity.txt"
+    },
+    "buttons": {
+      "en_US": [
+        "English",
+        "Agree",
+        "Disagree",
+        "print",
+        "save",
+        "Do you agree or not?Press Agree or Disagree"
+      ]
+    }
+  }
+}

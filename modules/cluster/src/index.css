@@ -1,0 +1,212 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+
+.theme_dark .tan-box > div > .bottomC, .tan-box > div {
+    background: none;
+}
+
+.theme_dark .rc-virtual-list-scrollbar-thumb {
+    background-color: var(--grey60) !important;
+}
+
+.communication .topC > div {
+    min-width: 700px;
+}
+
+.fullmask {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.CommunicatorContainer .ant-divider {
+    border-top: 2px dashed var(--grey50);
+}
+
+.summary-advice-content {
+    background-color: var(--mi-bg-color-light);
+    padding: 10px;
+    font-weight: bold;
+}
+
+.communication-advice-title {
+    font-weight: bold;
+    line-height: 3rem;
+    font-size: 1.5rem;
+    padding-left: 10px;
+    margin: 0 0 10px 0;
+    background-color: var(--grey5);
+}
+
+.communication-advice-header {
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.communication-advice-content {
+    padding: 0 0px 24px;
+    display: inline-block;
+    line-height: 20px;
+}
+
+.communication-expert-index {
+    display: inline-block;
+    padding: 0 0px 24px;
+    line-height: 20px;
+    white-space: pre;
+}
+
+.theme_dark .communication-advice-title {
+    background-color: var(--grey70);
+}
+
+.theme_dark .summary-advice-header {
+    background-color: var(--grey80blue);
+}
+
+.theme_dark .communication-advice-content,
+.theme_dark .communication-expert-index {
+    color: rgb(211, 220, 233);
+}
+
+.theme_dark .CommunicatorContainer .st0 {
+    fill-rule: evenodd;
+    clip-rule: evenodd;
+    fill: var(--grey90);
+}
+
+.theme_dark .CommunicatorContainer .st1 {
+    fill-rule: evenodd;
+    clip-rule: evenodd;
+    fill: #50525B;
+    stroke: #2A2F37;
+}
+
+.theme_dark .CommunicatorContainer .st2 {
+    fill-rule: evenodd;
+    clip-rule: evenodd;
+    fill: #50525B;
+}
+
+.theme_dark .CommunicatorContainer .st3 {
+    fill-rule: evenodd;
+    clip-rule: evenodd;
+    fill: #D1D1D1;
+}
+
+.theme_dark .CommunicatorContainer .st4 {
+    fill: #D1D1D1;
+}
+
+.theme_dark .CommunicatorContainer .st5 {
+    fill: #007AFF;
+}
+
+.theme_dark .CommunicatorContainer .st6 {
+    fill: #242425;
+}
+
+.noDataTip {
+    display: flex;
+    height: 200px;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.tooltip-row {
+    margin-bottom: 5px;
+}
+
+.tooltip-value {
+    float: right;
+    margin-left: 20px;
+    font-size: 14px;
+    color: #666;
+    font-weight: bold;
+}
+.tooltip-value.theme{
+    color: var(--mi-text-color);
+}
+
+.positive-number,.theme.positive-number{
+    color:var(--mi-color-success);
+}
+.negative-number,.theme.negative-number{
+    color:var(--mi-color-danger);
+}
+
+@keyframes blink {
+    0%, 100% {
+        opacity: 0;
+        background-color: transparent;
+    }
+    10% {
+        opacity: 1;
+        background-color: rgba(100, 220, 150, 0.5);
+    }
+    40% {
+        opacity: 1;
+        background-color: rgba(100, 220, 150, 0.1);
+    }
+    60% {
+        opacity: 1;
+        background-color: rgba(100, 220, 150, 0.3);
+    }
+    80% {
+        opacity: 1;
+        background-color: rgba(100, 220, 150, 0);
+    }
+}
+.find-in-time-line-load {
+    position: relative;
+    padding-right: 20px;
+}
+
+.find-in-time-line-load::after {
+    content: '';
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ddd;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+.lh-16 {
+    line-height: 16px;
+}
+
+.lh-24 {
+    line-height: 24px;
+}
+
+.lh-20 {
+    line-height: 20px;
+}

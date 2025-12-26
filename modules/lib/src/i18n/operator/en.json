@@ -1,0 +1,69 @@
+{
+  "operator": {
+    "Difference": "Difference",
+    "Baseline": "Baseline",
+    "Comparison": "Comparison",
+    "sessionTitle": {
+      "TotalTimeGroupByCriteria": "Total Time(μs) Group by {{criteria}}",
+      "Operator": "Operator",
+      "Operator Type": "Operator Type",
+      "Input Shape": "Input Shape",
+      "Communication Operator": "Communication Operator",
+      "Communication Operator Type": "Communication Operator Type",
+      "Accelerator Core": "Accelerator Core",
+      "OperatorDetails": "Operator Details"
+    },
+    "searchCriteria": {
+      "Group By": "Group By",
+      "Rank ID": "Rank ID",
+      "Host": "Host Name",
+      "Top": "Top",
+      "Computing Operator": "Computing Operator",
+      "Computing Operator Type": "Computing Operator Type",
+      "Computing Operator Name and Input Shape": "Computing Operator Name and Input Shape",
+      "Communication Operator": "Communication Operator",
+      "Communication Operator Type": "Communication Operator Type",
+      "All": "All",
+      "Custom": "Custom",
+      "15": "15"
+    },
+    "tableHead": {
+      "Source": "Source",
+      "Name": "Name",
+      "Type": "Type",
+      "AcceleratorCore": "Accelerator Core",
+      "Count": "Count",
+      "TotalTime": "Total Time",
+      "AvgTime": "Avg Time",
+      "MaxTime": "Max Time",
+      "MinTime": "Min Time",
+      "Details": "Details",
+      "Operation": "Operation",
+      "SeeMore": "see more",
+      "StartTime": "Start Time",
+      "WaitTime": "Wait Time",
+      "TaskId": "Task ID",
+      "Duration": "Duration",
+      "BlockDim": "Block Dim",
+      "InputShapes": "Input Shapes",
+      "InputDataTypes": "Input Data Types",
+      "InputFormats": "Input Formats",
+      "OutputShapes": "Output Shapes",
+      "OutputDataTypes": "Output Data Types",
+      "OutputFormats": "Output Formats",
+      "Shape": "Shape"
+    },
+    "Operator/ComputeOperatorDetailDescribe": [
+      "When the data type is db, the units of data without parameters are as follows:",
+      "Time-related: Unified use of nanoseconds (ns) and local Unix time.",
+      "Memory-related: Unified use of bytes (Byte).",
+      "Bandwidth-related: Unified use of bytes per second (Byte/s).",
+      "Frequency-related: Unified use of megahertz (MHz)."
+    ],
+    "export": "Export",
+    "exportSuccess": "Export Successful.",
+    "exportFilePath": "File path: {{filePath}}",
+    "exceedingFileLimit": "The file exceeds the maximum limit.",
+    "exportFail": "Export Failed."
+  }
+}

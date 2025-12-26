@@ -1,0 +1,7 @@
+{
+  "ServerApp": {
+    "jpserver_extensions": {
+      "mindstudio_insight_jupyterlab": true
+    }
+  }
+}

@@ -1,0 +1,70 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+pre{
+    overflow:visible;
+    margin:0!important;
+    width: fit-content;
+    min-width: 100%;
+}
+pre code.hljs {
+    overflow-x: visible!important;
+    padding: 0!important;
+}
+.hljs ul {
+    list-style: none!important;
+    margin: 0 0 0 0!important;
+    padding: 0!important;
+}
+.hljs li {
+    list-style: none;
+    margin: 0!important;
+    width: fit-content;
+    box-sizing: border-box;
+    height: 32px;
+    line-height: 32px;
+    cursor: pointer;
+    min-width: 100%;
+    font-size: 12px;
+    padding: 0 10px 0 5px;
+}
+.hljs .index{
+    display: inline-block;
+    width: 45px;
+    padding-right: 10px;
+    margin-right: 5px;
+    text-align: right;
+    border-right: 1px solid var(--grey10);
+    font-size: 12px;
+}
+
+.hljs li.hover{
+    background: var(--blue30);
+}
+.hljs li.selected{
+    background: var(--blue30);
+}
+
+.theme_dark .hljs .index{
+    border-right: 2px solid var(--grey60);
+}
+.theme_dark .hljs li.hover{
+    background: var(--greyTransparent);
+}
+.theme_dark .hljs li.selected{
+    background: var(--greyTransparent);
+}

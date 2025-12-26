@@ -1,0 +1,45 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+#include "SafeFile.h"
+
+namespace Dic {
+std::ifstream OpenReadFileSafely(const std::string &path, std::ios::openmode mode)
+{
+    std::ifstream res;
+    res.setstate(std::ifstream::badbit);
+    std::string message;
+    if (mode & std::ios::out) {
+        message = "Should open file in read mode.";
+        Server::ServerLog::Error(message + " path: " + path);
+        return res;
+    }
+    std::string tmpPath = FileUtil::PathPreprocess(path);
+    if (!FileUtil::CheckFileValid(tmpPath)) {
+        message = "Unable to open file safely, the file path is insecure or not a regular file.";
+        Server::ServerLog::Error(message + " path: " + path);
+        return res;
+    }
+    if (!FileUtil::CheckFileSize(path)) {
+        message = "Unable to open file safely, the file size does not comply with security regulations.";
+        Server::ServerLog::Error(message + " path: " + path);
+        return res;
+    }
+    res.open(tmpPath, std::ios::in | mode);
+    return res;
+}
+}

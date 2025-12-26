@@ -1,0 +1,391 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
+import { observer } from 'mobx-react-lite';
+import { runInAction } from 'mobx';
+import { Spin, CollapsiblePanel } from '@insight/lib/components';
+import { message } from 'antd';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { CardInfo, Session } from '../entity/session';
+import { MemorySession, MemoryGraphType, GroupBy } from '../entity/memorySession';
+import MemoryDetailTableFilter from './MemoryDetailTableFilter';
+import { AntTableChart, TableByComponent } from './AntTableChart';
+import { MemorySizeQueryCondition, OperatorMemoryCondition, StaticMemoryCondition } from '../entity/memory';
+import { fetchDynamicOperatorMaxMin, fetchStaticOperatorMaxMin, operatorsMemoryGet, staticOpMemoryListGet } from '../utils/RequestUtils';
+import { customConsole as console } from '@insight/lib/utils';
+import { SortOrder } from 'antd/lib/table/interface';
+import type { ResizeTableRef } from '@insight/lib';
+
+const enum CompareSource {
+    DIFFERENCE = 'Difference',
+    BASELINE = 'Baseline',
+    COMPARISON = 'Comparison',
+};
+
+const setSelectedRecord = (memorySession: MemorySession, record?: any): void => {
+    const memoryType: string = memorySession.memoryType;
+    runInAction(() => {
+        switch (memoryType) {
+            case MemoryGraphType.DYNAMIC:
+                memorySession.selectedRecord = record;
+                break;
+            case MemoryGraphType.STATIC:
+                memorySession.selectedStaticRecord = record;
+                break;
+            default:
+                break;
+        };
+    });
+};
+
+const buildDynamicSearchParam = (memorySession: MemorySession, tempCurrent: number, isCompare: boolean): OperatorMemoryCondition => {
+    const rankValue = memorySession.getSelectedRankValue();
+    const param: OperatorMemoryCondition = {
+        rankId: rankValue.rankInfo.rankId,
+        dbPath: rankValue.dbPath,
+        type: memorySession.groupId,
+        currentPage: tempCurrent,
+        pageSize: memorySession.pageSize,
+        searchName: memorySession.searchEventOperatorName,
+        minSize: memorySession.minSize,
+        maxSize: memorySession.maxSize,
+        filters: memorySession.filters,
+        rangeFilters: memorySession.rangeFilters,
+        isOnlyShowAllocatedOrReleasedWithinInterval: memorySession.isOnlyShowAllocatedOrReleasedWithinInterval,
+        isCompare,
+    };
+    if (memorySession.selectedRange) {
+        param.startTime = memorySession.selectedRange.startTs;
+        param.endTime = memorySession.selectedRange.endTs;
+    };
+    return param;
+};
+
+const buildStaticSearchParam = (memorySession: MemorySession, tempCurrent: number, isCompare: boolean): StaticMemoryCondition => {
+    const rankValue = memorySession.getSelectedRankValue();
+    const param: StaticMemoryCondition = {
+        rankId: rankValue.rankInfo.rankId,
+        dbPath: rankValue.dbPath,
+        graphId: memorySession.memoryGraphId,
+        currentPage: tempCurrent,
+        pageSize: memorySession.pageSize,
+        searchName: memorySession.searchEventOperatorName,
+        minSize: memorySession.minSize,
+        maxSize: memorySession.maxSize,
+        isCompare,
+    };
+    if (memorySession.staticSelectedRange) {
+        param.startNodeIndex = memorySession.staticSelectedRange.startTs;
+        param.endNodeIndex = memorySession.staticSelectedRange.endTs;
+    };
+    return param;
+};
+
+const buildSearchParam = (memorySession: MemorySession, tempCurrent: number, isCompare: boolean): any => {
+    const memoryType = memorySession.memoryType;
+    switch (memoryType) {
+        case MemoryGraphType.DYNAMIC:
+            return buildDynamicSearchParam(memorySession, tempCurrent, isCompare);
+        case MemoryGraphType.STATIC:
+            return buildStaticSearchParam(memorySession, tempCurrent, isCompare);
+        default:
+            return buildDynamicSearchParam(memorySession, tempCurrent, isCompare);
+    };
+};
+
+const getFetchApi = (memoryType: string): any => {
+    switch (memoryType) {
+        case MemoryGraphType.DYNAMIC:
+            return operatorsMemoryGet;
+        case MemoryGraphType.STATIC:
+            return staticOpMemoryListGet;
+        default:
+            return operatorsMemoryGet;
+    };
+};
+
+const getFetchSizeApi = (memoryType: string): any => {
+    switch (memoryType) {
+        case MemoryGraphType.DYNAMIC:
+            return fetchDynamicOperatorMaxMin;
+        case MemoryGraphType.STATIC:
+            return fetchStaticOperatorMaxMin;
+        default:
+            return fetchDynamicOperatorMaxMin;
+    };
+};
+
+const buildSearchSizeParam = (memorySession: MemorySession, isCompare: boolean): MemorySizeQueryCondition => {
+    const selectedCard = memorySession.getSelectedRankValue();
+    const param: MemorySizeQueryCondition = { rankId: selectedCard.rankInfo.rankId, dbPath: selectedCard.dbPath, type: memorySession.groupId, isCompare };
+    switch (memorySession.memoryType) {
+        case MemoryGraphType.STATIC:
+            param.graphId = memorySession.memoryGraphId;
+            break;
+        default:
+            break;
+    };
+    return param;
+};
+
+export const handleOperatorDetails = (operatorDetails: any[], isCompare: boolean, t: TFunction): any => {
+    return isCompare
+        ? operatorDetails.map(item => {
+            if (item.diff === undefined || item.diff === null) {
+                return item;
+            }
+            item.diff.source = t(CompareSource.DIFFERENCE);
+            item.diff.children = [{ ...item.baseline, source: t(CompareSource.BASELINE) }, { ...item.compare, source: t(CompareSource.COMPARISON) }];
+            return item.diff;
+        })
+        : operatorDetails.map(item => item.compare);
+};
+
+const MemoryDetailTable = observer(({ session, memorySession }:
+{ session: Session; memorySession: MemorySession }) => {
+    const isCompare: boolean = session.compareRank.isCompare;
+    const memoryType: string = memorySession.memoryType;
+    // 算子表格内存信息
+    const [memoryTableData, setMemoryTableData] = useState<any>([]);
+    // 算子表格表头信息
+    const [memoryTableHead, setMemoryTableHead] = useState<any>([]);
+    const [tableSpin, setTableSpin] = useState<boolean>(false);
+    const [total, setTotal] = useState<number>(0);
+    const { t } = useTranslation('memory');
+    const tableRef = useRef<ResizeTableRef>(null);
+
+    const handleReset = (): void => {
+        clearFilters();
+        tableRef.current?.clearAllFilters();
+        tableRef.current?.clearAllSorts();
+    };
+
+    const onRowSelected = (record?: any, rowIndex?: number): void => {
+        setSelectedRecord(memorySession, record);
+    };
+
+    const handlePageChanged = (newCurrent: number, newPageSize: number): void => {
+        runInAction(() => {
+            memorySession.current = newCurrent;
+            memorySession.pageSize = newPageSize;
+        });
+    };
+
+    const handleOrderChange = (newOrder: SortOrder): void => {
+        runInAction(() => {
+            memorySession.order = newOrder;
+        });
+    };
+
+    const handleOrderByChange = (newOrderBy: string): void => {
+        runInAction(() => {
+            memorySession.orderBy = newOrderBy;
+        });
+    };
+
+    const handleFiltersChange = (filters: any): void => {
+        const newFilters: MemorySession['filters'] = {};
+        const newRangeFilters: MemorySession['rangeFilters'] = {};
+        Object.keys(filters).forEach((key: string) => {
+            const filter = filters[key];
+            if (filter === null || filter === undefined || filter.length < 1) {
+                return;
+            }
+            if (filter.length === 2) {
+                newRangeFilters[key] = filter.map(Number);
+            } else {
+                newFilters[key] = filter[0];
+            }
+        });
+        runInAction(() => {
+            memorySession.filters = newFilters;
+            memorySession.rangeFilters = newRangeFilters;
+        });
+    };
+
+    const preParamCheck = (): boolean => {
+        const isRankIdConditionInvalid = memorySession.selectedRankId === '';
+        const isStaticMemoryInvalid = memorySession.memoryType === MemoryGraphType.STATIC && memorySession.memoryGraphId === '';
+        if (isRankIdConditionInvalid || isStaticMemoryInvalid) {
+            setMemoryTableData([]);
+            setTotal(0);
+            runInAction(() => {
+                memorySession.isBtnDisabled = true;
+                memorySession.current = 1;
+                memorySession.pageSize = 10;
+                memorySession.minSize = 0;
+                memorySession.maxSize = 0;
+            });
+            return false;
+        };
+        if (memorySession.maxSize < memorySession.minSize) {
+            message.warning(t('Invalid Size Warning'));
+            return false;
+        };
+        return true;
+    };
+
+    const setTempCurrent = (resetCurrent = false): number => {
+        let tempCurrent = memorySession.current;
+        if (resetCurrent) {
+            tempCurrent = 1;
+            runInAction(() => {
+                memorySession.current = 1;
+            });
+        }
+        return tempCurrent;
+    };
+
+    const setParamOtherCondition = (param: any): any => {
+        let newParam = param;
+        if (memorySession.order !== null) {
+            newParam = { order: memorySession.order, orderBy: memorySession.orderBy, ...param };
+        }
+        setTableSpin(true);
+        runInAction(() => {
+            memorySession.isBtnDisabled = true;
+        });
+        return newParam;
+    };
+
+    const fetchDetailTableData = (param: any): void => {
+        const fetchApi = getFetchApi(memorySession.memoryType);
+        fetchApi(param).then((resp: any) => {
+            const tableDataDetails = resp.operatorDetail;
+            setTotal(resp.totalNum);
+            setMemoryTableData(handleOperatorDetails(tableDataDetails, isCompare, t));
+            if (JSON.stringify(memoryTableHead) !== JSON.stringify(resp.columnAttr)) {
+                setMemoryTableHead(resp.columnAttr);
+            }
+        }).catch((err: any) => {
+            console.error(err);
+        }).finally(() => {
+            setTableSpin(false);
+            runInAction(() => {
+                memorySession.isBtnDisabled = false;
+            });
+        });
+    };
+
+    const setDetailTableData = (resetCurrent = false): void => {
+        if (!preParamCheck() || memorySession.groupId === GroupBy.COMPONENT) {
+            return;
+        };
+        const tempCurrent = setTempCurrent(resetCurrent);
+        let param = buildSearchParam(memorySession, tempCurrent, isCompare);
+        param = setParamOtherCondition(param);
+        fetchDetailTableData(param);
+    };
+
+    const selectedCard = React.useMemo(() => {
+        const rankValue = memorySession.getSelectedRankValue();
+        return {
+            cardId: memorySession.selectedRankId,
+            dbPath: rankValue.dbPath,
+            index: rankValue.index,
+        } as CardInfo;
+    }, [memorySession.selectedRankId]);
+
+    const clearFilters = (): void => {
+        runInAction(() => {
+            memorySession.order = null;
+            memorySession.orderBy = undefined;
+            memorySession.filters = {};
+            memorySession.rangeFilters = {};
+        });
+    };
+
+    // 动静图切换时重置排序
+    useEffect(() => {
+        clearFilters();
+    }, [memoryType]);
+
+    useEffect(() => {
+        if (memorySession.groupId === GroupBy.COMPONENT) {
+            clearFilters();
+        }
+    }, [memorySession.groupId]);
+
+    useEffect(() => {
+        if (memorySession.selectedRankId === '') {
+            setDetailTableData();
+            return;
+        }
+        // 如果分组类型是组件，不应该调用获取size的接口
+        if (memorySession.groupId === GroupBy.COMPONENT) {
+            return;
+        }
+        const fetchSizeApi = getFetchSizeApi(memorySession.memoryType);
+        const params = buildSearchSizeParam(memorySession, isCompare);
+        fetchSizeApi(params).then((res: { minSize: number; maxSize: number }) => {
+            runInAction(() => {
+                memorySession.defaultMinSize = res.minSize ?? 0;
+                memorySession.defaultMaxSize = res.maxSize ?? 0;
+                memorySession.minSize = memorySession.defaultMinSize;
+                memorySession.maxSize = memorySession.defaultMaxSize;
+                setDetailTableData();
+            });
+        }).catch((err: any) => {
+            console.error(err);
+        });
+    }, [memorySession.selectedRankId, memorySession.groupId, memorySession.memoryGraphId, isCompare, memoryType]);
+
+    useEffect(() => {
+        setDetailTableData();
+    }, [memorySession.selectedRange, memorySession.staticSelectedRange, memorySession.current, memorySession.pageSize,
+        session.isAllMemoryCompletedSwitch, memorySession.order, memorySession.orderBy, memorySession.filters,
+        memorySession.rangeFilters, t]);
+
+    useEffect(() => {
+        handleReset();
+    }, [session.projectChangedTrigger]);
+
+    return (
+        <CollapsiblePanel title={t('Memory Allocation/Release Details')} secondary>
+            {memorySession.groupId === GroupBy.COMPONENT
+                ? <TableByComponent session={session} />
+                : <>
+                    <MemoryDetailTableFilter session={session} memorySession={memorySession} queryDetailData={setDetailTableData} onReset={handleReset}></MemoryDetailTableFilter>
+                    <Spin spinning={tableSpin}>
+                        <AntTableChart
+                            ref={tableRef}
+                            tableData={{
+                                columns: memoryTableHead,
+                                rows: memoryTableData,
+                            }}
+                            memoryType={memorySession.memoryType as MemoryGraphType}
+                            onRowSelected={onRowSelected}
+                            current={memorySession.current}
+                            pageSize={memorySession.pageSize}
+                            onPageChange={handlePageChanged}
+                            onOrderChange={handleOrderChange}
+                            onOrderByChange={handleOrderByChange}
+                            onFiltersChange={handleFiltersChange}
+                            total={total}
+                            isCompare={isCompare}
+                            selectedCard={selectedCard}
+                        />
+                    </Spin>
+                </>}
+        </CollapsiblePanel>
+    );
+});
+
+export default MemoryDetailTable;

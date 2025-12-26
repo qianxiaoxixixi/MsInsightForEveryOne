@@ -1,0 +1,83 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+.ant-tree .ant-tree-treenode:not(.ant-tree .ant-tree-treenode-disabled).filter-node .ant-tree-title {
+    font-weight: 700;
+    color: #7ec1ff;
+}
+
+#root .ant-table.ant-table-small .ant-table-tbody > tr > td{
+    height:32px;
+}
+
+.theme_dark .tan-box>div>.bottomC,.tan-box>div {
+    background:none;
+}
+
+.theme_dark .ant-select-multiple .ant-select-selection-item{
+    background: var(--grey80);
+    border-color: var(--grey60);
+}
+
+.theme_dark .ant-modal-content{
+    background: var(--grey60);
+}
+.theme_dark .ant-message-notice-content{
+    background: var(--grey60);
+}
+
+/*代码搜索高亮样式*/
+mark {
+    padding:5px 0;
+    background-color:var(--mi-color-warning);
+}
+mark.current{
+    background-color:var(--mi-color-primary-light-1);
+    border-radius:1px;
+}
+/*选中代码范围*/
+code.active-range li.range{
+    background-color:var(--mi-bg-color-light)!important;
+}
+/*头部gap*/
+.head-gap .ant-table-header{
+    margin-bottom: 48px;
+}
+
+/*隐藏序号滚动条*/
+#CodeLine ::-webkit-scrollbar {
+    width: 0;
+}
+#CodeLine th.ant-table-cell.ant-table-cell-scrollbar {
+    display: none;
+}
+#CodeLine .ant-table-tbody > tr > td {
+    box-shadow: none;
+    border-right: 1px solid var(--mi-border-color-light);
+}
+#CodeLine .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan]):before {
+    display: none;
+}
+
+/*表格无数据不显示*/
+.hiddenEmpty #CodeLine .ant-table-tbody > tr > td {
+    border: none;
+}
+
+.hiddenEmpty .ant-empty {
+    display: none;
+}

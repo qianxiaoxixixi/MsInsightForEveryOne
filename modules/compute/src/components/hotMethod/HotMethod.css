@@ -1,0 +1,71 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+tr.selected {
+    background: var(--blue30);
+}
+
+.theme_dark tr.selected {
+    background: var(--greyTransparent);
+}
+
+.theme_dark tr.selected  td{
+    background: var(--greyTransparent);
+}
+.theme_dark .ant-tooltip-arrow-content {
+    --antd-arrow-background-color: linear-gradient(to right bottom, var(--grey50),var(--grey50));
+}
+.ant-tooltip-arrow-content {
+    --antd-arrow-background-color: linear-gradient(to right bottom, var(--grey8),var(--grey8));
+}
+
+.theme_dark .ant-dropdown .ant-tree-title{
+    background: none;
+}
+
+.hit-label {
+    padding: 0 10px 0 20px;
+}
+.hit-label > span > span:first-child {
+    font-size: 16px;
+    margin:0 5px;
+    color: var(--grey100);
+}
+.hit-label > span > span:last-child{
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--labelblue);
+    margin: 5px;
+}
+
+.theme_dark .hit-label>span{
+    color: var(--grey10);
+}
+.theme_dark .hit-label>span>span:first-child{
+    color: var(--grey0);
+}
+
+.theme_dark .ant-dropdown-menu-item:hover .ant-dropdown-menu-title-content *{
+    background: none;
+    color:var(--labelblue);
+}
+.theme_dark .ant-dropdown-menu-item.ant-dropdown-menu-item-selected .ant-dropdown-menu-title-content *{
+    color:var(--lightblue);
+}
+.theme_dark .ant-dropdown-menu-item.ant-dropdown-menu-item-active{
+    background: var(--grey95);
+}

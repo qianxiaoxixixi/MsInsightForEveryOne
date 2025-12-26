@@ -1,0 +1,13 @@
+{
+    "task": "tensor",
+    "dump_path": "./ms_tensor_dump",
+    "rank": [0],
+    "step": [0],
+    "level": "L0",
+
+    "tensor": {
+        "scope": [],
+        "list":[],
+        "data_mode": ["all"]
+    }
+}

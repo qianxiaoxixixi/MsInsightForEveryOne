@@ -1,0 +1,50 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+import React, { useEffect, useState } from 'react';
+import { Tooltip, Switch } from '@insight/lib/components';
+import { localStorageService, LocalStorageKey } from '@insight/lib';
+import { ThemeName } from '@/utils/enum';
+import { sendTheme } from '@/connection/sendNotification';
+import { useTranslation } from 'react-i18next';
+
+const useTheme = (): [ThemeName, (val: ThemeName) => void] => {
+    const [theme, setTheme] = useState(localStorageService.getItem(LocalStorageKey.THEME) ?? ThemeName.DARK);
+
+    useEffect(() => {
+        window.setTheme(theme === ThemeName.DARK);
+        localStorageService.setItem(LocalStorageKey.THEME, theme);
+        sendTheme();
+    }, [theme]);
+    return [theme, setTheme];
+};
+
+// 切换主题
+function SwitchTheme(): JSX.Element {
+    const { t } = useTranslation('framework');
+    const [theme, setTheme] = useTheme();
+    const isDarkTheme = theme === ThemeName.DARK;
+    const onChange = (): void => {
+        setTheme(isDarkTheme ? ThemeName.LIGHT : ThemeName.DARK);
+    };
+
+    return <Tooltip placement={'bottom'} title={t('Switch Theme')}>
+        <Switch checked={isDarkTheme} onChange={onChange} size={'small'} className={`switch-theme ${isDarkTheme ? 'switch-theme-dark' : 'switch-theme-light'}`}/>
+    </Tooltip>;
+}
+
+export default SwitchTheme;

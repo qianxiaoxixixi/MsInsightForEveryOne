@@ -1,0 +1,507 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+import { observer } from 'mobx-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import styled from '@emotion/styled';
+import { Button, Select, FormItem, Tooltip } from '@insight/lib/components';
+import {
+    getColumnSearchProps,
+    getDefaultColumData,
+    getPageData,
+    statsSystemViewItems,
+    expertSystemViewItems,
+    type IQueryCondition,
+    SystemViewItem, queryTableDataNameList,
+} from './Common';
+import { ResizeTable } from '@insight/lib/resize';
+import { limitInput, StyledEmpty, GroupCardRankInfosByHost, getRankInfoLabel } from '@insight/lib/utils';
+import type { CardMetaData } from '../../entity/data';
+import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
+import { getTimeOffset } from '../../insight/units/utils';
+import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
+import { HelpIcon } from '@insight/lib/icon';
+import { StatsSystemView } from './StatsSystemView';
+import { ExpertSystemView, handleAdvisorSelected } from './ExpertSystemView';
+import { EventView } from './EventsView';
+import { TableDataView } from './TableDataView';
+import { Session } from '../../entity/session';
+import type { BaseSummaryRowItemType, CardRankInfo } from '../../api/interface';
+
+export const DETAIL_HEADER_HEIGHT_ETC_PX = 146;
+const Container = styled.div`
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-flow: nowrap;
+    background-color: ${(p): string => p.theme.bgColorDark};
+    .ant-tree {
+        width: 280px;
+        height: 100%;
+        background-color: ${(p): string => p.theme.contentBackgroundColor};
+        overflow: auto;
+    }
+    .ant-tree-node-selected {
+        background-color: var(--grey50) !important;
+    }
+    .ant-divider-vertical {
+        height: 100%;
+        border-color: var(--grey80);
+    }
+`;
+
+const AsideSelectContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    flex: none;
+    padding: 8px 16px;
+    margin-right: 8px;
+    border-radius: 4px;
+    background-color: ${(p): string => p.theme.bgColor};
+    max-width: 400px;
+
+    .time-range-info{
+        margin-bottom: 8px;
+        flex: none;
+    }
+    .view-select{
+        margin-bottom: 8px;
+        flex: none;
+    }
+    .rank-filter{
+        margin-bottom: 8px;
+        flex: none;
+        color: ${(p): string => p.theme.textColorSecondary};
+    }
+`;
+
+const SelectContentContainer = styled.div`
+    flex: 1;
+    padding: 8px 16px;
+    height: 100%;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: ${(p): string => p.theme.bgColor};
+    .ant-table-wrapper {
+        height: 100%;
+    }
+`;
+
+const AsideSelectList = styled.div`
+    flex: 1;
+    overflow: auto;
+    & .aside-select-item {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        color: ${(props): string => props.theme.textColorSecondary};
+        + .aside-select-item {
+            margin-top: 8px;
+        }
+        &.selected{
+            color: ${(props): string => props.theme.primaryColor};
+        }
+    }
+`;
+
+export interface SelectedCardInfo {
+    cardId: string;
+    dbPath: string;
+}
+
+/**
+ * 添加服务化视图描述字段接口
+ */
+export interface ServiceLayers {
+    name: string;
+    description: string;
+}
+
+interface ConditionType<T, K> {
+    options: T[];
+    value: K;
+}
+
+interface HostConditionType extends ConditionType<string, string> {
+    cardsMap?: Map<string, CardRankInfo[]>;
+}
+
+export interface SelectContentViewProps {
+    key: string | number;
+    card: SelectedCardInfo;
+    session: Session;
+    bottomHeight: number;
+}
+
+type SelectContentViewComponent<T extends SelectContentViewProps = SelectContentViewProps> = React.FC<T>;
+
+export const DEFAULT_CARD_VALUE = { cardId: '', dbPath: '' };
+
+export const SystemView = observer((props: any) => {
+    const [viewOption, setViewOption] = useState(0);
+    const [key, setKey] = useState(0);
+    // eslint-disable-next-line camelcase
+    const SelectContent = useMemo(() => {
+        // 第四个tab的特殊逻辑
+        if (viewOption === 0 && key >= statsSystemViewItems.length) {
+            return null;
+        }
+        return contentList[viewOption][key];
+    }, [viewOption, key]);
+    const [conditions, setConditions] = useState<SelectedCardInfo>(DEFAULT_CARD_VALUE);
+    const handleChange = (card: SelectedCardInfo): void => {
+        setConditions(card);
+    };
+    const handleViewChange = (value: number): void => {
+        setViewOption(value);
+        setKey(0);
+    };
+    useEffect(() => {
+        if (props.session.showEvent !== undefined) {
+            setViewOption(2);
+            setKey(0);
+        }
+    }, [props.session.showEvent]);
+    return (<Container>
+        <AsideSelectContainer>
+            {viewOption !== 3 && (<TimeRangeInfo session={props.session}></TimeRangeInfo>)}
+            <ViewSelect viewOption={viewOption} handleViewChange={handleViewChange}/>
+            {viewOption !== 2 && (<RankFilter session={props.session} viewOption={viewOption} handleChange={handleChange}></RankFilter>)}
+            <SelectList viewOption={viewOption} selectKey={key} setKey={setKey} card={conditions} session={props.session}></SelectList>
+        </AsideSelectContainer>
+        <ChartErrorBoundary>
+            <SelectContentContainer>
+                {viewOption === 0 && key >= statsSystemViewItems.length
+                    ? <TableDataView key={key - statsSystemViewItems.length} selectKey={key - statsSystemViewItems.length} card={conditions} session={props.session}
+                        bottomHeight={props.bottomHeight}></TableDataView>
+                    : SelectContent && (<SelectContent key={key} card={conditions} session={props.session}
+                        bottomHeight={props.bottomHeight}></SelectContent>)}
+            </SelectContentContainer>
+        </ChartErrorBoundary>
+    </Container>);
+});
+
+const TimeRangeInfo = observer((props: { session: Session }) => {
+    const { session } = props;
+    const { t } = useTranslation('timeline');
+    return (
+        session.isTimeAnalysisMode && session.timeAnalysisRange
+            ? <div className={'time-range-info'}>
+                {t('contextMenu.Time Filter')}
+                {': '}
+                <strong>{getDetailTimeDisplay(session.timeAnalysisRange[0])}</strong>
+                {' '}
+                {t('contextMenu.to')}
+                {' '}
+                <strong>{getDetailTimeDisplay(session.timeAnalysisRange[1])}</strong>
+            </div>
+            : <></>
+    );
+});
+
+const ViewSelect = observer((props: any) => {
+    const { viewOption, handleViewChange } = props;
+    const { t } = useTranslation('timeline', { keyPrefix: 'systemView' });
+    const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }, { label: t('Events View'), value: 2 }];
+    return (
+        <div className={'view-select'}>
+            <Select id={'select-system-view'} width={'100%'} value={viewOption} onChange={handleViewChange} options={options}/>
+        </div>
+    );
+});
+
+// eslint-disable-next-line max-lines-per-function
+export const RankFilter = observer((props: { session: Session; viewOption?: number; handleChange: (v: SelectedCardInfo) => void }): JSX.Element => {
+    const [rankCondition, setRankCondition] = useState<ConditionType<CardRankInfo, number | undefined>>({ options: [], value: undefined });
+    const [hostCondition, setHostCondition] = useState<HostConditionType>({ options: [], value: '' });
+    const { t } = useTranslation('timeline');
+
+    useEffect(() => {
+        const cardList: CardRankInfo[] = [];
+        for (const v of props.session.rankCardInfoMap.values()) {
+            if (!v.rankInfo.rankId.endsWith('Host')) {
+                cardList.push(v);
+            }
+        }
+        const { hosts, cardsMap }: { hosts: string[]; cardsMap: Map<string, CardRankInfo[]> } = GroupCardRankInfosByHost(cardList);
+        setHostCondition({ options: hosts, value: hosts[0] ?? '', cardsMap });
+    }, [props.session.rankCardInfoMap.size]);
+
+    useEffect(() => {
+        const rankOptions = hostCondition.cardsMap?.get(hostCondition.value) ?? [];
+        setRankCondition({ options: rankOptions, value: rankOptions.length > 0 ? 0 : undefined });
+    }, [hostCondition]);
+
+    useEffect(() => {
+        if (rankCondition.value === undefined) {
+            props.handleChange({ cardId: '', dbPath: '' });
+            return;
+        }
+        const cardRankInfo = rankCondition.options[rankCondition.value];
+        props.handleChange({ cardId: cardRankInfo.rankInfo.rankId, dbPath: cardRankInfo.dbPath });
+    }, [rankCondition]);
+
+    useEffect(() => {
+        limitInput();
+    }, []);
+
+    const onRankIdChanged = (value: number): void => {
+        setRankCondition({ ...rankCondition, value });
+    };
+    return (<div className={'rank-filter'} >
+        {hostCondition.options.length > 0
+            ? <FormItem label={t('Host')} contentStyle={{ flex: 1, minWidth: 0 }}>
+                <Select
+                    value={hostCondition.value}
+                    width={'100%'}
+                    onChange={(value: string): void => setHostCondition({ ...hostCondition, value })}
+                    options={hostCondition.options.map((host) => ({ value: host, label: host }))}
+                />
+            </FormItem>
+            : <></>
+        }
+        <FormItem label={t('Rank ID')} contentStyle={{ flex: 1, minWidth: 0 }}>
+            <Select
+                value={rankCondition.value}
+                width={'100%'}
+                onChange={onRankIdChanged}
+                options={rankCondition.options.map((card, index) => {
+                    return {
+                        value: index,
+                        label: getRankInfoLabel(card.rankInfo),
+                    };
+                })}
+                showSearch={true}
+            />
+        </FormItem>
+    </div>);
+});
+/**
+ * 国际化-中文
+ */
+const LANGUAGE_ZH = 'zhCN';
+
+const SelectList = observer((props: { session: Session; viewOption: number; selectKey: number; setKey: (v: number) => void; card: SelectedCardInfo}) => {
+    const [selectedKey, setSelectedKey] = useState(0);
+    const [systemViewItems, setSystemViewItems] = useState<SystemViewItem[]>([]);
+    const { t } = useTranslation('timeline', { keyPrefix: 'systemView' });
+    const handleClick = (key: number): void => {
+        props.setKey(key);
+        setSelectedKey(key);
+    };
+    const params = useMemo(() => {
+        return { rankId: props.card.cardId, dbPath: props.card.dbPath, isZh: props.session.language === LANGUAGE_ZH };
+    }, [props.card, props.session.language]);
+    useEffect(() => {
+        setSelectedKey(props.selectKey);
+    }, [props.selectKey]);
+    useEffect(() => {
+        switch (props.viewOption) {
+            case 0: {
+                if (params.rankId !== undefined && params.rankId !== '') {
+                    queryTableDataNameList(params).then((res) => {
+                        // 获取服务视图名称和描述数据
+                        const layers = res.layers as SystemViewItem[];
+                        if (layers !== undefined && layers.length > 0) {
+                            const merged = Array.from(
+                                new Map([...statsSystemViewItems, ...layers].map(item => [item.name, item])).values(),
+                            );
+                            setSystemViewItems(merged);
+                        } else {
+                            setSystemViewItems(statsSystemViewItems);
+                        }
+                    }).catch(() => {
+                        setSystemViewItems(statsSystemViewItems);
+                    });
+                } else {
+                    setSystemViewItems(statsSystemViewItems);
+                }
+                break;
+            }
+            case 1:
+                setSystemViewItems(expertSystemViewItems);
+                break;
+            case 2:
+                setSystemViewItems([]);
+                break;
+            default:
+                break;
+        }
+    }, [props.viewOption, params, props.session.language]);
+    if (systemViewItems.length > statsSystemViewItems.length) {
+        return (<AsideSelectList>
+            {
+                systemViewItems.slice(statsSystemViewItems.length).map((item, index) =>
+                    (<div
+                        className={`aside-select-item ${selectedKey === index + statsSystemViewItems.length ? 'selected' : ''}`}
+                        key={index + statsSystemViewItems.length}
+                        onClick={(): void => handleClick(index + statsSystemViewItems.length)}
+                    >
+                        <Tooltip title={item.description}>
+                            <div>{item.name}</div>
+                        </Tooltip>
+                    </div>
+                    ),
+                )
+            }
+        </AsideSelectList>);
+    }
+    return (<AsideSelectList>
+        {
+            systemViewItems.map((item, index) =>
+                (<div
+                    className={`aside-select-item ${selectedKey === index ? 'selected' : ''}`}
+                    key={index}
+                    onClick={(): void => handleClick(index)}
+                >
+                    <div>{t(item.name)}</div>
+                    {
+                        item.tips !== undefined &&
+                                <Tooltip title={t(item.tips)}>
+                                    <HelpIcon style={{ cursor: 'pointer', marginLeft: 4 }} height={20} width={20} />
+                                </Tooltip>
+                    }
+                </div>
+                ),
+            )
+        }
+    </AsideSelectList>
+    );
+});
+
+export interface BaseSummaryProps extends SelectContentViewProps {
+    layerType?: string;
+    request: (...rest: any[]) => any;
+    isStats?: boolean;
+    columns: any;
+}
+
+// eslint-disable-next-line max-lines-per-function
+export const BaseSummary = observer((props: BaseSummaryProps) => {
+    const isStats = props.isStats as boolean;
+    const defaultPage = { current: 1, pageSize: 10, total: 0 };
+    const defaultSorter = isStats ? { field: 'totalTime', order: 'descend' } : { field: 'duration', order: 'descend' };
+    const [dataSource, setDataSource] = useState<any[]>([]);
+    const [page, setPage] = useState(defaultPage);
+    const [sorter, setSorter] = useState(defaultSorter);
+    const [isLoading, setLoading] = useState(false);
+    const [searchText, setSearchText] = useState('');
+    const [searchedColumn, setSearchedColumn] = useState('');
+    const [rowData, setRowData] = useState<Partial<BaseSummaryRowItemType>>({});
+    const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
+    const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.card.cardId)?.phase;
+    let columns = props.columns?.map((col: any) => ({
+        ...col,
+        title: t(col.title),
+    }));
+
+    if (isStats) {
+        columns = [{
+            title: t('Name'),
+            dataIndex: 'name',
+            ...getDefaultColumData('name'),
+            ...getColumnSearchProps({ dataIndex: 'name', setSearchText, searchText, setSearchedColumn, searchedColumn }),
+        }, ...columns];
+    } else {
+        columns = [...columns, {
+            title: t('Click To Timeline'),
+            dataIndex: 'click',
+            key: 'click',
+            ellipsis: true,
+            render: (_: any, record: any): JSX.Element => (<Button type="link"
+                onClick={(): void => {
+                    setRowData({ name: record.name ?? record.originOptimizer, ...record });
+                }}>{t('Click')}</Button>),
+        }];
+    }
+    const updateData = async(searchName: string, pages: any, sorters: {field: string;order: string}, prop: BaseSummaryProps): Promise<void> => {
+        const _isStats = prop.isStats as boolean;
+        if (props.card === undefined || props.card.cardId === '') {
+            setDataSource([]);
+            setPage(defaultPage);
+            return;
+        }
+        setLoading(true);
+        let startTime = prop.session.timeAnalysisRange?.[0] ?? 0;
+        startTime = startTime < 0 ? 0 : startTime;
+        let endTime = prop.session.timeAnalysisRange?.[1] ?? 0;
+        endTime = endTime < 0 ? 0 : endTime;
+        const timestampOffset = getTimeOffset(prop.session, { cardId: prop.card.cardId });
+        const sortedField = sorters.field === 'startTimeLabel' ? 'startTime' : sorters.field;
+        let params: IQueryCondition = {
+            rankId: prop.card.cardId,
+            dbPath: prop.card.dbPath,
+            pageSize: pages.pageSize,
+            current: pages.current,
+            orderBy: sorters.order ? sortedField : defaultSorter.field,
+            order: sorters.order ?? defaultSorter.order,
+            startTime: Math.floor(startTime + timestampOffset),
+            endTime: Math.ceil(endTime + timestampOffset),
+        };
+        if (_isStats) {
+            params = { isQueryTotal: true, layer: prop.layerType, searchName, ...params };
+        }
+        const res = await props.request(params).finally(() => setLoading(false));
+        if (_isStats) {
+            setDataSource(res.systemViewDetails);
+        } else {
+            const timestampoffset = getTimeOffset(props.session, props.card);
+            const dbPath = res.dbPath;
+            const data = res.data.map((item: any) => {
+                item.startTimeLabel = getDetailTimeDisplay(item.startTime - timestampoffset);
+                item.dbPath = dbPath;
+                return item;
+            });
+            setDataSource(data);
+        }
+        setPage({ ...page, total: res.count });
+    };
+    useEffect(() => {
+        if (status === 'download') {
+            updateData(searchText, page, sorter, props);
+        }
+    }, [sorter, props.card.cardId, status, props.session.timeAnalysisRange]);
+    useEffect(() => {
+        if (rowData.name === null || rowData.name === undefined) {
+            return;
+        }
+        handleAdvisorSelected(rowData as BaseSummaryRowItemType, props);
+    }, [rowData]);
+
+    return (
+        (status === 'download' && props.card !== undefined && props.card.cardId !== '')
+            ? <ResizeTable
+                onChange={(pagination: any, filters: any, nwSorter: any): void => {
+                    setSorter(nwSorter);
+                }}
+                rowClassName={(record: any): string => {
+                    return record.id !== undefined && record.id === rowData.id ? 'selected-row' : 'click-able';
+                }}
+                pagination={getPageData(page, setPage)}
+                dataSource={dataSource}
+                columns={columns}
+                size="small"
+                scroll={{ y: props.bottomHeight - DETAIL_HEADER_HEIGHT_ETC_PX }}
+                loading = {isLoading}/>
+            : <div style={{ display: 'flex', height: '100%' }}>
+                <StyledEmpty style={{ margin: 'auto' }}/>
+            </div>
+    );
+});
+
+const contentList: SelectContentViewComponent[][] = [StatsSystemView, ExpertSystemView, [EventView]];

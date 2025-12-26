@@ -1,0 +1,50 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+/*默认颜色配置*/
+@import "color.css";
+/*默认light样式*/
+@import "light.css";
+/*默认dark样式*/
+@import 'dark.css';
+/*默认antd组件css依赖*/
+@import '~antd/dist/antd.variable.min.css';
+@import "antdExtendsLight.css";
+@import "antdExtendsDark.css";
+@import 'base.css';
+
+#root {
+    color: var(--mi-text-color-primary);
+}
+
+body {
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-family: var(--mi-font-family);
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--mi-text-color-placeholder);
+    z-index: 100;
+    border-radius: 5px;
+    transition: .3s background-color;
+}

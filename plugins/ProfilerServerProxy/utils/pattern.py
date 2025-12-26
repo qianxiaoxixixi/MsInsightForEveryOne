@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+
+"""
+-------------------------------------------------------------------------
+This file is part of the MindStudio project.
+Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+
+MindStudio is licensed under Mulan PSL v2.
+You can use this software according to the terms and conditions of the Mulan PSL v2.
+You may obtain a copy of Mulan PSL v2 at:
+
+         http://license.coscl.org.cn/MulanPSL2
+
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+See the Mulan PSL v2 for more details.
+-------------------------------------------------------------------------
+"""
+
+import asyncio
+
+
+class Observer:
+    async def update(self, *args, **kwargs):
+        ...
+
+
+class Subject:
+    def __init__(self):
+        self._observers = []
+        self._lock = asyncio.Lock()
+
+    async def attach(self, observer: Observer):
+        async with self._lock:
+            if observer not in self._observers:
+                self._observers.append(observer)
+
+    async def detach(self, observer: Observer):
+        async with self._lock:
+            try:
+                self._observers.remove(observer)
+            except ValueError:
+                pass
+
+    async def notify(self, *args, **kwargs):
+        async with self._lock:
+            for observer in self._observers:
+                await observer.update(*args, **kwargs)

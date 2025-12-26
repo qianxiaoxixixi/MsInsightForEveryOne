@@ -1,0 +1,187 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+/*子模块共用light样式*/
+#root {
+    height: 100vh;
+    overflow: hidden;
+}
+
+body {
+    margin: 0;
+    height: 100vh;
+    letter-spacing: .5px;
+}
+
+html {
+    font-size: 12px;
+}
+
+.loading {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #7f7f7f;
+    border-top-color: transparent;
+    border-radius: 100%;
+    margin-right: 3px;
+    animation: circle infinite 0.75s linear;
+}
+
+.h5 {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.left20 {
+    padding-left: 20px;
+    color: var(--grey60);
+}
+
+.fullbox {
+    z-index: 10;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--mi-bg-color);
+}
+
+.text-selectable {
+    user-select: text;
+}
+
+@keyframes circle {
+    0% {
+        transform: rotate(0);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.baseinfo {
+    padding: 1rem 0 1rem 3rem;
+}
+
+.baseinfo > div > div {
+    display: inline-block;
+    height: 2rem;
+    line-height: 2rem;
+}
+
+.baseinfo > div > div:first-child {
+    font-weight: bold;
+    width: 250px;
+}
+
+.common-title {
+    font-weight: bold;
+    height: 3rem;
+    line-height: 3rem;
+    font-size: 1.5rem;
+}
+
+.common-title-bottom {
+    font-weight: bold;
+    height: 3rem;
+    line-height: 3rem;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.common-title-h2 {
+    font-weight: bold;
+    height: 2.5rem;
+    line-height: 2.5rem;
+    font-size: 1.3rem;
+}
+
+.container-header {
+    font-weight: bold;
+    background: rgb(250, 250, 250);
+    line-height: 3rem;
+    font-size: 1.5rem;
+    padding-left: 10px;
+    margin: 0 0 10px 0;
+    background: var(--grey5);
+}
+
+.hide {
+    display: none;
+}
+
+.bandwidthHeader {
+    background: #f3f7f7;
+}
+
+.home-tab-children {
+    width: 100%;
+    position: fixed;
+    height: calc(100% - 62px);
+    padding-top: 10px;
+}
+
+.tan-box > div {
+    background-color: white;
+}
+
+.tan-box > div > .bottomC {
+    background-color: white;
+}
+
+.tan-box > div > .bottomC > .dragContainer {
+    padding-right: 10px;
+}
+
+.tan-box > div > .topC {
+    overflow: auto;
+}
+
+
+.header-fixed-content-scroll {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.header-fixed-content-scroll > div:nth-child(2) {
+    display: block;
+    flex: 1;
+    overflow: auto;
+}
+
+.activeRank .Select {
+    stroke: #0077ff !important;
+    stroke-width: 1.5;
+}
+
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+    transition: opacity 120ms ease-out;
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: transparent;
+    z-index: 100;
+}

@@ -1,0 +1,73 @@
+cmake_minimum_required(VERSION 3.16)
+
+project(profiler_server)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 11)
+
+set(HOME_DIR ${PROJECT_SOURCE_DIR})
+message(STATUS "HOME_DIR: ${HOME_DIR}")
+
+message(STATUS "System name = ${CMAKE_SYSTEM_NAME}")
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+    set(EXECUTABLE_OUTPUT_PATH ${HOME_DIR}/output/win_mingw64/bin)
+    set(LIBRARY_OUTPUT_PATH ${HOME_DIR}/output/win_mingw64/bin)
+elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    set(EXECUTABLE_OUTPUT_PATH ${HOME_DIR}/output/linux-${CMAKE_SYSTEM_PROCESSOR}/bin)
+    set(LIBRARY_OUTPUT_PATH ${HOME_DIR}/output/linux-${CMAKE_SYSTEM_PROCESSOR}/bin)
+elseif(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
+    set(EXECUTABLE_OUTPUT_PATH ${HOME_DIR}/output/emscripten)
+    set(LIBRARY_OUTPUT_PATH ${HOME_DIR}/output/emscripten)
+else()
+    set(EXECUTABLE_OUTPUT_PATH ${HOME_DIR}/output/darwin/bin)
+    set(LIBRARY_OUTPUT_PATH ${HOME_DIR}/output/darwin/bin)
+endif()
+
+# set compile warn
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unknown-pragmas -Wno-unused-parameter -Wno-missing-field-initializers")
+set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -Wno-unknown-pragmas -Wno-unused-parameter -Wno-missing-field-initializers")
+# set some compile warn as error which is not allow
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Werror=return-type -Werror=implicit-fallthrough -Werror=switch")
+# Compiler Security Options
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all  -O2 -ftrapv -fstack-protector-strong -fPIE -fPIC")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all  -O2 -ftrapv -fstack-protector-strong -fPIE -fPIC")
+
+# 构建脚本中使用的是release
+if (CMAKE_BUILD_TYPE MATCHES "Release")
+    set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+    set(CMAKE_C_VISIBILITY_PRESET hidden)
+    set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
+    set(CMAKE_SKIP_RPATH true)
+elseif(CMAKE_BUILD_TYPE MATCHES "Debug")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
+endif()
+# windows add link option: -static
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-cast-function-type")
+    if ((NOT CMAKE_BUILD_TYPE MATCHES "Debug") AND (NOT CMAKE_BUILD_TYPE MATCHES "PROFILE"))
+        message(STATUS "Build type = ${CMAKE_BUILD_TYPE}, static = enable.")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--nxcompat -Wl,--dynamicbase -s -pie")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,--nxcompat -Wl,--dynamicbase -s -pie")
+        add_link_options(-static)
+    endif()
+elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    if ((NOT CMAKE_BUILD_TYPE MATCHES "Debug") AND (NOT CMAKE_BUILD_TYPE MATCHES "PROFILE"))
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s -pie -Wl,-z,now")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -s -pie -Wl,-z,now")
+    endif()
+endif()
+
+message(STATUS "Project Type = ${_PROJECT_TYPE}, Project SubType = ${_PROJECT_SUBTYPE},CMAKE BUILD TYPE = ${CMAKE_BUILD_TYPE}")
+
+string(TIMESTAMP COMPILE_TIME %Y%m%d%H)
+message(STATUS "Version = ${COMPILE_TIME}")
+add_definitions(-DDATABASE_VERSION=${COMPILE_TIME})
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+    add_definitions(-DINSIGHT_DEBUG)
+endif()
+
+include(cmake/third_party.cmake)
+add_subdirectory(msinsight)
+add_subdirectory(src)

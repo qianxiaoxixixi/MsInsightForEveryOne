@@ -1,0 +1,226 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+import { store } from '../store';
+import { runInAction } from 'mobx';
+import type { NotificationHandler } from './defs';
+import { updateData, AnalysisType } from '../components/communication/Filter';
+import type { ConditionDataType } from '../components/communication/Filter';
+import i18n from '@insight/lib/i18n';
+import type { communicatorContainerData } from '../components/communicatorContainer/ContainerUtils';
+import { ClusterInfo } from '../entity/session';
+import { customConsole as console } from '@insight/lib/utils';
+import parallelismStore from '../store/parallelism';
+
+type LayerType = 'PROJECT' | 'CLUSTER' | 'HOST' | 'RANK' | 'COMPUTE' | 'IPYNB' | 'UNKNOWN';
+
+export interface ClusterPageInfo {
+    clusterList: ClusterInfo[];
+    selectedClusterPath: string;
+}
+
+export interface TimelinePageInfo {
+    unitCount: number;
+}
+
+interface ProjectCreateInfo extends Record<string, any> {
+    selectedFileType: LayerType;
+    selectedFilePath: string;
+    selectedProjectName: string;
+    pageInfo: {
+        cluster: ClusterPageInfo;
+        timeline: TimelinePageInfo;
+    };
+}
+
+interface ProjectUpdateInfo extends ProjectCreateInfo {
+    rankId: string;
+    isCompare: boolean;
+}
+
+export const removeRemoteHandler: NotificationHandler = async (data): Promise<void> => {
+    try {
+        resetStatus();
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+function updateClusterListAndSelectedAndTimelineStatus(pageInfo: ClusterPageInfo, selectedProjectName: string, unitCount: number): void {
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) { return; }
+        session.clusterList = pageInfo.clusterList;
+        session.selectedClusterPath = pageInfo.selectedClusterPath;
+        session.selectedProjectName = selectedProjectName;
+        session.unitcount = unitCount;
+    });
+}
+
+export const frameLoadedHandler: NotificationHandler<ProjectCreateInfo> = async (data: ProjectCreateInfo): Promise<void> => {
+    try {
+        resetStatus();
+        updateClusterListAndSelectedAndTimelineStatus(data.pageInfo.cluster, data.selectedProjectName, data.pageInfo.timeline.unitCount);
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+export const switchDirectoryHandler: NotificationHandler<ProjectUpdateInfo> = (data: ProjectUpdateInfo): void => {
+    try {
+        const session = store.sessionStore.activeSession;
+        const currentClusterParsed = data.pageInfo.cluster.clusterList.find(({ path }) => path === session.selectedClusterPath)?.parsed ?? false;
+
+        // 页面数据更新需要依赖selectedPath 和 clusterCompleted，当发现新值与原值一致，就不需要进行数据重置
+        if (!(session.selectedClusterPath === data.pageInfo.cluster.selectedClusterPath && currentClusterParsed === session.clusterCompleted)) {
+            if (data.selectedProjectName === session?.selectedProjectName) {
+                resetStatus('Cluster');
+            } else {
+                resetStatus('Project');
+            }
+        }
+        updateClusterListAndSelectedAndTimelineStatus(data.pageInfo.cluster, data.selectedProjectName, data.pageInfo.timeline.unitCount);
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+export const setTheme: NotificationHandler = (data): void => {
+    window.setTheme(Boolean(data.isDark));
+};
+
+export const updateClusterPageInfoHandler: NotificationHandler<ClusterPageInfo> = (data): void => {
+    const { sessionStore } = store;
+    const session = sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        session.clusterList = data.clusterList;
+        session.selectedClusterPath = data.selectedClusterPath;
+        session.renderId = ++session.renderId % 1000;
+    });
+};
+
+export const updateSessionHandler: NotificationHandler = (data): void => {
+    const { sessionStore } = store;
+    const session = sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        const dataKeys = Object.keys(data);
+        const sessionKeys = Object.keys(session);
+        dataKeys.forEach((key: any) => {
+            if (sessionKeys.includes(key) || key === 'clusterList') { // 这里需要单独判断 clusterList，因为该字段在session中是访问器属性，Object.keys拿不到
+                (session as any)[key] = data[key];
+            }
+        });
+        session.renderId = ++session.renderId % 1000;
+    });
+};
+
+const resetStatus = (type: 'Project' | 'Cluster' = 'Project'): void => {
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        if (type === 'Cluster') {
+            session.resetForClusterChange();
+        } else {
+            session.resetForProjectChange();
+        }
+        parallelismStore.reset();
+    });
+};
+
+export const locateCommunication: NotificationHandler = (data): void => {
+    const { iterationId, operatorName, stage } = data as unknown as ConditionDataType;
+    updateData({
+        iterationId,
+        stage,
+        operatorName: iterationId && stage && operatorName,
+        type: AnalysisType.COMMUNICATION_DURATION_ANALYSIS,
+        baselineIterationId: '',
+        pgName: '',
+        groupIdHash: '',
+        baselineGroupIdHash: '',
+    });
+};
+
+export const viewCommunicationDurationAnalysisHandler: NotificationHandler<ConditionDataType> = (data): void => {
+    const { stage, pgName } = data;
+    updateData({
+        stage,
+        type: AnalysisType.COMMUNICATION_DURATION_ANALYSIS,
+        baselineIterationId: '',
+        pgName,
+    });
+};
+
+export const switchLanguageHandler: NotificationHandler = (data): void => {
+    const session = store.sessionStore.activeSession;
+    const lang = data.lang as 'zhCN' | 'enUS';
+    if (session) {
+        runInAction(() => {
+            session.language = lang;
+        });
+    }
+    i18n.changeLanguage(lang);
+};
+
+export const updateCommunicatorDataHandler: NotificationHandler = (data): void => {
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        session.communicatorData = data as unknown as communicatorContainerData;
+    });
+};
+
+export const baselineToggleHandler: NotificationHandler = (data): void => {
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        session.isCompare = data.status as boolean ?? false;
+        forceRender();
+    });
+};
+
+function forceRender(): void {
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        session.renderId = ++session.renderId % 1000;
+    });
+}
+
+export const profilingExpertDataParsedHandler: NotificationHandler = (data, session): void => {
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+
+        session.profilingExpertDataParsed = data.parseResult as boolean ?? false;
+    });
+};

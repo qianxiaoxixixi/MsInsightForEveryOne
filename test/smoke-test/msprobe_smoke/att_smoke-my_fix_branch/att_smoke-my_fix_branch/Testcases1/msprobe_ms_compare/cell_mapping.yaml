@@ -1,0 +1,3 @@
+fc1.Dense: fc1.Linear
+fc2.Dense: fc2.Linear
+fc3.Dense: fc3.Linear

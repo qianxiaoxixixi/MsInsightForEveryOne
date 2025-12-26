@@ -1,0 +1,48 @@
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
+:root {
+    --grey0: #ffffff;
+    --grey5: #EEEEEE;
+    --grey6: #ebebeb;
+    --grey8: #dddddd;
+    --grey10: #d1d1d1;
+    --grey15: #bcbcbc;
+    --grey18: #b1b1b1;
+    --grey20: #a9a9a9;
+    --grey30: #a3a3a3;
+    --grey40: #939393;
+    --grey50: #808080;
+    --grey60: #656565;
+    --grey70: #414141;
+    --grey80: #3C3C3C;
+    --grey83: #2C2C2C;
+    --grey85: #252526;
+    --grey90: #202020;
+    --grey95: #1e1e1e;
+    --grey100: #000000;
+    --activeblue: #1890ff;
+    --whiteblue: #F4F6FA;
+    --grey80blue: #2E2F31;
+    --grey20blue: #8D98AA;
+    --middleblue: #0c518d;
+    --labelblue: #40a9ff;
+    --lightblue: #318cd7;
+    --blue30: rgb(126 193 255 / 50%);
+    /* 新增的底色变量，颜色为#3291fe，透明度为10% */
+    --greyTransparent: rgba(50, 145, 254, 0.1);
+}
