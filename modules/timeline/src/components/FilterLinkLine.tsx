@@ -61,11 +61,12 @@ interface FilterItemProps {
     category: string;
     checkedCategories: string[];
     setCheckedCategories: React.Dispatch<React.SetStateAction<string[]>>;
+    session: Session;
 }
 
 const categoryMap: { [key: string]: string } = { MsTx: 'MSTX' };
 
-const FilterItem: React.FC<FilterItemProps> = observer(({ category, checkedCategories, setCheckedCategories }) => {
+const FilterItem: React.FC<FilterItemProps> = observer(({ category, checkedCategories, setCheckedCategories, session }) => {
     const isChecked = checkedCategories.includes(category);
     if (checkedCategories.length >= 10 && !isChecked) {
         return (
@@ -73,6 +74,9 @@ const FilterItem: React.FC<FilterItemProps> = observer(({ category, checkedCateg
                 <Checkbox
                     checked={false}
                     onChange={(): void => {
+                        runInAction(() => {
+                            session.drawLineMode = 'all';
+                        });
                         message.warning(i18n.t('Line Warning', { ns: 'timeline' }));
                     }}>
                     {categoryMap[category] ?? category}
@@ -357,10 +361,7 @@ const updateSessionLineData = (checkedCategories: string[], fetchLinkLinesMap: M
         }
         newLines[session.ridLineType] = await fetchLinkLinesMap.get(session.ridLineType)?.(session);
         runInAction(() => {
-            if (checkedCategories.length > 0) {
-                session.drawLineMode = 'all';
-                session.singleLinkLine = {};
-            }
+            session.singleLinkLine = {};
             session.linkLines = newLines;
             session.renderTrigger = !session.renderTrigger;
             session.linkLineCategories = checkedCategories;
@@ -448,6 +449,7 @@ const LinkLineFilterBody = observer(({ session, isSuspend, checkedCategories, se
                         ? <StyledEmpty />
                         : displayCategories.map((category, index) => <FilterItem
                             key={index}
+                            session={session}
                             category={category}
                             checkedCategories={checkedCategories}
                             setCheckedCategories={setCheckedCategories}
@@ -459,6 +461,7 @@ const LinkLineFilterBody = observer(({ session, isSuspend, checkedCategories, se
                             message.warning(i18n.t('Line Warning', { ns: 'timeline' }));
                             return;
                         }
+                        session.drawLineMode = 'all';
                         setCheckedCategories([...displayCategories]);
                     }}>
                         {i18n.t('timeline:All')}
@@ -489,17 +492,20 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
     connector.addListener('updateCategory', (e) => {
         setFilterLinkLineDisabled(e.data.body.data);
     });
-    const dependencyParam = [session.domainRange.domainStart,
+    const dependencyParam = [
+        session.domainRange.domainStart,
         session.domainRange.domainEnd,
         checkedCategories,
         session?.unitsConfig.offsetConfig.timestampOffset,
-        session.viewedExpandedCardIdSet, session.ridLineType];
-    React.useEffect(updateLineData, dependencyParam);
+        session.viewedExpandedCardIdSet,
+        session.ridLineType,
+        session.drawLineMode,
+    ];
     React.useEffect(() => {
-        if (session.drawLineMode === 'single') {
-            setCheckedCategories([]);
+        if (session.drawLineMode !== 'single') {
+            updateLineData();
         }
-    }, [session.drawLineMode]);
+    }, dependencyParam);
     // tooltip显隐控制悬浮效果
     const onTooltipVisibleChange = (visible: boolean): void => {
         updateCustomButtonProps({ ...customButtonProps, isSuspend: visible });

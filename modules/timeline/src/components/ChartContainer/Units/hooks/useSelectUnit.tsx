@@ -23,7 +23,9 @@ import type { KeyedInsightUnit } from '../types';
 type SelectUnit = (unit: KeyedInsightUnit) => void;
 export const useSelectUnit = (session: Session): SelectUnit => {
     return (unit: KeyedInsightUnit): void => runInAction(() => {
-        session.selectedData = undefined;
+        if (!(session.selectedUnits.length === 1 && session.selectedUnits.includes(unit))) {
+            session.selectedData = undefined;
+        }
         session.selectedUnits = [unit];
     });
 };
