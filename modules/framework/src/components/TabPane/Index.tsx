@@ -130,10 +130,8 @@ const Index = observer(({ session }: {session: Session}) => {
 
     const availableModules = useMemo(() => mergedModulesConfig.filter(config => isAvailable(config, scene, dataCompose))
         , [scene, dataCompose, mergedModulesConfig]);
-    const isLeaks = availableModules.some(module => module.isLeaks && module.name === MEM_SCOPE_MODULE_NAME);
-    if (isLeaks) {
-        setActiveModule(MEM_SCOPE_MODULE_NAME);
-    };
+    const isLeaks = useMemo(() => availableModules.some(module => module.isLeaks && module.name === MEM_SCOPE_MODULE_NAME)
+        , [availableModules]);
     const getIcon = (tabTitle: string): React.ReactElement => {
         return <Tooltip mouseEnterDelay={1} title={
             tabTitle === 'Timeline'
@@ -259,6 +257,12 @@ const Index = observer(({ session }: {session: Session}) => {
             setActiveModule(value);
         }
     }, [session.actionListener]);
+
+    useEffect(() => {
+        if (isLeaks) {
+            setActiveModule(MEM_SCOPE_MODULE_NAME);
+        };
+    }, [isLeaks]);
     return <Container>
         <Menu onClick={onClick} selectedKeys={[activeModule]} mode="horizontal" items={items} />
         <div className="tab-body">{availableModules.map(moduleConfig => (
