@@ -70,7 +70,7 @@ OPEN_SOURCE = [
     ],
     [
         'att',
-        'master',
+        'tag_MindStudio_8.2.RC1.B090_001',
         'https://gitcode.com/Ascend/mstt.git'
     ]
 ]
