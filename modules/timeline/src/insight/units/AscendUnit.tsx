@@ -354,7 +354,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
             const requestParams = getThreadTracesRequestParams(session, threadMetaData, timestampOffset);
             try {
                 thisUnit.isTraceLoading = true;
-                const request = await window.request(requestParams.dataSource as DataSource, { command: 'unit/threadTraces', params: requestParams }).finally(() => {
+                const request = await window.request(requestParams.dataSource as DataSource, { command: 'unit/threadTraces', params: requestParams }, { silent: true }).finally(() => {
                     thisUnit.isTraceLoading = false;
                 });
 
