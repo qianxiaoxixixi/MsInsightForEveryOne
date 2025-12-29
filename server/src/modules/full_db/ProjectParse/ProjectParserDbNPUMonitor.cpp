@@ -79,13 +79,13 @@ void ProjectParserDbNPUMonitor::ParserBaseline(const Global::ProjectExplorerInfo
     auto hostInfoMap = GetReportFiles({projectInfo}, baselineInfo.parsedFilePath);
     if (std::empty(hostInfoMap)) {
         Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
-        baselineInfo.errorMessage = "NPU monitor db get host info failed!";
+        baselineInfo.errorMessage = "Can't get host info, and failed to compare!";
         return;
     }
     FilterHostMap(hostInfoMap, baselineInfo.parsedFilePath);
     if (std::empty(hostInfoMap.begin()->second) || std::empty(hostInfoMap.begin()->second.begin()->second)) {
         Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
-        baselineInfo.errorMessage = "NPU monitor db get rank info failed!";
+        baselineInfo.errorMessage = "Can't get rank info, and failed to compare!";
         return;
     }
     std::string rankId = hostInfoMap.begin()->first + hostInfoMap.begin()->second.begin()->second[0];
