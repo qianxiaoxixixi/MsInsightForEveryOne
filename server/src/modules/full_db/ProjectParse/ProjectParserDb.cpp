@@ -338,13 +338,13 @@ void ProjectParserDb::ParserBaseline(const Global::ProjectExplorerInfo &projectI
     auto hostInfoMap = GetReportFiles({projectInfo}, parseFilePath);
     if (std::empty(hostInfoMap)) {
         Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
-        baselineInfo.errorMessage = "Db get host info failed!";
+        baselineInfo.errorMessage = "Can't get host info, and failed to compare!";
         return;
     }
     FilterHostMap(hostInfoMap, parseFilePath);
     if (std::empty(hostInfoMap.begin()->second) || std::empty(hostInfoMap.begin()->second.begin()->second)) {
         Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
-        baselineInfo.errorMessage = "Db get rank info failed!";
+        baselineInfo.errorMessage = "Can't get rank info, and failed to compare!";
         return;
     }
     std::string rankId = hostInfoMap.begin()->first + hostInfoMap.begin()->second.begin()->second[0];
