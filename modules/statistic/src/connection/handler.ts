@@ -50,6 +50,7 @@ export const locateGroup: NotificationHandler = (data): void => {
                 curveSession.groupCondition.push({ label: curveSession.groupId, value: curveSession.groupId });
             }
             curveSession.rankIdCondition.value = data.fileId as string;
+            curveSession.switchPage = !curveSession.switchPage;
         });
     } catch (err) {
         console.error(err);

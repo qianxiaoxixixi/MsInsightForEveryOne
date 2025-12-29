@@ -42,6 +42,7 @@ export class CurveSession {
     // 底部表格分页相关变量
     current: number = 1;
     pageSize: number = 10;
+    switchPage: boolean = true;
 
     constructor() {
         makeAutoObservable(this);

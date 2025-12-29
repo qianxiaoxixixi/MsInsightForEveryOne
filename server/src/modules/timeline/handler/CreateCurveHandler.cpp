@@ -63,7 +63,7 @@ std::string CreateCurveHandler::CreateBubbleCurve(const CreateCurveRequest& requ
                       std::to_string(start) +
                       " as startTime,duration,AVG( duration ) OVER ( ) AS avg_duration"
                       " FROM gaps WHERE duration > 0;";
-    std::string curveSql = "CREATE VIEW '" + viewName + "' AS " + sql;
+    std::string curveSql = "DROP VIEW IF EXISTS '" + viewName + "'; CREATE VIEW '" + viewName + "' AS " + sql;
     openApi->CreateCurve(request.params.fileId, curveSql);
     return viewName;
 }
@@ -77,7 +77,7 @@ std::string CreateCurveHandler::CreateSliceDurationCurve(const CreateCurveReques
     std::string sql = "SELECT timestamp - " + std::to_string(start) +
                       " as startTime,AVG( duration ) OVER ( ) AS avg_duration,duration FROM slice WHERE track_id = " +
                       trackId + " AND name = '" + request.params.x + "' ORDER BY timestamp;";
-    std::string curveSql = "CREATE VIEW '" + viewName + "' AS " + sql;
+    std::string curveSql = "DROP VIEW IF EXISTS '" + viewName + "'; CREATE VIEW '" + viewName + "' AS " + sql;
     openApi->CreateCurve(request.params.fileId, curveSql);
     return viewName;
 }
