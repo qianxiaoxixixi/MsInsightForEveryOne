@@ -797,6 +797,17 @@ std::string TextMemoryDataBase::GetCreateOperatorMemoryTableSql()
                                     OpMemoryColumn::STREAM, OpMemoryColumn::DEVICE_ID);
 }
 
+MemoryDataBaseContext TextMemoryDataBase::GetMemoryDbContext()
+{
+    if (!initContextFlag) {
+        memDbContext.withMemoryRecord = CheckTableExist(recordTable);
+        memDbContext.withOperatorMemory = CheckTableExist(operatorTable);
+        memDbContext.withNpuModuleMem = CheckTableExist(componentTable);
+    }
+    initContextFlag = true;
+    return memDbContext;
+}
+
 } // end of namespace Memory
 } // end of namespace Module
 } // end of namespace Dic
