@@ -67,6 +67,9 @@ export const TableDataDetail = observer((props: SelectContentViewProps & { selec
             orderBy: condition.sorter.field,
             filterconditions,
         };
+        if (param.rankId === '' || param.rankId === undefined) {
+            return;
+        }
         setLoading(true);
         queryTableDataDetails(param).then((res) => {
             const datas = res as TableData;
