@@ -69,9 +69,10 @@ class UnitTreeTool {
             unit.onceExpand = settingUnit?.isExpanded ?? false;
             // 校验次unit在上一次是否被置顶
             const pinnedUnitIdx = pinnedUnits.findIndex(item => {
-                const pinnedMetadata = item.metadata;
+                const { cardId, processId, threadId, label } = item.metadata || {};
                 const metadata = unit.metadata;
-                return metadata.cardId === pinnedMetadata?.cardId && metadata.processId === pinnedMetadata?.processId && metadata.threadId === pinnedMetadata?.threadId;
+                // cardId、processId、threadId 在threadId为空时，不能判断泳道的唯一性，临时增加label判断
+                return metadata.cardId === cardId && metadata.processId === processId && metadata.threadId === threadId && label === metadata.label;
             });
             // 若上一次被置顶，则恢复置顶状态
             if (pinnedUnitIdx !== -1) {
