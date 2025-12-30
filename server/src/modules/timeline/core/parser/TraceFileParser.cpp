@@ -313,10 +313,7 @@ void TraceFileParser::DeleteParseFiles(const std::vector<std::string> &fileIds)
     ParserStatusManager::Instance().WaitAllFinished(fileIds);
     for (const auto &fileId : fileIds) {
         auto oldStatus = ParserStatusManager::Instance().GetParserStatus(fileId);
-        ServerLog::Info("Delete file. id:", fileId, ", status:", static_cast<int>(oldStatus));
-        if (oldStatus == ParserStatus::FINISH) {
-            DeleteParseFileFromDisk(fileId);
-        }
+        ServerLog::Info("Clear cache. id:", fileId, ", status:", static_cast<int>(oldStatus));
         CacheManager::Instance().ClearCacheByRankId(fileId);
     }
 }
