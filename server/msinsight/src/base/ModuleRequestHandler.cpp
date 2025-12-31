@@ -21,6 +21,7 @@
 #include "../WsSessionManager.h"
 #include "../utils/IdBuilder.h"
 #include "RequestContext.h"
+#include "RequestFilter.h"
 
 namespace Dic {
 namespace Module {
@@ -31,9 +32,22 @@ bool ModuleRequestHandler::HandleRequestEntrance(std::unique_ptr<Request> reques
 {
     RequestContext::GetInstance().resetError();
     unsigned int id = requestPtr->id;
+    auto &requestFilter = RequestFilter::Instance();
+    std::string key = GetRequestKey(*requestPtr);
+    if (requestFilter.IsNeedFilter(GetRequestKey(*requestPtr), id)) {
+        ServerLog::Warn("Request is outdated, intercepted,id:", id, ", key:", key);
+        WsSession& session = *Server::WsSessionManager::Instance().GetSession();
+        std::unique_ptr<Response> responsePtr = std::make_unique<Response>();
+        SetBaseResponse(*requestPtr, *responsePtr);
+        SetCommonError(Common::ErrorCode::OUTDATED_REQUEST_ERROR);
+        SetResponseResult(*responsePtr, false);
+        session.SendBaseResponse(std::move(responsePtr));
+        return false;
+    }
     ServerLog::Info("Start handle request, module = ", moduleName, ", command = ", command, ", id = ", id);
     bool res = HandleRequest(std::move(requestPtr));
     ServerLog::Info("End handle request, module = ", moduleName, ", command = ", command, ", id = ", id);
+    requestFilter.ClearKey(key, id);
     return res;
 }
 
@@ -78,6 +92,11 @@ void ModuleRequestHandler::SetResponseError(ErrorMessage error)
 bool ModuleRequestHandler::IsAsync()
 {
     return async;
+}
+
+std::string ModuleRequestHandler::GetRequestKey(Request &request)
+{
+    return std::to_string(request.id);
 }
 } // end of namespace Module
 } // end of namespace Dic

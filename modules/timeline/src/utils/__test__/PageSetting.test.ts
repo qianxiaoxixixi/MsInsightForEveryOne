@@ -100,6 +100,7 @@ describe('recoverPageSetting', () => {
                 domainStart: 1,
                 domainEnd: 0,
             },
+            pinnedUnits: [],
         };
         recoverPageSetting();
         expect(session.domainRange).toEqual({
@@ -128,6 +129,7 @@ describe('updatePageSetting', () => {
                 domainStart: 0,
                 domainEnd: 0,
             },
+            pinnedUnits: [],
         };
         updatePageSetting({
             type: 'updateProjectName',
@@ -149,6 +151,7 @@ describe('updatePageSetting', () => {
                 domainStart: 0,
                 domainEnd: 0,
             },
+            pinnedUnits: [],
         };
         updatePageSetting({
             type: 'removeSingleDataPath',
@@ -169,6 +172,7 @@ describe('updatePageSetting', () => {
                 domainStart: 0,
                 domainEnd: 0,
             },
+            pinnedUnits: [],
         };
         updatePageSetting({ type: 'removeDataSource', data: { projectName: 'testProject' } });
         expect(session.pageSetting.testProject).toBeUndefined();
@@ -186,6 +190,7 @@ describe('updatePageSetting', () => {
                 domainStart: 0,
                 domainEnd: 0,
             },
+            pinnedUnits: [],
         };
         updatePageSetting({ type: 'reset' });
         expect(Object.keys(session.pageSetting).length).toBe(0);

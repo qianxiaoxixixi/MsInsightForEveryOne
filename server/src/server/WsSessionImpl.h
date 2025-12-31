@@ -45,6 +45,7 @@ public:
 
     void OnRequestMessage(const std::string &data);
     void OnResponse(std::unique_ptr<Protocol::Response> responsePtr) override;
+    void SendBaseResponse(std::unique_ptr<Protocol::Response> responsePtr) override;
     void OnEvent(std::unique_ptr<Protocol::Event> eventPtr) override;
     bool Send(const std::string &message);
     void SendResponse(const Protocol::Response &response);
@@ -84,6 +85,7 @@ protected:
     std::string bundleName;
 
     static void BatchHandleMsg(WsSessionImpl &session);
+    void SendResponse(const Protocol::Response &response, const std::string &responseStr);
 };
 } // end of namespace Server
 } // end of namespace Dic

@@ -20,6 +20,7 @@ import { register } from './register';
 import { Session } from '../entity/session';
 import { createCurve } from '../api/request';
 import connector from '../connection';
+import { ProjectType } from '../entity/insight';
 
 async function findLineChart(session: Session, type: string): Promise<void> {
     if (!session.selectedData) {
@@ -47,10 +48,10 @@ async function findLineChart(session: Session, type: string): Promise<void> {
     });
 }
 
-function checkCardIsIE(session: Session): boolean {
+export function checkCardIsIE(session: Session): boolean {
     const { isIE, isCluster, selectedData, units } = session;
-    const cluster = units.find(unit => unit.metadata?.cardId === selectedData?.cardId)?.metadata?.cluster;
-    return Boolean(isIE && selectedData && (!isCluster || (isCluster && !cluster)));
+    const projectType = units.find(unit => unit.metadata?.cardId === selectedData?.cardId)?.projectType;
+    return Boolean(isIE && selectedData && (!isCluster || (isCluster && projectType === ProjectType.IE)));
 }
 
 export const actionGenerateBubbleCurve = register({

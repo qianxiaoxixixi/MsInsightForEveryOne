@@ -138,7 +138,7 @@ const CurveDetailTable = observer(({ session, curveSession }:
     }, [curveSession.rankIdCondition.value, curveSession.groupId]);
     useEffect(() => {
         setDetailTableData();
-    }, [curveSession.selectedRange, curveSession.current, curveSession.pageSize, order, orderBy, t]);
+    }, [curveSession.selectedRange, curveSession.current, curveSession.pageSize, order, orderBy, curveSession.switchPage, t]);
 
     return (
         <CollapsiblePanel title={t('Table Data Details')} secondary>

@@ -28,8 +28,7 @@ import { notNull } from '@insight/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { groupGet } from '../utils/RequestUtils';
 
-const CurveHeader = observer(({ session, curveSession }:
-{ session: Session; curveSession: CurveSession}) => {
+const CurveHeader = observer(({ session, curveSession }: { session: Session; curveSession: CurveSession }) => {
     const { t } = useTranslation('statistic');
     const groupByOptions = async (rankId: string): Promise<void> => {
         const options: Array<{ label: string; value: string }> = [];
@@ -60,6 +59,7 @@ const CurveHeader = observer(({ session, curveSession }:
 
     useEffect(() => {
         runInAction(() => {
+            // 联合导入时session.compareRank.rankId可能不是服务化的cardId，需校验session.compareRank.rankId是否匹配，不匹配默认取session.iERankIds[0]
             const isValidCompareRank = notNull(session.compareRank.rankId) && session.iERankIds.includes(session.compareRank.rankId);
             curveSession.rankIdCondition = {
                 options: session.iERankIds,

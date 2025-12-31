@@ -230,7 +230,7 @@ const getMoreContent = (session: Session, height: number, bottomPanelComponents?
 const getMoreTitle = (session: Session, bottomPanelComponents?: ReturnType<BottomPanelSingleRender>): JSX.Element => {
     const Title = bottomPanelComponents?.MoreTitle;
     if (typeof Title === 'string' || Title === undefined) {
-        return <span>{Title ?? i18n.t('More')}</span>;
+        return <span>{Title ?? i18n.t('Details')}</span>;
     }
     return <Title session={session} />;
 };

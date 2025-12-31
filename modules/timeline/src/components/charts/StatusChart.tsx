@@ -39,7 +39,7 @@ interface DrawParams {
     startY: number;
 }
 
-const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2D): [ string, number ] => {
+const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2D): [string, number] => {
     if (ctx.measureText(text).width <= maxWidth) { return [text, ctx.measureText(text).width]; }
     let left = 0;
     let right = text.length;
@@ -130,7 +130,7 @@ export const StatusChart = observer(({
     const theme = useTheme();
     const canvasContainer = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
-    const { action: drawExt = (): void => {}, triggers = [] } = decorator?.(session, metadata) ?? {};
+    const { action: drawExt = (): void => { }, triggers = [] } = decorator?.(session, metadata) ?? {};
 
     const datasState = useData({ session, mapFunc, unit, metadata, width, processor: zipStatusData });
     const rangeAndDomain = useRangeAndDomain(session, width, margin);
@@ -143,6 +143,9 @@ export const StatusChart = observer(({
             session.selectedData = clickedData
                 ? { ...clickedData, threadId: (metadata as ThreadMetaData).threadId ?? '', processId: (metadata as ThreadMetaData).processId ?? '' }
                 : undefined;
+            if (!session.selectedData) {
+                session.drawLineMode = 'all';
+            }
             onClick?.(clickedData, session, metadata);
         });
     };
@@ -182,7 +185,7 @@ export const StatusChart = observer(({
         <SkeletonWrapper>
             <Skeleton loading={unit.isSummaryLoading} active paragraph={false}>
                 <TooltipComponent {...tooltipProp} />
-                <Canvas className={'drawCanvas'} ref={canvas} width={width * devicePixelRatio} height={height * devicePixelRatio}/>
+                <Canvas className={'drawCanvas'} ref={canvas} width={width * devicePixelRatio} height={height * devicePixelRatio} />
             </Skeleton>
         </SkeletonWrapper>
     </CanvasContainer>;

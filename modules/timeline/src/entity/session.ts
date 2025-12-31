@@ -260,6 +260,7 @@ export class Session {
     pageSetting: Record<string, {
         domainRange: DomainRange;
         units: InsightUnitSet[];
+        pinnedUnits: InsightUnit[];
     } | undefined> = {};
 
     autoAdjustUnitHeight: boolean = false;

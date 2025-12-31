@@ -89,6 +89,9 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
             } else {
                 columns = resp.legends?.map(legend => t(legend));
             }
+            if (columns?.length <= 0 || resp.lines?.length <= 0) {
+                return;
+            }
             setLineChartData({
                 title: resp.title,
                 columns,

@@ -252,7 +252,7 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
         {
             advices.length > 0
                 ? <div>
-                    <Advice text={advices}/>
+                    <Advice style={{ marginBottom: 0 }} text={advices}/>
                 </div>
                 : <></>
         }

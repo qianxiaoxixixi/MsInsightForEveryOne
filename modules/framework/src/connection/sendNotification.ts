@@ -118,6 +118,8 @@ export const sendDirectory = (to?: string): void => {
         selectedFilePath = session.activeDataSource.selectedFilePath;
     }
     // 通知页签
+    // 联合导入时rankId可能为ProjectType.IE类型的cardId，也可能为非ProjectType.IE类型的cardId。
+    // rankId在Statistic模块用来当做初始值，所以在Statistic模块需要校验iERankIds中是否有rankId，没有需默认取iERankIds[0]
     connector.send({
         event: 'switchDirectory',
         body: {

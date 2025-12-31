@@ -23,6 +23,7 @@ export enum ErrorCode {
     WS_ERROR = 'WS_ERROR',
     PARSE_FAIL = 'PARSE_FAIL',
     IMPORT_ERROR = 4112,
+    ZOOM_LIMIT_WARNING = 'ZOOM_LIMIT_WARNING',
 }
 
 export class WsError extends Error {
@@ -44,6 +45,10 @@ class ErrorCenter {
             case ErrorCode.PARSE_FAIL:
                 if (this.shouldThrottle()) return;
                 message.error(err.message);
+                break;
+            case ErrorCode.ZOOM_LIMIT_WARNING:
+                if (this.shouldThrottle()) return;
+                message.warning(err.message);
                 break;
             case ErrorCode.IMPORT_ERROR:
                 Modal.error({

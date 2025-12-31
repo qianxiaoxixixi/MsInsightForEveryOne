@@ -30,8 +30,8 @@ namespace Dic::Module::FullDb {
     bool WaitTimeParseUnit::PreCheck(const ParseUnitParams &params, const std::shared_ptr<DbTraceDataBase> &database,
                                      std::string &error)
     {
-        bool checkRes = database->CheckTableExist(TABLE_COMPUTE_TASK_INFO)
-            && database->CheckTableExist(TABLE_COMMUNICATION_OP)
+        bool checkRes = (database->CheckTableExist(TABLE_COMPUTE_TASK_INFO)
+            || database->CheckTableExist(TABLE_COMMUNICATION_OP))
             && database->CheckTableDataInvalid(TABLE_TASK);
         if (!checkRes) {
             error = "Update wait time:Table is not exist or table data invalid.";
