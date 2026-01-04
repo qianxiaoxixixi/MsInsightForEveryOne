@@ -46,7 +46,8 @@ void ParserIE::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
             continue;
         }
         std::string cardPath = FileUtil::GetRankIdFromPath(rankEntry.second);
-        SetBaseActionOfResponse(response, rankEntry.first, rankEntry.second, cardPath, {folders},
+        SetBaseActionOfResponse(response, rankEntry.first, rankEntry.second, cardPath,
+                                {FileUtil::GetParentPath(folders)},
                                 static_cast<int>(ProjectTypeEnum::IE));
     }
     // 解析内容

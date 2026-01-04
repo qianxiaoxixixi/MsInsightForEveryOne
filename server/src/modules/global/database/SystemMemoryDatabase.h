@@ -40,7 +40,7 @@ public:
     bool UpdateProjectName(const std::string &oldProjectName, const std::string &newProjectName);
     bool UpdateProjectDbPath(const std::string &projectName, const std::string &fileName, const std::string &dbPath);
     bool DropTable();
-    bool DeleteFileMenu(const std::vector<std::string> &projectNameList, const std::vector<std::string> &fileNameList);
+    bool DeleteFileMenu(const std::vector<std::string> &projectNameList, const std::vector<int64_t>& projectIdList);
     bool DeleteParsedFile(const std::vector<int64_t> &projectIdList, const std::vector<int64_t> &idList);
 
     std::map<int64_t, std::vector<std::shared_ptr<ParseFileInfo>>>
