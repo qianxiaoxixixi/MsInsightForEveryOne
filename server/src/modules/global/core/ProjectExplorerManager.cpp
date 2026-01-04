@@ -89,7 +89,7 @@ bool ProjectExplorerManager::SaveProjectExplorer(const ProjectExplorerInfo &proj
     db->StartTransaction();
     // 如果存在冲突，则需要清空老项目内容，如果处理失败，则事务回滚
     if (isConflict &&
-        !db->DeleteFileMenu(std::vector<std::string>{projectExplorerInfo.projectName}, std::vector<std::string>())) {
+        !db->DeleteFileMenu(std::vector<std::string>{projectExplorerInfo.projectName}, {})) {
         db->RollbackTransaction();
         return false;
     }
@@ -179,7 +179,7 @@ bool ProjectExplorerManager::DeleteProjectAndFilePath(const std::string &project
         return true;
     }
     std::vector<int64_t> projectIdList;
-    std::vector<std::string> needDeleteImportFileList;
+    std::vector<int64_t> needDeleteImportFileList;
     std::vector<int64_t> needDeleteParseFileIdList;
     for (auto &project: infos) {
         projectIdList.push_back(project.id);
@@ -195,7 +195,7 @@ bool ProjectExplorerManager::DeleteProjectAndFilePath(const std::string &project
             }
         }
         if (isNeedDeleteImportData) {
-            needDeleteImportFileList.push_back(project.fileName);
+            needDeleteImportFileList.push_back(project.id);
         }
     }
 
@@ -320,8 +320,8 @@ bool ProjectExplorerManager::ClearProjectExplorer(const std::vector<std::string>
     }
 
     // 删除两个表中对应的数据
-    if (db->DeleteFileMenu(projectNameList, std::vector<std::string>{}) &&
-        db->DeleteParsedFile(projectIdList, std::vector<int64_t>{})) {
+    if (db->DeleteFileMenu(projectNameList, {}) &&
+        db->DeleteParsedFile(projectIdList, {})) {
         // 删除成功，提交事务
         db->EndTransaction();
         Server::ServerLog::Info("Success to clear project explorer.");

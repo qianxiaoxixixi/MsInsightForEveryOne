@@ -192,7 +192,7 @@ std::vector<ProjectExplorerInfo> SystemMemoryDatabase::QueryProjectExplorerData(
 }
 
 bool SystemMemoryDatabase::DeleteFileMenu(const std::vector<std::string> &projectNameList,
-                                          const std::vector<std::string>& fileNameList)
+                                          const std::vector<int64_t>& projectIdList)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     if (!CheckTableExist(projectExplorerTable)) {
@@ -203,8 +203,8 @@ bool SystemMemoryDatabase::DeleteFileMenu(const std::vector<std::string> &projec
     if (!projectNameList.empty()) {
         sql += " and projectName in (" + StringUtil::CreateQuestionMarkString(projectNameList.size()) + ")";
     }
-    if (!fileNameList.empty()) {
-        sql += " and fileName in (" + StringUtil::CreateQuestionMarkString(fileNameList.size()) + ")";
+    if (!projectIdList.empty()) {
+        sql += " and id in (" + StringUtil::CreateQuestionMarkString(projectIdList.size()) + ")";
     }
     sql += ";";
     auto stmt = CreatPreparedStatement(sql);
@@ -215,7 +215,7 @@ bool SystemMemoryDatabase::DeleteFileMenu(const std::vector<std::string> &projec
     for (const auto &item: projectNameList) {
         stmt->BindParams(item);
     }
-    for (const auto &item: fileNameList) {
+    for (const auto &item: projectIdList) {
         stmt->BindParams(item);
     }
     if (!stmt->Execute()) {
