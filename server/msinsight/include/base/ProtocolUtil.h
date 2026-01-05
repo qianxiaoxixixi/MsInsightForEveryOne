@@ -64,6 +64,7 @@ struct Request : public ProtocolMessage {
     std::string fileId;
 };
 struct Response : public ProtocolMessage {
+    Response() = default;
     explicit Response(const std::string &command) : command(command)
     {
         type = ProtocolMessage::Type::RESPONSE;

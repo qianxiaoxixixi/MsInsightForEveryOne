@@ -165,6 +165,18 @@ void WsSessionImpl::OnResponse(std::unique_ptr<Protocol::Response> responsePtr)
     }
 }
 
+void WsSessionImpl::SendBaseResponse(std::unique_ptr<Protocol::Response> responsePtr)
+{
+    if (responsePtr != nullptr) {
+        document_t json(kObjectType);
+        auto &allocator = json.GetAllocator();
+        ProtocolUtil::SetResponseJsonBaseInfo(*responsePtr.get(), json);
+        std::string responseStr = JsonUtil::JsonDump(json);
+        responseStr = StringUtil::ToUtf8Str(responseStr);
+        SendResponse(*responsePtr.get(), responseStr);
+    }
+}
+
 void WsSessionImpl::OnEvent(std::unique_ptr<Protocol::Event> eventPtr)
 {
     if (eventPtr != nullptr) {
@@ -197,6 +209,11 @@ void WsSessionImpl::SendResponse(const Protocol::Response &response)
     }
     std::string responseStr = JsonUtil::JsonDump(json.value());
     responseStr = StringUtil::ToUtf8Str(responseStr);
+    SendResponse(response, responseStr);
+}
+
+void WsSessionImpl::SendResponse(const Protocol::Response &response, const std::string &responseStr)
+{
     std::string traceId = TraceIdManager::GetTraceId();
     // send header + response
     loop->defer([this, responseStr, response, traceId]() {

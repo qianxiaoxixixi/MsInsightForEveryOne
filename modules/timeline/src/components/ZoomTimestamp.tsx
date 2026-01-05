@@ -58,12 +58,14 @@ const Controller = styled.div`
 
 export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
     const { t } = useTranslation();
-    const { zoom, isLowerBound, isUpperBound, isResetDisabled } = React.useMemo(() => ({
+    const { zoom, isLowerBound, isUpperBound, isResetDisabled, totalDuration } = React.useMemo(() => ({
         zoom: getDuration(session.domain.duration, { precision: session.isNsMode ? 'ns' : 'ms', maxChars: TEXT_WIDTH / FONT_SIZE }),
         isLowerBound: session.domain.isLowerBound,
         isUpperBound: session.domain.isUpperBound,
         isResetDisabled: session.endTimeAll === undefined,
+        totalDuration: session.endTimeAll === undefined ? '-' : getDuration(session.endTimeAll, { maxChars: TEXT_WIDTH / FONT_SIZE }),
     }), [session.domain.duration, session.endTimeAll]);
+
     return <Container>
         <Tooltip title={t('tooltip:reset')}><ResetIcon
             data-testid={'tool-reset'}
@@ -88,7 +90,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
                     }}
                 />
             </Tooltip>
-            <Tooltip title={zoom}>
+            <Tooltip title={t('zoomTooltips', { ns: 'timeline', zoom, totalDuration })}>
                 <Percentage>{zoom}</Percentage>
             </Tooltip>
             <Tooltip title={t('tooltip:add')}>

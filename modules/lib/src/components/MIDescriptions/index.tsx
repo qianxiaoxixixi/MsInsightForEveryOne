@@ -63,10 +63,10 @@ export const MIDescriptions: React.FC<MIDescriptionsProps> = (props): JSX.Elemen
 };
 
 export const MIDescriptionsItem: React.FC<MIDescriptionsItemProps> = (props): JSX.Element => {
-    const { label, children } = props;
+    const { label, children, style } = props;
 
     return (
-        <Item>
+        <Item style={style ?? {}}>
             <div className="label">{label}:</div>
             <div className="content">
                 {children}

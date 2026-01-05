@@ -28,12 +28,8 @@ export const parseStatisticCompletedHandler: NotificationHandler = async (data):
             if (!session) {
                 return;
             }
-            const rankIds = data.rankIds as string[];
-            rankIds.forEach((item) => {
-                if (!session.iERankIds.includes(item)) {
-                    session.iERankIds.push(item);
-                }
-            });
+            const rankIds = (data.rankIds ?? []) as string[];
+            session.iERankIds = [...rankIds];
         });
     } catch (err) {
         console.error(err);
@@ -54,6 +50,7 @@ export const locateGroup: NotificationHandler = (data): void => {
                 curveSession.groupCondition.push({ label: curveSession.groupId, value: curveSession.groupId });
             }
             curveSession.rankIdCondition.value = data.fileId as string;
+            curveSession.switchPage = !curveSession.switchPage;
         });
     } catch (err) {
         console.error(err);

@@ -37,6 +37,8 @@ static const std::string unknownError = "Unknown error code";
 const std::map<ErrorCode, std::string> errorMessages = {
     {ErrorCode::RESET_ERROR, ""},
 
+    {ErrorCode::OUTDATED_REQUEST_ERROR, "Request is outdated, intercepted."},
+
     {ErrorCode::PARAMS_ERROR, "Request parameter exception"},
 
     {ErrorCode::GET_ABSOLUTE_PATH_FAILED, "Failed to retrieve the absolute path"},

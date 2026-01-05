@@ -120,7 +120,7 @@ function wrapData(dataSource: AnalysisChartData, isCompare: boolean, communicati
     return option;
 }
 
-const getRenderData = ({ item, rankId, source, theme }: {item: OperatorTimeItem;rankId: string;source: compareSource;theme: Theme}): any => {
+const getRenderData = ({ item, rankId, source, theme }: { item: OperatorTimeItem; rankId: string; source: compareSource; theme: Theme }): any => {
     const startTime = nsToMs(item.startTime);
     const duration = nsToMs(item.duration);
     const endTime = startTime + duration;
@@ -146,7 +146,7 @@ const baseSeire = {
     },
     data: [],
 };
-function getSeries({ isCompare, data }: {isCompare: boolean;data: any[]}): any[] {
+function getSeries({ isCompare, data }: { isCompare: boolean; data: any[] }): any[] {
     return [{ ...baseSeire, data, renderItem: getRenderItem(isCompare) }];
 }
 
@@ -338,7 +338,7 @@ function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDown
     dataSource?.data?.forEach((item) => rankDbPathMap.set(item.rankId, item.dbPath));
     myChart.on('contextmenu', { element: 'op' }, (e: echarts.ECElementEvent): void => {
         setDropDownVisible(true);
-        const [rankId, timestamp, , duration,, operatorName] = e.value as RectItemValues;
+        const [rankId, timestamp, , duration, , operatorName] = e.value as RectItemValues;
         selectedOpDetail = {
             name: operatorName,
             rankId,
@@ -403,6 +403,7 @@ async function redirectToTimeline(setDropDownVisible: (_: boolean) => void): Pro
                     startTime: resObj.startTime,
                     rankId: resObj.rankId,
                     duration,
+                    showSelectedData: true,
                 },
             },
         });
@@ -519,7 +520,7 @@ export interface YAxis {
  * @param loading - 是否正在加载数据。
  * @returns 返回一个React组件，用于展示通信时间分析图表。
  */
-const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading }: { dataSource: AnalysisChartData; session: Session; loading: boolean}) => {
+const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading }: { dataSource: AnalysisChartData; session: Session; loading: boolean }) => {
     // 设置图表高度的state
     const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT);
     // 控制下拉菜单可见性的state

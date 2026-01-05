@@ -20,7 +20,7 @@
 #define PROFILER_SERVER_SPINLOCKGARD_H
 #include <atomic>
 
-namespace Dic::Module::Timeline {
+namespace Dic {
 class SpinLock {
 public:
     SpinLock() : flag(ATOMIC_FLAG_INIT) {}

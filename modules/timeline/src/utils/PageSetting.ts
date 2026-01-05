@@ -17,6 +17,7 @@
  */
 import type { InsightUnit } from '../entity/insight';
 import { store } from '../store';
+import { switchPinned } from '../components/ChartContainer/unitPin';
 
 // 保留当前页面（时间范围、卡等）
 export function savePageSetting(): void {
@@ -25,11 +26,7 @@ export function savePageSetting(): void {
         return;
     }
     const units = new UnitTreeTool().getSetting(session.units);
-    const setting = {
-        units,
-        domainRange: session.domainRange,
-    };
-    session.pageSetting[session.projectName] = setting;
+    session.pageSetting[session.projectName] = { units, domainRange: session.domainRange, pinnedUnits: session.pinnedUnits };
 }
 
 export interface InsightUnitSet {
@@ -44,8 +41,8 @@ class UnitTreeTool {
         return this.getSettingLimited(units);
     }
 
-    recoverSetting(units: InsightUnit[], unitsSetting: InsightUnitSet[]): void {
-        this.recoverSettingLimited(units, unitsSetting);
+    recoverSetting(units: InsightUnit[], unitsSetting: InsightUnitSet[], pinnedUnits: InsightUnit[] = []): void {
+        this.recoverSettingLimited(units, unitsSetting, pinnedUnits);
     }
 
     private stopIteration(index: number): boolean {
@@ -62,18 +59,29 @@ class UnitTreeTool {
         }));
     }
 
-    private recoverSettingLimited(units: InsightUnit[], unitsSetting: InsightUnitSet[], iteration = 0): void {
+    private recoverSettingLimited(units: InsightUnit[], unitsSetting: InsightUnitSet[], pinnedUnits: InsightUnit[] = [], iteration = 0): void {
         if (this.stopIteration(iteration)) {
             return;
         }
         units.forEach((unit, index) => {
-            const unitset = unitsSetting[index];
-            unit.isExpanded = unitset?.isExpanded ?? false;
-            unit.onceExpand = unitset?.isExpanded ?? false;
-            // 只有在自身状态是开启的情况下，才需要恢复子泳道的状态
-            if (!(unitset?.isExpanded)) { return; }
-            if (unit.children !== undefined && unit.children.length > 0 && Number(unitset.children.length) > 0) {
-                this.recoverSettingLimited(unit.children, unitset.children, iteration + 1);
+            const settingUnit = unitsSetting[index];
+            unit.isExpanded = settingUnit?.isExpanded ?? false;
+            unit.onceExpand = settingUnit?.isExpanded ?? false;
+            // 校验次unit在上一次是否被置顶
+            const pinnedUnitIdx = pinnedUnits.findIndex(item => {
+                const { cardId, processId, threadId, label } = item.metadata || {};
+                const metadata = unit.metadata;
+                // cardId、processId、threadId 在threadId为空时，不能判断泳道的唯一性，临时增加label判断
+                return metadata.cardId === cardId && metadata.processId === processId && metadata.threadId === threadId && label === metadata.label;
+            });
+            // 若上一次被置顶，则恢复置顶状态
+            if (pinnedUnitIdx !== -1) {
+                switchPinned(unit);
+                pinnedUnits[pinnedUnitIdx] = unit;
+            }
+            // 泳道未展开不进行子泳道的展开恢复，但需要恢复子泳道的置顶状态
+            if (unit.children !== undefined && unit.children.length > 0 && Number(settingUnit.children.length) > 0) {
+                this.recoverSettingLimited(unit.children, settingUnit.children, pinnedUnits, iteration + 1);
             }
         });
     }
@@ -90,11 +98,12 @@ export function recoverPageSetting(): void {
         if (!setting) {
             return;
         }
-        const { domainRange, units } = setting;
+        const { domainRange, units, pinnedUnits } = setting;
         // 时间范围
         session.domainRange = domainRange;
+        session.pinnedUnits = [...pinnedUnits];
         // 卡展开
-        new UnitTreeTool().recoverSetting(session.units, units);
+        new UnitTreeTool().recoverSetting(session.units, units, session.pinnedUnits);
     }
 }
 

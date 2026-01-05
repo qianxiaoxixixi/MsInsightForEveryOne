@@ -70,6 +70,13 @@ bool QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     return true;
 }
 
+std::string QueryThreadTracesHandler::GetRequestKey(Request &requestPtr)
+{
+    UnitThreadTracesRequest &request = dynamic_cast<UnitThreadTracesRequest &>(requestPtr);
+    std::vector<std::string> keyContentList = {request.command, request.params.processId, request.params.threadId};
+    return StringUtil::join(keyContentList, "_");
+}
+
 void QueryThreadTracesHandler::QueryTracesByTrackIds(UnitThreadTracesRequest& request,
                                                      UnitThreadTracesResponse& response, uint64_t minTimestamp)
 {

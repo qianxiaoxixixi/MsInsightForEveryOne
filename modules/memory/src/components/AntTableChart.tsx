@@ -207,9 +207,7 @@ async function redirectToTimeline(record: OperatorDetail, card: CardInfo): Promi
         body: {
             switchTo: 'timeline',
             toModuleEvent: 'locateUnit',
-            params: {
-                ...res,
-            },
+            params: { ...res, showSelectedData: true },
         },
     });
 }

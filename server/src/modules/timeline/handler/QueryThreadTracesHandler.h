@@ -32,6 +32,7 @@ public:
     };
     ~QueryThreadTracesHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    std::string GetRequestKey(Request &requestPtr) override;
 
     void
     QueryTracesByTrackIds(UnitThreadTracesRequest &request, UnitThreadTracesResponse &response, uint64_t minTimestamp);

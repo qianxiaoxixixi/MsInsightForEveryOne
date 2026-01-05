@@ -158,6 +158,9 @@ const RidMoreTable = observer(({ card, value, bottomHeight }: RidMoreProps) => {
             type: '1',
             equalConditions,
         };
+        if (param.rankId === '' || param.rankId === undefined) {
+            return;
+        }
         setLoading(true);
         queryTableDataDetails(param).then((res) => {
             const datas = res as TableData;

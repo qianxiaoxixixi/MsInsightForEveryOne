@@ -19,6 +19,7 @@
 import { runInAction } from 'mobx';
 import { register } from './register';
 import type { Session } from '../entity/session';
+import { checkCardIsIE } from './actionGenerateCurve';
 
 const timeRangeAnalysisMenuVisible = (session: Session): boolean => {
     if (session.isTimeAnalysisMode || session.selectedRangeIsLock || session.sliceSelection.active) {
@@ -35,17 +36,11 @@ const timeRangeAnalysisMenuVisible = (session: Session): boolean => {
 };
 
 const applyTimeRangeAnalysisMenuVisible = (session: Session): boolean => {
-    if (session.isTimeAnalysisMode || session.selectedRangeIsLock || session.sliceSelection.active) {
-        return false;
-    }
-    if (session.selectedData === undefined) {
+    if (session.isTimeAnalysisMode || session.selectedRangeIsLock || session.sliceSelection.active || !session.selectedData) {
         return false;
     }
     // 算子调优和服务化调优不支持
-    if (session.isSimulation || session.isIE) {
-        return false;
-    }
-    return true;
+    return !(session.isSimulation || checkCardIsIE(session));
 };
 
 const timeRangeAnalysis = (session: Session): void => {

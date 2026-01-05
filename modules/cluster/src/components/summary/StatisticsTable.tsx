@@ -402,8 +402,9 @@ export const StatisticsTable = observer(({ rankId, dbPath, step, session }: {ste
                     <CollapsiblePanel
                         secondary
                         title={`${getTitle('compute', t)} ( Rank ${rankId} )`}
-                        headerStyle={{ padding: 0 }}
-                        contentStyle={{ paddingLeft: 0, paddingRight: 0 }}>
+                        style={{ marginBottom: !session.isFullDb ? 0 : -26 }}
+                        headerStyle={{ padding: 0, marginTop: 24, marginBottom: 16 }}
+                        contentStyle={{ padding: 0 }}>
                         {session.parseCompleted
                             ? (<ComputeStatisticsTable rankId={rankId} dbPath={dbPath} step={step} session={session}/>)
                             : <div style={{ textAlign: 'center' }}>{ t('Timeline not fully parsed') }</div>
@@ -416,9 +417,10 @@ export const StatisticsTable = observer(({ rankId, dbPath, step, session }: {ste
                             <div data-testid="communication-detail" style={{ marginBottom: '20px' }}>
                                 <CollapsiblePanel
                                     secondary
+                                    style={{ marginBottom: -26 }}
                                     title={`${t('CommunicationDetail')} ( Rank ${rankId} )`}
-                                    headerStyle={{ padding: 0 }}
-                                    contentStyle={{ paddingLeft: 0, paddingRight: 0 }}>
+                                    headerStyle={{ padding: 0, marginTop: 24, marginBottom: 16 }}
+                                    contentStyle={{ padding: 0 }}>
                                     {session.parseCompleted
                                         ? <CommunicationStatisticsTable rankId={rankId} dbPath={dbPath} step={step} session={session}/>
                                         : <div style={{ textAlign: 'center' }}>{ t('Timeline not fully parsed') }</div>

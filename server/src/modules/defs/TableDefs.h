@@ -54,6 +54,7 @@ namespace Dic {
     const static std::string TABLE_MEMORY_RECORD = "MEMORY_RECORD";
     const static std::string TABLE_OPERATOR_MEMORY = "OP_MEMORY";
     const static std::string TABLE_NPU_MODULE_MEM = "NPU_MODULE_MEM";
+    const static std::string TABLE_NPU_MEM = "NPU_MEM";
     const static std::string TABLE_GE_MEMORY = "NPU_OP_MEM";
     const static std::string TABLE_LEAKS_DUMP = "leaks_dump"; // 仍需兼容旧表名
     const static std::string TABLE_MEM_SCOPE_DUMP = "memscope_dump"; // 适配msleaks更名memscope

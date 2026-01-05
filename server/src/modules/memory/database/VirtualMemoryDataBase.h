@@ -30,6 +30,13 @@ namespace Module {
 namespace Memory {
 using componentDtoVector = std::vector<Protocol::ComponentDto>;
 using namespace Dic::Protocol;
+struct MemoryDataBaseContext {
+public:
+    bool withMemoryRecord{false};
+    bool withNpuModuleMem{false};
+    bool withOperatorMemory{false};
+    bool withNpuMem{false};
+};
 class VirtualMemoryDataBase : public Database {
 public:
     explicit VirtualMemoryDataBase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};;
@@ -64,6 +71,7 @@ public:
                                                 std::vector<Protocol::StaticOperatorItem>& opDetails) = 0;
     virtual void GetSelectOperatorMemoryColumnAndAlias(std::string_view columnKey, uint64_t baseTimestamp,
                                                        std::string &column, std::string &alias) = 0;
+    virtual MemoryDataBaseContext GetMemoryDbContext() = 0;
     const int defaultPageSize = 10;
     const int64_t maxPageSize = 1000;
 protected:
@@ -77,6 +85,9 @@ protected:
     const double componentThresholdMb = 100.0;
     const double componentThresholdByte = 100.0 * 1024.0 * 1024.0;
     bool isInference = false;
+
+    bool initContextFlag = false;
+    MemoryDataBaseContext memDbContext = {};
 
     const std::vector<std::string> baseLegends = {
         "Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved"
