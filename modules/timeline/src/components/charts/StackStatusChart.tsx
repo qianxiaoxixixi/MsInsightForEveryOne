@@ -28,10 +28,11 @@ import { Canvas, CanvasContainer, zipStatusData } from './common';
 import { useBatchedRender, useClick, useData, useHoverPos, useRangeAndDomain } from './hooks';
 import { TooltipComponent, type TooltipProps } from './TooltipComp';
 import type { ThreadMetaData } from '../../entity/data';
+import { Spin } from 'antd';
 
 type StackStatusChartProps = ChartProps<'stackStatus'>;
 type OverflowType = 'hidden' | 'ellipsis';
-type DrawTextType = Array<StackStatusData & {width: number} >;
+type DrawTextType = Array<StackStatusData & { width: number }>;
 
 const FONT_SIZE = 12;
 const DFT_PADDING = 8;
@@ -80,7 +81,7 @@ export const drawChevron = (
 };
 
 // 计算当前节点宽度及圆角半径大小，同时将需要写的文字提前放入数组保存
-const drawRect = (ctx: CanvasRenderingContext2D, dataObj: { data: StackStatusData; textToDraw: DrawTextType},
+const drawRect = (ctx: CanvasRenderingContext2D, dataObj: { data: StackStatusData; textToDraw: DrawTextType },
     config: { height: number; right: number; xScale: Scale; yScale: Scale; overflow: OverflowType; minTextWidth: number; order?: number },
     isSimulation: boolean): void => {
     const { data, textToDraw } = dataObj;
@@ -181,8 +182,8 @@ const draw = ({ ctx, datas, xScale, yScale, theme, right, isSimulation, textConf
     }
 };
 
-const findDataByXY = (mousePos: {x: number; y: number} | undefined, datas: StackStatusData[][],
-    rangeAndDomain: Array<[ number, number ]>, depthHeight: number, endTime: number): StackStatusData | undefined => {
+const findDataByXY = (mousePos: { x: number; y: number } | undefined, datas: StackStatusData[][],
+    rangeAndDomain: Array<[number, number]>, depthHeight: number, endTime: number): StackStatusData | undefined => {
     if (mousePos === undefined || datas.length === 0 || rangeAndDomain.length < 2) {
         return undefined;
     }
@@ -260,6 +261,9 @@ const mouseUpFunc = ({ e, datasState, rangeAndDomain, rowHeight, session, metada
                 metaType: (metadata as ThreadMetaData).metaType ?? '',
             }
             : undefined;
+        if (!session.selectedData) {
+            session.drawLineMode = 'all';
+        }
         onClick?.(clickedData, session, metadata);
         session.selectedRangeData = undefined;
     });
@@ -280,7 +284,7 @@ export const StackStatusChart = observer(({ // 绘制 slice 的画布
     const theme = useTheme();
     const canvasContainer = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
-    const { action: drawExt = (): void => {}, triggers = [] } = decorator?.(session, metadata) ?? {};
+    const { action: drawExt = (): void => { }, triggers = [] } = decorator?.(session, metadata) ?? {};
     const datasState = useData({
         session,
         mapFunc,
@@ -349,6 +353,8 @@ export const StackStatusChart = observer(({ // 绘制 slice 的画布
 
     return <CanvasContainer ref={canvasContainer} className={'canvasContainer'} width={width} height={height} style={{ pointerEvents: `${isCollapse ? 'none' : 'auto'}` }}>
         { !isCollapse && <TooltipComponent {...tooltipProp} /> }
-        <Canvas className={'drawCanvas'} ref={canvas} width={width * devicePixelRatio} height={height * devicePixelRatio}/>
+        <Spin spinning={unit.isTraceLoading} delay={2500} size="small">
+            <Canvas className={'drawCanvas'} ref={canvas} width={width * devicePixelRatio} height={height * devicePixelRatio}/>
+        </Spin>
     </CanvasContainer>;
 });

@@ -142,7 +142,7 @@ const ContainerLeft = styled(ContainerBase)`
             top: 50%;
             z-index: 2;
             transform: rotate(90deg);
-            right: -33px;
+            right: -38px;
         }
         & > .caret {
             position: absolute;
@@ -204,7 +204,7 @@ const ContainerRight = styled(ContainerBase)`
             top: 50%;
             z-index: 2;
             transform: rotate(-90deg);
-            left: -33px;
+            left: -37px;
             opacity: 0.8;
         }
         & > .caret {

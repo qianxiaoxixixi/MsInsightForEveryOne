@@ -126,7 +126,20 @@
       "Operators Dispatch": "Operators Dispatch",
       "Events View": "Events View",
       "Overall Metrics": "Overall Metrics",
-      "OverallMetricsTips": "To obtain the sub-level categories of computation time, the profiling data must be configured with the following specific mode: the level should be L1 or higher, and the aic_metrics value must be set to PipeUtilization"
+      "OverallMetricsTips": "对于Ascend Hardware层，按照计算、通信、空闲事件的进一步拆解；其中计算会拆解出FA、MM等关键算子耗时，通信会按通信域拆解传输、等待时长。采集事件需包含CPU（框架侧）、NPU（CANN软件栈及NPU硬件层）数据（以PyTorch Profiler接口为例，activities配置需包含ProfilerActivity.CPU、ProfilerActivity.NPU开关），采集Level等级需为L1及以上；要进一步得到计算时间的子层级分类，AI Core的性能指标采集项需为PipeUtilization。",
+      "PythonAPISummaryTips": "对于Python层事件的统计。采集事件需包含CPU（框架侧）数据（以PyTorch Profiler接口为例，activities配置需包含ProfilerActivity.CPU开关）。",
+      "CANNAPISummaryTips": "对于CANN层事件的统计。采集事件需包含NPU（CANN软件栈及NPU硬件层）数据（以PyTorch Profiler接口为例，activities配置需包含ProfilerActivity.NPU开关）。",
+      "AscendHardWareTaskSummaryTips": "对于Ascend Hardware层事件的统计。采集事件需包含NPU（CANN软件栈及NPU硬件层）数据（以PyTorch Profiler接口为例，activities配置需包含ProfilerActivity.NPU开关）。",
+      "CommunicationSummaryTips": "对于Communication层事件的统计。采集的Level等级需为L1及以上。",
+      "OverlapAnalysisTips": "对于Ascend Hardware层，按照计算、通信、空闲事件的归类统计。采集事件需包含NPU（CANN软件栈及NPU硬件层）数据（以PyTorch Profiler接口为例，activities配置需包含ProfilerActivity.NPU开关）；要得到Communication拆解结果，采集的Level等级需为L1及以上。",
+      "KernelDetailsTips": "Ascend Hardware层（即NPU）算子的详细信息。采集事件需包含NPU（CANN软件栈及NPU硬件层）数据（以PyTorch Profiler接口为例，activities配置需包含ProfilerActivity.NPU开关）；要进一步得到算子类型、加速器核、输入输出shape等，采集的Level等级需为L1及以上。",
+      "ExpertAnalysisTips": "对NPU的降频分析，降频会影响NPU的计算性能。采集事件需包含NPU（CANN软件栈及NPU硬件层）数据（以PyTorch Profiler接口为例，activities配置需包含ProfilerActivity.NPU开关）。",
+      "AffinityAPITips": "分析存在可以替换的亲和API。采集事件需包含CPU（框架侧）数据（以PyTorch Profiler接口为例，activities配置需包含ProfilerActivity.CPU开关）。",
+      "AffinityOptimizerTips": "分析存在可以替换的亲和优化器。采集事件需包含CPU（框架侧）数据（以PyTorch Profiler接口为例，activities配置需包含ProfilerActivity.CPU开关）。",
+      "AICPUOperatorsTips": "AICPU算子无法充分利用AI Core资源，可按备注提示，尝试减少AI CPU类算子。采集事件需包含NPU（CANN软件栈及NPU硬件层）数据（以PyTorch Profiler接口为例，activities配置需包含ProfilerActivity.NPU开关）；采集的Level等级需为L1及以上。",
+      "ACLNNOperatorsTips": "分析可优化的ACLNN类算子。采集事件需包含NPU（CANN软件栈及NPU硬件层）数据（以PyTorch Profiler接口为例，activities配置需包含ProfilerActivity.NPU开关）。",
+      "OperatorsFusionTips": "提示存在可以替换的融合算子，详见Ascend Extension for PyTorch融合算子替换文档。采集事件需包含NPU（CANN软件栈及NPU硬件层）数据（以PyTorch Profiler接口为例，activities配置需包含ProfilerActivity.NPU开关）；采集的Level等级需为L1及以上。",
+      "OperatorsDispatchTips": "提示算子下发时存在较为耗时的aclOpCompile操作，可按备注提示，禁用在线编译。采集事件需包含NPU（CANN软件栈及NPU硬件层）数据（以PyTorch Profiler接口为例，activities配置需包含ProfilerActivity.NPU开关）。"
     },
     "tableHead": {
       "Name": "Name",
@@ -185,6 +198,8 @@
     "KeyInfo": {
       "Press": "Press",
       "Create": "Create"
-    }
+    },
+    "zoomOutLimitWarning": "Zoom-out limit reached. Maximum visible range is {{maxDuration}} minutes",
+    "zoomTooltips": "Visible time range: {{zoom}} ( total data duration: {{totalDuration}} )"
   }
 }

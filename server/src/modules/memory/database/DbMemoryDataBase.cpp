@@ -63,6 +63,10 @@ std::string DbMemoryDataBase::BuildOperatorDetailSql(const uint64_t baseTimestam
 int64_t DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                                               std::vector<Protocol::MemoryOperator> &opDetails)
 {
+    if (!GetMemoryDbContext().withOperatorMemory) {
+        ServerLog::Warn("Missing table % on querying operator detail, nothing will be done.", TABLE_OPERATOR_MEMORY);
+        return true;
+    }
     std::string sql;
     const FileType type = DataBaseManager::Instance().GetFileType(path);
     const uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
@@ -85,6 +89,10 @@ int64_t DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &re
 bool DbMemoryDataBase::QueryEntireOperatorTable(Protocol::MemoryOperatorParams &requestParams,
     std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime)
 {
+    if (!GetMemoryDbContext().withOperatorMemory) {
+        ServerLog::Warn("Missing table % on querying entire operator table, nothing will be done.", TABLE_OPERATOR_MEMORY);
+        return true;
+    }
     std::string sql;
     FileType type = DataBaseManager::Instance().GetFileType(path);
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
@@ -103,6 +111,10 @@ bool DbMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &req
                                             std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                             std::vector<Protocol::MemoryComponent> &componentDetails)
 {
+    if (!GetMemoryDbContext().withNpuModuleMem) {
+        ServerLog::Warn("Missing table % on querying component detail, nothing will be done.", TABLE_NPU_MODULE_MEM);
+        return true;
+    }
     std::string sql;
     FileType type = DataBaseManager::Instance().GetFileType(path);
     if (type == FileType::PYTORCH) {
@@ -141,6 +153,10 @@ bool DbMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &req
 bool DbMemoryDataBase::QueryEntireComponentTable(Protocol::MemoryComponentParams &requestParams,
     std::vector<Protocol::MemoryComponent> &componentDetails, uint64_t offsetTime)
 {
+    if (!GetMemoryDbContext().withNpuModuleMem) {
+        ServerLog::Warn("Missing table % on querying entire component, nothing will be done.", TABLE_NPU_MODULE_MEM);
+        return true;
+    }
     std::string sql;
     FileType type = DataBaseManager::Instance().GetFileType(path);
     if (type == FileType::PYTORCH) {
@@ -166,6 +182,11 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestParams
 {
     std::string sql = "";
     FileType type = DataBaseManager::Instance().GetFileType(path);
+    if (!GetMemoryDbContext().withMemoryRecord) {
+        ServerLog::Warn("Missing table % on querying memory view, nothing will be done.", TABLE_MEMORY_RECORD);
+        return true;
+    }
+
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     if (type == FileType::PYTORCH) {
         sql += "select * from ( ";
@@ -177,11 +198,13 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestParams
             "ROUND(totalActive / (1024.0 * 1024.0), 2) as totalActive, streamPtr as stream, " +
             deviceIdColumnName + " FROM ";
         sql += TABLE_MEMORY_RECORD + " JOIN STRING_IDS AS NAME ON NAME.id = MEMORY_RECORD.component ";
-        sql += " UNION ALL select 'APP' as component, ROUND((timestampNs - " + std::to_string(startTime) +
-               " ) / (1000.0 * 1000.0), 2) as timestampNs, "
-               " 0 as totalAllocated,  ROUND((hbm + ddr) / (1024.0 * 1024.0), 2) as totalReserve, "
-               " 0 as totalActive, '' as stream, deviceId from NPU_MEM join STRING_IDS as ids on ids.id = type "
-               " where value = 'app' ";
+        if (GetMemoryDbContext().withNpuMem) {
+            sql += " UNION ALL select 'APP' as component, ROUND((timestampNs - " + std::to_string(startTime) +
+                   " ) / (1000.0 * 1000.0), 2) as timestampNs, "
+                   " 0 as totalAllocated,  ROUND((hbm + ddr) / (1024.0 * 1024.0), 2) as totalReserve, "
+                   " 0 as totalActive, '' as stream, deviceId from NPU_MEM join STRING_IDS as ids on ids.id = type "
+                   " where value = 'app' ";
+        }
         sql += " ) WHERE " + deviceIdColumnName + " = ? ";
     } else {
         ServerLog::Error("Memory tab does not support msprof data.");
@@ -197,6 +220,10 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestParams
 
 bool DbMemoryDataBase::QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum)
 {
+    if (!GetMemoryDbContext().withNpuModuleMem) {
+        ServerLog::Warn("Missing table % on querying component detail, nothing will be done.", TABLE_NPU_MODULE_MEM);
+        return true;
+    }
     std::string sql;
     FileType type = DataBaseManager::Instance().GetFileType(path);
     if (type == FileType::PYTORCH) {
@@ -215,6 +242,10 @@ bool DbMemoryDataBase::QueryOperatorSize(Protocol::MemoryOperatorSizeParams &req
 {
     FileType type = DataBaseManager::Instance().GetFileType(path);
     std::string sql = "";
+    if (!GetMemoryDbContext().withOperatorMemory) {
+        ServerLog::Warn("Missing table % on querying operator size, nothing will be done.", TABLE_OPERATOR_MEMORY);
+        return true;
+    }
     if (type == FileType::PYTORCH) {
         sql += "SELECT ROUND(min(size)/ 1024.0, 2) as minSize, "
                " ROUND(max(size)/ 1024.0, 2) as maxSize FROM " + TABLE_OPERATOR_MEMORY +
@@ -381,6 +412,18 @@ void DbMemoryDataBase::GetSelectOperatorMemoryColumnAndAlias(std::string_view co
 std::string DbMemoryDataBase::GetJoinStringIDSAlias(std::string_view joinCol)
 {
     return StringUtil::FormatString("SI_{}", joinCol);
+}
+
+MemoryDataBaseContext DbMemoryDataBase::GetMemoryDbContext()
+{
+    if (!initContextFlag) {
+        memDbContext.withMemoryRecord = CheckTableExist(TABLE_MEMORY_RECORD);
+        memDbContext.withOperatorMemory = CheckTableExist(TABLE_OPERATOR_MEMORY);
+        memDbContext.withNpuModuleMem = CheckTableExist(TABLE_NPU_MODULE_MEM);
+        memDbContext.withNpuMem = CheckTableExist(TABLE_NPU_MEM);
+        initContextFlag = true;
+    }
+    return memDbContext;
 }
 
 }

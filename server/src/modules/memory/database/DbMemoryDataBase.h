@@ -69,6 +69,7 @@ public:
     static void Reset();
     void GetSelectOperatorMemoryColumnAndAlias(std::string_view columnKey, uint64_t baseTimestamp,
                                                std::string& column, std::string& alias) override;
+    MemoryDataBaseContext GetMemoryDbContext() override;
 
 private:
     static std::map<std::string, Protocol::MemorySuccess> ranks;

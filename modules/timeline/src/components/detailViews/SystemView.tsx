@@ -372,9 +372,9 @@ const SelectList = observer((props: { session: Session; viewOption: number; sele
                     <div>{t(item.name)}</div>
                     {
                         item.tips !== undefined &&
-                                <Tooltip title={t(item.tips)}>
-                                    <HelpIcon style={{ cursor: 'pointer', marginLeft: 4 }} height={20} width={20} />
-                                </Tooltip>
+                            <Tooltip title={t(item.tips)} placement={'topLeft'}>
+                                <HelpIcon style={{ cursor: 'pointer', marginLeft: 4 }} height={20} width={20} />
+                            </Tooltip>
                     }
                 </div>
                 ),

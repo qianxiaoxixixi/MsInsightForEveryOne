@@ -17,10 +17,12 @@
  */
 
 import { register } from './register';
-import { KEYS } from '@insight/lib/utils';
+import { errorCenter, ErrorCode, KEYS, WsError } from '@insight/lib/utils';
 import type { Session } from '../entity/session';
 import { runInAction } from 'mobx';
 import { getZoomPoint } from '../components/charts/ChartInteractor/ChartInteractor';
+import { MAX_ZOOM_DURATION } from '../entity/domain';
+import { i18n } from '@insight/lib';
 
 enum ZoomDirection {
     IN = -1,
@@ -107,6 +109,11 @@ export const actionZoomOut = register({
     name: 'zoomOut',
     label: '',
     perform: (session, interactorMouseState, xScale): void => {
+        if (session.domain.duration >= MAX_ZOOM_DURATION) {
+            errorCenter.handleError(new WsError(ErrorCode.ZOOM_LIMIT_WARNING, i18n.t('timeline:zoomOutLimitWarning', { maxDuration: MAX_ZOOM_DURATION / 60 / 1e9 })));
+            return;
+        }
+
         const zoomPoint = interactorMouseState === undefined || xScale === undefined
             ? 0
             : getZoomPoint(xScale, interactorMouseState);

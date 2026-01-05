@@ -26,5 +26,4 @@ export const SearchBox = styled(FlexDiv)`
     margin: 0 0 20px;
     flex-wrap: wrap;
     gap: 24px;
-    padding: 0 24px;
 `;

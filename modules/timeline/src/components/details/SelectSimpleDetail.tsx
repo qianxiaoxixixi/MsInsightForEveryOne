@@ -65,7 +65,13 @@ export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
     }, [state.dataSource]);
     // 新增Summary(Totals)行
     const summary = (): React.ReactNode => dataSource?.length ? generateSummary(state, dataSource) : undefined;
-    return <ResizeTable className={'table-slice-list'} {...state} summary={summary} dataSource={dataSource} allowCopy
+    return <ResizeTable
+        key={`${session.selectedRange?.[0]}_${session.selectedRange?.[1]}_${dataSource.length}`}
+        className={'table-slice-list'}
+        {...state}
+        summary={summary}
+        dataSource={dataSource}
+        allowCopy
         scroll={{ y: scrollY, x: TABLE_MIN_WIDTH }} virtual
         rowClassName={(row): string => {
             return selectedKey !== null && selectedKey === getAutoKey(row) ? 'selected-row' : 'click-able';

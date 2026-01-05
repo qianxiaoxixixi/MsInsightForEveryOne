@@ -53,6 +53,12 @@ const antdTooltipCss = (theme: Theme): SerializedStyles => css`
     }
 `;
 
+const antdSpinCss = (theme: Theme): SerializedStyles => css`
+    .ant-spin-container:after{
+        background: ${theme.bgColorLighter};
+    }
+`;
+
 const formatterCss = css`
     .formatter{
         .row {
@@ -143,6 +149,7 @@ export const GlobalStyles = (): JSX.Element => {
             ${formatterCss};
             ${antdFormCss};
             ${modalConfirmCss(theme)};
+            ${antdSpinCss(theme)};
         `}
     />;
 };

@@ -347,12 +347,17 @@ export const ThreadUnit = unit<ThreadMetaData>({
         type: 'stackStatus',
         height: UnitHeight.COLL,
         mapFunc: async (session: Session, metaData: unknown, thisUnit?: InsightUnit) => {
+            if (thisUnit === undefined) { return []; }
             const threadMetaData = metaData as ThreadMetaData;
             // 查询泳道chart参数加上时间偏移
             const timestampOffset = getTimeOffset(session, threadMetaData);
             const requestParams = getThreadTracesRequestParams(session, threadMetaData, timestampOffset);
             try {
-                const request = await window.request(requestParams.dataSource as DataSource, { command: 'unit/threadTraces', params: requestParams });
+                thisUnit.isTraceLoading = true;
+                const request = await window.request(requestParams.dataSource as DataSource, { command: 'unit/threadTraces', params: requestParams }, { silent: true }).finally(() => {
+                    thisUnit.isTraceLoading = false;
+                });
+
                 if (request === undefined) {
                     return [];
                 }

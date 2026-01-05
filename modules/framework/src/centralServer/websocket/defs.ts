@@ -15,6 +15,8 @@
  * See the Mulan PSL v2 for more details.
  * -------------------------------------------------------------------------
  */
+import { ProjectType } from '@/utils/enum';
+
 export const CONTENT_LENGTH_PREFIX = 'Content-Length';
 const getParamMap = (): Map<string, string> => {
     const paramMap: Map<string, string> = new Map();
@@ -122,6 +124,7 @@ export interface ImportResultBody {
     isCluster: boolean;
     isMultiDevice: boolean; // 判断是否是单Host多Device项目
     children: ImportTreeInfo[];
+    isIE: boolean;
 }
 
 export interface ImportRankInfo {
@@ -138,6 +141,7 @@ export interface ImportTreeInfo {
     cardName?: string;
     rankId?: string;
     children: ImportTreeInfo[];
+    projectType: ProjectType;
 }
 
 export interface ProjectDirectory {

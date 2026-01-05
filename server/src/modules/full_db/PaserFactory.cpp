@@ -370,11 +370,13 @@ void ProjectParserBase::SendAllParseSuccess()
 {
     ParserStatusManager::Instance().WaitStartParse();
     std::string notFinishTask = "";
+    const int maxSleepTimeMs = 2000;
+    int sleepTime = 200;
     while (!ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
 #ifdef INSIGHT_DEBUG
         ServerLog::Info("NotFinishTask is: ", notFinishTask);
 #endif
-        const int sleepTime = 2000;
+        sleepTime = std::min(sleepTime * 2, maxSleepTimeMs);
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
     }
     ServerLog::Info("Send all parse finished");

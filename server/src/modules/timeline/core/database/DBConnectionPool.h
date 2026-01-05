@@ -59,7 +59,7 @@ private:
     std::condition_variable cv;
     std::string path;
     bool valid = true;
-    unsigned int maxActiveConnections = 20;
+    unsigned int maxActiveConnections = 30;
     int maxRetryAttempts = 3;
     int maxWaitTime = 2; // seconds
     std::deque<T *> idlePool;

@@ -27,6 +27,8 @@ namespace Dic::Common {
 // 错误码枚举
 enum class ErrorCode {
     RESET_ERROR = 0,
+    // 过滤请求
+    OUTDATED_REQUEST_ERROR = 1000,
     // 接口入参错误
     PARAMS_ERROR = 1101,
 

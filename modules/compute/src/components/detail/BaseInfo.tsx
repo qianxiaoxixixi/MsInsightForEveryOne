@@ -36,17 +36,17 @@ interface Ilabel {
     value?: ReactNode;
 }
 interface IblockDetail {
-    headerName: string[] ;
-    row: Array<{value: string[]}>;
+    headerName: string[];
+    row: Array<{ value: string[] }>;
 }
 interface Ibaseinfo {
     name?: string;
     soc?: string;
     opType?: string;
-    duration?: string ;
-    blockDim?: string ;
-    blockDetail?: IblockDetail ;
-    mixBlockDim?: string ;
+    duration?: string;
+    blockDim?: string;
+    blockDetail?: IblockDetail;
+    mixBlockDim?: string;
     pid?: string;
     deviceId?: string;
 
@@ -126,7 +126,7 @@ function BlockDetail({ blockDetail = { headerName: [], row: [] } }: Ibaseinfo): 
     useEffect(() => {
         setLimit({ ...limit, overlimit: blockDetail.row.length > limit.maxSize, current: blockDetail.row.length });
     }, [blockDetail]);
-    return (<div style={{ width: '600px' }}>
+    return (<div style={{ width: '100%' }}>
         {limit.overlimit && (<LimitHit maxSize={limit.maxSize} name={`${tDetails('Block Detail Records')} (${limit.current})`}/>)}
         <ResizeTable
             size="small"
@@ -222,15 +222,23 @@ const index = observer(({ session }: Iprops): JSX.Element => {
 
     return (
         <CollapsiblePanel title={t('BaseInfo')} collapsible id={'baseinfo'}>
-            {
-                items.map((item, itemIndex) => <MIDescriptions title={''} key={itemIndex}>
-                    {
-                        item.map((node, nodeIndex) => <MIDescriptionsItem key={nodeIndex} label={node.label}>
-                            {node.value}
-                        </MIDescriptionsItem>)
-                    }
-                </MIDescriptions>)
-            }
+            {items.map((item, itemIndex) => (
+                <>
+                    <MIDescriptions title={''} key={itemIndex}>
+                        {item.filter(column => column.key !== 'blockDetail').map((column, idx) => (
+                            <MIDescriptionsItem key={idx} label={column.label} style={{ flex: 1 }}>
+                                {column.value}
+                            </MIDescriptionsItem>
+                        ))}
+                    </MIDescriptions>
+                    {item.filter(column => column.key === 'blockDetail').map((column, idx) => (
+                        <>
+                            <div style={{ marginTop: '16px', marginBottom: '4px', color: '#8D98AA' }}>{column.label}：</div>
+                            {column.value}
+                        </>
+                    ))}
+                </>
+            ))}
         </CollapsiblePanel>
     );
 });

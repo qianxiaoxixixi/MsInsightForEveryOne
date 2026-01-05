@@ -806,7 +806,7 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, theme: T
     ctx.rect(-1, clipTop, ctx.canvas.width + 1, ctx.canvas.height + 1);
     ctx.clip();
     const units = toJS(session.units);
-    if (session.linkLineCategories.length) {
+    if (session.linkLineCategories.length && session.drawLineMode === 'all') {
         const checkedCategories = [...session.linkLineCategories, session.ridLineType];
         for (const checkedCategory of checkedCategories) {
             const rawList = session.linkLines[checkedCategory] ?? [];

@@ -728,9 +728,11 @@ bool DbTraceDataBase::GenerateOverlapAnalysis()
         ExecSql("delete from OVERLAP_ANALYSIS where 1 = 1");
     }
     QueryRankId();
-    std::unordered_map<std::string, std::string> deviceMap = QueryRankIdAndDeviceMap();
-    for (const auto &rankId: rankIds) {
-        std::string deviceId = deviceMap.count(rankId) == 0 ? rankId : deviceMap.at(rankId);
+    // 考虑到PyTorch多Device场景，这里需要遍历所有deviceId
+    // NPU_INFO表除了纯Host数据没有，其它场景保证有，它的id列保存了所有的deviceId
+    std::vector<uint64_t> deviceIdList = TraceDatabaseHelper::GetDeviceIdList(path);
+    for (const auto deviceIdNum: deviceIdList) {
+        std::string deviceId = std::to_string(deviceIdNum);
         std::vector<OVERLAP_INFO> timeInfoList; // 包含computing,Communication 覆盖数据
         QueryTaskTimeInfo(true, timeInfoList, deviceId);
         QueryTaskTimeInfo(false, timeInfoList, deviceId);
@@ -739,13 +741,11 @@ bool DbTraceDataBase::GenerateOverlapAnalysis()
         }
         std::sort(timeInfoList.begin(), timeInfoList.end(), std::less<OVERLAP_INFO>());
         const std::vector<OVERLAP_INFO> overlapInfoList = BuildOverlapInfoList(timeInfoList, deviceId);
-        if (InsertOverlapAnalysisInfo(timeInfoList, deviceId) && InsertOverlapAnalysisInfo(overlapInfoList, deviceId)) {
-            Server::ServerLog::Info("Generate overlap analysis success for device: ", deviceId);
-            return true;
-        } else {
-            Server::ServerLog::Error("Generate overlap analysis fail");
+        if (!InsertOverlapAnalysisInfo(timeInfoList, deviceId) || !InsertOverlapAnalysisInfo(overlapInfoList, deviceId)) {
+            Server::ServerLog::Error("Failed to generate overlap analysis.");
             return false;
         }
+        Server::ServerLog::Info("Successfully generated overlap analysis for device: ", deviceId);
     }
     return true;
 }
@@ -800,7 +800,7 @@ void DbTraceDataBase::QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_IN
     } else {
         sql = "select op.startNs, op.endNs from COMMUNICATION_OP op ";
         if (!isUniqueDevice) {
-            sql += " join TASK task on task.connectionId = op.connectionId where deviceId=? ";
+            sql += " join TASK task on task.connectionId = op.connectionId where task.deviceId=? ";
         }
         sql += " group by opId  order by op.startNs, op.endNs";
     }
@@ -920,12 +920,18 @@ bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedState
             return rankAndDeviceMap;
         }
 
+        // PyTorch多Device场景，map实际保存deviceId到自身的映射，其它场景保存rankId到deviceId的映射
+        // NPU_INFO表除了纯Host数据没有，其它场景保证有，它的id列保存了所有的deviceId
+        bool isMultiDevice = TraceDatabaseHelper::GetDeviceIdList(path).size() > 1;
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             std::string deviceId = sqlite3_column_string(stmt, resultStartIndex);
             std::string rankId = sqlite3_column_string(stmt, resultStartIndex + 1);
             // rankId存在多个映射值时取较大值，为-1时丢弃
             if (deviceId == "-1") {
                 continue;
+            }
+            if (isMultiDevice) {
+                rankId = deviceId;
             }
             rankAndDeviceMap[rankId] = StringUtil::StrNumMax(deviceId, rankAndDeviceMap[rankId]);
         }

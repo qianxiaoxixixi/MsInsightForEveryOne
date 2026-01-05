@@ -127,6 +127,7 @@ export const SkeletonWrapper = styled.div`
 `;
 
 export const Canvas = styled.canvas`
+    display: block;
     width: 100%;
     height: 100%;
     margin: 0;

@@ -32,7 +32,7 @@ import {
     importProject,
     ImportProjectParams,
 } from '@/utils/Request';
-import { ProjectAction, SessionAction } from '@/utils/enum';
+import { ProjectAction, SessionAction, ProjectType } from '@/utils/enum';
 import { updateRankMap } from '@/utils/Rank';
 import { transformFile, updateProject } from '@/utils/Project';
 import { closeLoading } from '@/utils/useLoading';
@@ -157,8 +157,15 @@ const afterImportProject = (params: ImportProjectParams, data: ImportResultBody)
         const projectName = params.projectName;
         const projectPath = params.path;
         const importRankList = reduceImportRankInfoList(data.children);
-        const selectedFilePath = params.selectedFilePath ?? importRankList?.[0]?.filePath ?? '';
-        const selectedRankId = params.selectedRankId ?? importRankList?.[0]?.rankId ?? '';
+        let targetList = importRankList;
+
+        // selectedFilePath、selectedRankId 仅在Cluster模块使用，联合导入需排除ProjectType.IE类型数据，避免初次导入selectedFilePath取到ProjectType.IE的filePath
+        if (data.isCluster && data.isIE) {
+            const subOfNotIE = data.children.filter(item => item.projectType !== ProjectType.IE);
+            targetList = reduceImportRankInfoList(subOfNotIE);
+        }
+        const selectedFilePath = params.selectedFilePath ?? targetList?.[0]?.filePath ?? '';
+        const selectedRankId = params.selectedRankId ?? targetList?.[0]?.rankId ?? '';
         const selectedFileType: LayerType = params.selectedFileType ?? 'RANK'; // 此处暂时用 RANK，实际应该和 data.subdirectoryList[0] 中应该带有的类型相同
         const children = data.children?.map((child) => transformFile(child, 0))
             ?.flat()?.filter((item) => item !== undefined) as FileOrDirectory[];

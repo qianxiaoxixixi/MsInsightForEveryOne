@@ -166,6 +166,7 @@ export const useClick = <T extends ChartType>({
             if (mousedownX !== null && Math.abs(mousedownX - e.offsetX) > CLICK_TOLERANCE) {
                 runInAction(() => {
                     session.selectedData = undefined;
+                    session.drawLineMode = 'all';
                 });
                 if (mouseMoved && mousedownX !== null) {
                     handleMouseMoveUp?.([mousedownX, e.offsetX]);
