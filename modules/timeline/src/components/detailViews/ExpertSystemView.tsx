@@ -37,32 +37,62 @@ import { ExpertSummary } from './ExpertSummary';
 import { queryExpertAnalysis, queryOperatorDispatch } from '../../api/request';
 import type { BaseSummaryRowItemType } from '../../api/interface';
 import jumpToUnitOperator from '../../utils/jumpToUnitOperator';
+import type { CardMetaData } from '../../entity/data';
+import { ProjectType } from '../../entity/insight';
 
 const ExpertAnalysis = observer((props: SelectContentViewProps) => {
+    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
+    if (targetInfo?.projectType === ProjectType.IE) {
+        return <div></div>;
+    }
     return <ExpertSummary request={queryExpertAnalysis} {...props} />;
 });
 
 const AffinityAPI = observer((props: SelectContentViewProps) => {
+    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
+    if (targetInfo?.projectType === ProjectType.IE) {
+        return <div></div>;
+    }
     return <BaseSummary request={queryAffinityAPI} columns={affinityAPIColumns} {...props} />;
 });
 
 const AffinityOptimizer = observer((props: SelectContentViewProps) => {
+    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
+    if (targetInfo?.projectType === ProjectType.IE) {
+        return <div></div>;
+    }
     return <BaseSummary request={queryAffinityOptimizer} columns={affinityOptimizerColumns} {...props} />;
 });
 
 const AICPUOperator = observer((props: SelectContentViewProps) => {
+    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
+    if (targetInfo?.projectType === ProjectType.IE) {
+        return <div></div>;
+    }
     return <BaseSummary request={queryAICPUOperators} columns={aicpuOperatorColumns} {...props} />;
 });
 
 const ACLNNOperator = observer((props: SelectContentViewProps) => {
+    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
+    if (targetInfo?.projectType === ProjectType.IE) {
+        return <div></div>;
+    }
     return <BaseSummary request={queryACLNNOperators} columns={aclnnOperatorColumns} {...props} />;
 });
 
 const FusedOperator = observer((props: SelectContentViewProps) => {
+    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
+    if (targetInfo?.projectType === ProjectType.IE) {
+        return <div></div>;
+    }
     return <BaseSummary request={queryOperatorFusion} columns={fusionOperatorColumns} {...props} />;
 });
 
 const OperatorDispatch = observer((props: SelectContentViewProps) => {
+    const targetInfo = props.session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === props.card.cardId);
+    if (targetInfo?.projectType === ProjectType.IE) {
+        return <div></div>;
+    }
     return <BaseSummary request={queryOperatorDispatch} columns={operatorDispatchColumns} {...props} />;
 });
 
