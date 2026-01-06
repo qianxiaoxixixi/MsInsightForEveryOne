@@ -22,13 +22,13 @@
 #include "GlobalProtocolResponse.h"
 #include "ProtocolDefs.h"
 #include "FileUtil.h"
+#include "TestSuit.h"
 
 using namespace Dic::Module::Global;
 using namespace Dic::Protocol;
 class FileSelectorTest : public ::testing::Test {
 protected:
-    inline static std::string currPath = Dic::FileUtil::GetCurrPath();
-    inline static int index = currPath.find_last_of("server");
+    inline static std::string testDataDir = TestSuit::GetSrcTestPath() + "test_data";
 };
 
 TEST_F(FileSelectorTest, TestPathNotExist)
@@ -46,9 +46,9 @@ TEST_F(FileSelectorTest, TestPathNotExist)
 TEST_F(FileSelectorTest, TestContainFolder)
 {
 #ifdef _WIN32
-    std::string path =  currPath.substr(0, index + 1) + R"(\src\test\test_data\msprof)";
+    std::string path =  testDataDir + R"(\msprof)";
 #else
-    std::string path =  currPath.substr(0, index + 1) + R"(/src/test/test_data/msprof)";
+    std::string path =  testDataDir + R"(/msprof)";
 #endif
     std::vector<std::unique_ptr<Folder>> childrenFolders;
     std::vector<std::unique_ptr<Folder>> realChildrenFolders;
@@ -72,9 +72,9 @@ TEST_F(FileSelectorTest, TestContainFolder)
 TEST_F(FileSelectorTest, TestContainFiles)
 {
 #ifdef _WIN32
-    std::string path =  currPath.substr(0, index + 1) + R"(\src\test\test_data\full_db)";
+    std::string path =  testDataDir + R"(\full_db)";
 #else
-    std::string path =  currPath.substr(0, index + 1) + R"(/src/test/test_data/full_db)";
+    std::string path =  testDataDir + R"(/full_db)";
 #endif
     std::vector<std::unique_ptr<Folder>> childrenFolders;
     std::vector<std::unique_ptr<File>> childrenFiles;
@@ -97,9 +97,9 @@ TEST_F(FileSelectorTest, TestContainFiles)
 TEST_F(FileSelectorTest, TestContainFolderandFiles)
 {
 #ifdef _WIN32
-    std::string path =  currPath.substr(0, index + 1) + R"(\src\test\test_data\test_rank_0)";
+    std::string path =  testDataDir + R"(\test_rank_0)";
 #else
-    std::string path =  currPath.substr(0, index + 1) + R"(/src/test/test_data/test_rank_0)";
+    std::string path =  testDataDir + R"(/test_rank_0)";
 #endif
     std::vector<std::unique_ptr<Folder>> childrenFolders;
     std::vector<std::unique_ptr<Folder>> realChildrenFolders;

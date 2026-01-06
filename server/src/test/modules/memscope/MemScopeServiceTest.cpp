@@ -35,15 +35,11 @@ public:
     const static uint64_t SECOND = 1000000000;
     static void SetUpTestSuite()
     {
-        std::string currPath = Dic::FileUtil::GetCurrPath();
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        std::string dbPath3 = R"(/src/test/test_data/full_db/)";
-        std::string fullDbPath = StringUtil::StrJoin(currPath, dbPath3, "leaks_dump_20250806.dat");
-        DataBaseManager::Instance().SetDataType(DataType::DB, fullDbPath);
-        DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE, fullDbPath);
+        std::string dbPath = TestSuit::GetSrcTestPath() + R"(test_data/full_db/leaks_dump_20250806.dat)";
+        DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
+        DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE, dbPath);
         auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
-        ASSERT_TRUE(memoryDatabase->OpenDb(fullDbPath, false));
+        ASSERT_TRUE(memoryDatabase->OpenDb(dbPath, false));
     }
     static void TearDownTestSuite()
     {

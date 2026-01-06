@@ -82,6 +82,7 @@ aux_source_directory(${TEST_HOME_DIR}/modules/rl TEST)
 include_directories(
         ${TEST_HOME_DIR}/modules/memory
         ${TEST_HOME_DIR}/mock
+        ${TEST_HOME_DIR}
 )
 
 list(APPEND DIC_TEST_LIST

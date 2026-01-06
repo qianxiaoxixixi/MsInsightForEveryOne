@@ -47,15 +47,12 @@ class VirtualSummaryDatabaseTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        std::string currPath = Dic::FileUtil::GetCurrPath();
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        std::string dbPathRank0 = currPath + R"(/src/test/test_data/operator_st/db_rank_0.dat)";
-        std::string textPathRank0 = currPath + R"(/src/test/test_data/operator_st/text_rank_0.dat)";
+        std::string operatorDataPath = TestSuit::GetSrcTestPath() + "test_data/operator_st/";
+        std::string dbPathRank0 = operatorDataPath + "db_rank_0.dat";
+        std::string textPathRank0 = operatorDataPath + "text_rank_0.dat";
         // 设置db版本避免被重置，该套件仅用于db/text场景查询ST，不考虑解析
         SetDatabaseVersion(dbPathRank0);
         SetDatabaseVersion(textPathRank0);
-
         // 初始化stringCache
         std::recursive_mutex tmpMutex;
         DbTraceDataBase tmpFullDbRank0 = DbTraceDataBase(tmpMutex);

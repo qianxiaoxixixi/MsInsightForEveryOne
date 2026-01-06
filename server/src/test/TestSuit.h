@@ -62,10 +62,19 @@ public:
     // 获取渲染引擎实例
     static std::shared_ptr<RenderEngine> GetRenderEngine();
 
+    // 获取server(.../server)
+    static std::string GetServerHome();
+    // 获取server/src下的测试目录.../server/src/test)
+    static std::string GetSrcTestPath();
+    // 获取根目录下的测试目录
+    static std::string GetRootTestPath();
 private:
     // 禁止拷贝构造和赋值操作
     TestSuit(const TestSuit&) = delete;
     TestSuit& operator=(const TestSuit&) = delete;
+    static std::string serverHome;
+    static std::string srcTestPath;
+    static std::string rootTestPath;
 };
 
 #endif // PROFILER_SERVER_TESTSUIT_H

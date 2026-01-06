@@ -19,6 +19,7 @@
 #include "OverlapAnsRepo.h"
 #include "TrackInfoManager.h"
 #include "DataBaseManager.h"
+#include "TestSuit.h"
 #include "../../../DatabaseTestCaseMockUtil.h"
 using namespace Dic::Module::Timeline;
 using namespace Dic::Global::PROFILER::MockUtil;
@@ -32,10 +33,7 @@ public:
         "startNs integer, endNs integer, type integer);";
     static void SetUpTestSuite()
     {
-        std::string currPath = Dic::FileUtil::GetCurrPath();
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        g_testDbPath = currPath + R"(/src/test/test_data/test_overlap_database.db)";
+        g_testDbPath = TestSuit::GetSrcTestPath() + R"(test_data/test_overlap_database.db)";
         g_testDataBase.OpenDb(g_testDbPath, false);
         DataBaseManager::Instance().SetDataType(DataType::DB, g_testDbPath);
         DataBaseManager::Instance().CreateTraceConnectionPool("0", g_testDbPath);

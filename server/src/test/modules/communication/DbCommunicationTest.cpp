@@ -24,6 +24,7 @@
 #include "ParamsParser.h"
 #include "PacketAnalyzer.h"
 #include "ByteAlignmentAnalyzer.h"
+#include "TestSuit.h"
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
@@ -34,16 +35,13 @@ class DbCommunicationTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        std::string dbPath3 = R"(/src/test/test_data/full_db/)";
-        std::string dbFilePath = currPath + dbPath3 + "cluster_analysis.db";
+        std::string dataDir = TestSuit::GetSrcTestPath() + R"(test_data/full_db/)";
+        std::string dbFilePath = dataDir + "cluster_analysis.db";
         DataBaseManager::Instance().SetDataType(DataType::DB, dbFilePath);
         DataBaseManager::Instance().SetFileType(FileType::MS_PROF, dbFilePath);
-        std::string clusterDbPath = currPath + dbPath3 + "cluster_analysis.db";
+        std::string clusterDbPath = dataDir + "cluster_analysis.db";
         Dic::Module::FullDb::DataBaseManager::Instance().CreateClusterConnectionPool(COMPARE, clusterDbPath,
             Dic::Module::Timeline::DataType::DB);
         auto clusterDatabase = Dic::Module::FullDb::DataBaseManager::Instance().GetClusterDatabase(COMPARE);

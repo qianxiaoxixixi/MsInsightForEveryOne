@@ -34,10 +34,7 @@ protected:
     std::string filePath;
     void SetUp() override
     {
-        std::string currPath = Dic::FileUtil::GetCurrPath();
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        filePath = currPath + R"(/src/test/test_data/test_bin_mix/visualize_data.bin)";
+        filePath = TestSuit::GetSrcTestPath() + R"(test_data/test_bin_mix/visualize_data.bin)";
     }
     static Dic::Module::Source::SourceFileParser &InitParser(const std::string &dataPath, const std::string &fileId)
     {

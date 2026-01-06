@@ -18,9 +18,10 @@
 
 set -e
 CUR_DIR=$(dirname $(readlink -f $0))
+ARCH=$(uname -m)
 TOP_DIR=${CUR_DIR}/..
 cd ${TOP_DIR}/server/build
-export LD_LIBRARY_PATH=${TOP_DIR}'/server/output/linux-x86_64/bin':${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=${TOP_DIR}'/server/output/linux-'${ARCH}'/bin':${LD_LIBRARY_PATH}
 python3 preprocess_third_party.py
 python3 build.py test
 
@@ -32,7 +33,7 @@ if [ ! -d "${COV_DIR}" ] ; then
     mkdir -p ${COV_DIR}
 fi
 
-cd ../output/linux-x86_64/bin
+cd ../output/linux-${ARCH}/bin
 
 ./insight_test
 # 平台暂时不支持覆盖率，这里先屏蔽

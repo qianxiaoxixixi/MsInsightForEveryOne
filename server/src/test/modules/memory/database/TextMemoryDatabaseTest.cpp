@@ -17,6 +17,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "TestSuit.h"
 #include "MemoryProtocolRequest.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"

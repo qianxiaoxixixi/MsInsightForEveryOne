@@ -23,6 +23,7 @@
 #include "DataBaseManager.h"
 #include "TimeUtil.h"
 #include "BaselineManager.h"
+#include "TestSuit.h"
 
 using namespace Dic::Module::Communication;
 
@@ -39,11 +40,8 @@ protected:
 
     void SetUp() override
     {
-        std::string  currPath = Dic::FileUtil::GetCurrPath();
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        filePath = currPath + R"(/src/test/test_data/cluster_analysis_output)";
-        baselineFilePath = currPath + R"(/src/test/test_data/baseline_cluster/cluster_analysis_output)";
+        filePath = TestSuit::GetSrcTestPath() + R"(test_data/cluster_analysis_output)";
+        baselineFilePath = TestSuit::GetSrcTestPath() + R"(test_data/baseline_cluster/cluster_analysis_output)";
         dbPath = filePath + FILE_SEPARATOR + "cluster.db";
         dbBaselinePath = baselineFilePath + FILE_SEPARATOR + "cluster.db";
     }

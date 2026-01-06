@@ -19,16 +19,14 @@
 #include "../../defaultMock/MockFileReader.h"
 #include "ParserJson_mock_data.h"
 #include "ProjectParserJson.h"
+#include "TestSuit.h"
 using namespace Dic::Module;
 using namespace Dic::Module::ParserJsonMock;
 class ParserJsonTest : public ::testing::Test {
 protected:
     inline std::string GetTestDataDir()
     {
-        static std::string currPath = FileUtil::GetCurrPath();
-        static auto index = currPath.find_last_of("server");
-        static std::string testDataDir = currPath.substr(0, index + 1) + R"(/src/test/test_data)";
-        return testDataDir;
+        return TestSuit::GetSrcTestPath() + R"(test_data)";
     }
 };
 

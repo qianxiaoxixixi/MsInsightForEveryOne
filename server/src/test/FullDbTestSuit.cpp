@@ -17,6 +17,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "TestSuit.h"
 #include "DataBaseManager.h"
 #include "ParamsParser.h"
 #include "FullDbParser.h"
@@ -48,11 +49,8 @@ public:
         dataEngine->SetRepositoryFactory(respotoryFactory);
         auto renderEngine = RenderEngine::Instance();
         renderEngine->SetDataEngineInterface(dataEngine);
-        const std::string server = "server";
-        int index = currPath.find_last_of(server);
-        currPath = currPath.substr(0, index - server.length()); // 取 server 前的文件路径
-        std::string dbPath3 = currPath + R"(/server/src/test/test_data/full_db/msprof_0.db)";
-
+        const std::string srcTestPath = TestSuit::GetSrcTestPath(); // 取 server 前的文件路径
+        std::string dbPath3 = srcTestPath + R"(test_data/full_db/msprof_0.db)";
         DataBaseManager::Instance().SetDataType(DataType::DB, dbPath3);
         DataBaseManager::Instance().SetFileType(FileType::MS_PROF, dbPath3);
         std::pair<std::string, ParserType> parserType = std::make_pair(dbPath3, ParserType::DB);
