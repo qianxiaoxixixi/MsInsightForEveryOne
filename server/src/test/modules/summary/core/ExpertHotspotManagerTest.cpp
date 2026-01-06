@@ -30,6 +30,7 @@
 #include "DataEngine.h"
 #include "RenderEngine.h"
 #include "ProjectParserFactory.h"
+#include "TestSuit.h"
 
 using namespace Dic::Module::FullDb;
 class ExpertHotspotManagerTest : public ::testing::Test {
@@ -41,14 +42,11 @@ protected:
     std::string heatMapProfilingPath;
     void SetUp() override
     {
-        std::string  currPath = Dic::FileUtil::GetCurrPath();
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        filePath = currPath + R"(/src/test/test_data/cluster_analysis_output)";
-        baselineFilePath = currPath + R"(/src/test/test_data/baseline_cluster/cluster_analysis_output)";
-        hotspotPath = currPath + R"(/src/test/test_data/expert_hotspot)";
-        deploymentPath = currPath + R"(/src/test/test_data/expert_deployment)";
-        heatMapProfilingPath = currPath + R"(/src/test/test_data/heatMap/)";
+        filePath = TestSuit::GetSrcTestPath() + R"(test_data/cluster_analysis_output)";
+        baselineFilePath = TestSuit::GetSrcTestPath() + R"(test_data/baseline_cluster/cluster_analysis_output)";
+        hotspotPath = TestSuit::GetSrcTestPath() + R"(test_data/expert_hotspot)";
+        deploymentPath = TestSuit::GetSrcTestPath() + R"(test_data/expert_deployment)";
+        heatMapProfilingPath = TestSuit::GetSrcTestPath() + R"(test_data/heatMap/)";
     }
 
     void InitParser(const std::string &dataPath)

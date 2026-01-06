@@ -32,11 +32,8 @@ public:
 
     static void SetUpTestCase()
     {
-        string currPath = Dic::FileUtil::GetCurrPath();
-        auto index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        dataPath = currPath + R"(/src/test/test_data/data.bin)";
-        dbPath = currPath + R"(/src/test/test_data/compute_mindstudio_insight_data.db)";
+        dataPath = TestSuit::GetSrcTestPath() + R"(test_data/data.bin)";
+        dbPath = TestSuit::GetSrcTestPath() + R"(test_data/compute_mindstudio_insight_data.db)";
         DataBaseManager::Instance().SetDataType(DataType::TEXT, dbPath);
         DataBaseManager::Instance().CreateTraceConnectionPool(dataPath, dbPath);
     }

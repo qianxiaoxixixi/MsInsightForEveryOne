@@ -60,17 +60,14 @@ TEST(TestUtil, testGetDouble)
 
 TEST(TestUtil, TestSplitToRankList)
 {
-    std::string currPath = Dic::FileUtil::GetCurrPath();
-    int index = currPath.find_last_of("server");
-    currPath = currPath.substr(0, index + 1);
     std::vector<std::pair<std::string, std::string>> fileList;
     std::pair<std::string, std::string> pair1;
     pair1.first = "1";
-    pair1.second = currPath + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json";
+    pair1.second = TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json";
     fileList.push_back(pair1);
     std::pair<std::string, std::string> pair2;
     pair1.first = "0";
-    pair1.second = currPath + "/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/trace_view.json";
+    pair1.second = TestSuit::GetSrcTestPath() + "test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/trace_view.json";
     fileList.push_back(pair2);
     std::map<std::string, std::vector<std::string>> result = FileUtil::SplitToRankList(fileList);
     EXPECT_EQ(result.size(), 2);
@@ -78,41 +75,32 @@ TEST(TestUtil, TestSplitToRankList)
 
 TEST(TestUtil, TestGetRankIdFromFile)
 {
-    std::string currPath = Dic::FileUtil::GetCurrPath();
-    int index = currPath.find_last_of("server");
-    currPath = currPath.substr(0, index + 1);
     std::string rank = FileUtil::GetRankIdFromFile(
-            currPath + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json");
+            TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json");
     EXPECT_EQ(rank, "1");
 }
 
 TEST(TestUtil, TestGetRankIdFromPath)
 {
-    std::string currPath = Dic::FileUtil::GetCurrPath();
-    int index = currPath.find_last_of("server");
-    currPath = currPath.substr(0, index + 1);
     std::string rank = FileUtil::GetRankIdFromPath(
-            currPath + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json");
+            TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json");
     bool result = FileUtil::CheckFilePath(
-            currPath + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json");
+            TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json");
     EXPECT_EQ(rank, "test_rank_1");
     EXPECT_EQ(result, true);
 }
 
 TEST(TestUtil, TestGetDbPath)
 {
-    std::string currPath = Dic::FileUtil::GetCurrPath();
-    int index = currPath.find_last_of("server");
-    currPath = currPath.substr(0, index + 1);
 #ifdef _WIN32
     std::string fileId = FileUtil::GetDbPath(
-            currPath + "\\src\\test\\test_data\\test_rank_1\\ASCEND_PROFILER_OUTPUT\\trace_view.json", "1");
+            TestSuit::GetSrcTestPath() + "test_data\\test_rank_1\\ASCEND_PROFILER_OUTPUT\\trace_view.json", "1");
     EXPECT_EQ(fileId,
-            currPath + "\\src\\test\\test_data\\test_rank_1\\ASCEND_PROFILER_OUTPUT\\mindstudio_insight_data.db");
+            TestSuit::GetSrcTestPath() + "test_data\\test_rank_1\\ASCEND_PROFILER_OUTPUT\\mindstudio_insight_data.db");
 #else
     std::string dbPath = FileUtil::GetDbPath(
-            currPath + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json", "1");
-    EXPECT_EQ(dbPath, currPath + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db");
+            TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json", "1");
+    EXPECT_EQ(dbPath, TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db");
 #endif
 }
 
@@ -437,10 +425,7 @@ TEST(TestUtil, GetRootPath)
 
 TEST(TestUtil, FindIfDbTypeByRegex)
 {
-    std::string currPath = Dic::FileUtil::GetCurrPath();
-    int index = currPath.find_last_of("server");
-    currPath = currPath.substr(0, index + 1);
-    auto testDbDir = currPath + R"(/src/test/test_data/full_db)";
+    auto testDbDir = TestSuit::GetSrcTestPath() + R"(test_data/full_db)";
     const std::string DB_REG =
             R"((msprof_[0-9]{1,16}|((ascend_pytorch_profiler)(_[0-9]{1,16}){0,1})|cluster_analysis)\.db$)";
     const std::string traceViewReg =

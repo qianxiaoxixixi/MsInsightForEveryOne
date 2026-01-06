@@ -33,13 +33,9 @@ class DbOperatorTestSuit : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        std::string dbPath3 = R"(/src/test/test_data/full_db/)";
-        std::string dbPath = StringUtil::StrJoin(currPath, dbPath3, "msprof_0.db");
+        std::string dbPath = TestSuit::GetSrcTestPath() + R"(test_data/full_db/msprof_0.db)";
         DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
         auto summeryDatabase =
             std::dynamic_pointer_cast<DbSummaryDataBase, Dic::Module::Summary::VirtualSummaryDataBase>(

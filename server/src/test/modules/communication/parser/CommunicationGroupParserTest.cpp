@@ -19,6 +19,7 @@
 #include "FileUtil.h"
 #include "CommunicationGroupParser.h"
 #include "ClusterDef.h"
+#include "TestSuit.h"
 
 using namespace Dic::Module;
 using namespace Dic::Module::Communication;
@@ -28,10 +29,7 @@ protected:
 
     void SetUp() override
     {
-        std::string  currPath = Dic::FileUtil::GetCurrPath();
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        filePath = currPath + R"(/src/test/test_data/communication_group/)";
+        filePath = TestSuit::GetSrcTestPath() + R"(test_data/communication_group/)";
     }
 };
 

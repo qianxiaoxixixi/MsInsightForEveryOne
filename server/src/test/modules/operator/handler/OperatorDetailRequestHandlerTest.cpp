@@ -55,8 +55,7 @@ public:
 
     static void InitBaseLineManager()
     {
-        std::string systemDbPath = currPath.substr(0, index + 1) + R"(/src/test/test_data/)";
-        ProjectExplorerManager::Instance().InitSystemMemoryDbPath(systemDbPath);
+        ProjectExplorerManager::Instance().InitSystemMemoryDbPath(testDataDir);
         InitProjectExplorerData();
     }
 
@@ -64,8 +63,7 @@ public:
     {
         InitBaseLineManager();
         // 创建DB场景的baseline基线manager
-        std::string filePathText = currPath.substr(0, index + 1) +
-                                   R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT)";
+        std::string filePathText = testDataDir + "test_rank_0/ASCEND_PROFILER_OUTPUT";
         BaselineInfo baselineInfo;
         baselineInfo.parsedFilePath = filePathText;
         BaselineSettingRequest request;
@@ -93,8 +91,7 @@ public:
     }
 
 protected:
-    inline static std::string currPath = Dic::FileUtil::GetCurrPath();
-    inline static int index = currPath.find_last_of("server");
+    inline static std::string testDataDir = TestSuit::GetSrcTestPath() + "test_data/";
     inline static int retry = 2;
     static ProjectExplorerInfo CreateProjectData(const std::string &projectName, const std::string &fileName,
                                                  const std::string &importType, Dic::ProjectTypeEnum projectType,
@@ -117,10 +114,8 @@ protected:
 
     static void InitProjectExplorerData()
     {
-        std::string filePathText = currPath.substr(0, index + 1) +
-                                   R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT)";
-        std::string filePathDb = currPath.substr(0, index + 1) +
-                                 R"(/src/test/test_data/full_db/ascend_pytorch_profiler.db)";
+        std::string filePathText = testDataDir + R"(test_rank_0/ASCEND_PROFILER_OUTPUT)";
+        std::string filePathDb = testDataDir + R"(full_db/ascend_pytorch_profiler.db)";
         std::vector<ProjectExplorerInfo> infos;
         std::vector<std::string> parseFileList {filePathText};
         ProjectExplorerInfo info = CreateProjectData("testProject", "projectFilePath",

@@ -17,6 +17,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "TestSuit.h"
 #include "MemoryProtocolRequest.h"
 #include "DataBaseManager.h"
 #include "DbMemoryDataBase.h"
@@ -36,11 +37,9 @@ class DbMemoryDatabaseTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        std::string currPath = Dic::FileUtil::GetCurrPath();
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        std::string dbPath3 = R"(/src/test/test_data/full_db/)";
-        std::string dbPath = StringUtil::StrJoin(currPath, dbPath3, "ascend_pytorch_profiler.db");
+        std::string srcTestPath = TestSuit::GetSrcTestPath();
+        std::string dbRelativePath = R"(test_data/full_db/ascend_pytorch_profiler.db)";
+        std::string dbPath = StringUtil::StrJoin(srcTestPath, dbRelativePath);
         DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
         DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbPath);
         auto memoryDatabase =

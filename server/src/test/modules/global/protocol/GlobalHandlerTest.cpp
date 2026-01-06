@@ -29,6 +29,7 @@
 
 #include "WsSession.h"
 #include "ServerDefs.h"
+#include "TestSuit.h"
 #include "WsSessionManager.h"
 #include "WsSessionImpl.h"
 
@@ -54,8 +55,7 @@ public:
         }
     }
 protected:
-    inline static std::string currPath = Dic::FileUtil::GetCurrPath();
-    inline static int index = currPath.find_last_of("server");
+    inline static std::string testDataDir = TestSuit::GetSrcTestPath() + R"(test_data\)";
 };
 
 TEST_F(GlobalHandlerTest, TestCancelBaselineHandler)
@@ -69,7 +69,7 @@ TEST_F(GlobalHandlerTest, TestCheckProjectValidHandler)
 {
     auto requestPtr = std::make_unique<ProjectCheckValidRequest>();
     requestPtr->params.projectName = "";
-    std::string path =  currPath.substr(0, index + 1) + R"(\src\test\test_data\test_rank_0)";
+    std::string path = testDataDir + R"(test_rank_0)";
     requestPtr->params.dataPath = {path};
     CheckProjectValidHandler checkProjectValidHandler;
     ASSERT_TRUE(checkProjectValidHandler.HandleRequest(std::move(requestPtr)));
@@ -79,7 +79,7 @@ TEST_F(GlobalHandlerTest, TestDeleteProjectExplorerHandler)
 {
     auto requestPtr = std::make_unique<ProjectExplorerInfoDeleteRequest>();
     requestPtr->params.projectName = "";
-    std::string path =  currPath.substr(0, index + 1) + R"(\src\test\test_data\test_rank_0)";
+    std::string path =  testDataDir + R"(test_rank_0)";
     requestPtr->params.dataPath = {path};
     DeleteProjectExplorerInfoHandler deleteProjectExplorerInfoHandler;
     ASSERT_TRUE(deleteProjectExplorerInfoHandler.HandleRequest(std::move(requestPtr)));
@@ -96,7 +96,7 @@ TEST_F(GlobalHandlerTest, TestFilesNotExistGetHandler)
 TEST_F(GlobalHandlerTest, TestCheckfilesGetHandler)
 {
     auto requestPtr = std::make_unique<FilesGetRequest>();
-    std::string path =  currPath.substr(0, index + 1) + R"(\src\test\test_data\test_rank_0)";
+    std::string path =  testDataDir + R"(test_rank_0)";
     requestPtr->params.path = path;
     FilesGetHandler filesGetHandler;
     ASSERT_TRUE(filesGetHandler.HandleRequest(std::move(requestPtr)));

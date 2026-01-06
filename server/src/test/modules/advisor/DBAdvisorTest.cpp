@@ -17,6 +17,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "TestSuit.h"
 #include "FileUtil.h"
 #include "WsSessionImpl.h"
 #include "WsSessionManager.h"
@@ -36,11 +37,8 @@ class DBAdvisorTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        std::string currPath = Dic::FileUtil::GetCurrPath();
-        size_t index = currPath.find_last_of("server");
-        std::string serverPath = currPath.substr(0, index + 1);
-        std::string dbPath = Dic::FileUtil::GetParentPath(serverPath) +
-                             R"(/test/data/pytorch/db/level1/rank0_ascend_pt/ASCEND_PROFILER_OUTPUT/ascend_pytorch_profiler_0.db)";
+        std::string dbPath = TestSuit::GetRootTestPath() +
+                             R"(data/pytorch/db/level1/rank0_ascend_pt/ASCEND_PROFILER_OUTPUT/ascend_pytorch_profiler_0.db)";
         Dic::Server::WsChannel *ws;
         std::unique_ptr<Dic::Server::WsSessionImpl> session = std::make_unique<Dic::Server::WsSessionImpl>(ws);
         Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));

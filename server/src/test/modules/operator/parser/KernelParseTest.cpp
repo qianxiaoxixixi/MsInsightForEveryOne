@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 #include "KernelParse.h"
 #include "DataBaseManager.h"
+#include "TestSuit.h"
 using namespace Dic::Module::Summary;
 using namespace Dic::Module::Timeline;
 
@@ -48,10 +49,7 @@ public:
 protected:
     void SetUp() override
     {
-        std::string currPath = Dic::FileUtil::GetCurrPath();
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        testDataPath = currPath + R"(/src/test/test_data/)";
+        testDataPath = TestSuit::GetSrcTestPath() + R"(test_data/)";
     }
 
     void TearDown() override

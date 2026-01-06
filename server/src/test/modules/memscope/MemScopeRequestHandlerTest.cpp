@@ -26,6 +26,7 @@
 #include "QueryMemScopePythonTraceHandler.h"
 #include "QueryMemScopeEventHandler.h"
 #include "DataBaseManager.h"
+#include "TestSuit.h"
 #include "TraceTime.h"
 
 using namespace Dic::Module::Timeline;
@@ -43,16 +44,12 @@ public:
         Dic::Server::WsChannel *ws;
         std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSessionImpl>(ws);
         Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
-        std::string currPath = Dic::FileUtil::GetCurrPath();
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        std::string dbPath3 = R"(/src/test/test_data/full_db/)";
-        std::string dbFilePath = currPath + dbPath3 + "leaks_dump_20250806.dat";
-        DataBaseManager::Instance().SetDataType(DataType::DB, dbFilePath);
-        DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE, dbFilePath);
+        std::string dbPath = TestSuit::GetSrcTestPath() + R"(test_data/full_db/leaks_dump_20250806.dat)";
+        DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
+        DataBaseManager::Instance().SetFileType(FileType::MEM_SCOPE, dbPath);
         auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("");
         ASSERT_TRUE(memoryDatabase != nullptr);
-        ASSERT_TRUE(memoryDatabase->OpenDb(dbFilePath, false));
+        ASSERT_TRUE(memoryDatabase->OpenDb(dbPath, false));
         ASSERT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
         ASSERT_TRUE(MemScopeService::ParseMemoryMemScopeDumpEventsAndPythonTraces("0"));
     }

@@ -24,6 +24,7 @@
 #include "ProjectParserFactory.h"
 #include "DataBaseManager.h"
 #include "DbTraceDataBase.h"
+#include "TestSuit.h"
 
 using namespace Dic::Module;
 using namespace Dic::Module::FullDb;
@@ -33,16 +34,12 @@ public:
     static void SetUpTestSuite()
     {
         FullDb::FullDbParser::Instance().Reset();
-        std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
         std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSessionImpl>(nullptr);
         WsSessionManager::Instance().AddSession(std::move(session));
-        const std::string server = "server";
-        int index = currPath.find_last_of(server);
-        currPath = currPath.substr(0, index - server.length()); // 取 server 前的文件路径
-        std::string dbPath = currPath +
-            R"(/test/data/pytorch/db/level2/rank0_ascend_pt)";
+        std::string dbPath = TestSuit::GetRootTestPath() +
+            R"(data/pytorch/db/level2/rank0_ascend_pt)";
 
         DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
         std::pair<std::string, ParserType> parserType = std::make_pair(dbPath, ParserType::DB);

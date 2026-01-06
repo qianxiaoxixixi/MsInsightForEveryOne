@@ -20,6 +20,7 @@
 #include "FileUtil.h"
 #include "TableDefs.h"
 #include "ConstantDefs.h"
+#include "TestSuit.h"
 #include "TextSummaryDataBase.h"
 
 using namespace Dic;
@@ -33,10 +34,7 @@ class TextSummaryDatabaseTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        std::string currPath = Dic::FileUtil::GetCurrPath();
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        g_testDbPath = currPath + R"(/src/test/test_data/test_text_database.db)";
+        g_testDbPath = TestSuit::GetSrcTestPath() + R"(test_data/test_text_database.db)";
         g_testDataBase.SetDbPath(g_testDbPath);
         g_testDataBase.OpenDb(g_testDbPath, false);
     }

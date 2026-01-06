@@ -38,10 +38,7 @@ TEST_F(TestSuit, TestAllRequestHandler)
     std::unique_ptr<WsSessionImpl> session = std::make_unique<WsSessionImpl>(ws);
     WsSessionManager::Instance().AddSession(std::move(session));
     std::string err = "";
-    std::string currPath = Dic::FileUtil::GetCurrPath();
-    int index = currPath.find_last_of("server");
-    currPath = currPath.substr(0, index + 1);
-    std::ifstream file(currPath + R"(/src/test/test_data/request.csv)");
+    std::ifstream file(TestSuit::GetSrcTestPath() + R"(test_data/request.csv)");
     std::string line;
     int count = 0;
     while (getline(file, line)) {
@@ -71,10 +68,7 @@ TEST_F(TestSuit, TestAllRequestHandler)
 TEST_F(TestSuit, TestAllRequestSessionErr)
 {
     std::string err = "";
-    std::string currPath = Dic::FileUtil::GetCurrPath();
-    int index = currPath.find_last_of("server");
-    currPath = currPath.substr(0, index + 1);
-    std::ifstream file(currPath + R"(/src/test/test_data/request.csv)");
+    std::ifstream file(TestSuit::GetSrcTestPath() + R"(test_data/request.csv)");
     std::string line;
     int count = 0;
     while (getline(file, line)) {

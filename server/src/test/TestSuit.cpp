@@ -24,17 +24,17 @@ using namespace Dic::Module::Memory;
 using namespace Dic;
 
 std::string TestSuit::clusterPath;
+std::string TestSuit::srcTestPath;
+std::string TestSuit::rootTestPath;
+std::string TestSuit::serverHome;
 void TestSuit::SetUpTestSuite()
 {
-    std::string currPath = Dic::FileUtil::GetCurrPath();
     const ParamsOption &option = ParamsParser::Instance().GetOption();
     ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
-    int index = currPath.find_last_of("server");
-    currPath = currPath.substr(0, index + 1);
-    std::string refPath0 = R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/)";
-    std::string refPath1 = R"(/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/)";
-    std::string dbPath0 = currPath + refPath0 + "mindstudio_insight_data.db";
-    std::string dbPath1 = currPath + refPath1 + "mindstudio_insight_data.db";
+    std::string refPath0 = R"(test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/)";
+    std::string refPath1 = R"(test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/)";
+    std::string dbPath0 = GetSrcTestPath() + refPath0 + "mindstudio_insight_data.db";
+    std::string dbPath1 = GetSrcTestPath() + refPath1 + "mindstudio_insight_data.db";
     DataBaseManager::Instance().SetDataType(DataType::TEXT, dbPath0);
     DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbPath0);
     DataBaseManager::Instance().SetDataType(DataType::TEXT, dbPath1);
@@ -43,18 +43,18 @@ void TestSuit::SetUpTestSuite()
     DataBaseManager::Instance().CreateTraceConnectionPool("1", dbPath1);
     DataBaseManager::Instance().UpdateRankIdToDeviceId(dbPath0, "0", "0");
     DataBaseManager::Instance().UpdateRankIdToDeviceId(dbPath1, "1", "1");
-    TraceFileParser::Instance().Parse({currPath + refPath0 + "trace_view.json"}, "0", "",
-                                      dbPath0);
+    TraceFileParser::Instance().Parse({GetSrcTestPath() + refPath0 + "trace_view.json"},
+        "0", "", dbPath0);
     WaitParseEnd({"0"});
-    TraceFileParser::Instance().Parse({currPath + refPath1 + "trace_view.json"}, "1", "",
-                                      dbPath1);
+    TraceFileParser::Instance().Parse({GetSrcTestPath() + refPath1 + "trace_view.json"}, 
+        "1", "", dbPath1);
     WaitParseEnd({"1"});
-    std::string testDataPath = currPath + R"(/src/test/test_data)";
-    KernelParse::Instance().Parse({dbPath0, "0", currPath + refPath0});
-    KernelParse::Instance().Parse({dbPath1, "1", currPath + refPath1});
+    std::string testDataPath = GetSrcTestPath() + R"(test_data)";
+    KernelParse::Instance().Parse({dbPath0, "0", GetSrcTestPath() + refPath0});
+    KernelParse::Instance().Parse({dbPath1, "1", GetSrcTestPath() + refPath1});
     WaitParseEnd({KERNEL_PREFIX + "0", KERNEL_PREFIX + "1"});
-    MemoryParse::Instance().Parse({dbPath0, "0", currPath + refPath0});
-    MemoryParse::Instance().Parse({dbPath1, "1", currPath + refPath1});
+    MemoryParse::Instance().Parse({dbPath0, "0", GetSrcTestPath() + refPath0});
+    MemoryParse::Instance().Parse({dbPath1, "1", GetSrcTestPath() + refPath1});
     WaitParseEnd({MEMORY_PREFIX + "0", MEMORY_PREFIX + "1"});
 
     clusterPath = testDataPath + R"(/cluster_analysis_output)";
@@ -91,10 +91,8 @@ void TestSuit::TearDownTestSuite()
     KernelParse::Instance().Reset();
     TraceFileParser::Instance().DeleteParseFiles({"0", "1"});
     DataBaseManager::Instance().EraseClusterDb(COMPARE);
-    std::string tempPath = Dic::FileUtil::GetCurrPath();
-    int index = tempPath.find_last_of("server");
-    tempPath = tempPath.substr(0, index + 1);
-    if (std::remove((tempPath + R"(/src/test/test_data)" + "/cluster.db").c_str()) != 0) {
+    std::string tempPath = GetSrcTestPath();
+    if (std::remove((tempPath + R"(test_data/cluster.db)").c_str()) != 0) {
         Dic::Server::ServerLog::Info("Delete file failed");
     } else {
         Dic::Server::ServerLog::Info("Delete file success");
@@ -115,4 +113,31 @@ std::shared_ptr<RenderEngine> TestSuit::GetRenderEngine()
     auto renderEngine = RenderEngine::Instance();
     renderEngine->SetDataEngineInterface(dataEngine);
     return renderEngine;
+}
+
+std::string TestSuit::GetServerHome()
+{
+    if (serverHome.empty()) {
+        std::string currPath = Dic::FileUtil::GetCurrPath();
+        const std::string serverDir = "server";
+        const int index = currPath.rfind(serverDir);
+        serverHome = currPath.substr(0, index + serverDir.size());
+    }
+    return serverHome;
+}
+
+std::string TestSuit::GetSrcTestPath()
+{
+    if (srcTestPath.empty()) {
+        srcTestPath = StringUtil::StrJoin(GetServerHome(), R"(/src/test/)");
+    }
+    return srcTestPath;
+}
+
+std::string TestSuit::GetRootTestPath()
+{
+    if (rootTestPath.empty()) {
+        rootTestPath = StringUtil::StrJoin(FileUtil::GetParentPath(GetServerHome()), R"(/test/)");
+    }
+    return rootTestPath;
 }

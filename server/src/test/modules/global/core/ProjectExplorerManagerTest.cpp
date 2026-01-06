@@ -21,6 +21,7 @@
 #include "ProjectExplorerManager.h"
 #include "GlobalDefs.h"
 #include "ProjectParserJson.h"
+#include "TestSuit.h"
 
 const int64_t NUMBER_ZERO = 0;
 const int64_t NUMBER_THREE = 3;
@@ -31,18 +32,13 @@ class ProjectExplorerManagerTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        std::string currPath = Dic::FileUtil::GetCurrPath();
-        int index = currPath.find_last_of("server");
-        std::string systemDbPath = currPath.substr(0, index + 1) + R"(/src/test/test_data/)";
-        ProjectExplorerManager::Instance().InitSystemMemoryDbPath(systemDbPath);
+        ProjectExplorerManager::Instance().InitSystemMemoryDbPath(testDataDir);
     }
 
     static void TearDownTestSuite() {}
 
 protected:
-    inline static std::string currPath = FileUtil::GetCurrPath();
-    inline static auto index = currPath.find_last_of("server");
-    inline static std::string curServerPath = currPath.substr(0, index + 1) + R"(src/test/test_data)";
+    inline static std::string testDataDir = TestSuit::GetSrcTestPath() + R"(test_data/)";
     ProjectExplorerInfo CreateProjectData(const std::string &projectName, const std::string &fileName,
                                           const std::string &importType, Dic::ProjectTypeEnum projectType,
                                           const std::vector<std::string> dbPath)
@@ -106,10 +102,7 @@ TEST_F(ProjectExplorerManagerTest, CheckProjectConflictAndCoverData)
     InitProjectExplorerData();
     std::vector<std::string> filePathList;
     Dic::Protocol::ProjectCheckBody body;
-    std::string currPath = Dic::FileUtil::GetCurrPath();
-    int index = currPath.find_last_of("server");
-    std::string filePath =
-            currPath.substr(0, index + 1) + "/src/test/test_data/data.bin";
+    std::string filePath = TestSuit::GetSrcTestPath() + "test_data/data.bin";
     filePathList.push_back(filePath);
     Dic::Protocol::ProjectErrorType result = ProjectExplorerManager::Instance().CheckProjectConflict(projectName,
                                                                                                      filePathList[0]);

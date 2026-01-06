@@ -22,6 +22,7 @@
 #include "DbSummaryDataBase.h"
 #include "ParamsParser.h"
 #include "FileUtil.h"
+#include "TestSuit.h"
 #include "TraceTime.h"
 
 using namespace Dic::Module::Timeline;
@@ -34,20 +35,17 @@ public:
         std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        std::string dbPath3 = R"(/src/test/test_data/full_db/)";
-        DataBaseManager::Instance().SetDataType(DataType::DB, currPath + dbPath3 + "msprof_0.db");
-        DataBaseManager::Instance().SetFileType(FileType::MS_PROF, currPath + dbPath3 + "msprof_0.db");
-        DataBaseManager::Instance().CreateTraceConnectionPool("0", currPath + dbPath3 + "msprof_0.db");
+        std::string dbPath = TestSuit::GetSrcTestPath() + R"(test_data/full_db/msprof_0.db)";
+        DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
+        DataBaseManager::Instance().SetFileType(FileType::MS_PROF, dbPath);
+        DataBaseManager::Instance().CreateTraceConnectionPool("0", dbPath);
         auto database = std::dynamic_pointer_cast<DbTraceDataBase, VirtualTraceDatabase>(
             DataBaseManager::Instance().GetTraceDatabaseByRankId("0"));
         database->UpdateStartTime("0");
-        std::string fullDbPath = StringUtil::StrJoin(currPath, dbPath3, "msprof_0.db");
         auto summaryDatabase =
             std::dynamic_pointer_cast<DbSummaryDataBase, Dic::Module::Summary::VirtualSummaryDataBase>(
-                DataBaseManager::Instance().CreateSummaryDatabase("0", fullDbPath));
-        summaryDatabase->OpenDb(fullDbPath, false);
+                DataBaseManager::Instance().CreateSummaryDatabase("0", dbPath));
+        summaryDatabase->OpenDb(dbPath, false);
     }
     static void TearDownTestSuite() {}
 };

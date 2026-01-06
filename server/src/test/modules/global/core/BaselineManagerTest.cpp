@@ -22,13 +22,14 @@
 #include "ProjectExplorerManager.h"
 #include "DataBaseManager.h"
 #include "ParserStatusManager.h"
+#include "TestSuit.h"
 
 using namespace Dic::Module::Global;
 class BaselineManagerTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
-        std::string systemDbPath = currPath.substr(0, index + 1) + R"(/src/test/test_data/)";
+        std::string systemDbPath = TestSuit::GetSrcTestPath() + R"(test_data/)";
         ProjectExplorerManager::Instance().InitSystemMemoryDbPath(systemDbPath);
         InitProjectExplorerData();
     }
@@ -38,8 +39,6 @@ public:
         ClearProjectExplorerData();
     }
 protected:
-    inline static std::string currPath = Dic::FileUtil::GetCurrPath();
-    inline static int index = currPath.find_last_of("server");
     inline static int retry = 5;
     static ProjectExplorerInfo CreateProjectData(const std::string &projectName, const std::string &fileName,
                                                  const std::string &importType, Dic::ProjectTypeEnum projectType,
@@ -82,10 +81,8 @@ protected:
 
     static void InitProjectExplorerData()
     {
-        std::string filePathText = currPath.substr(0, index + 1) +
-            R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT)";
-        std::string filePathDb = currPath.substr(0, index + 1) +
-            R"(/src/test/test_data/full_db/ascend_pytorch_profiler.db)";
+        std::string filePathText = TestSuit::GetSrcTestPath() + R"(test_data/test_rank_0/ASCEND_PROFILER_OUTPUT)";
+        std::string filePathDb = TestSuit::GetSrcTestPath() + R"(test_data/full_db/ascend_pytorch_profiler.db)";
         std::vector<ProjectExplorerInfo> infos;
         std::vector<std::string> parseFileList {filePathText};
         ProjectExplorerInfo info = CreateProjectData("testProject", "projectFilePath",
@@ -114,8 +111,7 @@ protected:
 // 测试text数据baseline设置正常情况
 TEST_F(BaselineManagerTest, TestText)
 {
-    std::string filePathText = currPath.substr(0, index + 1) +
-        R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT)";
+    std::string filePathText = TestSuit::GetSrcTestPath() + R"(test_data/test_rank_0/ASCEND_PROFILER_OUTPUT)";
     BaselineInfo baselineInfo;
     baselineInfo.parsedFilePath = filePathText;
     BaselineSettingRequest request;
@@ -139,8 +135,7 @@ TEST_F(BaselineManagerTest, TestText)
 // 测试db数据baseline设置正常情况
 TEST_F(BaselineManagerTest, TestDb)
 {
-    std::string filePathDb = currPath.substr(0, index + 1) +
-        R"(/src/test/test_data/full_db/ascend_pytorch_profiler.db)";
+    std::string filePathDb = TestSuit::GetSrcTestPath() + R"(test_data/full_db/ascend_pytorch_profiler.db)";
     BaselineInfo baselineInfo;
     baselineInfo.parsedFilePath = filePathDb;
     BaselineSettingRequest request;
