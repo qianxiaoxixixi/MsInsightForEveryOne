@@ -40,8 +40,8 @@ OPEN_SOURCE = [
     ],
     [
         'mockcpp',
-        'main',
-        'https://gitee.com/aronic/mockcpp.git'
+        'master',
+        'https://gitcode.com/Ascend/mockcpp.git'
     ],
     [
         'libuv',
