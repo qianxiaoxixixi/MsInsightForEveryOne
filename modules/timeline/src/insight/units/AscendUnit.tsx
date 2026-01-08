@@ -154,7 +154,7 @@ export const getSliceTimeDisplay = (startTime: number | undefined): string => {
     if (startTime === undefined) {
         return '';
     }
-    return `${nsToMs(startTime).toFixed(6).toString()} ms`;
+    return `${nsToMs(startTime).toFixed(6).toString()}`;
 };
 
 export const getDetailTimeDisplay = (startTime: number | undefined): string => {
