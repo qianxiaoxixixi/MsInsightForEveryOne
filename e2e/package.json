@@ -4,12 +4,13 @@
   "private": true,
   "scripts": {
     "test": "playwright test tests/full-test",
+    "test:smoke": "playwright test tests/smoke",
     "jointTest": "npx playwright test tests/joint-test",
     "lint": "eslint . --ext .js,.ts,.cjs,.mts --fix --ignore-path .gitignore",
     "format": "prettier --write e2e/"
   },
   "devDependencies": {
-    "@playwright/test": "1.46.1",
+    "@playwright/test": "1.57.0",
     "@tsconfig/node18": "^2.0.1",
     "@types/node": "^18.17.5",
     "eslint": "^8.46.0",

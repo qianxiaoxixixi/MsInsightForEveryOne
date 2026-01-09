@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import * as path from 'path';
 
 /**
  * Read environment variables from file.
@@ -8,6 +9,8 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
+const isCI = !!process.env.CI;
+
 export default defineConfig({
     testDir: './src/tests',
     /* Maximum time one test can run for. */
@@ -26,7 +29,10 @@ export default defineConfig({
     /* Opt out of parallel tests on CI. */
     workers: process.env.CI ? 1 : 1,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-    reporter: [['html', { open: 'never' }], ['.\\src\\utils\\myReporter.ts']],
+    reporter: [
+        ['html', { open: 'never' }],
+        [path.resolve(__dirname, 'src/utils/myReporter.ts')],
+    ],
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
         /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
@@ -51,8 +57,10 @@ export default defineConfig({
     /* Run your local dev server before starting the tests */
     webServer: [
         {
-            command: '..\\server\\output\\win_mingw64\\bin\\profiler_server.exe --wsPort=9000 --logPath=D:\\MindStudio-Insight_GUI_Test\\GUI\\Ascend-Insight',
-            reuseExistingServer: !process.env.CI,
+            command: isCI
+                ? '../server/output/linux-aarch64/bin/profiler_server --wsPort=9000 --logPath=./log'
+                : `${path.resolve(__dirname, '../server/output/win_mingw64/bin/profiler_server.exe')} --wsPort=9000 --logPath=D:\\MindStudio-Insight_GUI_Test\\GUI\\Ascend-Insight`,
+            reuseExistingServer: !isCI,
         },
         {
             /**
@@ -60,9 +68,10 @@ export default defineConfig({
              * Use the preview server on CI for more realistic testing.
              * Playwright will re-use the local server if there is already a dev-server running.
              */
-            command: 'cd ..\\modules\\framework && npm run staging',
+            command: 'npm run staging',
+            cwd: path.resolve(__dirname, '../modules/framework'),
             url: 'http://127.0.0.1:5174',
-            reuseExistingServer: !process.env.CI,
+            reuseExistingServer: !isCI,
         },
     ],
 });
