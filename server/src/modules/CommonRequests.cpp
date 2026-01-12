@@ -143,9 +143,9 @@ bool RangeFiltersParam::SetRangeFiltersFromJson(const json_t& json, const std::v
     return true;
 }
 
-document_t TableViewColumn::ToTableHeaderJson(MemoryPoolAllocator<CrtAllocator>& allocator) const
+json_t TableViewColumn::ToTableHeaderJson(MemoryPoolAllocator<>& allocator) const
 {
-    document_t headerJson(kObjectType);
+    json_t headerJson(kObjectType);
     std::string headerName = std::string(name);
     StringUtil::StripDbColumnName(headerName);
     JsonUtil::AddMember(headerJson, "name", headerName, allocator);
@@ -154,5 +154,19 @@ document_t TableViewColumn::ToTableHeaderJson(MemoryPoolAllocator<CrtAllocator>&
     JsonUtil::AddMember(headerJson, "searchable", searchable, allocator);
     JsonUtil::AddMember(headerJson, "rangeFilterable", rangeFilterable, allocator);
     return headerJson;
+}
+
+json_t TableViewColumn::CommonBuildTableHeadersJson(MemoryPoolAllocator<>& allocator,
+        const std::vector<TableViewColumn>& columns)
+{
+    json_t headerJsonArray(kArrayType);
+    for (const auto &header : columns) {
+        if (!header.visible) {
+            continue;
+        }
+        auto headerJson = header.ToTableHeaderJson(allocator);
+        headerJsonArray.PushBack(headerJson, allocator);
+    }
+    return headerJsonArray;
 }
 }

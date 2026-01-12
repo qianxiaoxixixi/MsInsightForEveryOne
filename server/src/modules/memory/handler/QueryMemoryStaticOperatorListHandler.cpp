@@ -28,8 +28,7 @@ namespace Memory {
 using namespace Dic::Server;
 bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    MemoryStaticOperatorListRequest &request =
-            dynamic_cast<MemoryStaticOperatorListRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<MemoryStaticOperatorListRequest &>(*requestPtr.get());
     std::unique_ptr<MemoryStaticOperatorListCompResponse> responsePtr =
             std::make_unique<MemoryStaticOperatorListCompResponse>();
     MemoryStaticOperatorListCompResponse &response = *responsePtr.get();
@@ -46,11 +45,11 @@ bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
         SendResponse(std::move(responsePtr), false, "Failed to connect to database.");
         return false;
     }
-
+    response.isCompare = request.params.isCompare;
     if (!request.params.isCompare) {
         std::vector<StaticOperatorItem> opDetails;
-        if (!database->QueryStaticOperatorList(request.params, response.columnAttr, opDetails) or
-            !database->QueryStaticOperatorsTotalNum(request.params, response.totalNum)) {
+        response.totalNum = database->QueryStaticOperatorList(request.params, opDetails);
+        if (response.totalNum < 0) {
             SetMemoryError(ErrorCode::QUERY_MEMORY_STATIC_OPERATOR_FAILED);
             SendResponse(std::move(responsePtr), false, "Failed to query memory static operator data.");
             return false;
@@ -200,13 +199,6 @@ void QueryMemoryStaticOperatorListHandler::SelectDiffResult(MemoryStaticOperator
             response.operatorDiffDetails.push_back(filteredDiffResult.operatorDiffDetails[i]);
         }
     }
-    for (const auto& column : staticOpTableColumnAttr) {
-        response.columnAttr.emplace_back(column);
-        if (column.name == "Name") {
-            MemoryTableColumnAttr sourceItem = {"Source", "string", "source"};
-            response.columnAttr.emplace_back(sourceItem);
-        }
-    }
 }
 
 bool QueryMemoryStaticOperatorListHandler::IsSelected(MemoryStaticOperatorListRequest &request,
@@ -238,13 +230,13 @@ bool QueryMemoryStaticOperatorListHandler::IsSelected(MemoryStaticOperatorListRe
 void QueryMemoryStaticOperatorListHandler::SortResult(MemoryStaticOperatorListRequest &request,
     MemoryStaticOperatorListCompResponse &result)
 {
-    if (request.params.orderBy.empty() || request.params.order.empty()) {
+    if (request.params.orderBy.empty()) {
         return;
     }
-    if (request.params.order == "ascend") {
-        SortAscend(request, result);
-    } else {
+    if (request.params.desc) {
         SortDescend(request, result);
+    } else {
+        SortAscend(request, result);
     }
 }
 
@@ -252,15 +244,19 @@ void QueryMemoryStaticOperatorListHandler::SortAscend(MemoryStaticOperatorListRe
     MemoryStaticOperatorListCompResponse &result)
 {
     std::map<std::string, bool (*)(StaticOperatorCompItem &, StaticOperatorCompItem &)> compFunc = {
-        {"device_id", [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
+        {std::string(StaticOpColumn::DEVICE_ID), [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
             return op1.diff.deviceId < op2.diff.deviceId;}},
-        {"op_name", [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
+        {std::string(StaticOpColumn::OP_NAME), [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
             return op1.diff.opName < op2.diff.opName;}},
-        {"node_index_start", [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
-            return op1.diff.nodeIndexStart < op2.diff.nodeIndexStart;}},
-        {"node_index_end", [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
-            return op1.diff.nodeIndexEnd < op2.diff.nodeIndexEnd;}},
-        {"size", [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
+        {std::string(StaticOpColumn::NODE_INDEX_START),
+            [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
+                return op1.diff.nodeIndexStart < op2.diff.nodeIndexStart;
+            }},
+        {std::string(StaticOpColumn::NODE_INDEX_END),
+            [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
+                return op1.diff.nodeIndexEnd < op2.diff.nodeIndexEnd;
+            }},
+        {std::string(StaticOpColumn::SIZE), [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
             return op1.diff.size < op2.diff.size;}}};
     if (compFunc.find(request.params.orderBy) != compFunc.end()) {
         std::sort(result.operatorDiffDetails.begin(), result.operatorDiffDetails.end(),
@@ -272,16 +268,22 @@ void QueryMemoryStaticOperatorListHandler::SortDescend(MemoryStaticOperatorListR
     MemoryStaticOperatorListCompResponse &result)
 {
     std::map<std::string, bool (*)(StaticOperatorCompItem &, StaticOperatorCompItem &)> compFunc = {
-        {"device_id", [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
+        {std::string(StaticOpColumn::DEVICE_ID), [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
             return op1.diff.deviceId > op2.diff.deviceId;}},
-        {"op_name", [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
+        {std::string(StaticOpColumn::OP_NAME), [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
             return op1.diff.opName > op2.diff.opName;}},
-        {"node_index_start", [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
-            return op1.diff.nodeIndexStart > op2.diff.nodeIndexStart;}},
-        {"node_index_end", [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
-            return op1.diff.nodeIndexEnd > op2.diff.nodeIndexEnd;}},
-        {"size", [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
-            return op1.diff.size > op2.diff.size;}}};
+        {std::string(StaticOpColumn::NODE_INDEX_START),
+            [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
+                return op1.diff.nodeIndexStart > op2.diff.nodeIndexStart;
+            }},
+        {std::string(StaticOpColumn::NODE_INDEX_END),
+            [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
+                return op1.diff.nodeIndexEnd > op2.diff.nodeIndexEnd;
+            }},
+        {std::string(StaticOpColumn::SIZE),
+            [](StaticOperatorCompItem &op1, StaticOperatorCompItem &op2) {
+                return op1.diff.size > op2.diff.size;
+            }}};
     if (compFunc.find(request.params.orderBy) != compFunc.end()) {
         std::sort(result.operatorDiffDetails.begin(), result.operatorDiffDetails.end(),
             compFunc[request.params.orderBy]);

@@ -42,7 +42,6 @@ private:
     static std::unique_ptr<Request> ToMemoryFindSliceRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToMemoryOperatorSizeRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToMemoryStaticOperatorGraphRequest(const json_t &json, std::string &error);
-    static std::unique_ptr<Request> ToMemoryStaticOperatorListRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToMemoryStaticOperatorSizeRequest(const json_t &json, std::string &error);
     // response to json
     static std::optional<document_t> ToMemoryTypeResponseJson(const Response &response);
@@ -53,7 +52,6 @@ private:
     static std::optional<document_t> ToMemoryFindSliceResponseJson(const Response &response);
     static std::optional<document_t> ToMemoryOperatorSizeResponseJson(const Response &response);
     static std::optional<document_t> ToMemoryStaticOperatorGraphResponseJson(const Response &response);
-    static std::optional<document_t> ToMemoryStaticOperatorListResponseJson(const Response &response);
     static std::optional<document_t> ToMemoryStaticOperatorSizeResponseJson(const Response &response);
 };
 

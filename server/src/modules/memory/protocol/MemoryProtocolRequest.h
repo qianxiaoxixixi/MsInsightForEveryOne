@@ -21,13 +21,15 @@
 
 #include <string>
 #include <optional>
+#include <MemoryTableColum.h>
 #include "CommonRequests.h"
+#include "MemoryTableView.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 
 namespace Dic {
 namespace Protocol {
-
+namespace  NSStaticOpTableView = Module::Memory::StaticOpTableView;
 const std::string MEMORY_OVERALL_GROUP = "Overall";
 const std::string MEMORY_STREAM_GROUP = "Stream";
 const std::string MEMORY_COMPONENT_GROUP = "Component";
@@ -38,9 +40,6 @@ const std::vector<std::string> operatorTableColumn = {
 };
 const std::vector<std::string> componentTableColumn = {
     "component", "timestamp", "totalReserved", "device"
-};
-const std::vector<std::string> staticOperatorTableColumn = {
-    "device_id", "op_name", "node_index_start", "node_index_end", "size"
 };
 
 struct MemoryOperatorParams : OrderByParam, PaginationParam, FiltersParam, RangeFiltersParam {
@@ -107,7 +106,7 @@ struct MemoryOperatorSizeParams {
     }
 };
 
-struct StaticOperatorListParams {
+struct StaticOperatorListParams : OrderByParam, PaginationParam {
     std::string rankId;
     std::string graphId;
     std::string searchName;
@@ -115,10 +114,6 @@ struct StaticOperatorListParams {
     int64_t maxSize = 0;
     int64_t startNodeIndex = 0;
     int64_t endNodeIndex = 0;
-    int64_t currentPage = 0;
-    int64_t pageSize = 0;
-    std::string orderBy;
-    std::string order;
     bool isCompare = false;
     bool CommonCheck(std::string &errorMsg)
     {
@@ -142,16 +137,7 @@ struct StaticOperatorListParams {
         if (!CheckPageValid(pageSize, currentPage, errorMsg)) {
             return false;
         }
-        if (!order.empty() && order != "ascend" && order != "descend") {
-            errorMsg = "Order parameter is not legal";
-            return false;
-        }
-        if (!orderBy.empty() && std::find(staticOperatorTableColumn.begin(), staticOperatorTableColumn.end(),
-            orderBy) == staticOperatorTableColumn.end()) {
-            errorMsg = "Order By parameter is not legal.";
-            return false;
-        }
-        return true;
+        return PaginationParam::Check(errorMsg);
     }
 };
 
@@ -324,6 +310,46 @@ struct MemoryStaticOperatorGraphRequest : public Request {
 struct MemoryStaticOperatorListRequest : public Request {
     MemoryStaticOperatorListRequest() : Request(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST) {};
     StaticOperatorListParams params;
+
+    static std::unique_ptr<Request> FromJson(const json_t& json, std::string& error)
+    {
+        std::unique_ptr<MemoryStaticOperatorListRequest> reqPtr = std::make_unique<MemoryStaticOperatorListRequest>();
+        if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+            error = "Failed to set request base info, command is: " + reqPtr->command;
+            return nullptr;
+        }
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.graphId, json["params"], "graphId");
+
+        if (json["params"].HasMember("startNodeIndex")) {
+            reqPtr->params.startNodeIndex = JsonUtil::GetInteger(json["params"], "startNodeIndex");
+        } else {
+            reqPtr->params.startNodeIndex = -1;
+        }
+        if (json["params"].HasMember("endNodeIndex")) {
+            reqPtr->params.endNodeIndex = JsonUtil::GetInteger(json["params"], "endNodeIndex");
+        } else {
+            reqPtr->params.endNodeIndex = -1;
+        }
+        if (!reqPtr->params.SetOrderFromJson(json["params"], NSStaticOpTableView::FIELD_FULL_COLUMNS, error)) {
+            Server::ServerLog::Error("Failed set order from json param: %", error);
+            return nullptr;
+        }
+        reqPtr->params.SetPaginationParamFromJson(json["params"]);
+        if (json["params"].HasMember("minSize")) {
+            JsonUtil::SetByJsonKeyValue(reqPtr->params.minSize, json["params"], "minSize");
+        } else {
+            reqPtr->params.minSize = std::numeric_limits<int64_t>::min();
+        }
+        if (json["params"].HasMember("maxSize")) {
+            JsonUtil::SetByJsonKeyValue(reqPtr->params.maxSize, json["params"], "maxSize");
+        } else {
+            reqPtr->params.maxSize = std::numeric_limits<int64_t>::max();
+        }
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "searchName");
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
+        return reqPtr;
+    }
 };
 
 struct MemoryStaticOperatorSizeRequest : public Request {

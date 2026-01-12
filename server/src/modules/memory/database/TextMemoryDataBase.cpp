@@ -59,9 +59,7 @@ bool TextMemoryDataBase::CreateTable()
         "CREATE TABLE " + recordTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, component TEXT, " +
         "total_allocated INTEGER, total_reserve INTEGER, total_active INTEGER, "
         "deviceId TEXT, stream TEXT, timestamp INTEGER);" +
-        "CREATE TABLE " + staticOpTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId TEXT, " +
-        "op_name TEXT, model_name TEXT, graph_id TEXT, node_index_start INTEGER, " +
-        "node_index_end INTEGER, size INTEGER);" +
+        GetCreateStaticOpTableSql() +
         "CREATE TABLE " + componentTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, component TEXT, " +
         "timestamp INTEGER, total_reserved INTEGER, deviceId TEXT);";
     std::unique_lock<std::recursive_mutex> lock(mutex);
@@ -100,10 +98,8 @@ bool TextMemoryDataBase::InitStmt()
         ServerLog::Error("Failed to prepare insert Record statement. Error: ", sqlite3_errmsg(db));
         return false;
     }
-
-    sql = "INSERT INTO " + staticOpTable +
-            " (deviceId, op_name, model_name, graph_id, node_index_start, node_index_end, size)" +
-            " VALUES (?,?,?,?,?,?,?)";
+    sql = StringUtil::FormatString("INSERT INTO {} ({}) VALUES (?,?,?,?,?,?,?)", staticOpTable,
+        StringUtil::GenerateColumnString(StaticOpColumn::FULL_COLUMNS_WITHOUT_ID));
     for (size_t i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(?,?,?,?,?,?,?)");
     }
@@ -397,38 +393,32 @@ std::string  TextMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &
     return sql;
 }
 
-std::string  TextMemoryDataBase::GetStaticOperatorSql(Protocol::StaticOperatorListParams &requestParams)
+std::string TextMemoryDataBase::GetStaticOperatorSql(Protocol::StaticOperatorListParams &requestParams)
 {
-    std::string sql =
-        "SELECT deviceId, op_name, node_index_start, node_index_end, ROUND(size / 1024.0, 2) as size"
-        " FROM " + staticOpTable +
-        " WHERE op_name LIKE ? AND op_name <> 'TOTAL'";
+    std::string sql = StringUtil::FormatString("SELECT COUNT(*) OVER(), {}, {}, {}, {}, {} FROM {} WHERE {} LIKE ? AND "
+                                               "{} <> 'TOTAL' ", StaticOpColumn::DEVICE_ID, StaticOpColumn::OP_NAME,
+                                               StaticOpColumn::NODE_INDEX_START, StaticOpColumn::NODE_INDEX_END,
+                                               StringUtil::FormatString("ROUND({}/1024.0, 2) AS {}", StaticOpColumn::SIZE, StaticOpColumn::SIZE),
+                                               staticOpTable, StaticOpColumn::OP_NAME, StaticOpColumn::OP_NAME);
     AddStableOperatorSql(requestParams, sql);
     return sql;
 }
 
-std::string TextMemoryDataBase::GetStaticGraphStartSql(Protocol::StaticOperatorGraphParams &requestParams)
+void TextMemoryDataBase::GenerateGetStaticGraphNodeIndexSql(Protocol::StaticOperatorGraphParams &requestParams,
+    std::string &startSql, std::string &endSql)
 {
-    std::string sql =
-            "SELECT node_index_start, size FROM " + staticOpTable +
-            " WHERE op_name <> 'TOTAL' AND size <> 0 AND graph_id = ?";
+    std::string pattern = "SELECT {}, {} FROM {} WHERE {} <> 'TOTAL' AND {} <> 0 AND {} = ?";
+    startSql = StringUtil::FormatString(pattern, StaticOpColumn::NODE_INDEX_START, StaticOpColumn::SIZE, staticOpTable,
+        StaticOpColumn::OP_NAME, StaticOpColumn::SIZE, StaticOpColumn::GRAPH_ID);
+    endSql = StringUtil::FormatString(pattern, StaticOpColumn::NODE_INDEX_END, StaticOpColumn::SIZE, staticOpTable,
+        StaticOpColumn::OP_NAME, StaticOpColumn::SIZE, StaticOpColumn::GRAPH_ID);
     if (!requestParams.modelName.empty()) {
-        sql += " AND op_name = ?";
+        const std::string condition = StringUtil::FormatString(" AND {} = ? ", StaticOpColumn::MODEL_NAME);
+        startSql += condition;
+        endSql += condition;
     }
-    sql += " ORDER BY node_index_start ASC";
-    return sql;
-}
-
-std::string TextMemoryDataBase::GetStaticGraphEndSql(Protocol::StaticOperatorGraphParams &requestParams)
-{
-    std::string sql =
-            "SELECT node_index_end, size FROM " + staticOpTable +
-            " WHERE op_name <> 'TOTAL' AND size <> 0 AND graph_id = ?";
-    if (!requestParams.modelName.empty()) {
-        sql += " AND op_name = ?";
-    }
-    sql += " ORDER BY node_index_end ASC";
-    return sql;
+    startSql += StringUtil::FormatString(" ORDER BY {} ASC ", StaticOpColumn::NODE_INDEX_START);
+    endSql += StringUtil::FormatString(" ORDER BY {} ASC ", StaticOpColumn::NODE_INDEX_END);
 }
 
 bool TextMemoryDataBase::QueryMemoryType(std::string &type, std::vector<std::string> &graphId)
@@ -528,23 +518,23 @@ bool TextMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestPara
     return ExecuteQueryMemoryViewGetGraph(requestParams, componentDtoVec, streams, operatorBody);
 }
 
-bool TextMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
-    std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+int64_t TextMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
     std::vector<Protocol::StaticOperatorItem> &opDetails)
 {
     std::string sql = GetStaticOperatorSql(requestParams);
-    return ExecuteStaticOperatorDetail(requestParams, columnAttr, opDetails, sql);
+    return ExecuteStaticOperatorDetail(requestParams, opDetails, sql);
 }
 
 bool TextMemoryDataBase::QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
                                                         std::vector<Protocol::StaticOperatorItem>& opDetails)
 {
-    std::string sql =
-        "SELECT deviceId, op_name, node_index_start, node_index_end, ROUND(size / 1024.0, 2) as size"
-        " FROM " + staticOpTable +
-        " WHERE op_name <> 'TOTAL'";
+    const std::string pattern = "SELECT {},{},{},{},{} FROM {} WHERE {} <> 'TOTAL' ";
+    std::string sql = StringUtil::FormatString(pattern,
+        StaticOpColumn::DEVICE_ID, StaticOpColumn::OP_NAME, StaticOpColumn::NODE_INDEX_START, StaticOpColumn::NODE_INDEX_END,
+        StringUtil::FormatString("ROUND({}/1024.0, 2) as {} ", StaticOpColumn::SIZE, StaticOpColumn::SIZE),
+        staticOpTable, StaticOpColumn::OP_NAME);
     if (!requestParams.graphId.empty()) {
-        sql += " AND graph_id = ?" ;
+        sql += StringUtil::FormatString(" AND {} = ? ", StaticOpColumn::GRAPH_ID);
     }
     return ExecuteQueryEntireStaticOperatorTable(requestParams, opDetails, sql);
 }
@@ -552,13 +542,14 @@ bool TextMemoryDataBase::QueryEntireStaticOperatorTable(Protocol::StaticOperator
 bool TextMemoryDataBase::QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
                                                   Protocol::StaticOperatorGraphItem &graphItem)
 {
-    std::string totalSql = "SELECT size FROM " + staticOpTable +
-                           " WHERE op_name = 'TOTAL' AND graph_id = ?";
+    std::string totalSql = StringUtil::FormatString("SELECT {} FROM {} WHERE {} = 'TOTAL' AND {} = ? ",
+        StaticOpColumn::SIZE, staticOpTable, StaticOpColumn::OP_NAME, StaticOpColumn::GRAPH_ID);
     if (!requestParams.modelName.empty()) {
-        totalSql += " AND modelName = ?";
+        totalSql += StringUtil::FormatString(" AND {} = ? ", StaticOpColumn::MODEL_NAME);
     }
-    std::string graphStartSql = GetStaticGraphStartSql(requestParams);
-    std::string graphEndSql = GetStaticGraphEndSql(requestParams);
+    std::string graphStartSql;
+    std::string graphEndSql;
+    GenerateGetStaticGraphNodeIndexSql(requestParams, graphStartSql, graphEndSql);
     return ExecuteStaticOperatorGraph(requestParams, graphItem, totalSql, graphStartSql, graphEndSql);
 }
 
@@ -651,9 +642,8 @@ sqlite3_stmt *TextMemoryDataBase::GetStaticOpStmt(uint64_t paramLen)
         stmt = insertStaticOpStmt;
         sqlite3_reset(stmt);
     } else {
-        std::string sql = "INSERT INTO " + staticOpTable +
-                          " (deviceId, op_name, model_name, graph_id, node_index_start, node_index_end, size)"
-                          " VALUES (?,?,?,?,?,?,?)";
+        std::string sql = StringUtil::FormatString("INSERT INTO {} ({}) VALUES (?,?,?,?,?,?,?)", staticOpTable,
+            StringUtil::GenerateColumnString(StaticOpColumn::FULL_COLUMNS_WITHOUT_ID));
         for (uint64_t i = 0; i < paramLen - 1; ++i) {
             sql.append(",(?,?,?,?,?,?,?)");
         }
@@ -697,29 +687,6 @@ bool TextMemoryDataBase::QueryComponentsTotalNum(Protocol::MemoryComponentParams
     return ExecuteComponentTotalNum(requestParams, totalNum, sql);
 }
 
-bool TextMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams,
-                                                      int64_t &totalNum)
-{
-    std::string sql = "SELECT count(*) as nums FROM " + staticOpTable +
-        " WHERE op_name LIKE ? AND op_name <> 'TOTAL'";
-    if (!requestParams.graphId.empty()) {
-        sql += " AND graph_id = ?";
-    }
-    if (requestParams.startNodeIndex >= 0 && requestParams.endNodeIndex >= requestParams.startNodeIndex) {
-        sql += " AND (node_index_start BETWEEN " + std::to_string(requestParams.startNodeIndex) +
-               " AND " + std::to_string(requestParams.endNodeIndex) +
-               " OR node_index_end BETWEEN " + std::to_string(requestParams.startNodeIndex) +
-               " AND " + std::to_string(requestParams.endNodeIndex) +")";
-    }
-    if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
-        sql += " AND size >= ? ";
-    }
-    if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
-        sql += " AND size <= ? ";
-    }
-    return ExecuteStaticOperatorListTotalNum(requestParams, totalNum, sql);
-}
-
 bool TextMemoryDataBase::QueryOperatorSize(Protocol::MemoryOperatorSizeParams &requestParams, double &min, double &max)
 {
     std::string sql = StringUtil::FormatString("SELECT min({}), max({}) FROM {} WHERE {} = ?",
@@ -730,11 +697,11 @@ bool TextMemoryDataBase::QueryOperatorSize(Protocol::MemoryOperatorSizeParams &r
 bool TextMemoryDataBase::QueryStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams,
                                                  double &min, double &max)
 {
-    std::string sql =
-        "SELECT min(size) as minSize, max(size) as maxSize FROM "
-        + staticOpTable + " WHERE op_name <> 'TOTAL'";
+    std::string sql = StringUtil::FormatString("SELECT min({}) as minSize, max({}) as maxSize FROM {} "
+                                               "WHERE {} <> 'TOTAL'", StaticOpColumn::SIZE, StaticOpColumn::SIZE,
+                                               staticOpTable, StaticOpColumn::OP_NAME);
     if (!requestParams.graphId.empty()) {
-        sql += " AND graph_id = ?" ;
+        sql += StringUtil::FormatString(" AND {} = ? ", StaticOpColumn::GRAPH_ID);
     }
     return ExecuteStaticOperatorSize(requestParams, min, max, sql);
 }
@@ -795,6 +762,22 @@ std::string TextMemoryDataBase::GetCreateOperatorMemoryTableSql()
                                     OpMemoryColumn::ALLOCATION_ALLOCATED, OpMemoryColumn::ALLOCATION_RESERVE, OpMemoryColumn::ALLOCATION_ACTIVE,
                                     OpMemoryColumn::RELEASE_ALLOCATED, OpMemoryColumn::RELEASE_RESERVE, OpMemoryColumn::RELEASE_ACTIVE,
                                     OpMemoryColumn::STREAM, OpMemoryColumn::DEVICE_ID);
+}
+
+std::string TextMemoryDataBase::GetCreateStaticOpTableSql() const
+{
+    return StringUtil::FormatString("CREATE TABLE {} ("
+                                    "{} INTEGER PRIMARY KEY AUTOINCREMENT,"
+                                    "{} TEXT,"
+                                    "{} TEXT,"
+                                    "{} TEXT,"
+                                    "{} TEXT,"
+                                    "{} INTEGER,"
+                                    "{} INTEGER,"
+                                    "{} INTEGER"
+                                    ");", staticOpTable, StaticOpColumn::ID, StaticOpColumn::DEVICE_ID,
+                                    StaticOpColumn::OP_NAME, StaticOpColumn::MODEL_NAME, StaticOpColumn::GRAPH_ID,
+                                    StaticOpColumn::NODE_INDEX_START, StaticOpColumn::NODE_INDEX_END, StaticOpColumn::SIZE);
 }
 
 MemoryDataBaseContext TextMemoryDataBase::GetMemoryDbContext()

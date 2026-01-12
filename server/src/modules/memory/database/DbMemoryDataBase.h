@@ -44,10 +44,8 @@ public:
     bool QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum) override;
     bool QueryOperatorSize(Protocol::MemoryOperatorSizeParams &requestParams, double &min, double &max) override;
     bool QueryStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams, double &min, double &max) override;
-    bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) override;
 
-    bool QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
-                                 std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+    int64_t QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
                                  std::vector<Protocol::StaticOperatorItem> &opDetails) override;
 
     bool QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,

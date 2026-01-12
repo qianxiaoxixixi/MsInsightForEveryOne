@@ -47,7 +47,9 @@ struct TableViewColumn {
           key(key),
           visible(false) {}
 
-    document_t ToTableHeaderJson(Document::AllocatorType& allocator) const;
+    json_t ToTableHeaderJson(MemoryPoolAllocator<>& allocator) const;
+    static json_t CommonBuildTableHeadersJson(MemoryPoolAllocator<>& allocator,
+        const std::vector<TableViewColumn>& columns);
 };
 
 class PaginationParam {

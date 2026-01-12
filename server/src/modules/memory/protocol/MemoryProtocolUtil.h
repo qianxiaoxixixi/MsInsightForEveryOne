@@ -38,8 +38,6 @@ namespace Protocol {
             (const MemoryResourceTypeResponse &response);
     template<> std::optional<document_t> ToResponseJson<MemoryStaticOperatorGraphResponse>
             (const MemoryStaticOperatorGraphResponse &response);
-    template<> std::optional<document_t> ToResponseJson<MemoryStaticOperatorListCompResponse>
-            (const MemoryStaticOperatorListCompResponse &response);
     template<> std::optional<document_t> ToResponseJson<MemoryStaticOperatorSizeResponse>
             (const MemoryStaticOperatorSizeResponse &response);
     template<>

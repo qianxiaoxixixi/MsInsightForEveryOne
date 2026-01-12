@@ -155,11 +155,13 @@ protected:
     {
         ASSERT_TRUE(jsonOptional.value()["body"].HasMember("columnAttr"));
         ASSERT_TRUE(jsonOptional.value()["body"]["columnAttr"].IsArray());
-        ASSERT_EQ(jsonOptional.value()["body"]["columnAttr"].Size(), response.columnAttr.size());
-        for (size_t i = 0; i < response.columnAttr.size(); ++i) {
-            EXPECT_EQ(jsonOptional.value()["body"]["columnAttr"][i]["name"].GetString(), response.columnAttr[i].name);
-            EXPECT_EQ(jsonOptional.value()["body"]["columnAttr"][i]["type"].GetString(), response.columnAttr[i].type);
-            EXPECT_EQ(jsonOptional.value()["body"]["columnAttr"][i]["key"].GetString(), response.columnAttr[i].key);
+        ASSERT_EQ(jsonOptional.value()["body"]["columnAttr"].Size(), StaticOpTableView::FIELD_FULL_COLUMNS.size());
+        for (size_t i = 0; i < StaticOpTableView::FIELD_FULL_COLUMNS.size(); ++i) {
+            auto &column = StaticOpTableView::FIELD_FULL_COLUMNS[i];
+            auto &jsonCol = jsonOptional.value()["body"]["columnAttr"][i];
+            EXPECT_EQ(jsonCol["name"].GetString(), column.name);
+            EXPECT_EQ(jsonCol["key"].GetString(), column.key);
+            EXPECT_EQ(jsonCol["sortable"].GetBool(), column.sortable);
         }
         ASSERT_TRUE(jsonOptional.value()["body"].HasMember("operatorDetail"));
         ASSERT_TRUE(jsonOptional.value()["body"]["operatorDetail"].IsArray());
@@ -214,13 +216,6 @@ protected:
         {"Release Total Reserved(MB)", "number", "releaseReserved"},
         {"Release Total Active(MB)", "number", "releaseActive"},
         {"Stream", "string", "streamId"}
-    };
-    const std::vector<Protocol::MemoryTableColumnAttr> staticOpTableColumnAttr = {
-        {"Device ID", "string", "deviceId"},
-        {"Name", "string", "opName"},
-        {"Node Index Start", "number", "nodeIndexStart"},
-        {"Node Index End", "number", "nodeIndexEnd"},
-        {"Size(MB)", "number", "size"}
     };
     const std::vector<Protocol::MemoryTableColumnAttr> componentTableColumnAttr = {
         {"Component", "string", "component"},
@@ -618,9 +613,15 @@ TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestNormalTest)
         "command": "Memory/view/staticOpMemoryList", "params": {"rankId": "3", "graphId": "0",
         "searchName": "model.layers.0.attention_norm.weight", "minSize": -1000, "maxSize": 10000,
         "startNodeIndex": 1, "endNodeIndex": 2533, "currentPage": 1000, "pageSize": 20,
-        "orderBy": "op_name", "order": "descend"}})";
-    StaticOperatorListParams expect = {"3", "0", "model.layers.0.attention_norm.weight",
-        -1000, 10000, 1, 2533, 1000, 20, "op_name", "descend", false};
+        "orderBy": "opName", "order": "descend"}})";
+    StaticOperatorListParams expect = {
+        .rankId =  "3", .graphId = "0", .searchName = "model.layers.0.attention_norm.weight",
+        .minSize = -1000, .maxSize = 10000, .startNodeIndex = 1, .endNodeIndex = 2533, .isCompare = false
+    };
+    expect.currentPage = 1000;
+    expect.pageSize = 20;
+    expect.desc = true;
+    expect.orderBy = StaticOpColumn::OP_NAME;
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
@@ -635,19 +636,25 @@ TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestNormalTest)
     EXPECT_EQ(result.currentPage, expect.currentPage);
     EXPECT_EQ(result.pageSize, expect.pageSize);
     EXPECT_EQ(result.orderBy, expect.orderBy);
-    EXPECT_EQ(result.order, expect.order);
+    EXPECT_EQ(result.desc, expect.desc);
     EXPECT_EQ(result.isCompare, expect.isCompare);
 }
 
-TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestLackNodeIndexAndSizeTest)
+TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestLackNodeIndexAndSizeTestme)
 {
     std::string reqJson = R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
         "command": "Memory/view/staticOpMemoryList", "params": {"rankId": "3", "graphId": "0",
         "searchName": "model.layers.0.attention_norm.weight", "currentPage": 1000, "pageSize": 20,
-        "orderBy": "op_name", "order": "descend"}})";
-    StaticOperatorListParams expect = {"3", "0", "model.layers.0.attention_norm.weight",
-        std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(), -1, -1, 1000, 20,
-        "op_name", "descend", false};
+        "orderBy": "opName", "order": "descend"}})";
+    StaticOperatorListParams expect = {
+        .rankId =  "3", .graphId = "0", .searchName = "model.layers.0.attention_norm.weight",
+        .minSize = std::numeric_limits<int64_t>::min(), .maxSize = std::numeric_limits<int64_t>::max(),
+        .startNodeIndex = -1, .endNodeIndex = -1, .isCompare = false
+    };
+    expect.currentPage = 1000;
+    expect.pageSize = 20;
+    expect.orderBy = StaticOpColumn::OP_NAME;
+    expect.desc = true;
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
@@ -662,7 +669,7 @@ TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestLackNodeIndexAndSize
     EXPECT_EQ(result.currentPage, expect.currentPage);
     EXPECT_EQ(result.pageSize, expect.pageSize);
     EXPECT_EQ(result.orderBy, expect.orderBy);
-    EXPECT_EQ(result.order, expect.order);
+    EXPECT_EQ(result.desc, expect.desc);
     EXPECT_EQ(result.isCompare, expect.isCompare);
 }
 
@@ -895,7 +902,6 @@ TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListResponseEmptyDataTest)
 {
     MemoryStaticOperatorListCompResponse response;
     std::string err;
-    response.columnAttr.clear();
     response.operatorDiffDetails.clear();
     response.totalNum = 0;
     std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
@@ -906,7 +912,6 @@ TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListResponseNoComparisonDataTes
 {
     MemoryStaticOperatorListCompResponse response;
     std::string err;
-    response.columnAttr = staticOpTableColumnAttr;
     response.operatorDiffDetails = {
         {{"host", "MatMul-op129", 1034, 2517, 200.7}, {}, {}},
         {{"host", "Cast-op32", 1, 967, 20000.478}, {}, {}},

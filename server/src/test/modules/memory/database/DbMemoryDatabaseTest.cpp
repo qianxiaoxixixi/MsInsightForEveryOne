@@ -410,31 +410,12 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryStaticOperatorList)
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Protocol::StaticOperatorItem> responseBody;
-    bool result = database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
+    int64_t result = database->QueryStaticOperatorList(requestParams, responseBody);
     int expectSize = 0;
     int expectColumnSize = 0;
-    EXPECT_FALSE(result);
+    EXPECT_EQ(result, -1);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
     EXPECT_EQ(responseBody.size(), expectSize);
-}
-
-TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryStaticOperatorsTotalNum)
-{
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId("0");
-    Dic::Protocol::StaticOperatorListParams requestParams;
-    requestParams.rankId = "0";
-    requestParams.graphId = "0";
-    requestParams.currentPage = 0;
-    requestParams.pageSize = 0;
-    requestParams.startNodeIndex = -1;
-    requestParams.endNodeIndex = -1;
-    requestParams.minSize = std::numeric_limits<int64_t>::min();
-    requestParams.maxSize = std::numeric_limits<int64_t>::max();
-    int64_t totalNum = 0;
-    bool result = database->QueryStaticOperatorsTotalNum(requestParams, totalNum);
-    int expectNum = 0;
-    EXPECT_FALSE(result);
-    EXPECT_EQ(totalNum, expectNum);
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryEntireStaticOperatorTable)

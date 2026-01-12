@@ -52,13 +52,6 @@ private:
     bool IsSelected(MemoryStaticOperatorListRequest &request, const StaticOperatorCompItem &op);
     void SortAscend(MemoryStaticOperatorListRequest &request, MemoryStaticOperatorListCompResponse &result);
     void SortDescend(MemoryStaticOperatorListRequest &request, MemoryStaticOperatorListCompResponse &result);
-    const std::vector<Protocol::MemoryTableColumnAttr> staticOpTableColumnAttr = {
-        {"Device ID", "string", "deviceId"},
-        {"Name", "string", "opName"},
-        {"Node Index Start", "number", "nodeIndexStart"},
-        {"Node Index End", "number", "nodeIndexEnd"},
-        {"Size(MB)", "number", "size"}
-    };
 };
 } // end of namespace Memory
 } // end of namespace Module
