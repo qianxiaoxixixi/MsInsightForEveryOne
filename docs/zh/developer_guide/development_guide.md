@@ -1056,6 +1056,7 @@ sqlalchemy
 numpy<=1.26.4
 pandas<=2.3.2
 psutil
+dmgbuild
 ```
 
 开发时requirements：
@@ -1067,6 +1068,23 @@ pyinstaller
 
 ### 编译出包
 
-1.进入项目根目录下server/build目录，执行python3 download_third_party.py && python3 preprocess_third_party.py
+#### Step 1. 预处理构建依赖
+- 进入项目根目录下执行:
+``` shell
+cd server/build
+python3 download_third_party.py && python3 preprocess_third_party.py
+```
+#### Step 2. 指定APP签名证书（可选）
+**注意**：请您确保已阅读并知悉[LICENSE](https://gitcode.com/Ascend/msinsight/blob/master/docs/LICENSE)要求。
+- 步骤说明：Insight MacOS ARM版本在构建出包时，会对产物APP进行MacOS的开发者证书签名。您可以通过环境变量配置指定签名所用证书。如不指定，缺省时使用临时证书进行签名，可能导致您的insight产物**无法通过网络进行分发**（具体表现可能为将临时签名的产物通过网络分发到其他设备时，安装后无法打开），若您仅在本地进行调试运行，使用时不受影响，可跳过此步骤。
+- 证书使用前置：要求为可用于签名的苹果开发者证书，并确保已正确导入钥匙串中（如登陆钥匙串~/Library/Keychains/login.keychain）。
+- 通过环境变量配置证书，支持**证书名**或**证书ID**。
+```shell
+# 以证书名为"insight_cert"为例, 且使用前已将其导入了登陆钥匙串~/Library/Keychains/login.keychain
+export INSIGHT_APP_SIGN="insight_cert"
+# !注意执行如下钥匙串解锁命令后，您当前的交互式环境将可以访问该钥匙串下的证书/密钥，请确保环境的安全
+security unlock-keychain -p {您当前用户的密码} ~/Library/Keychains/login.keychain
+```
 
-2.进入项目根目录下build目录，执行`python build.py`即可，产物位于项目根目录out目录下
+#### Step 3. 执行出包脚本
+进入项目根目录下build目录，执行`python build.py`即可，产物位于项目根目录out目录下

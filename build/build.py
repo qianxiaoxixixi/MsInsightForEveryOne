@@ -82,9 +82,8 @@ class Const:
     JUPYTER = 'jupyter'
     PIP = 'pip' if platform.system() == WINDOWS_OS else 'pip3'
     PLUGINS_VERSION_PLACEHOLDER = '{plugins_version}'
-    MAC_ARM_SIGNATURE_CERTIFICATE_ID = "0CC4E29F544EE91874A89DE9C61421E3D3722A79"
-    MAC_X86_SIGNATURE_CERTIFICATE_ID = "0B361EE30477593A3766B67157B94FB942EAF20F"
-    MAC_SIGNATURE_CERTIFICATE_ID = ""
+    # 证书设置为“-”代表缺省临时签名，需要使用签名证书时通过环境变量INSIGHT_APP_SIGN指定签名证书名或证书id
+    MAC_SIGNATURE_CERTIFICATE_ID = "-"
 
 
 def init():
@@ -367,7 +366,7 @@ def build_light_package(version, os_name, is_huaweicloud):
     # 在macos下使用cargo bundle --release直接构建为app
     if platform.system() == Const.MAC_OS:
         cmd_list = [Const.CARGO, 'bundle', '--release']
-        set_mac_app_signature_certificate_id(os_name)
+        set_mac_app_signature_certificate_id()
     else:
         cmd_list = [Const.CARGO, 'build', '--release']
     package_name = Const.ASCEND_INSIGHT_PREFIX + '_' + version + '_' + os_name + Const.PACKAGE_SUFFIX
@@ -532,9 +531,6 @@ def zip_package(profiler_path, package_name):
 
 
 def resign_mac_app(preview_app: str, is_cluster_resource: bool):
-    # 清除旧bundle临时签名
-    if not clear_mac_app_signature(preview_app):
-        return False
     resources_dir = os.path.join(preview_app, "Contents/MacOS/resources")
     server_dir = os.path.join(resources_dir, "profiler/server")
     # 签名前设置resources权限, 否则无法签名通过
@@ -589,20 +585,6 @@ def get_mac_app_structure(app_path: str, arch: str) -> list:
             logging.warning(f'{path} not found.')
             return []
     return app_structure_paths
-
-
-def clear_mac_app_signature(app_path: str) -> bool:
-    if not os.path.exists(app_path):
-        return False
-    # 清除现有的bundle签名
-    logging.info('[%s] %s', 'bin_package', 'MacOS application old signature removing.')
-    remove_sign_cmd_list = ["codesign", "--remove-signature", app_path]
-    result = exec_command(remove_sign_cmd_list,
-                          os.path.join(PROJECT_PATH, Const.PLATFORM_PREVIEW_DIR), 'bin_package')
-    if result != 0:
-        logging.error('[%s] %s', 'bin_package', 'MacOS application old signature removed failed.')
-        return False
-    return True
 
 
 def sign_mac_app(app_path: str, certificate_id: str = Const.MAC_SIGNATURE_CERTIFICATE_ID) -> bool:
@@ -858,9 +840,9 @@ def plugin_install_backend(profiler_path, plugin_name, config):
     return True
 
 
-def set_mac_app_signature_certificate_id(framework: str):
-    Const.MAC_SIGNATURE_CERTIFICATE_ID = Const.MAC_ARM_SIGNATURE_CERTIFICATE_ID \
-        if 'aarch64' in framework else Const.MAC_X86_SIGNATURE_CERTIFICATE_ID
+def set_mac_app_signature_certificate_id():
+    if os.getenv('INSIGHT_APP_SIGN'):
+        Const.MAC_SIGNATURE_CERTIFICATE_ID = os.getenv('INSIGHT_APP_SIGN')
 
 
 def clean_backend_build_cache():
