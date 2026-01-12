@@ -51,14 +51,12 @@ public:
     virtual bool
     QueryMemoryView(Protocol::MemoryViewParams &requestParams, Protocol::MemoryViewData &operatorBody,
         uint64_t offsetTime) = 0;
-    virtual bool QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
-                                         std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
-                                         std::vector<Protocol::StaticOperatorItem> &opDetails) = 0;
+    virtual int64_t QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
+        std::vector<Protocol::StaticOperatorItem> &opDetails) = 0;
 
     virtual bool QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
                                          Protocol::StaticOperatorGraphItem &graphItem) = 0;
     virtual bool QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum) = 0;
-    virtual bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) = 0;
 
     virtual bool QueryOperatorSize(Protocol::MemoryOperatorSizeParams &requestParams, double &min, double &max) = 0;
     virtual bool QueryStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams,
@@ -71,6 +69,7 @@ public:
                                                 std::vector<Protocol::StaticOperatorItem>& opDetails) = 0;
     virtual void GetSelectOperatorMemoryColumnAndAlias(std::string_view columnKey, uint64_t baseTimestamp,
                                                        std::string &column, std::string &alias) = 0;
+    void GetStaticOperatorColumns(std::vector<Protocol::MemoryTableColumnAttr> &copyTo);
     virtual MemoryDataBaseContext GetMemoryDbContext() = 0;
     const int defaultPageSize = 10;
     const int64_t maxPageSize = 1000;
@@ -128,11 +127,11 @@ protected:
     };
 
     const std::vector<Protocol::MemoryTableColumnAttr> staticOpTableColumnAttr = {
-        {"Device ID", "string", "deviceId"},
-        {"Name", "string", "opName"},
-        {"Node Index Start", "number", "nodeIndexStart"},
-        {"Node Index End", "number", "nodeIndexEnd"},
-        {"Size(MB)", "number", "size"}
+        {"Device ID", "string", std::string(StaticOpColumn::DEVICE_ID)},
+        {"Name", "string", std::string(StaticOpColumn::OP_NAME)},
+        {"Node Index Start", "number", std::string(StaticOpColumn::NODE_INDEX_START)},
+        {"Node Index End", "number", std::string(StaticOpColumn::NODE_INDEX_END)},
+        {"Size(MB)", "number", std::string(StaticOpColumn::SIZE)}
     };
 
     const std::vector<std::string> activeRelatedColumn = {
@@ -207,9 +206,8 @@ protected:
                                     const std::string& graphEndSql, std::map<int64_t, double> &graphSizeMap,
                                     int64_t &maxIndex);
 
-    bool ExecuteStaticOperatorDetail(Protocol::StaticOperatorListParams &requestParams,
-        std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::StaticOperatorItem> &opDetails,
-        const std::string& sql);
+    int64_t ExecuteStaticOperatorDetail(Protocol::StaticOperatorListParams &requestParams,
+        std::vector<Protocol::StaticOperatorItem> &opDetails, const std::string& sql);
     bool ExecuteQueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams &requestParams,
         std::vector<Protocol::StaticOperatorItem> &opDetails, const std::string& sql);
     void AddOperatorSql(Protocol::MemoryOperatorParams requestParams, std::string &sql);

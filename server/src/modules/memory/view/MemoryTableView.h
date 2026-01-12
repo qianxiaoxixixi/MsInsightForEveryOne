@@ -23,6 +23,7 @@
 #include "MemoryTableColum.h"
 
 namespace Dic::Module::Memory {
+const TableViewColumn TABLE_VIEW_COMPARE_COLUMN{"Source", "source", true, false, false, false};
 namespace OperatorMemoryTableView {
 using namespace Dic::Protocol;
     constexpr int64_t DEFAULT_MAX_SIZE = std::numeric_limits<int32_t>::max();
@@ -45,9 +46,15 @@ using namespace Dic::Protocol;
         { "Stream", OpMemoryColumn::STREAM, true, true, false, false }, // 可排序
         {"deviceId", OpMemoryColumn::DEVICE_ID } // 不可见
     };
-    inline const std::vector<TableViewColumn> COMPARE_COLUMNS = {
-        { "Source", "source", true, false, false, false } // 对比列，仅对比场景下可见
-    };
+}
+namespace StaticOpTableView {
+inline const std::vector<TableViewColumn> FIELD_FULL_COLUMNS = {
+    {"Device ID", StaticOpColumn::DEVICE_ID, true, true, false, false},
+    {"Name", StaticOpColumn::OP_NAME, true, true, false, false},
+    {"Node Index Start", StaticOpColumn::NODE_INDEX_START, true, true, false, false},
+    {"Node Index End", StaticOpColumn::NODE_INDEX_END, true, true, false, false},
+    {"Size(MB)", StaticOpColumn::SIZE, true, true, false, false}
+};
 }
 }
 #endif  // PROFILER_SERVER_MEMORYTABLEVIEW_H

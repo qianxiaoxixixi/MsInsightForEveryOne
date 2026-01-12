@@ -230,14 +230,11 @@ TEST_F(TestSuit, QueryStaticOperatorListParamsException)
     requestParams.endNodeIndex = -1;
     requestParams.minSize = std::numeric_limits<int64_t>::min();
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
-    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
-    std::vector<Dic::Protocol::StaticOperatorItem> responseBody;
-    bool result = database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
+    std::vector<Dic::Protocol::StaticOperatorItem> opDetails;
+    int64_t result = database->QueryStaticOperatorList(requestParams, opDetails);
     int expectSize = 0;
-    int expectColumnSize = 5; // 该场景下表头数据正常返回，表格数据无内容
-    EXPECT_TRUE(result);
-    EXPECT_EQ(responseBody.size(), expectSize);
-    EXPECT_EQ(columnAttr.size(), expectColumnSize);
+    EXPECT_EQ(result, 0);
+    EXPECT_EQ(opDetails.size(), expectSize);
 }
 
 TEST_F(TestSuit, QueryStaticOperatorListParams)
@@ -247,18 +244,15 @@ TEST_F(TestSuit, QueryStaticOperatorListParams)
     requestParams.rankId = "1";
     requestParams.graphId = "0";
     requestParams.currentPage = 3; // 选择最后一页 3/3
+    requestParams.pageSize = 10;
     requestParams.startNodeIndex = -1;
     requestParams.endNodeIndex = -1;
     requestParams.minSize = std::numeric_limits<int64_t>::min();
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
-    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::StaticOperatorItem> responseBody;
-    bool result = database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
-    int expectSize = 7;
-    int expectColumnSize = 5;
-    EXPECT_TRUE(result);
-    EXPECT_EQ(responseBody.size(), expectSize);
-    EXPECT_EQ(columnAttr.size(), expectColumnSize);
+    int64_t result = database->QueryStaticOperatorList(requestParams, responseBody);
+    EXPECT_EQ(result, (requestParams.currentPage - 1) * requestParams.pageSize + responseBody.size());
+    EXPECT_EQ(responseBody.size(), 7);
 }
 
 TEST_F(TestSuit, QueryStaticOperatorListTotal)
@@ -268,15 +262,16 @@ TEST_F(TestSuit, QueryStaticOperatorListTotal)
     requestParams.rankId = "1";
     requestParams.graphId = "0";
     requestParams.currentPage = 3; // 选择最后一页 3/3
+    requestParams.pageSize = 10;
     requestParams.startNodeIndex = -1;
     requestParams.endNodeIndex = -1;
     requestParams.minSize = std::numeric_limits<int64_t>::min();
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
-    int64_t number;
-    bool result = database->QueryStaticOperatorsTotalNum(requestParams, number);
+    std::vector<Dic::Protocol::StaticOperatorItem> opDetails;
+    int64_t result = database->QueryStaticOperatorList(requestParams, opDetails);
     int expectNumber = 27;
-    EXPECT_TRUE(result);
-    EXPECT_EQ(number, expectNumber);
+    EXPECT_EQ(result, expectNumber);
+    EXPECT_EQ(opDetails.size(), 7);
 }
 
 TEST_F(TestSuit, QueryStaticOperatorListParamsWithNodeIndex)
@@ -293,12 +288,10 @@ TEST_F(TestSuit, QueryStaticOperatorListParamsWithNodeIndex)
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::StaticOperatorItem> responseBody;
-    bool result = database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
+    int64_t result = database->QueryStaticOperatorList(requestParams, responseBody);
     int expectSize = 16;
-    int expectColumnSize = 5;
-    EXPECT_TRUE(result);
+    EXPECT_EQ(result, expectSize);
     EXPECT_EQ(responseBody.size(), expectSize);
-    EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(TestSuit, QueryStaticOperatorListParamsWithSizeFileter)
@@ -315,9 +308,9 @@ TEST_F(TestSuit, QueryStaticOperatorListParamsWithSizeFileter)
     requestParams.maxSize = 3000; // 筛选 max Size = 3000
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::StaticOperatorItem> responseBody;
-    bool result = database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
+    int64_t result = database->QueryStaticOperatorList(requestParams, responseBody);
     int expectSize = 4;
-    EXPECT_TRUE(result);
+    EXPECT_EQ(result, expectSize);
     EXPECT_EQ(responseBody.size(), expectSize);
 }
 
@@ -327,8 +320,8 @@ TEST_F(TestSuit, QueryStaticOperatorListParamsWithAllFilter)
     Dic::Protocol::StaticOperatorListParams requestParams;
     requestParams.rankId = "1";
     requestParams.graphId = "1";
-    requestParams.order = "ascend";
-    requestParams.orderBy = "op_name";
+    requestParams.desc = false;
+    requestParams.orderBy = StaticOpColumn::OP_NAME;
     requestParams.searchName = "re";
     requestParams.currentPage = 0;
     requestParams.pageSize = 100; // page size = 100
@@ -338,9 +331,9 @@ TEST_F(TestSuit, QueryStaticOperatorListParamsWithAllFilter)
     requestParams.maxSize = 3000; // 筛选 max Size = 3000
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::StaticOperatorItem> responseBody;
-    bool result = database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
+    int64_t result = database->QueryStaticOperatorList(requestParams, responseBody);
     int expectSize = 4;
-    EXPECT_TRUE(result);
+    EXPECT_EQ(result, expectSize);
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(responseBody[0].opName, "reducemax_03");
 }
@@ -358,11 +351,11 @@ TEST_F(TestSuit, QueryStaticOperatorListTotalWithAllFilter)
     requestParams.endNodeIndex = -1;
     requestParams.minSize = 600; // 筛选 min Size = 600
     requestParams.maxSize = 3000; // 筛选 max Size = 3000
-    int64_t number;
-    bool result = database->QueryStaticOperatorsTotalNum(requestParams, number);
-    int expectNumber = 4;
-    EXPECT_TRUE(result);
-    EXPECT_EQ(number, expectNumber);
+    std::vector<Dic::Protocol::StaticOperatorItem> opDetails;
+    int64_t result = database->QueryStaticOperatorList(requestParams, opDetails);
+    int expectSize = 4;
+    EXPECT_EQ(result, expectSize);
+    EXPECT_EQ(opDetails.size(), expectSize);
 }
 
 TEST_F(TestSuit, QueryStaticOperatorListTotalWithNodeIndex)
@@ -377,11 +370,11 @@ TEST_F(TestSuit, QueryStaticOperatorListTotalWithNodeIndex)
     requestParams.endNodeIndex = 10; // end Node Index = 10
     requestParams.minSize = std::numeric_limits<int64_t>::min();
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
-    int64_t number;
-    bool result = database->QueryStaticOperatorsTotalNum(requestParams, number);
-    int expectNumber = 16;
-    EXPECT_TRUE(result);
-    EXPECT_EQ(number, expectNumber);
+    std::vector<Dic::Protocol::StaticOperatorItem> opDetails;
+    int64_t result = database->QueryStaticOperatorList(requestParams, opDetails);
+    int expectSize = 16;
+    EXPECT_EQ(result, expectSize);
+    EXPECT_EQ(opDetails.size(), expectSize);
 }
 
 TEST_F(TestSuit, QueryEntireStaticOperatorTable)

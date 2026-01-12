@@ -1046,16 +1046,13 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerSelectDiffR
     const int defaultPageSize = 10;
     request.params.pageSize = defaultPageSize;
     request.params.currentPage = 1;
-    request.params.order = "";
     request.params.orderBy = "";
     std::unique_ptr<MemoryStaticOperatorListCompResponse> responsePtr =
         std::make_unique<MemoryStaticOperatorListCompResponse>();
     Dic::Module::Memory::QueryMemoryStaticOperatorListHandler handler;
     handler.SelectDiffResult(request, *responsePtr.get(), fullDiffResult);
-    const int expectColumnSize = 6;
     ASSERT_EQ(responsePtr.get()->totalNum, 1);
     EXPECT_EQ(responsePtr.get()->operatorDiffDetails[0].diff.opName, "RmsNorm-op8");
-    EXPECT_EQ(responsePtr.get()->columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerSelectDiffResultSelectNodeIndexTest)
@@ -1084,16 +1081,13 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerSelectDiffR
     const int defaultPageSize = 10;
     request.params.pageSize = defaultPageSize;
     request.params.currentPage = 1;
-    request.params.order = "";
     request.params.orderBy = "";
     std::unique_ptr<MemoryStaticOperatorListCompResponse> responsePtr =
         std::make_unique<MemoryStaticOperatorListCompResponse>();
     Dic::Module::Memory::QueryMemoryStaticOperatorListHandler handler;
     handler.SelectDiffResult(request, *responsePtr.get(), fullDiffResult);
-    const int expectColumnSize = 6;
     ASSERT_EQ(responsePtr.get()->totalNum, 1);
     EXPECT_EQ(responsePtr.get()->operatorDiffDetails[0].diff.opName, "ReduceMax-op6");
-    EXPECT_EQ(responsePtr.get()->columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerSelectDiffResultSortAscendTest)
@@ -1108,30 +1102,30 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerSelectDiffR
     opDiffDetails.push_back({{}, {}, opDiffThird});
     result.operatorDiffDetails = opDiffDetails;
     MemoryStaticOperatorListRequest request;
-    request.params.order = "ascend";
+    request.params.desc = false;
     const size_t second = 2;
     Dic::Module::Memory::QueryMemoryStaticOperatorListHandler handler;
-    request.params.orderBy = "device_id";
+    request.params.orderBy = StaticOpColumn::DEVICE_ID;
     handler.SortResult(request, result);
     EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "RmsNorm-op8");
     EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "ReduceMax-op6");
     EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "OneHot-op8");
-    request.params.orderBy = "op_name";
+    request.params.orderBy = StaticOpColumn::OP_NAME;
     handler.SortResult(request, result);
     EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "OneHot-op8");
     EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "ReduceMax-op6");
     EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "RmsNorm-op8");
-    request.params.orderBy = "node_index_start";
+    request.params.orderBy = StaticOpColumn::NODE_INDEX_START;
     handler.SortResult(request, result);
     EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "ReduceMax-op6");
     EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "OneHot-op8");
     EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "RmsNorm-op8");
-    request.params.orderBy = "node_index_end";
+    request.params.orderBy = StaticOpColumn::NODE_INDEX_END;
     handler.SortResult(request, result);
     EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "OneHot-op8");
     EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "ReduceMax-op6");
     EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "RmsNorm-op8");
-    request.params.orderBy = "size";
+    request.params.orderBy = StaticOpColumn::SIZE;
     handler.SortResult(request, result);
     EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "OneHot-op8");
     EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "RmsNorm-op8");
@@ -1150,30 +1144,30 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerSelectDiffR
     opDiffDetails.push_back({{}, {}, opDiffThird});
     result.operatorDiffDetails = opDiffDetails;
     MemoryStaticOperatorListRequest request;
-    request.params.order = "descend";
+    request.params.desc = true;
     const size_t second = 2;
     Dic::Module::Memory::QueryMemoryStaticOperatorListHandler handler;
-    request.params.orderBy = "device_id";
+    request.params.orderBy = StaticOpColumn::DEVICE_ID;
     handler.SortResult(request, result);
     EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "RmsNorm-op8");
     EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "ReduceMax-op6");
     EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "OneHot-op8");
-    request.params.orderBy = "op_name";
+    request.params.orderBy = StaticOpColumn::OP_NAME;
     handler.SortResult(request, result);
     EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "RmsNorm-op8");
     EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "ReduceMax-op6");
     EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "OneHot-op8");
-    request.params.orderBy = "node_index_start";
+    request.params.orderBy = StaticOpColumn::NODE_INDEX_START;
     handler.SortResult(request, result);
     EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "RmsNorm-op8");
     EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "OneHot-op8");
     EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "ReduceMax-op6");
-    request.params.orderBy = "node_index_end";
+    request.params.orderBy = StaticOpColumn::NODE_INDEX_END;
     handler.SortResult(request, result);
     EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "RmsNorm-op8");
     EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "ReduceMax-op6");
     EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "OneHot-op8");
-    request.params.orderBy = "size";
+    request.params.orderBy = StaticOpColumn::SIZE;
     handler.SortResult(request, result);
     EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "ReduceMax-op6");
     EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "RmsNorm-op8");

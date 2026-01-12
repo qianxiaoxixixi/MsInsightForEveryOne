@@ -65,7 +65,7 @@ int64_t DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &re
 {
     if (!GetMemoryDbContext().withOperatorMemory) {
         ServerLog::Warn("Missing table % on querying operator detail, nothing will be done.", TABLE_OPERATOR_MEMORY);
-        return true;
+        return 0;
     }
     std::string sql;
     const FileType type = DataBaseManager::Instance().GetFileType(path);
@@ -265,18 +265,10 @@ bool DbMemoryDataBase::QueryStaticOperatorSize(Protocol::StaticOperatorSizeParam
 }
 
 // DB格式不支持静态图内存数据
-bool DbMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams,
-                                                    int64_t &totalNum)
+int64_t DbMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
+    std::vector<Protocol::StaticOperatorItem> &opDetails)
 {
-    return false;
-}
-
-// DB格式不支持静态图内存数据
-bool DbMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
-                                               std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
-                                               std::vector<Protocol::StaticOperatorItem> &opDetails)
-{
-    return false;
+    return -1;
 }
 
 // DB格式不支持静态图内存数据

@@ -70,7 +70,8 @@ bool VirtualMemoryDataBase::ExecuteMemoryType(std::vector<std::string> &graphId,
         return true;
     }
     type = Module::Memory::MEMORY_TYPE_STATIC;
-    std::string sql = "SELECT DISTINCT graph_id as graphId FROM " + TABLE_STATIC_OPERATOR;
+    std::string sql = StringUtil::FormatString("SELECT DISTINCT {} as graphId FROM {};",
+        StaticOpColumn::GRAPH_ID, TABLE_STATIC_OPERATOR);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -600,8 +601,7 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorGraph(Protocol::StaticOperatorG
     return true;
 }
 
-bool VirtualMemoryDataBase::ExecuteStaticOperatorDetail(Protocol::StaticOperatorListParams &requestParams,
-                                                        std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+int64_t VirtualMemoryDataBase::ExecuteStaticOperatorDetail(Protocol::StaticOperatorListParams &requestParams,
                                                         std::vector<Protocol::StaticOperatorItem> &opDetails,
                                                         const std::string& sql)
 {
@@ -613,16 +613,12 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorDetail(Protocol::StaticOperator
     if (currentPage < 0) {
         currentPage = 0;
     }
-    if (pageSize > maxPageSize || currentPage > maxCurrentPage) {
-        ServerLog::Error("Error param: pageSize or currentPage");
-        return false;
-    }
     int64_t offset = currentPage * pageSize;
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query static operator detail. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
-        return false;
+        return -1;
     }
     int index = bindStartIndex;
     std::string searchName = "%" + requestParams.searchName + "%";
@@ -633,9 +629,11 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorDetail(Protocol::StaticOperator
     sqlite3_bind_int64(stmt, index++, pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
     std::vector<Protocol::StaticOperatorItem> operatorDtoVec;
+    int64_t totalNum = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::StaticOperatorItem operatorDto{};
+        totalNum = sqlite3_column_int64(stmt, col++);
         operatorDto.deviceId = sqlite3_column_string(stmt, col++);
         operatorDto.opName = sqlite3_column_string(stmt, col++);
         operatorDto.nodeIndexStart = sqlite3_column_int64(stmt, col++);
@@ -645,10 +643,7 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorDetail(Protocol::StaticOperator
     }
     sqlite3_finalize(stmt);
     opDetails = operatorDtoVec;
-    for (const auto& column : staticOpTableColumnAttr) {
-        columnAttr.emplace_back(column);
-    }
-    return true;
+    return totalNum;
 }
 
 bool VirtualMemoryDataBase::ExecuteQueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
@@ -792,35 +787,28 @@ void VirtualMemoryDataBase::AddOperatorSql(Protocol::MemoryOperatorParams reques
 
 void VirtualMemoryDataBase::AddStableOperatorSql(Protocol::StaticOperatorListParams requestParams, std::string &sql)
 {
-    std::string ascend;
-    if (requestParams.order == "ascend") {
-        ascend = "ASC";
-    } else {
-        ascend = "DESC";
-    }
-
     if (!requestParams.graphId.empty()) {
-        sql += " AND graph_id = ?" ;
+        sql += StringUtil::FormatString(" AND {} = ? ", StaticOpColumn::GRAPH_ID);
     }
-
     if (requestParams.startNodeIndex >= 0 && requestParams.endNodeIndex >= requestParams.startNodeIndex) {
-        sql += " AND (node_index_start BETWEEN " + std::to_string(requestParams.startNodeIndex) +
-                " AND " + std::to_string(requestParams.endNodeIndex) +
-                " OR node_index_end BETWEEN " + std::to_string(requestParams.startNodeIndex) +
-                " AND " + std::to_string(requestParams.endNodeIndex) +")";
+        std::string tmpBetweenAndSql = StringUtil::FormatString("BETWEEN {} AND {}",
+            std::to_string(requestParams.startNodeIndex), std::to_string(requestParams.endNodeIndex));
+        sql += StringUtil::FormatString(" AND ({} {} OR {} {}) ",
+            StaticOpColumn::NODE_INDEX_START, tmpBetweenAndSql,
+            StaticOpColumn::NODE_INDEX_END, tmpBetweenAndSql);
     }
 
     if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
-        sql += " AND size >= " + std::to_string(requestParams.minSize);
+        sql += StringUtil::FormatString(" AND {} >= {} ",
+            StaticOpColumn::SIZE, std::to_string(requestParams.minSize));
     }
     if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
-        sql += " AND size <= " + std::to_string(requestParams.maxSize);
+        sql += StringUtil::FormatString(" AND {} <= {} ",
+            StaticOpColumn::SIZE, std::to_string(requestParams.maxSize));
     }
-    if (!requestParams.orderBy.empty() &&
-        std::find(Protocol::staticOperatorTableColumn.begin(), Protocol::staticOperatorTableColumn.end(),
-        requestParams.orderBy) != Protocol::staticOperatorTableColumn.end()) {
-        auto columnName = isLowCamel ? StringUtil::ToCamelCase(requestParams.orderBy) : requestParams.orderBy;
-        sql += " ORDER BY " + columnName + " " + ascend;
+    if (!requestParams.orderBy.empty()) {
+        std::string ascend = requestParams.desc? "DESC" : "ASC";
+        sql += StringUtil::FormatString(" ORDER BY {} {} ", requestParams.orderBy, ascend);
     }
     sql += " LIMIT ? offset ?";
 }
@@ -1147,6 +1135,13 @@ std::string VirtualMemoryDataBase::ConvertTimestampStr(const std::string& timest
         result = "N/A";
     }
     return result;
+}
+
+void VirtualMemoryDataBase::GetStaticOperatorColumns(std::vector<Protocol::MemoryTableColumnAttr> &copyTo)
+{
+    for (const auto &col: staticOpTableColumnAttr) {
+        copyTo.push_back(col);
+    }
 }
 }
 }

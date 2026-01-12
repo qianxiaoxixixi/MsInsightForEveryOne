@@ -59,9 +59,8 @@ public:
     bool QueryMemoryView(Protocol::MemoryViewParams &requestParams,
                          Protocol::MemoryViewData &operatorBody, uint64_t offsetTime) override;
 
-    bool QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
-                             std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
-                             std::vector<Protocol::StaticOperatorItem> &opDetails) override;
+    int64_t QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
+        std::vector<Protocol::StaticOperatorItem> &opDetails) override;
 
     bool QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
                              Protocol::StaticOperatorGraphItem &graphItem) override;
@@ -72,7 +71,6 @@ public:
     void SaveComponentDetail();
 
     bool QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum) override;
-    bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) override;
     bool QueryOperatorSize(Protocol::MemoryOperatorSizeParams &requestParams, double &min, double &max) override;
     bool QueryStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams,
                                  double &min, double &max) override;
@@ -122,10 +120,11 @@ private:
 
     std::string GetOperatorSql(Protocol::MemoryOperatorParams &requestParams);
     std::string GetStaticOperatorSql(Protocol::StaticOperatorListParams &requestParams);
-    std::string GetStaticGraphStartSql(Protocol::StaticOperatorGraphParams &requestParams);
-    std::string GetStaticGraphEndSql(Protocol::StaticOperatorGraphParams &requestParams);
+    void GenerateGetStaticGraphNodeIndexSql(Protocol::StaticOperatorGraphParams &requestParams,
+        std::string &startSql, std::string &endSql);
 
     std::string GetCreateOperatorMemoryTableSql();
+    std::string GetCreateStaticOpTableSql() const;
 
     const std::string COMPONENT_APP = "APP";
     const std::string COMPONENT_GE = "GE";

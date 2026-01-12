@@ -24,6 +24,7 @@
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 #include "CommonRequests.h"
+#include "MemoryTableView.h"
 #include "MemoryDef.h"
 
 namespace Dic {
@@ -167,11 +168,61 @@ struct MemoryStaticOperatorGraphResponse : public Response {
     StaticOperatorGraphItem data;
 };
 
-struct MemoryStaticOperatorListCompResponse : public Response {
-    MemoryStaticOperatorListCompResponse() : Response(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST) {}
-    std::vector<MemoryTableColumnAttr> columnAttr;
+struct MemoryStaticOperatorListCompResponse : public JsonResponse {
+    MemoryStaticOperatorListCompResponse() : JsonResponse(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST) {}
     std::vector<StaticOperatorCompItem> operatorDiffDetails;
-    int64_t totalNum = 0;
+    int64_t totalNum{0};
+    bool isCompare{false};
+
+    [[nodiscard]]std::optional<document_t> ToJson() const override
+    {
+        document_t json(kObjectType);
+        auto &allocator = json.GetAllocator();
+        ProtocolUtil::SetResponseJsonBaseInfo(*this, json);
+        json_t body(kObjectType);
+        std::vector<TableViewColumn> copyHeaders = {};
+        for (auto &header: StaticOpTableView::FIELD_FULL_COLUMNS) {
+            copyHeaders.push_back(header);
+            if (isCompare && header.key == StaticOpColumn::OP_NAME) {
+                copyHeaders.push_back(TABLE_VIEW_COMPARE_COLUMN);
+            }
+        }
+        auto headers = TableViewColumn::CommonBuildTableHeadersJson(allocator, copyHeaders);
+        json_t operatorDiffDetail(kArrayType);
+        for (const StaticOperatorCompItem& anOperator : operatorDiffDetails) {
+            json_t basicJson = json_t(kObjectType);
+            std::optional<document_t> jsonCompare = ToMemoryStaticOperatorJson(anOperator.compare, allocator);
+            std::optional<document_t> jsonBaseline = ToMemoryStaticOperatorJson(anOperator.baseline, allocator);
+            std::optional<document_t> jsonDiff = ToMemoryStaticOperatorJson(anOperator.diff, allocator);
+            if (jsonCompare.has_value()) {
+                JsonUtil::AddMember(basicJson, "compare", jsonCompare.value(), allocator);
+            }
+            if (jsonBaseline.has_value()) {
+                JsonUtil::AddMember(basicJson, "baseline", jsonBaseline.value(), allocator);
+            }
+            if (jsonDiff.has_value()) {
+                JsonUtil::AddMember(basicJson, "diff", jsonDiff.value(), allocator);
+            }
+            operatorDiffDetail.PushBack(basicJson, allocator);
+        }
+        JsonUtil::AddMember(body, "totalNum", totalNum, allocator);
+        JsonUtil::AddMember(body, "operatorDetail", operatorDiffDetail, allocator);
+        JsonUtil::AddMember(body, "columnAttr", headers, allocator);
+        JsonUtil::AddMember(json, "body", body, allocator);
+        return std::optional<document_t>{std::move(json)};
+    }
+
+    static std::optional<document_t> ToMemoryStaticOperatorJson(const StaticOperatorItem &op,
+        Document::AllocatorType &allocator)
+    {
+        document_t json(kObjectType);
+        JsonUtil::AddMember(json, StaticOpColumn::DEVICE_ID, op.deviceId, allocator);
+        JsonUtil::AddMember(json, StaticOpColumn::OP_NAME, op.opName, allocator);
+        JsonUtil::AddMember(json, StaticOpColumn::NODE_INDEX_START, op.nodeIndexStart, allocator);
+        JsonUtil::AddMember(json, StaticOpColumn::NODE_INDEX_END, op.nodeIndexEnd, allocator);
+        JsonUtil::AddMember(json, StaticOpColumn::SIZE, op.size, allocator);
+        return std::optional<document_t>{std::move(json)};
+    }
 };
 
 struct MemoryStaticOperatorSizeResponse : public Response {
