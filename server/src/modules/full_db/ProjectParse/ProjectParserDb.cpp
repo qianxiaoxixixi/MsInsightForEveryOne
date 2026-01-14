@@ -15,6 +15,7 @@
  * See the Mulan PSL v2 for more details.
  * -------------------------------------------------------------------------
  */
+#include <unordered_map>
 #include "TimelineRequestHandler.h"
 #include "ModuleRequestHandler.h"
 #include "FullDbParser.h"
@@ -515,7 +516,7 @@ std::vector<std::string> ProjectParserDb::GetDbFilesInDir(const std::string &fil
         return dbFiles;
     }
     // 静态初始化，避免重复调用时正则编译开销
-    static std::map<FileType, std::regex> dbRegex = {
+    static std::unordered_multimap<FileType, std::regex> dbRegex = {
         {FileType::MEM_SCOPE, std::regex{memScopeDbReg}}, {FileType::PYTORCH, std::regex{pytorchDBReg}},
         {FileType::PYTORCH, std::regex{mindsporeDBReg}}, {FileType::MS_PROF, std::regex{msprofDBReg}}};
     for (const auto &pair: dbRegex) {
