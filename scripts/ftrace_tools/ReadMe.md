@@ -180,8 +180,204 @@ def stop(self)
 ```
 **说明**：参数`duration`代表映射关系dump采集的开启周期，当传入`None`时，仅dump一次，且无需调用stop接口；传入其它有效值时，每`duration`秒dump一次，并通过stop接口停止。
 
-
-
 ## 基于vllm-ascend场景的ftrace数据与profiling数据联合分析样例
 
-待补充
+本样例给出一个在**Docker容器**内基于vllm-ascend（v0.11.0）进行离线推理服务，同步采集Profiling数据，在**宿主机**通过命令行方式采集ftrace数据，并将采集结果**导入MindStudio Insight进行联合分析**的简单样例，帮助用户快速上手。
+
+### 1. 前置准备
+vllm-Ascend镜像获取地址：https://quay.io/repository/ascend/vllm-ascend?tab=tags
+
+vllm-Ascend文档：https://docs.vllm.ai/projects/ascend/zh-cn/v0.11.0-dev/quick_start.html
+
+按照文档所示，获取镜像，启动容器。
+
+**安装trace-cmd**：
+
++ Ubuntu安装命令：sudo apt-get install trace-cmd
+
++ CentOs安装命令：sudo yum install trace-cmd
+
+**获取ftrace采集与转换脚本**
+
+下载本仓库提供的ftrace采集与转换脚本至本地。
+```bash
+├── ftrace_tools
+│   ├── trace_convert.py
+│   └── trace_record.py
+```
+
+**环境变量配置**：
+
+```bash
+```bash
+#  Load model from ModelScope to speed up download
+export VLLM_USE_MODELSCOPE=True
+# Set `max_split_size_mb` to reduce memory fragmentation and avoid out of memory
+export PYTORCH_NPU_ALLOC_CONF=max_split_size_mb:256
+
+# 开启vllm profiling采集（请根据实际需要指定profiling输出路径）
+export VLLM_TORCH_PROFILER_DIR="/path/to/profiling/data"
+
+# 开启绑核，将NPU 0 绑至CPU 0-15核
+export CPU_AFFINITY_CONF=2,npu0:0-15
+```
+此处绑核仅为示例，请根据实际业务需要确定CPU绑核区间，建议采用NPU与CPU亲和性绑核。详见：[绑核优化-Ascend Extension for PyTorch-昇腾社区](https://www.hiascend.com/document/detail/zh/Pytorch/720/ptmoddevg/trainingmigrguide/performance_tuning_0060.html)
+
+### 2. 进入容器，运行vllm-ascend离线推理任务，同步采集ftrace与Profiling数据
+可参考以下推理脚本`Qwen3_8B.py`进行vllm-ascend离线推理任务，脚本将同步采集Profiling数据：
+```python
+import os
+from vllm import LLM, SamplingParams
+
+prompts = [
+    "Hello, my name is",
+    "The future of AI is",
+]
+sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
+llm = LLM(
+        model="Qwen/Qwen3-8B",
+        max_model_len=26240
+)
+# 开启profiling采集
+llm.start_profile()
+outputs = llm.generate(prompts, sampling_params)
+# 停止profiling采集
+llm.start_profile()
+for output in outputs:
+    prompt = output.prompt
+    generated_text = output.outputs[0].text
+    print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
+```
+
+在**宿主机**启动ftrace采集：
+```bash
+# 进入脚本所在目录
+cd /home/xxx/msinsight/scripts/ftrace_tools
+
+# record_time为-1代表持续采集，需Ctrl+C手动终止
+# 针对CPU0-15核采集，打开容器内外PID映射开关
+python trace_record.py --record_time=-1 --cpu=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 --NSpid 
+```
+
+ftrace采集期间，同步在**容器中**运行推理脚本：
+```bash
+python Qwen3_8B.py
+```
+**注意：`--record_time`为-1，代表持续采集模式，ftrace采集完成后，需及时`Ctrl+C`终止采集进程**。
+#### 采集结果
+vllm-ascend离线推理任务运行，profiling成功采集，打屏回显如下：
+```bash
+......
+
+[INFO] [1070251] profiler.py: Start parsing profiling data: /home/tangke/result_dir/profiling0113/ubuntu122_1069691_20260113031336165_ascend_pt
+[INFO] [1070260] profiler.py: CANN profiling data parsed in a total time of 0:00:06.039457
+[INFO] [1070251] profiler.py: All profiling data parsed in a total time of 0:00:34.928982
+Prompt: 'Hello, my name is', Generated text: ' Lucy and I am an 8 year old who loves to draw and write stories'
+Prompt: 'The future of AI is', Generated text: ' a topic that has been widely discussed, with many people expressing both excitement and concern'
+```
+得到如下形式的profiling采集交付件：
+```bash
+.
+└── profiling
+    └── ubuntu122_1069691_20260113031336165_ascend_pt
+        ├── ASCEND_PROFILER_OUTPUT
+        ├── FRAMEWORK
+        ├── logs
+        ├── PROF_000001_20260113031336168_JJIHFMPCABFRIEEB
+        ├── profiler_info_0.json
+        └── profiler_metadata.json
+```
+
+ftrace采集成功打屏回显如下：
+```bash
+[2026-01-13 03:12:55,173] [INFO]:Write nspid collect result to file
+[2026-01-13 03:12:55,173] [INFO]:Start recording
+[2026-01-13 03:13:55,173] [INFO]:Ending record, writing result to file...
+[2026-01-13 03:13:55,174] [INFO]:Run command/usr/bin/trace-cmd stop
+[2026-01-13 03:13:55,177] [INFO]:Write result to file
+[2026-01-13 03:13:55,178] [INFO]:Run command/usr/bin/trace-cmd show
+[2026-01-13 03:14:02,518] [INFO]:Write end
+[2026-01-13 03:14:02,518] [INFO]:Run command/usr/bin/trace-cmd clear
+[2026-01-13 03:14:02,601] [INFO]:Run command/usr/bin/trace-cmd reset
+[2026-01-13 03:14:04,758] [INFO]:Write finish
+```
+得到如下形式的ftrace采集结果（默认保存在ftrace脚本同级目录下）：
+```bash
+.
+├── ftrace_tools
+│   ├── ftrace.txt # trace-cmd采集结果
+│   ├── pid_mapping.json #容器内外PID映射信息
+│   ├── trace_convert.py
+│   └── trace_record.py
+```
+### 3. 数据后处理
+
+> 该步骤将原始 ftrace 数据转换为 Chrome Trace JSON 格式，并与所采集的profiling数据时间轴对齐，以便导入 MindStudio Insight 可视化工具联合展示与分析。
+
+假设所采集的profiling数据在目录`/path/to/profiling/xxxx_ascend_pt`下。trace-cmd采集结果`ftrace.txt`与容器内外PID映射信息`pid_mapping.json`在`trace_convert.py`同级目录下。
+
+执行命令：
+```bash
+# 进入脚本所在目录
+cd /home/xxx/msinsight/scripts/ftrace_tools
+python trace_convert.py --profiling_data=/path/to/profiling/xxxx_ascend_pt --pid_mapping=pid_mapping.json
+```
+> 多卡场景下，`--profiling_data`可指定为包含多卡的上级目录，或任意单卡数据目录。
+
+转换结果`output.json`默认保存在当前目录下。可将其导入MindStudio Insight，进行可视化分析。
+```bash
+.
+├── ftrace_tools
+│   ├── ftrace.txt
+│   ├── output.json # ftrace转换结果
+│   ├── pid_mapping.json
+│   ├── trace_convert.py
+│   └── trace_record.py
+```
+### 4. 导入MindStudio Insight联合分析
+>**注意**：当前暂不支持Text类型数据与DB类型数据混合显示。若Profiling为Text和DB混合场景，需要提前删除其中的DB交付件`analysis.db`与`ascend_pytorch_profiler_x.db`。
+![](./assets/hybrid_text_db_data.png)
+
+打开MindStudio Insight可视化软件，首先导入Profiling数据：
+
+<img src="./assets/import_profiling_data.png" width="500">
+
+随后，在同一工程中导入ftrace数据：
+
+<div style="display:flex; align-items:flex-start;">
+<img src="./assets/import_within_same_project.png" width=350 style="margin-right:12px;">
+<img src="./assets/import_ftrace_data.png" width=350 >
+</div>
+
+即可联合分析Profiling数据与ftrace数据：
+
+![](./assets/joint_analysis.png)
+
+CPU Scheduling泳道，可从CPU视角查看进程调度情况。
+![](./assets/cpu_sche.png)
+
+Process Scheduling泳道，可查看特定进程的调度状态。
+![](./assets/process_sche.png)
+
+利用MindStudio Insight的泳道置顶功能，可以将感兴趣的泳道放在一起联合分析。
+![](./assets/lane_pinning_feature.png)
+
+**联合分析思路**
+
+一般而言，若在Profiling中观察到下发瓶颈点，可先通过CPU Scheduling泳道，概览性地观察该时间段内，下发流水中的热点线程，如Pytorch主线程、前向算子下发、反向算子下发、PTA二级流水下发（aclThread）等，是否存在进程抢占、软中断等情况。随后，观察特定进程的Process Scheduling泳道，进一步了解进程状态。最后，根据分析结果，进行针对性优化，例如改进绑核方案、核隔离、流水优化等。
+
+# 常见问题FAQ
+## 1. Profiling数据与ftrace数据联合导入失败，报错`File Conflict`
+![](./assets/joint_import_failure.png)
+
+**答：**
+当前暂不支持Text类型数据与DB类型数据混合显示。若Profiling为Text和DB混合场景，需要提前删除其中的DB交付件`analysis.db`与`ascend_pytorch_profiler_x.db`。
+![Text与DB混合数据](./assets/hybrid_text_db_data.png)
+
+## 2. 采集后ftrace数据部分CPU核存在大面积空白
+
+![](./assets/partial_cpu_core_blank.png)
+
+**可能性1**：ftrace采用环形缓冲区，这意味着缓冲区满后新数据会覆盖旧数据，可以在脚本`trace_record.py`中调整缓冲区大小`buffer_size`，例如调整至`buffer_size = '409600'`
+
+**可能性2**：该核在此时段确实没有数据（可能性较小）

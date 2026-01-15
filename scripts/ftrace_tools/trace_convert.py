@@ -176,7 +176,7 @@ class PidTran:
             return pid
         if pid not in self.pid_status:
             return pid
-        return self.pid_status[pid]['Nspid']
+        return self.pid_status[pid]['NSpid']
 
 
 @singleton
