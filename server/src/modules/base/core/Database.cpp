@@ -21,6 +21,8 @@
 #include "ConstantDefs.h"
 #include "Database.h"
 
+#include "ProjectParserFactory.h"
+
 namespace Dic {
 namespace Module {
 using namespace Dic::Server;
@@ -35,7 +37,12 @@ bool Database::CreateDbIfNotExist(const std::string &dbPath)
 {
     struct stat st;
     std::string dbPathStr = CheckSqlString(dbPath);
+#ifdef _WIN32
+    std::string longDbPath = FileUtil::ConvertToLongPath(dbPathStr);
+    std::string utfDbPath = StringUtil::ToUtf8Str(longDbPath);
+#else
     std::string utfDbPath = StringUtil::ToUtf8Str(dbPathStr);
+#endif
     if (stat(dbPathStr.c_str(), &st) == -1) {
         int result = sqlite3_open(utfDbPath.c_str(), &db);
         if (result) {
@@ -43,6 +50,9 @@ bool Database::CreateDbIfNotExist(const std::string &dbPath)
             ServerLog::Error("Open db fail when create Db. path is: ", utfDbPath);
             return false;
         }
+#ifdef _WIN32
+        return true;
+#else
         sqlite3_close(db); // 修改权限前先关闭数据库
         mode_t mode = 0640; // 业务数据权限要求设置为0640 （rw-r-----）
         result = FileUtil::ModifyFilePermissions(dbPathStr, mode);
@@ -50,6 +60,7 @@ bool Database::CreateDbIfNotExist(const std::string &dbPath)
             ServerLog::Error("Can't set db file permissions.");
             return false;
         }
+#endif
     }
     return true;
 }
@@ -85,7 +96,12 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
         ServerLog::Error("The db file has been opened.");
         return false;
     }
+#ifdef _WIN32
+    std::string longDbPath = FileUtil::ConvertToLongPath(dbPath);
+    std::string utfDbPath = StringUtil::ToUtf8Str(longDbPath);
+#else
     std::string utfDbPath = StringUtil::ToUtf8Str(dbPath);
+#endif
     int result = sqlite3_open_v2(CheckSqlString(utfDbPath).c_str(), &db,
         SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, nullptr);
     if (result == SQLITE_OK) {

@@ -75,7 +75,7 @@ const StyledModal = styled(Modal)`
 `;
 
 // 文件最大路径长度
-const MAX_FILE_PATH_LENGTH = 260;
+const MAX_FILE_PATH_LENGTH = 4096;
 interface IProps {
     customImport: boolean;
     importTips: string;
