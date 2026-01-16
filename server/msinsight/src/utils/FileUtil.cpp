@@ -24,6 +24,9 @@ namespace Dic {
 namespace {
 // 非Windows平台不允许反斜杠
 #ifdef _WIN32
+// Windows long path support: paths up to 4096 characters with \\?\ prefix
+constexpr size_t WINDOWS_LONG_PATH_MAX = 4096;
+
 const std::unordered_map<std::string, std::string> INVALID_CHAR = {
     {"\n", "\\n"}, {"\f", "\\f"}, {"\r", "\\r"}, {"\b", "\\b"},
     {"\t", "\\t"}, {"\v", "\\v"}, {"\x7F", "\\x7F"}, {"\u007F", "\\u007F"},
@@ -40,26 +43,71 @@ const std::unordered_map<std::string, std::string> INVALID_CHAR = {
 };
 #endif
 #ifdef _WIN32
-const std::string_view MSVP_SLASH = "\\";
+const std::string_view MSVP_SLASH = "";
 #else
 const std::string_view MSVP_SLASH = "/";
 #endif
 }
+
+#ifdef _WIN32
+std::string FileUtil::ConvertToLongPath(const std::string &path)
+{
+    if (path.empty()) {
+        return path;
+    }
+
+    // Check if path already has the \\?\ prefix
+    if (path.size() >= 4 && path.substr(0, 4) == "\\\\?\\") {
+        return path;
+    }
+
+    // Check if path is a UNC path (starts with \\)
+    if (path.size() >= 2 && path.substr(0, 2) == "\\\\") {
+        // Convert UNC path from \\server\share to \\?\UNC\server\share
+        return "\\\\?\\UNC\\" + path.substr(2);
+    }
+
+    // Convert regular absolute path to long path format
+    // Check if it's an absolute path (starts with drive letter like C:)
+    if (path.size() >= 2 && isalpha(path[0]) && path[1] == ':') {
+        return "\\\\?\\" + path;
+    }
+
+    return path;
+}
+
+std::wstring FileUtil::ConvertToLongPathW(const std::string &path)
+{
+    std::string longPath = ConvertToLongPath(path);
+    return StringUtil::String2WString(longPath);
+}
+#endif
+
 std::string FileUtil::GetCurrPath()
 {
-    char curPath[1024];
     std::string strCurPath;
 #ifdef _WIN32
-    ::GetModuleFileName(nullptr, curPath, MAX_PATH);
-    (_tcsrchr(curPath, '\\'))[1] = 0;
-    strCurPath = curPath;
+    // Use wide character API for long path support
+    std::vector<wchar_t> wCurPath(WINDOWS_LONG_PATH_MAX);
+    DWORD len = ::GetModuleFileNameW(nullptr, wCurPath.data(), static_cast<DWORD>(wCurPath.size()));
+    if (len > 0 && len < wCurPath.size()) {
+        wCurPath[len] = L'\0';
+        // Find the last backslash and null terminate after it
+        wchar_t* lastSlash = wcsrchr(wCurPath.data(), L'\\');
+        if (lastSlash != nullptr) {
+            lastSlash[1] = L'\0';
+        }
+        strCurPath = StringUtil::WString2String(wCurPath.data());
+    }
 #else
 #ifdef __APPLE__
+    char curPath[1024];
     uint32_t size = sizeof(curPath);
     if (_NSGetExecutablePath(curPath, &size) == 0) {
         strCurPath = std::string(dirname(curPath));
     }
 #else
+    char curPath[1024];
     ssize_t len = readlink("/proc/self/exe", curPath, sizeof(curPath) - 1);
     if (len != -1) {
         curPath[len] = '\0';
@@ -120,7 +168,7 @@ std::vector<std::string> FileUtil::SplitFilePath(std::string &path)
 bool FileUtil::IsSoftLink(const std::string &path)
 {
 #ifdef _WIN32
-    std::wstring widePath(path.begin(), path.end());
+    std::wstring widePath = ConvertToLongPathW(path);
     DWORD attributes = GetFileAttributesW(widePath.c_str());
     return (attributes != INVALID_FILE_ATTRIBUTES) &&
            (attributes & FILE_ATTRIBUTE_REPARSE_POINT);
@@ -137,7 +185,8 @@ bool FileUtil::IsSoftLink(const std::string &path)
 bool FileUtil::IsRegularFile(const std::string &filePath)
 {
 #ifdef _WIN32
-    DWORD fileAttributes = GetFileAttributesA(filePath.c_str());
+    std::wstring widePath = ConvertToLongPathW(filePath);
+    DWORD fileAttributes = GetFileAttributesW(widePath.c_str());
     if (fileAttributes == INVALID_FILE_ATTRIBUTES) {
         return false;
     }
@@ -154,7 +203,8 @@ bool FileUtil::IsRegularFile(const std::string &filePath)
 bool FileUtil::IsFilePathExist(const std::string &filePath)
 {
 #ifdef _WIN32
-    DWORD fileAttributes = GetFileAttributesA(filePath.c_str());
+    std::wstring widePath = ConvertToLongPathW(filePath);
+    DWORD fileAttributes = GetFileAttributesW(widePath.c_str());
     return fileAttributes != INVALID_FILE_ATTRIBUTES;
 #else
     struct stat fileStat;
@@ -263,9 +313,9 @@ bool FileUtil::CheckFilePath(const std::string& filePath)
 bool FileUtil::CheckFilePathLength(const std::string& filePath)
 {
 #ifdef _WIN32
-    if (filePath.size() >= MAX_PATH) {
+    if (filePath.size() >= WINDOWS_LONG_PATH_MAX) {
         Server::ServerLog::Error("The path length of % exceeds the maximum allowed length of % characters."
-                                 "The file size is % MB", filePath, MAX_PATH, filePath.size());
+                                 "The file size is % MB", filePath, WINDOWS_LONG_PATH_MAX, filePath.size());
         Dic::Common::SetCommonError(Dic::Common::ErrorCode::SUB_FILE_PATH_LENGTH_EXCEEDS);
         return false;
     }
@@ -283,11 +333,10 @@ bool FileUtil::CheckFilePathLength(const std::string& filePath)
 uint32_t FileUtil::GetFilePathLengthLimit()
 {
 #ifdef _WIN32
-    return MAX_PATH;
+    return WINDOWS_LONG_PATH_MAX;
 #else
     return PATH_MAX;
 #endif
-    return 0;
 }
 
 void FileUtil::CalculateDirSize(const std::string &path, long long int &size, int depth)
@@ -578,18 +627,18 @@ bool FileUtil::CheckFileSize(const std::string &filePath, bool emptyAllow, size_
 {
     constexpr size_t fileMinSize = 0;
 #ifdef _WIN32
-    std::string tmpFilePath = FileUtil::PathPreprocess(filePath);
+    std::wstring wFilePath = ConvertToLongPathW(filePath);
     WIN32_FILE_ATTRIBUTE_DATA fileData;
-    if (GetFileAttributesEx(tmpFilePath.c_str(), GetFileExInfoStandard, &fileData)) {
+    if (GetFileAttributesExW(wFilePath.c_str(), GetFileExInfoStandard, &fileData)) {
         // 获取文件大小
         uintmax_t fileSize = (static_cast<uintmax_t>(fileData.nFileSizeHigh) << 32) | fileData.nFileSizeLow;
         if (fileSize <= fileMinSize && !emptyAllow) {
-            Server::ServerLog::Error("This file % is an empty file.", tmpFilePath);
+            Server::ServerLog::Error("This file % is an empty file.", filePath);
             return false;
         }
         if (fileSize > fileMaxSize) {
-            Server::ServerLog::Error("The size limit for the file located at tmpFilePath has been exceeded.",
-                                     tmpFilePath);
+            Server::ServerLog::Error("The size limit for the file located at % has been exceeded.",
+                                     filePath);
             return false;
         }
         return true;
@@ -640,9 +689,9 @@ long long FileUtil::GetFileSize(const char *fileName)
         return 0;
     }
 #ifdef _WIN32
-    std::string tmpFilePath = FileUtil::PathPreprocess(fileName);
+    std::wstring wFilePath = ConvertToLongPathW(std::string(fileName));
     WIN32_FILE_ATTRIBUTE_DATA fileData;
-    if (GetFileAttributesEx(tmpFilePath.c_str(), GetFileExInfoStandard, &fileData)) {
+    if (GetFileAttributesExW(wFilePath.c_str(), GetFileExInfoStandard, &fileData)) {
         // 获取文件大小
         uintmax_t fileSize = (static_cast<uintmax_t>(fileData.nFileSizeHigh) << 32) | fileData.nFileSizeLow;
         return fileSize;
@@ -897,8 +946,6 @@ std::vector<std::string> FileUtil::FindNPUMonitorFiles(const std::string &path)
     if (!FileUtil::IsFolder(path)) {
         if (std::regex_match(FileUtil::GetFileName(path), fileRegex)) {
             matchedFiles.emplace_back(path);
-        } else {
-            Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_NOT_EXIST);
         }
         return matchedFiles;
     }

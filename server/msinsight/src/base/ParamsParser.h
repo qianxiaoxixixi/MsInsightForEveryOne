@@ -31,7 +31,11 @@ struct ParamsOption {
     int logSize = 10 * 1024 * 1024;
     string host = "127.0.0.1";
     string logLevel = "INFO";
+#ifdef _WIN32
+    string logPath = "";
+#else
     string logPath = "./";
+#endif
     string eventDir;
     int scanPort{-1};
 };

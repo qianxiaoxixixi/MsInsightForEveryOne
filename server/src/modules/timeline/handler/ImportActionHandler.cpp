@@ -90,7 +90,6 @@ void ImportActionHandler::LogIfFileNotExist(const Global::ProjectExplorerInfo &p
     }
     if (!FileUtil::CheckFilePathExist(projectExplorerInfo.fileName)) {
         std::string message = "paths do not exist: " + projectExplorerInfo.fileName;
-        SetTimelineError(ErrorCode::FILE_NOT_EXIST);
         ServerLog::Warn(message);
     }
 }

@@ -75,8 +75,8 @@ public:
     static inline bool CheckDirAccess(const std::string &path, const int &mode = 0)
     {
 #ifdef _WIN32
-        std::string tmpPath(path);
-        if (_access(tmpPath.c_str(), mode) == -1) {
+        std::wstring wPath = ConvertToLongPathW(path);
+        if (_waccess(wPath.c_str(), mode) == -1) {
             return false;
         }
 #else
@@ -108,15 +108,24 @@ public:
         return res + SplicePath(args...);
     }
 
+    // Convert path to long path format for Windows (\\?\ prefix)
+    static std::string ConvertToLongPath(const std::string &path);
+
+    // Convert path to wide string long path format for Windows API calls
+    static std::wstring ConvertToLongPathW(const std::string &path);
+
     static inline std::string GetRealPath(const std::string &path)
     {
 #ifdef _WIN32
-        wchar_t wResolvedPath[MAX_PATH] = {0}; // windows中文路径需要使用宽字符处理
-        if (_wfullpath(wResolvedPath, StringUtil::String2WString(path).data(),
-                       MAX_PATH) == nullptr) {
+        // Use dynamic allocation for long path support (up to 32767 characters)
+        std::wstring wPath = StringUtil::String2WString(path);
+        wchar_t* wResolvedPath = _wfullpath(nullptr, wPath.c_str(), 0);
+        if (wResolvedPath == nullptr) {
             return "";
         }
-        return StringUtil::WString2String(wResolvedPath).data();
+        std::string result = StringUtil::WString2String(wResolvedPath);
+        free(wResolvedPath);
+        return result;
 #else
         char resolvedPath[PATH_MAX] = {0};
         if (realpath(path.c_str(), resolvedPath) == nullptr) {
@@ -149,30 +158,35 @@ public:
     static inline bool FindFolders(const std::string &path,
         std::vector<std::string> &folders, std::vector<std::string> &files, bool strict = true)
     {
-        // long type will crash when use wingw11 compile in windows11
-        long long hFile = 0;
+        // Use wide character version for long path support
+        intptr_t hFile = 0;
         const uint64_t fileCountLimit = 100000;
-        struct _finddata_t fileInfo {};
-        std::string tmpPath = PathPreprocess(path);
+        struct _wfinddata_t fileInfo {};
         std::string currentPath = PathPreprocess(path);
-        if ((hFile = _findfirst(tmpPath.append("\\*").c_str(), &fileInfo)) == -1) {
-            Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_NOT_EXIST);
+        std::wstring searchPath = ConvertToLongPathW(path);
+        if (searchPath.back() != L'\\' && searchPath.back() != L'/') {
+            searchPath += L"\\*";
+        } else {
+            searchPath += L"*";
+        }
+        if ((hFile = _wfindfirst(searchPath.c_str(), &fileInfo)) == -1) {
             return false;
         }
         do {
             if ((fileInfo.attrib & (_A_HIDDEN | _A_SYSTEM)) != 0) {
                 continue;
             }
-            if (std::string(fileInfo.name) == ".." || std::string(fileInfo.name) == ".") {
+            std::string fileName = StringUtil::WString2String(fileInfo.name);
+            if (fileName == ".." || fileName == "." || fileName.empty()) {
                 continue;
             }
-            if (!CheckDirValid(SplicePath(currentPath, fileInfo.name))) {
+            if (!CheckDirValid(SplicePath(currentPath, fileName))) {
                 continue;
             }
             if ((fileInfo.attrib & _A_SUBDIR) != 0) {
-                folders.emplace_back(fileInfo.name);
+                folders.emplace_back(fileName);
             } else {
-                files.emplace_back(fileInfo.name);
+                files.emplace_back(fileName);
             }
             if (folders.size() + files.size() > fileCountLimit) {
                 Server::ServerLog::Warn("There are too many sub files in the folder");
@@ -180,7 +194,7 @@ public:
                 files.clear();
                 break;
             }
-        } while (_findnext(hFile, &fileInfo) == 0);
+        } while (_wfindnext(hFile, &fileInfo) == 0);
         _findclose(hFile);
         return true;
     }
@@ -242,8 +256,12 @@ public:
     static inline bool IsFolder(const std::string &path)
     {
 #ifdef _WIN32
-        std::string tmpPath(path);
-        return PathIsDirectory(tmpPath.c_str());
+        std::wstring wPath = ConvertToLongPathW(path);
+        DWORD attributes = GetFileAttributesW(wPath.c_str());
+        if (attributes == INVALID_FILE_ATTRIBUTES) {
+            return false;
+        }
+        return (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 #else
         struct stat st;
         if (stat(path.c_str(), &st) == -1) {
@@ -288,9 +306,9 @@ public:
             return false;
         }
 #ifdef _WIN32
-        std::string tmpSourcePath(sourceFilePath);
-        std::string tmpTargetPath(targetFilePath);
-        return CopyFile(tmpSourcePath.c_str(), tmpTargetPath.c_str(), false);
+        std::wstring wSourcePath = ConvertToLongPathW(sourceFilePath);
+        std::wstring wTargetPath = ConvertToLongPathW(targetFilePath);
+        return CopyFileW(wSourcePath.c_str(), wTargetPath.c_str(), false);
 #else
         pid_t pid = fork();
         if (pid == -1) {

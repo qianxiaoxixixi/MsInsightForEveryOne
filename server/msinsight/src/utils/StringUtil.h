@@ -195,32 +195,68 @@ public:
     }
 #endif
 
-static inline const std::wstring String2WString(const std::string& s)
+static inline const std::wstring String2WString(const std::string& gbk)
 {
-    const size_t bufferSize = s.size() + 1;
-    if (bufferSize > PATH_MAX) { // 超过最大长度返回空字符串
-        return std::wstring();
-    }
-    std::vector<wchar_t> dstWstr;
-    dstWstr.reserve(PATH_MAX);
-    auto len = mbstowcs(dstWstr.data(), s.c_str(), bufferSize);
-    if (len == static_cast<size_t>(-1)) {
-        return std::wstring();
-    }
-    std::wstring result(dstWstr.data(), len);
+#ifdef _WIN32
+    if (gbk.empty())
+        return {};
+    int size = MultiByteToWideChar(
+        936,
+        0,
+        gbk.c_str(),
+        -1,
+        nullptr,
+        0
+    );
+    std::wstring result(size - 1, 0);
+
+    MultiByteToWideChar(
+        936,
+        0,
+        gbk.c_str(),
+        -1,
+        result.data(),
+        size
+    );
     return result;
+#else
+    std::wstring result;
+    return result;
+#endif
 }
 
-static inline const std::string WString2String(const std::wstring& ws)
+static inline const std::string WString2String(const std::wstring& wstr)
 {
-    size_t bufferSize = ws.size() * 4 + 1;
-    if (ws.size() + 1 > PATH_MAX) {
-        return std::string();
-    }
-    char dstStr[PATH_MAX] = {0};
-    wcstombs(dstStr, ws.c_str(), bufferSize);
-    std::string result = dstStr;
+#ifdef _WIN32
+    if (wstr.empty())
+        return {};
+
+    int size = WideCharToMultiByte(
+        936,
+        0,
+        wstr.c_str(),
+        -1,
+        nullptr,
+        0,
+        nullptr,
+        nullptr
+    );
+    std::string result(size - 1, 0);
+    WideCharToMultiByte(
+        936,
+        0,
+        wstr.c_str(),
+        -1,
+        result.data(),
+        size,
+        nullptr,
+        nullptr
+    );
     return result;
+#else
+    std::string result;
+    return result;
+#endif
 }
 
     template<typename T, typename S>
