@@ -16,7 +16,7 @@
  * -------------------------------------------------------------------------
  */
 
-import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { queryParallelismArrangementCancelable } from '../../utils/RequestUtils';
 import { ParallelismArrangementResult } from '../../utils/interface';
 import { Session } from '../../entity/session';
@@ -104,7 +104,7 @@ const resetPerformanceConditions = (): void => {
 
 interface UseFetchDataReturns {
     loading: boolean;
-    isUpdated: MutableRefObject<boolean>;
+    isUpdated: boolean;
     data?: ParallelismArrangementResult;
     error?: Error;
 }
@@ -113,7 +113,7 @@ const useFetchData = (params: GenerateConditions | null, session: Session): UseF
     const [data, setData] = useState<ParallelismArrangementResult>();
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error>();
-    const isUpdated = useRef(false);
+    const [isUpdated, setIsUpdated] = useState<boolean>(false);
 
     const fetchData = async (): Promise<void> => {
         if (params === null) {
@@ -124,8 +124,8 @@ const useFetchData = (params: GenerateConditions | null, session: Session): UseF
         try {
             setLoading(true);
             const res = await invoke(params);
-            isUpdated.current = !isUpdated.current;
             setData(res);
+            setIsUpdated((oldV) => !oldV);
         } catch (err) {
             setError(err as Error);
         } finally {
@@ -438,7 +438,7 @@ export const ParallelismGraph = observer(({ session, targetRankIndex, targetTrig
             setActiveRectIndex(null);
             resetPerformanceConditions();
         }
-    }, [isUpdated.current]);
+    }, [isUpdated]);
 
     useEffect(() => {
         const dyeingMode = dyeingModeMapping[parallelismStore.activeDimension] || 'None';
