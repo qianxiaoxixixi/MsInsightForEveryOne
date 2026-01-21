@@ -27,6 +27,8 @@ import { cubeCoreBaseV5, vectorCoreModule1V5, vectorCoreModule2V5 } from './core
 
 const bodyStyle = window.getComputedStyle(document.body);
 const fontFamily = bodyStyle.fontFamily;
+const PLAIN_LINES = ['L1_TO_UB_UB', 'UB_TO_L1', 'UB_TO_L1__UB_TO_L1_2'];
+const LINES_HIDDEN_LABELS = ['L1_TO_UB_2', 'UB_TO_L1_2'];
 
 const cubeCore: Inode = {
     name: '',
@@ -664,7 +666,7 @@ const cubeV5: Igraph = [
 ];
 
 function changeVectorParameter(value: Inode): Inode {
-    const idsToRemove = ['UB_TO_L1', 'L1_TO_UB', 'FIXP_TO_UB'];
+    const idsToRemove = ['UB_TO_L1', 'L1_TO_UB', 'FIXP_TO_UB', 'UB_TO_L1__UB_TO_L1_2'];
     // 过滤line数组，移除指定ID的元素
     const filteredLine = value.line?.filter(item => !idsToRemove.includes(item.id as string));
     value.line = filteredLine;
@@ -1235,7 +1237,7 @@ const drawLine = (nodes: d3.Selection<SVGGElement, IdrawNode, d3.BaseType, unkno
         .enter()
         .append('text')
         .attr('class', 'line-label')
-        .attr('x', d => d.id === 'L1_TO_UB_2' ? '' : d.labelXy?.x ?? 0)
+        .attr('x', d => LINES_HIDDEN_LABELS.includes(d.id ?? '') ? '' : d.labelXy?.x ?? 0)
         .attr('y', d => d.labelXy?.y ?? 0)
         .attr('text-anchor', d => {
             switch (d.labelPosition) {
@@ -1543,7 +1545,7 @@ const updateHotPath = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>
         })
         .attr('marker-end', d => {
             const lineid: any = ((d as IdrawLine)?.id ?? '').split('_append')[0];
-            if (lineid === 'L1_TO_UB_UB') {
+            if (PLAIN_LINES.includes(lineid)) {
                 return null;
             }
             const memoryUnitId = Path[lineid];
