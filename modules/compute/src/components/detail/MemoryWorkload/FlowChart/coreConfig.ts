@@ -195,8 +195,22 @@ export const vectorCoreModule1V5: Inode = {
             x: 150,
             y: 20,
             top: '46%-60',
-            length: 146,
+            length: 104,
             orient: 'top',
+            labelXy: {
+                x: 166,
+                y: -100,
+            },
+        },
+        // UB_TO_L1 到 UB_TO_L1_2
+        {
+            id: 'UB_TO_L1__UB_TO_L1_2',
+            label: 'UB_TO_L1__UB_TO_L1_2',
+            x: 150,
+            y: -84,
+            top: '46%-60',
+            length: 30,
+            orient: 'right',
         },
         // L1 -> UB0,44
         {
@@ -230,11 +244,11 @@ export const vectorCoreModule1V5: Inode = {
         {
             id: 'UB_TO_L2',
             label: 'UB0_TO_L2',
-            x: 140,
-            top: '46%-20',
-            length: 138,
+            x: 126,
+            top: '46%-2',
+            length: 124,
             orient: 'left',
-            labelPosition: 'bottom',
+            labelPosition: 'top',
         },
         // L2_TO_Dcache 48
         {
@@ -244,16 +258,6 @@ export const vectorCoreModule1V5: Inode = {
             top: '46%+35',
             length: 138,
             orient: 'right',
-        },
-        // Dcache_TO_L2 50
-        {
-            id: 'Dcache_TO_L2',
-            label: 'Dcache_TO_L2',
-            x: 140,
-            top: '46%+55',
-            length: 138,
-            orient: 'left',
-            labelPosition: 'bottom',
         },
         // UB_TO_VEC 14
         {
@@ -391,11 +395,11 @@ export const vectorCoreModule2V5: Inode = {
         {
             id: 'UB_TO_L2_2',
             label: 'UB_TO_L2_2',
-            x: 140,
-            top: '46%-20',
-            length: 138,
+            x: 126,
+            top: '46%-2',
+            length: 124,
             orient: 'left',
-            labelPosition: 'bottom',
+            labelPosition: 'top',
         },
         // L2_TO_Dcache_2 49
         {
@@ -405,16 +409,6 @@ export const vectorCoreModule2V5: Inode = {
             top: '46%+35',
             length: 138,
             orient: 'right',
-        },
-        // Dcache_TO_L2_2 51
-        {
-            id: 'Dcache_TO_L2_2',
-            label: 'Dcache_TO_L2_2',
-            x: 140,
-            top: '46%+55',
-            length: 138,
-            orient: 'left',
-            labelPosition: 'bottom',
         },
         // UB_TO_VEC_2 18
         {
