@@ -26,42 +26,22 @@ import { observer } from 'mobx-react';
 import { getFuncNewData } from './dataHandler';
 import { chartResize } from '../utils/utils';
 import { useTheme, type Theme } from '@emotion/react';
+import { MarkLineStack } from './leaks/tools';
+import { runInAction } from 'mobx';
 const colorTypes: string[] = ['#8fd3e8', '#d95850', '#eb8146', '#ffb248', '#f2d643', '#ebdba4', '#fcce10', '#b5c334', '#1bca93'];
-const transData = (data: any): any => {
+const transData = (data: any, min: number, max: number): any => {
     return data.map((item: any, index: number) => ({
         name: item.func,
-        value: [item.depth, item.startTimestamp, item.endTimestamp, item.func],
+        value: [item.depth, Math.max(item.startTimestamp, min), Math.min(item.endTimestamp, max), item.func],
         itemStyle: {
             color: colorTypes[index % 9],
         },
     }));
 };
-const getToolbox = (): echarts.ToolboxComponentOption => {
-    return {
-        show: true,
-        feature: {
-            dataZoom: {
-                yAxisIndex: false,
-                filterMode: 'weakFilter',
-                icon: {
-                    back: 'none',
-                },
-            },
-            restore: {
-                show: true,
-            },
-            dataView: {
-                show: false,
-            },
-        },
-        right: 80,
-        top: 20,
-    };
-};
 const getRenderItem = (session: Session, theme: Theme, api: any): any => {
     const level = api.value(0);
-    const start = api.coord([Math.max(api.value(1), session.minTime), level]);
-    const end = api.coord([Math.min(api.value(2), session.maxTime), level]);
+    const start = api.coord([api.value(1), level]);
+    const end = api.coord([api.value(2), level]);
     const height = ((api.size([0, 1]) || [0, 20]) as number[])[1];
     const width = end[0] - start[0];
     const customRes = {
@@ -105,12 +85,12 @@ const getSeries = (session: Session, theme: Theme): any => {
     return [
         {
             type: 'custom',
+            data: transData(session.funcData.traces, session.minTime, session.maxTime),
             renderItem: (params: any, api: any): any => getRenderItem(session, theme, api),
             encode: {
                 x: [0, 1, 2],
                 y: 0,
             },
-            data: transData(session.funcData.traces),
             clip: true,
         },
     ];
@@ -145,7 +125,7 @@ const getOptions = (session: Session, theme: Theme): EChartsOption => {
             },
             axisLabel: {
                 formatter: function (value: number): string {
-                    return `${(value / 1000000000).toFixed(3)}s`;
+                    return `${(value / 1000 / 1000).toFixed(3)}`;
                 },
             },
             splitLine: {
@@ -161,10 +141,6 @@ const getOptions = (session: Session, theme: Theme): EChartsOption => {
             },
             max: session.maxDepth + 1,
         },
-        toolbox: getToolbox(),
-        axisPointer: {
-            show: true,
-        },
         tooltip: getTooltip(session),
         series: getSeries(session, theme),
         grid: {
@@ -174,15 +150,47 @@ const getOptions = (session: Session, theme: Theme): EChartsOption => {
     };
 };
 
-const MemoryFunctionCall = observer(({ session, setFuncIns }: {
-    session: Session;
-    setFuncIns: (value: echarts.ECharts | null) => void;
-}): React.ReactElement => {
+const MemoryFunctionCall = observer(({ session }: { session: Session }): React.ReactElement => {
     const chartRef = useRef<ChartsHandle>(null);
+    const markLineRef = useRef<HTMLDivElement>(null);
     const [loading, setLoading] = useState(false);
     const [chartOptions, setChartOptions] = useState<EChartsOption>({});
-    const { funcData, deviceId, eventType, threadId, maxTime, minTime, searchFunc, threadFlag } = session;
+    const { funcData, deviceId, eventType, threadId, searchFunc, threadFlag } = session;
+    const [markLineContainerWidth, setMarkLineContainerWidth] = useState(0);
+
     const theme: Theme = useTheme();
+
+    const handleResize = (): void => {
+        if (markLineRef.current === null) {
+            return;
+        }
+        setMarkLineContainerWidth(markLineRef.current.getBoundingClientRect().width);
+        const instance = chartRef.current?.getInstance();
+        if (instance) {
+            instance.clear();
+            setChartOptions(getOptions(session, theme));
+        }
+    };
+
+    const handleMouseMove = (ev: React.MouseEvent<HTMLDivElement>): void => {
+        if (markLineRef.current === null) {
+            return;
+        }
+        const rect = markLineRef.current.getBoundingClientRect();
+        const x = ev.clientX - rect.left;
+        const y = ev.clientY - rect.top;
+        if (x < 0 || x > rect.width || y < 0 || y > rect.height) {
+            runInAction(() => {
+                session.markLineInfo.stack = { x: -1, y: -1 };
+                session.markLineInfo.block = { x: -1, y: -1 };
+            });
+            return;
+        }
+        runInAction(() => {
+            session.markLineInfo.stack = { x, y };
+        });
+    };
+
     useEffect(() => {
         if (deviceId === '' || threadFlag) return;
         setLoading(true);
@@ -191,29 +199,37 @@ const MemoryFunctionCall = observer(({ session, setFuncIns }: {
     }, [deviceId, eventType, threadId]);
     useEffect(() => {
         setChartOptions(getOptions(session, theme));
-        if (chartRef.current !== null && chartRef.current !== undefined) {
-            setFuncIns(chartRef.current.getInstance());
-        }
         chartResize(chartRef?.current?.getInstance());
-    }, [deviceId, eventType, JSON.stringify(funcData.traces), maxTime, minTime]);
+    }, [deviceId, eventType, threadId, funcData, searchFunc, theme.mode]);
+
     useEffect(() => {
-        setChartOptions(getOptions(session, theme));
-    }, [JSON.stringify(searchFunc), theme.mode]);
-    useEffect(() => {
-        chartRef.current?.getInstance()?.dispatchAction({
-            type: 'takeGlobalCursor',
-            key: 'dataZoomSelect',
-            dataZoomSelectActive: true,
-        });
+        if (markLineRef.current === null) {
+            return;
+        }
+        setMarkLineContainerWidth(markLineRef.current.getBoundingClientRect().width);
     }, [chartOptions, theme.mode]);
-    return (
+
+    useEffect(() => {
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
+
+    return <div style={{ position: 'relative', width: 'calc(100vw - 120px)', height: 500 }}
+        onMouseMove={handleMouseMove}>
         <MIChart
             ref={chartRef}
-            height="500px"
-            width="calc(100vw - 120px)"
+            height="100%"
             loading={loading}
             options={chartOptions}
         />
-    );
+        <div ref={markLineRef}
+            style={{ position: 'absolute', top: 60, left: 80, width: 'calc(100% - 140px)', height: 'calc(100% - 130px)', pointerEvents: 'none' }}
+        >
+            <MarkLineStack session={session} width={markLineContainerWidth} />
+        </div>
+    </div>;
 });
 export default MemoryFunctionCall;

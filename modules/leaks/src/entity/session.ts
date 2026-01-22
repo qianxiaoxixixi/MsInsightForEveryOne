@@ -31,6 +31,43 @@ interface MarkStamps {
     first: number;
     last: number;
 }
+
+const LEAKS_WORKER_INFO_DEFAULT = {
+    sizeInfo: {
+        maxTimestamp: 0,
+        minTimestamp: 0,
+        maxSize: 0,
+        minSize: 0,
+    },
+    renderOptions: {
+        transform: {
+            x: 0,
+            y: 0,
+            scale: 1,
+        },
+        viewport: {
+            width: 0,
+            height: 0,
+        },
+        zoom: {
+            x: 1,
+            y: 1,
+            offset: 0,
+        },
+    },
+    mousePosition: {
+        x: -1,
+        y: -1,
+    },
+    hoverItem: null,
+};
+
+const MARK_LINE_POSITION_DEFAULT = {
+    block: { x: -1, y: -1 },
+    stack: { x: -1, y: -1 },
+    currentTimestamp: -1,
+};
+
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     deviceIds: any = {};
@@ -88,6 +125,19 @@ export class Session {
     longIdleThreshold: ThreShold = { perT: null, valueT: null };
     onlyInefficient: boolean = false;
     allowTrim: boolean = true;
+
+    leaksWorkerInfo: {
+        sizeInfo: Omit<RenderData, 'blocks'>;
+        renderOptions: RenderOptions;
+        hoverItem: Block | null;
+    } = LEAKS_WORKER_INFO_DEFAULT;
+
+    markLineInfo: {
+        block: { x: number; y: number };
+        stack: { x: number; y: number };
+        currentTimestamp: number;
+    } = MARK_LINE_POSITION_DEFAULT;
+
     constructor() {
         makeAutoObservable(this);
     }

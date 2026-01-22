@@ -50,7 +50,6 @@ export interface Allocation {
 }
 export interface GraphParam {
     deviceId: string;
-    graph: 'blocks' | 'allocations';
     eventType: string;
     relativeTime?: boolean;
     startTimestamp?: number;
@@ -143,14 +142,22 @@ export interface EventsTableData {
     events: TableDetail[];
     total: number;
 }
+
 /**
- * 获取图表信息
+ * 获取块图信息
  * @param params 查询条件
  * @returns 查询结果
  */
-export const getLeaksGraphData = async (params: GraphParam): Promise<BlockData | AllocationData> => {
-    const { graph, ...rest } = params;
-    return window.request({ command: `Memory/leaks/${graph}`, params: { ...rest } });
+export const getBlocksGraphData = async (params: GraphParam): Promise<Omit<RenderData, 'block'>> => {
+    return window.request({ command: 'Memory/leaks/blocks', params: { ...params } });
+};
+/**
+ * 获取缩略轴数据
+ * @param params 查询条件
+ * @returns 查询结果
+ */
+export const getLeaksAllocationsData = async (params: GraphParam): Promise<AllocationData> => {
+    return window.request({ command: 'Memory/leaks/allocations', params: { ...params } });
 };
 /**
  * 获取内存拆解详情
