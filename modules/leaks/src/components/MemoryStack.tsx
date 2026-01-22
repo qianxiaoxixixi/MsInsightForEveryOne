@@ -21,78 +21,41 @@ import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
-import MemoryBarChart from './MemoryBarChart';
 import MemorySliceChart from './MemorySliceChart';
 import MemoryFunctionCall from './MemoryFunctionCall';
 import MemoryTable from './MemoryTable';
 import { Label } from './Common';
 import { getFuncNewData, getBarNewData } from './dataHandler';
-import { Line, initLine, cancelLine } from './LineHandler';
-import { chartResize, convertNanoseconds } from '../utils/utils';
+import { convertNanoseconds } from '../utils/utils';
+import { MemoryBlockDiagram } from './leaks/MemoryBlockDiagram';
+import MemoryDataZoom from './MemoryDataZoom';
+import { workerTransform } from '@/leaksWorker/worker';
 
 const MemoryStack = observer(({ session }: { session: any }): React.ReactElement => {
     const { t } = useTranslation('leaks');
-    const [funcIns, setFuncIns] = useState<echarts.ECharts | null>();
-    const [barIns, setBarIns] = useState<echarts.ECharts | null>();
-    const [lineShow, setLineshow] = useState('none');
-    const [offset, setOffset] = useState(0);
-    const mouseEnter = (): void => {
-        setLineshow('block');
-    };
-    const mouseMove = (e: MouseEvent): void => {
-        requestAnimationFrame(() => {
-            setOffset(e.clientX - 16);
-        });
-    };
-    const mouseLeave = (): void => {
-        setLineshow('none');
-        setOffset(0);
-    };
-    const restoreSelect = (): void => {
+    const [zoomData, setZoomData] = useState<Array<[number, number]>>([]);
+    const [zoomMinTime, setZoomMinTime] = useState<number>(Number.MAX_SAFE_INTEGER);
+    const [zoomMaxTime, setZoomMaxTime] = useState<number>(Number.MIN_SAFE_INTEGER);
+
+    const selectedZoomChange = (range: [number, number]): void => {
+        getFuncNewData(session, range[0], range[1]);
+
+        const { sizeInfo, renderOptions } = session.leaksWorkerInfo;
+        const newScale = (sizeInfo.maxTimestamp - sizeInfo.minTimestamp) / (range[1] - range[0]);
+        const newX = -(range[0] - sizeInfo.minTimestamp) * renderOptions.zoom.x * newScale;
+        const transform = { x: newX, y: 0, scale: newScale };
+
         runInAction(() => {
-            Object.keys(session.legendSelect).forEach(key => { session.legendSelect[key] = true; });
+            session.leaksWorkerInfo.renderOptions.transform = transform;
         });
+        workerTransform({ transform });
     };
-    const linkageHandle = (): void => {
-        if (!funcIns || !barIns) {
-            return;
-        }
-        funcIns.off('dblclick');
-        barIns.off('legendselectchanged');
-        funcIns.on('dblclick', (params: any) => {
-            const data = params.value;
-            const start: number = data[1];
-            const end: number = data[2];
-            getFuncNewData(session, start, end);
-            getBarNewData(session, start, end);
-        });
-        barIns.on('legendselectchanged', (params: any) => {
-            chartResize(barIns);
-            runInAction(() => {
-                session.legendSelect = params.selected;
-            });
-        });
-        [funcIns, barIns].forEach((ins) => {
-            ins.off('restore');
-            ins.off('dataZoom');
-            ins.on('restore', () => {
-                getFuncNewData(session);
-                getBarNewData(session);
-                restoreSelect();
-            });
-            ins.on('dataZoom', (params: any) => {
-                const { startValue, endValue } = params.batch[0];
-                getFuncNewData(session, Math.floor(startValue), Math.ceil(endValue));
-                getBarNewData(session, Math.floor(startValue), Math.ceil(endValue));
-            });
-        });
-    };
+
     useEffect(() => {
         const newIdOpts = Object.keys(session.deviceIds).map((id: string) => ({ label: id, value: id }));
         if (newIdOpts.length > 0) {
             const newTypeOpts = session.deviceIds[newIdOpts[0].value].map((type: string) => ({ label: type, value: type }));
             const newThreadOpts = session.threadIds.map((thread: number) => ({ label: thread, value: thread }));
-            initLine(mouseEnter, mouseMove, mouseLeave);
             runInAction(() => {
                 session.deviceIdOpts = newIdOpts;
                 session.typeOpts = newTypeOpts;
@@ -103,12 +66,26 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
             });
         }
         return () => {
-            cancelLine(mouseEnter, mouseMove, mouseLeave);
         };
     }, [session.deviceIds, session.threadIds]);
+
     useEffect(() => {
-        linkageHandle();
-    }, [funcIns, barIns]);
+        if (session.deviceId === '' || session.threadFlag) return;
+        getBarNewData(session);
+    }, [session.deviceId, session.eventType, session.threadId]);
+
+    useEffect(() => {
+        setZoomData(session.allocationData.allocations.map((item: any) => ([item.timestamp, item.totalSize])));
+        let minTime = Math.min(session.leaksWorkerInfo.sizeInfo.minTimestamp, session.allocationData.minTimestamp);
+        let maxTime = Math.max(session.leaksWorkerInfo.sizeInfo.maxTimestamp, session.allocationData.maxTimestamp);
+        if (session.funcData.maxTimestamp > 0) {
+            minTime = Math.min(minTime, session.funcData.minTimestamp);
+            maxTime = Math.max(maxTime, session.funcData.maxTimestamp);
+        }
+        setZoomMinTime(minTime);
+        setZoomMaxTime(maxTime);
+    }, [session.allocationData.allocations]);
+
     return (
         <>
             <CollapsiblePanel title={t('FlameGraph')} style={{ minWidth: 1000, display: session.threadOps.length > 0 && session.threadId !== '' ? 'block' : 'none' }}>
@@ -146,9 +123,8 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                         runInAction(() => { session.allowTrim = event.target.checked; getFuncNewData(session, session.minTime, session.maxTime); });
                     }}
                 >{t('allowTrim')}</Checkbox>
-                <div id="funcContent" style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
-                    <Line id="funcLine" lineShow={lineShow} offset={offset} color="#999" />
-                    <MemoryFunctionCall session={session} setFuncIns={setFuncIns} />
+                <div id="funcContent" style={{ overflow: 'hidden', padding: 0, position: 'relative' }}>
+                    <MemoryFunctionCall session={session} />
                 </div>
             </CollapsiblePanel >
             <CollapsiblePanel title={t('LineBlockGraph')} style={{ minWidth: 1000 }}>
@@ -181,9 +157,15 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     }}
                     options={session.typeOpts}
                 />
-                <div id="barContent" style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
-                    <Line id="barLine" lineShow={lineShow} offset={offset} color="#999" />
-                    <MemoryBarChart session={session} setBarIns={setBarIns} />
+                <div id="barContent" style={{ overflow: 'hidden', padding: 0, position: 'relative' }}>
+                    <MemoryBlockDiagram session={session} />
+                    <MemoryDataZoom
+                        offsetLeft={95}
+                        offsetRight={105}
+                        dataSource={zoomData}
+                        minTime={zoomMinTime}
+                        maxTime={zoomMaxTime}
+                        selectedZoomChange={selectedZoomChange} />
                 </div>
             </CollapsiblePanel>
             {session.memoryStamp

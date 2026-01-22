@@ -19,6 +19,7 @@ import { store } from '../store';
 import { runInAction } from 'mobx';
 import type { NotificationHandler } from './defs';
 import i18n from '@insight/lib/i18n';
+import { workerDestroy } from '@/leaksWorker/worker';
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
 };
@@ -137,6 +138,7 @@ export const parseCompletedHandler = (data: any): void => {
 };
 export const removeRemoteHandler: NotificationHandler = (data): void => {
     const session = store.sessionStore.activeSession;
+    workerDestroy();
     if (session) {
         runInAction(() => {
             session.deviceIds = {};
