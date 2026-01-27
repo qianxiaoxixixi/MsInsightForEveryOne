@@ -16,8 +16,13 @@ See the Mulan PSL v2 for more details.
 -------------------------------------------------------------------------
 """
 from .database import MemScopeDb
-from .event import MemoryEvent, PythonTraceEvent
+from .entities import (
+    MemoryEvent,
+    PythonTraceEvent,
+    MemoryBlock,
+    MemoryAllocation
+)
 
 __all__ = [
-    'MemScopeDb', 'MemoryEvent', 'PythonTraceEvent'
+    'MemScopeDb', 'MemoryEvent', 'PythonTraceEvent', 'MemoryBlock', 'MemoryAllocation'
 ]

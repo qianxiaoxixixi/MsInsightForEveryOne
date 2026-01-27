@@ -48,3 +48,26 @@ class PythonTraceEventFieldDefs:
     END_TIME_NS = "EndTime(ns)"
     TID = "Thread Id"
     PID = "Process Id"
+
+
+class MemoryBlockFieldDefs:
+    ID = "id"
+    DEVICE_ID = "deviceId"
+    ADDR = "addr"
+    SIZE = "size"
+    START_TIME_NS = "startTimestamp"
+    END_TIME_NS = "endTimestamp"
+    EVENT_TYPE = "eventType"
+    OWNER = "owner"
+    ATTR = "attr"
+    PID = "processId"
+    TID = "threadId"
+
+
+class MemoryAllocationFieldDefs:
+    ID = "id"
+    TIME_NS = "timestamp"
+    TOTAL_SIZE = "totalSize"
+    OPTIMIZED = "optimized"
+    DEVICE_ID = "deviceId"
+    EVENT_TYPE = "eventType"

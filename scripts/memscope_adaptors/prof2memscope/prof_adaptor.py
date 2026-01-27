@@ -22,7 +22,7 @@ from torch_npu.profiler.analysis.prof_parse._event_tree_parser import (
     _ExtraFields_Allocation,
     _ExtraFields_PyCall,
 )
-from memscope.event import MemoryEvent, PythonTraceEvent, MallocFreeEventAttr
+from memscope.entities import MemoryEvent, PythonTraceEvent, MallocFreeEventAttr
 from memscope.defs import Event, EventType
 
 
