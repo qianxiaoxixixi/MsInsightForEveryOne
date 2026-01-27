@@ -30,19 +30,19 @@ export const hexToRgba = (hex: string, opacity: number = 1): [number, number, nu
     return [r, g, b, opacity];
 };
 
-const hashHexAddressToIndex = (addr: string): number => {
-    // 移除可能的 "0x" 前缀
-    const cleanAddr = addr.toLowerCase().replace(/^0x/, '');
-    const range = colors.length;
-    // 使用字符串哈希避免大数问题
-    let hash = 0;
-    for (let i = 0; i < cleanAddr.length; i++) {
-        const c = cleanAddr.charCodeAt(i);
-        const val = c >= 97 ? c - 87 : c - 48; // a-f: c-87, 0-9: c-48
-        hash = ((hash << 4) - hash) + val;
-        hash = hash & hash;
+const hashString = (str: string): number => {
+    let hash = 5381; // djb2 初始值
+    for (let i = 0; i < str.length; i++) {
+        // 强制保持为 32 位有符号整数（通过位运算）
+        hash = ((hash << 5) + hash + str.charCodeAt(i)) | 0;
     }
-    return Math.abs(hash) % range;
+    return hash >>> 0; // 转为 uint32
+};
+
+const hashHexAddressToIndex = (addr: string): number => {
+    const clean = addr.toLowerCase().replace(/^0x/, '');
+    const hash = hashString(clean);
+    return hash % colors.length;
 };
 
 export const getColorByAddr = (addr: string, isHightlight: boolean = false, opacity: number = 1): [number, number, number, number] => {
