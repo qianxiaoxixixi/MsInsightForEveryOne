@@ -18,7 +18,12 @@ See the Mulan PSL v2 for more details.
 from typing import List
 
 from utils import SqliteColumn, SqliteTable, SqliteDB
-from .defs import DumpEventFieldDefs, PythonTraceEventFieldDefs
+from .defs import (
+    DumpEventFieldDefs,
+    PythonTraceEventFieldDefs,
+    MemoryBlockFieldDefs,
+    MemoryAllocationFieldDefs
+)
 
 _MEMSCOPE_DUMP_TABLE_COLUMNS: List[SqliteColumn] = [
     SqliteColumn(name=DumpEventFieldDefs.ID, data_type=int, primary_key=True, autoincrement=True),
@@ -43,9 +48,34 @@ _PYTHON_TRACE_TABLE_COLUMNS: List[SqliteColumn] = [
     SqliteColumn(PythonTraceEventFieldDefs.PID, data_type=int)
 ]
 
+_MEMORY_BLOCK_TABLE_COLUMNS: List[SqliteColumn] = [
+    SqliteColumn(MemoryBlockFieldDefs.ID, data_type=int, primary_key=True),
+    SqliteColumn(MemoryBlockFieldDefs.DEVICE_ID),
+    SqliteColumn(MemoryBlockFieldDefs.ADDR),
+    SqliteColumn(MemoryBlockFieldDefs.SIZE, data_type=int),
+    SqliteColumn(MemoryBlockFieldDefs.START_TIME_NS, data_type=int),
+    SqliteColumn(MemoryBlockFieldDefs.END_TIME_NS, data_type=int),
+    SqliteColumn(MemoryBlockFieldDefs.EVENT_TYPE),
+    SqliteColumn(MemoryBlockFieldDefs.OWNER),
+    SqliteColumn(MemoryBlockFieldDefs.ATTR),
+    SqliteColumn(MemoryBlockFieldDefs.PID, data_type=int),
+    SqliteColumn(MemoryBlockFieldDefs.TID, data_type=int)
+]
+
+_MEMORY_ALLOCATION_TABLE_COLUMNS: List[SqliteColumn] = [
+    SqliteColumn(MemoryAllocationFieldDefs.ID, data_type=int, primary_key=True),
+    SqliteColumn(MemoryAllocationFieldDefs.TIME_NS, data_type=int),
+    SqliteColumn(MemoryAllocationFieldDefs.TOTAL_SIZE, data_type=int),
+    SqliteColumn(MemoryAllocationFieldDefs.OPTIMIZED, data_type=int),
+    SqliteColumn(MemoryAllocationFieldDefs.DEVICE_ID),
+    SqliteColumn(MemoryAllocationFieldDefs.EVENT_TYPE)
+]
+
 
 class MemScopeDb(SqliteDB):
     DUMP_TABLE_NAME = "leaks_dump"
+    MEMORY_BLOCK_TABLE_NAME = "memory_block"
+    MEMORY_ALLOC_TABLE_NAME = "memory_allocation"
     PYTHON_TRACE_TABLE_NAME_PREFIX = "python_trace"
 
     def __init__(self, path: str):
@@ -54,6 +84,14 @@ class MemScopeDb(SqliteDB):
 
     def create_dump_table(self):
         self.create_table(SqliteTable(MemScopeDb.DUMP_TABLE_NAME, _MEMSCOPE_DUMP_TABLE_COLUMNS),
+                          delete_if_exists=True)
+
+    def create_memory_block_table(self):
+        self.create_table(SqliteTable(MemScopeDb.MEMORY_BLOCK_TABLE_NAME, _MEMORY_BLOCK_TABLE_COLUMNS),
+                          delete_if_exists=True)
+
+    def create_allocation_block_table(self):
+        self.create_table(SqliteTable(MemScopeDb.MEMORY_ALLOC_TABLE_NAME, _MEMORY_ALLOCATION_TABLE_COLUMNS),
                           delete_if_exists=True)
 
     def create_python_trace_table(self, pid: int):

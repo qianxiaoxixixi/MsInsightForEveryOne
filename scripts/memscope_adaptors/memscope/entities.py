@@ -18,7 +18,12 @@ See the Mulan PSL v2 for more details.
 import json
 from dataclasses import dataclass
 
-from .defs import DumpEventFieldDefs, PythonTraceEventFieldDefs
+from .defs import (
+    DumpEventFieldDefs,
+    PythonTraceEventFieldDefs,
+    MemoryBlockFieldDefs,
+    MemoryAllocationFieldDefs
+)
 
 
 @dataclass
@@ -76,4 +81,54 @@ class PythonTraceEvent:
             PythonTraceEventFieldDefs.END_TIME_NS: self.end_time_ns,
             PythonTraceEventFieldDefs.TID: self.tid,
             PythonTraceEventFieldDefs.PID: self.pid
+        }
+
+
+@dataclass
+class MemoryBlock:
+    block_id: int
+    device_id: int
+    addr: str
+    size: int
+    start_time_ns: int
+    end_time_ns: int
+    event_type: str
+    owner: str
+    attr: dict
+    pid: int
+    tid: int
+
+    def to_dict(self):
+        return {
+            MemoryBlockFieldDefs.ID: self.block_id,
+            MemoryBlockFieldDefs.DEVICE_ID: self.device_id,
+            MemoryBlockFieldDefs.ADDR: self.addr,
+            MemoryBlockFieldDefs.SIZE: self.size,
+            MemoryBlockFieldDefs.START_TIME_NS: self.start_time_ns,
+            MemoryBlockFieldDefs.END_TIME_NS: self.end_time_ns,
+            MemoryBlockFieldDefs.EVENT_TYPE: self.event_type,
+            MemoryBlockFieldDefs.OWNER: self.owner,
+            MemoryBlockFieldDefs.ATTR: json.dumps(self.attr),
+            MemoryBlockFieldDefs.PID: self.pid,
+            MemoryBlockFieldDefs.TID: self.tid
+        }
+
+
+@dataclass
+class MemoryAllocation:
+    alloc_id: int
+    timestamp: int
+    total_size: int
+    device_id: int
+    event_type: str
+    optimized: int = 0
+
+    def to_dict(self):
+        return {
+            MemoryAllocationFieldDefs.ID: self.alloc_id,
+            MemoryAllocationFieldDefs.TIME_NS: self.timestamp,
+            MemoryAllocationFieldDefs.TOTAL_SIZE: self.total_size,
+            MemoryAllocationFieldDefs.OPTIMIZED: self.optimized,
+            MemoryAllocationFieldDefs.DEVICE_ID: self.device_id,
+            MemoryAllocationFieldDefs.EVENT_TYPE: self.event_type
         }
