@@ -35,7 +35,8 @@ module.exports = {
                 test: /\.glsl$/,
                 type: 'asset/source'
             });
-
+            webpackConfig.output.workerPublicPath = './';
+            webpackConfig.output.chunkFilename = '[name].[contenthash:8].chunk.js';
             return configureConfig(webpackConfig, [libPath, echartsPath]);
         }
     },

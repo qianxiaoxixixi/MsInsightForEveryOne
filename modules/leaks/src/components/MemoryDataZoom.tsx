@@ -192,6 +192,15 @@ const MemoryDataZoom = observer(
             return getOptions({ dataSource, minTime, maxTime, isDataZoom: true, height: 0, dataZoomHeight, offsetLeft, offsetRight, theme });
         }, [dataSource, dataZoomHeight, offsetLeft, offsetRight, maxTime, minTime, theme]);
 
+        const handleDataZoom = (params: any): void => {
+            const { start, end, batch } = params as DataZoomItem;
+            const batchItem = batch?.[0];
+            const _start = batchItem?.start ?? start;
+            const _end = batchItem?.end ?? end;
+            if (_start === undefined || _end === undefined) return;
+            debounceRef.current?.(_start, _end, ...timeRangeRef.current);
+        };
+
         useEffect(() => {
             timeRangeRef.current = [minTime, maxTime];
         }, [minTime, maxTime]);
@@ -200,15 +209,6 @@ const MemoryDataZoom = observer(
             if (!selectedZoomChange) return;
             let disposed: boolean = false;
             let chartInstance = dataZoomRef.current?.getInstance();
-
-            const handleDataZoom = (params: any): void => {
-                const { start, end, batch } = params as DataZoomItem;
-                const batchItem = batch?.[0];
-                const _start = batchItem?.start ?? start;
-                const _end = batchItem?.end ?? end;
-                if (_start === undefined || _end === undefined) return;
-                debounceRef.current?.(_start, _end, ...timeRangeRef.current);
-            };
 
             const retryGetInstance = (): void => {
                 if (disposed) return;
@@ -230,6 +230,13 @@ const MemoryDataZoom = observer(
                 chartInstance?.off('dataZoom', handleDataZoom);
             };
         }, []);
+
+        useEffect(() => {
+            if (!selectedZoomChange) return;
+            const chartInstance = dataZoomRef.current?.getInstance();
+            chartInstance?.off('dataZoom', handleDataZoom);
+            chartInstance?.on('dataZoom', handleDataZoom);
+        }, [dataSource, maxTime, minTime]);
 
         return (
             dataSource.length > 0
