@@ -26,9 +26,10 @@ let transform: RenderOptions['transform'] = { x: 0, y: 0, scale: 1 };
 let viewport: RenderOptions['viewport'];
 let zoom: RenderOptions['zoom'];
 let renderer: WebGLRenderer | null;
+
 const initCanvasHandler = async (payload: InitCanvasPayload): Promise<void> => {
-    canvas = payload.offscreenCanvas;
-    renderer = new WebGLRenderer(payload.offscreenCanvas, payload.devicePixelRatio);
+    canvas = payload.canvas as OffscreenCanvas;
+    renderer = new WebGLRenderer(canvas, payload.devicePixelRatio);
     viewport = { width: payload.width, height: payload.height };
     await renderer.initialize();
 };

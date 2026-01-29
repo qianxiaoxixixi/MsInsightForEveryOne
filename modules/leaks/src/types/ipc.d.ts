@@ -18,7 +18,7 @@
 
 interface InitCanvasPayload {
     type: 'initCanvas';
-    offscreenCanvas: OffscreenCanvas;
+    canvas: OffscreenCanvas | HTMLCanvasElement;
     width: number;
     height: number;
     devicePixelRatio: number;
@@ -26,7 +26,7 @@ interface InitCanvasPayload {
 
 interface SetMemoryBlocksDataPayload {
     type: 'setMemoryBlockData';
-    data: Omit<RenderData, 'block'>;
+    data: RenderData;
 };
 
 interface ResizeCanvasPayload {
@@ -46,12 +46,18 @@ interface HoverItemPayload {
     clientY: number;
 };
 
+interface SetMemoryStateDataPayload {
+    type: 'setMemoryState';
+    data: Segment[];
+};
+
 type Payload =
     | InitCanvasPayload
     | SetDataPayload
     | ResizeCanvasPayload
     | TransformPayload
-    | HoverItemPayload;
+    | HoverItemPayload
+    | SetMemoryStateDataPayload;
 
 type PayloadHandlers = {
     [K in Payload['type']]: (payload: Extract<Payload, { type: K }>) => void;
