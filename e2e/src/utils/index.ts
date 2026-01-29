@@ -159,7 +159,7 @@ export async function setCompare(
     }: {
         baseline: string;
         comparison: string;
-    } = { baseline: FilePath.TEXT_RANK_0, comparison: FilePath.TEXT_RANK_1 },
+    } = { baseline: FilePath.DB_RANK_0, comparison: FilePath.DB_RANK_1 },
 ): Promise<void> {
     const frameworkPage = new FrameworkPage(page);
     const rank1 = frameworkPage.getRankLocator(baseline);

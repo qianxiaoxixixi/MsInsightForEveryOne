@@ -44,9 +44,9 @@ test.describe('Timeline(DB)', () => {
         await clearAllData(page);
         const allPagesSuccessRes = waitForResponse(await ws, (res) => res?.event === 'allPagesSuccess');
         parseClusterCompletedRes = waitForResponse(await ws, (res) => res?.event === 'parse/clusterCompleted');
-        await importData(page, FilePath.DB_2025330);
+        await importData(page, FilePath.DB);
         await allPagesSuccessRes;
-        const secondLayerUnit = timelineFrame.locator('#main-container').getByText('process 115778');
+        const secondLayerUnit = timelineFrame.locator('#main-container').getByText('process 3430895');
         await expect(secondLayerUnit).toBeVisible();
     });
 
@@ -120,7 +120,7 @@ test.describe('Timeline(DB)', () => {
         await searchBtn.click();
         const inputLocator = timelineFrame.locator('.insight-category-search-overlay input');
         const input = new InputHelpers(page, inputLocator, timelineFrame);
-        await input.setValue('packaging/version.py(537): <lambda>');
+        await input.setValue('NpuSwigluBackward0');
         await input.press('Enter');
         await openInWindows.waitFor({ state: 'attached' });
         await page.mouse.move(0, 0);
@@ -136,7 +136,6 @@ test.describe('Timeline(DB)', () => {
         await timelineFrame.locator('div:nth-child(15) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold').click();
         const LinkLineType = [
             'HostToDevice',
-            'MSTX',
             'async_npu',
         ];
         for (const item of LinkLineType) {
@@ -154,6 +153,7 @@ test.describe('Timeline(DB)', () => {
     });
 
     //todo: 工具栏 连线async_task_queue  && fwdbwd
+
 
     // 工具栏 - 泳道(card)过滤
     test('test_db_cardFilter', async ({ page, timelinePage }) => {
@@ -183,7 +183,7 @@ test.describe('Timeline(DB)', () => {
     });
 
     // 右键菜单--右键点击通信算子跳转至通信页面
-    test('test_db_redirectToCommunication_when_rightClickHCCLOperator', async ({ page, timelinePage, ws }) => {
+    test('test_db_redirectToCommunication_when_rightClickHCCLOperator', async ({ page, timelinePage }) => {
         await parseClusterCompletedRes;
         test.setTimeout(30_000);
         const { communicationFrame } = new CommunicationPage(page);
@@ -201,19 +201,19 @@ test.describe('Timeline(DB)', () => {
         await searchBtn.click();
         const inputLocator = timelineFrame.locator('.insight-category-search-overlay input').nth(2);
         const input = new InputHelpers(page, inputLocator, timelineFrame);
-        await input.setValue('hcom_allGather__491_201_1');
+        await input.setValue('hcom_batchSendRecv__128_4_1');
         await input.press('Enter');
         await openInWindows.waitFor({ state: 'attached' });
-        await timelineFrame.locator('.chart-selected > div > .canvasContainer > .drawCanvas').click({
+        await timelineFrame.locator('.ant-spin-container > .drawCanvas').nth(5).click({
             position: {
-                x: 659,
+                x: 254,
                 y: 5,
             },
         });
-        await timelineFrame.locator('.chart-selected > div > .canvasContainer > .drawCanvas').click({
+        await timelineFrame.locator('.ant-spin-container > .drawCanvas').nth(5).click({
             button: 'right',
             position: {
-                x: 659,
+                x: 254,
                 y: 5,
             },
         });
@@ -225,7 +225,7 @@ test.describe('Timeline(DB)', () => {
     });
 
     // 同通信域泳道置顶
-    test('test_db_same_communication_group', async ({ page, timelinePage, ws }) => {
+    test('test_db_same_communication_group', async ({ page, timelinePage }) => {
         const { filterBtn, timelineFrame, selectUnitFilterContent } = timelinePage;
         const filterContentSelector = new SelectHelpers(page, selectUnitFilterContent, timelineFrame);
 
@@ -236,13 +236,13 @@ test.describe('Timeline(DB)', () => {
         await filterBtn.click();
         await timelineFrame.locator('.insight-unit-fold').first().click();
         await page.waitForTimeout(3000);
-        await timelineFrame.getByText('mp:Group group_name_41').click({
+        await timelineFrame.getByText('mp:Group group_name_13 Communication').click({
             button: 'right',
         });
-        await timelineFrame.getByText('Pin (Same Group group_name_41)').click();
+        await timelineFrame.getByText('Pin (Same Group group_name_13)').click();
         await page.mouse.move(0, 0);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('communication_group_pin.png', { maxDiffPixels: 100 });
-        await timelineFrame.locator('#pinnedUnitWrapperScroller').getByText('localhost.localdomain4978604445055226587_0 0_Communication (HCCL)_mp:Group').click({
+        await timelineFrame.locator('#pinnedUnitWrapperScroller').getByText('mp:Group group_name_13 Communication_Communication (HCCL)_localhost.localdomain2152938157304401006_0 0').click({
             button: 'right',
         });
         await timelineFrame.getByText('Unpin (Same Group').click();
@@ -251,12 +251,10 @@ test.describe('Timeline(DB)', () => {
     });
 
     // 右键菜单--Show in Events View
-    test('test_db_context_menu_click_ShowInEventsView', async ({ timelinePage, page }) => {
+    test('test_db_context_menu_click_ShowInEventsView', async ({ timelinePage }) => {
         const { timelineFrame, bottomPanel } = timelinePage;
-        timelineFrame.locator('#unitWrapperScroller');
-        await timelineFrame.locator('div:nth-child(4) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold > #Page-1 > [id="\\\\u9ED8\\\\u8BA4\\\\u9875\\\\u9762"] > [id="\\\\u7F16\\\\u7EC4\\\\u5907\\\\u4EFD"] > [id="list\\/item\\/Normal\\\\u5907\\\\u4EFD"] > #Group > [id="\\\\u77E9\\\\u5F62\\\\u5907\\\\u4EFD"]').click();
-        await timelineFrame.locator('div:nth-child(15) > .unit-info > .css-rdzxz6 > div > div > .insight-unit-fold > #Page-1 > [id="\\\\u9ED8\\\\u8BA4\\\\u9875\\\\u9762"] > [id="\\\\u7F16\\\\u7EC4\\\\u5907\\\\u4EFD"] > [id="list\\/item\\/Normal\\\\u5907\\\\u4EFD"] > #Group > [id="\\\\u77E9\\\\u5F62\\\\u5907\\\\u4EFD"]').click();
-        await timelineFrame.locator('#unitWrapperScroller div').filter({ hasText: /^Stream 2$/ }).nth(3).click({
+        await timelineFrame.locator('#unitWrapperScroller').getByText('Ascend Hardware').click();
+        await timelineFrame.getByText('Stream 2').click({
             button: 'right',
         });
         await timelineFrame.getByText('Show in Events View').click();
