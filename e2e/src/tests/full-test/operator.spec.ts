@@ -48,8 +48,12 @@ test.describe('Operator(SingleMachine)', () => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await operatorPage.goto();
         await clearAllData(page);
-        await importData(page);
+        await importData(page, FilePath.DB);
         await allCardParsedPromise;
+    });
+
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 
     // 【case】非对比非多机operator界面加载
@@ -61,7 +65,7 @@ test.describe('Operator(SingleMachine)', () => {
         await groupIdSelect.open();
         await groupIdSelect.selectOption('Computing Operator Type');
         await rankIdSelect.open();
-        await rankIdSelect.selectOption('4');
+        await rankIdSelect.selectOption('2');
         await topSelect.open();
         await topSelect.selectOption('15');
         await page.mouse.move(0, 0);
@@ -94,10 +98,6 @@ test.describe('Operator(SingleMachine)', () => {
         });
         await page.waitForTimeout(2000); // 对比场景需要加延时，确保稳定
     });
-
-    test.afterEach(async ({ page, ws }) => {
-        await clearAllData(page, ws);
-    });
 });
 
 // 多机多卡测试
@@ -106,7 +106,7 @@ test.describe('Operator(MultiMachines)', () => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await operatorPage.goto();
         await clearAllData(page);
-        await importData(page, FilePath.MULTI_MACHINES);
+        await importData(page, FilePath.MULTI_NODES);
         await allCardParsedPromise;
     });
 
@@ -144,12 +144,12 @@ test.describe('Operator(MultiMachines)', () => {
         const hostSelect = new SelectHelpers(page, hostSelector, operatorFrame);
 
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, operatorFrame);
-        const dbHost0Rank1 = frameworkPage.getRankLocator(FilePath.DB_HOST_0_RANK_1);
+        const dbHost0Rank1 = frameworkPage.getRankLocator(FilePath.MULTI_NODES_NODE_0_RANK_1);
         await dbHost0Rank1.click();
         expect(await hostSelect.getValue()).toBe('node18899436934890168541_0');
         expect(await rankIdSelect.getValue()).toBe('1');
 
-        const dbHost1Rank1 = frameworkPage.getRankLocator(FilePath.DB_HOST_1_RANK_0);
+        const dbHost1Rank1 = frameworkPage.getRankLocator(FilePath.MULTI_NODES_NODE_1_RANK_0);
         await dbHost1Rank1.click();
         await page.waitForTimeout(1000);
         expect(await hostSelect.getValue()).toBe('ubuntu22044973785946912235777_0');
@@ -174,8 +174,9 @@ test.describe('Operator(MultiMachines)', () => {
 
         // text切换到db数据
         // 选择db数据0卡，此时会重新加载
-        const dbRank0 = frameworkPage.getRankLocator(FilePath.DB_HOST_0_RANK_0);
+        const dbRank0 = frameworkPage.getRankLocator(FilePath.MULTI_NODES_NODE_0_RANK_0);
         await dbRank0.click();
+        await page.mouse.move(0, 0);
         await allCardParsedPromise;
 
         await hostSelector.waitFor({ state: 'attached' });
@@ -188,14 +189,15 @@ test.describe('Operator(MultiMachines)', () => {
         });
 
         // db切换到text数据
-        const textRank1 = frameworkPage.getRankLocator(FilePath.TEXT_RANK_1);
+        const textRank1 = frameworkPage.getRankLocator(FilePath.TEXT_RANK_2);
         await textRank1.click();
+        await page.mouse.move(0, 0);
         await allCardParsedPromise;
 
         await hostSelector.waitFor({ state: 'detached' });
         await page.waitForTimeout(400);
         const selectedText2 = await rankIdSelect.getValue();
-        expect(selectedText2).toBe('1');
+        expect(selectedText2).toBe('2');
         await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot('operator-db-to-text.png', {
             maxDiffPixels: 500,
         });

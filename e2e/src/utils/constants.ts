@@ -16,13 +16,26 @@
  * -------------------------------------------------------------------------
  */
 
+const DATA_PATH = 'C:';
+
 export enum FilePath {
-    TEXT = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\CANN_8.0.RC2.B050_GPT3_level1_ACLAICORE_text\\profiling_data',
+    TEXT = `${DATA_PATH}\\MindStudio-Insight-GUI-Data\\training\\single-node\\level2_text`,
+    TEXT_RANK_2 = `${DATA_PATH}\\MindStudio-Insight-GUI-Data\\training\\single-node\\level2_text\\rank_2_ascend_pt\\ASCEND_PROFILER_OUTPUT`,
+    DB = `${DATA_PATH}\\MindStudio-Insight-GUI-Data\\training\\single-node\\level2`,
+    OP_SIMULATOR_BIN = `${DATA_PATH}\\MindStudio-Insight-GUI-Data\\operator\\msprof-op-simulator\\visualize_data.bin`,
+    OP_SIMULATOR_JSON = `${DATA_PATH}\\MindStudio-Insight-GUI-Data\\operator\\msprof-op-simulator\\trace.json`,
+    DB_RANK_0 = `${DATA_PATH}\\MindStudio-Insight-GUI-Data\\training\\single-node\\level2\\rank_0_ascend_pt\\ASCEND_PROFILER_OUTPUT`,
+    DB_RANK_1 = `${DATA_PATH}\\MindStudio-Insight-GUI-Data\\training\\single-node\\level2\\rank_1_ascend_pt\\ASCEND_PROFILER_OUTPUT`,
+    MULTI_NODES = `${DATA_PATH}\\MindStudio-Insight-GUI-Data\\training\\multi-node\\MultiProfLevel2MemoryUB_db`,
+    MULTI_NODES_NODE_0_RANK_0 = `${DATA_PATH}\\MindStudio-Insight-GUI-Data\\training\\multi-node\\MultiProfLevel2MemoryUB_db\\node1_2166651_20240619060505060_ascend_pt\\ASCEND_PROFILER_OUTPUT`,
+    MULTI_NODES_NODE_0_RANK_1 = `${DATA_PATH}\\MindStudio-Insight-GUI-Data\\training\\multi-node\\MultiProfLevel2MemoryUB_db\\node1_2166652_20240619060505059_ascend_pt\\ASCEND_PROFILER_OUTPUT`,
+    MULTI_NODES_NODE_1_RANK_0 = `${DATA_PATH}\\MindStudio-Insight-GUI-Data\\training\\multi-node\\MultiProfLevel2MemoryUB_db\\ubuntu2204_1660963_20240619060440181_ascend_pt\\ASCEND_PROFILER_OUTPUT`,
+    MULTI_NODES_NODE_1_RANK_1 = `${DATA_PATH}\\MindStudio-Insight-GUI-Data\\training\\multi-node\\MultiProfLevel2MemoryUB_db\\ubuntu2204_1660964_20240619060440179_ascend_pt\\ASCEND_PROFILER_OUTPUT`,
+
     TEXT_330 = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\test_level1_PipeUtilization\\profiling_data', // 给 Memory 模块使用
     TEXT_330_RANK_0 = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\test_level1_PipeUtilization\\profiling_data\\ubuntu2204_3929556_20250411014455476_ascend_pt\\ASCEND_PROFILER_OUTPUT',
     TEXT_330_RANK_1 = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\test_level1_PipeUtilization\\profiling_data\\ubuntu2204_3929557_20250411014455475_ascend_pt\\ASCEND_PROFILER_OUTPUT',
     MEMORY_DB = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\profiler_llm_result_db',
-    DB = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\CANN_8.0.RC2.B050_GPT3_level2_ACLAICORE_db',
     MIND_SPORE = 'D:\\GUI_TEST_DATA 路徑测试\\mindspore\\profile',
     DB_2025330 = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\CANN_9.0.RC1.B090_db',
     DB_memory = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\test_level1_Memory_db',
