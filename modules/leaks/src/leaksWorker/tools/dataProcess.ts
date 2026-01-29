@@ -16,7 +16,7 @@
  * -------------------------------------------------------------------------
  */
 
-export const getZoom = (data: RenderData, canvas: OffscreenCanvas): RenderOptions['zoom'] => {
+export const getZoom = (data: RenderData, canvas: OffscreenCanvas | HTMLCanvasElement): RenderOptions['zoom'] => {
     return {
         x: canvas.width / (data.maxTimestamp - data.minTimestamp),
         y: canvas.height / (data.maxSize - data.minSize),

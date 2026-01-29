@@ -185,13 +185,12 @@ export const MemoryBlockDiagram = ({ session }: { session: Session }): JSX.Eleme
             const width = containerRect.width - 100;
             const height = containerRect.height - 50;
 
-            const offscreenCanvas = canvas.transferControlToOffscreen();
             runInAction(() => {
                 session.leaksWorkerInfo.renderOptions.viewport = { width, height };
             });
-            workerInitCanvas({ offscreenCanvas, width, height });
+            workerInitCanvas({ canvas, width, height });
         } catch (_e) {
-            // 进入这里，说明画布已经离屏代码，不需要做额外处理
+            // 进入这里，说明画布已经离屏代理，不需要做额外处理
         }
         handleResize();
     }, []);
