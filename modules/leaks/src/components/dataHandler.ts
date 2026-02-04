@@ -22,9 +22,12 @@ import {
     ThreShold,
     getBlocksGraphData,
     getLeaksAllocationsData,
+    getEventList,
+    EventList,
 } from '../utils/RequestUtils';
 import { message } from 'antd';
 import { runInAction } from 'mobx';
+import { Session } from '@/entity/session';
 
 export const getFuncNewData = async (session: any, startTimestamp?: number, endTimestamp?: number): Promise<void> => {
     try {
@@ -177,4 +180,32 @@ export const getEventTableData = async (session: any): Promise<void> => {
     } catch (error: any) {
         message.error(error.message);
     }
+};
+
+const PAGE_SIZE = 100000;
+let currentRequestId = 0;
+export const getAllEventListData = async (session: Session): Promise<EventList['data']> => {
+    const requestId = ++currentRequestId % 10;
+    let currentPage = 0;
+    let total = 0;
+    let data: EventList['data'] = [];
+
+    do {
+        currentPage++;
+        const res = await getEventList({
+            deviceId: session.deviceId,
+            currentPage,
+            pageSize: PAGE_SIZE,
+        });
+
+        // 请求返回后，确认是否已被新请求覆盖
+        if (requestId !== currentRequestId) {
+            return [];
+        }
+
+        total = res.total;
+        data = data.concat(res.data);
+    } while (PAGE_SIZE * currentPage < total);
+
+    return requestId === currentRequestId ? data : [];
 };
