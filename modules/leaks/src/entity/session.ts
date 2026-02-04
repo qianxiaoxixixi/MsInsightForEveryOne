@@ -69,6 +69,16 @@ const MARK_LINE_POSITION_DEFAULT = {
     currentTimestamp: -1,
 };
 
+const STATE_WORKER_INFO_DEFAULT = {
+    renderOptions: {
+        transform: { x: 0, y: 0, scale: 1 },
+        viewport: { width: 0, height: 0 },
+        zoom: { x: 1, y: 1, offset: 0 },
+    },
+    hoverItem: null,
+    clickItem: null,
+};
+
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     deviceIds: any = {};
@@ -139,6 +149,12 @@ export class Session {
         stack: { x: number; y: number };
         currentTimestamp: number;
     } = MARK_LINE_POSITION_DEFAULT;
+
+    stateWorkerInfo: {
+        renderOptions: RenderOptions;
+        hoverItem: StateDataHoverResult | null;
+        clickItem: StateDataHoverResult | null;
+    } = STATE_WORKER_INFO_DEFAULT;
 
     constructor() {
         makeAutoObservable(this);

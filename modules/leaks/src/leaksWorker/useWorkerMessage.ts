@@ -19,6 +19,7 @@
 import { store } from '../store';
 import { useEffect } from 'react';
 import { BlockWorker } from './blockWorker/worker';
+import { StateWorker } from './stateWorker/worker';
 import { runInAction } from 'mobx';
 
 const { sessionStore } = store;
@@ -42,10 +43,29 @@ const useWorkerMessage = (): void => {
                     });
                     break;
                 case 'clickItemResult':
-                    session.leaksWorkerInfo.clickItem = ev.data.result;
+                    runInAction(() => {
+                        session.leaksWorkerInfo.clickItem = ev.data.result;
+                    });
                     break;
-                case 'print':
-                    console.log(ev.data);
+                default:
+                    break;
+            }
+        };
+
+        StateWorker.onmessage = (ev: MessageEvent<any>): void => {
+            if (session === undefined) {
+                return;
+            }
+            switch (ev.data.type) {
+                case 'hoverItemResult':
+                    runInAction(() => {
+                        session.stateWorkerInfo.hoverItem = ev.data.result;
+                    });
+                    break;
+                case 'clickItemResult':
+                    runInAction(() => {
+                        session.stateWorkerInfo.clickItem = ev.data.result;
+                    });
                     break;
                 default:
                     break;
