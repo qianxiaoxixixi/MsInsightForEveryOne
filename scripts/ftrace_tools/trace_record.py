@@ -45,7 +45,7 @@ FUTEX_EVENT_LIST = {
     "syscalls:sys_enter_futex", "syscalls:sys_exit_futex",
 }
 
-def ftrace_record_start(cpu_mask=None, output="ftrace.dat", record_time=60, bf_size=DEFAULT_TRACE_BUFFER_SIZE, event_cfg: Optional["TraceEventConfig"]=None,
+def ftrace_record_start(cpu_mask=None, output="ftrace.dat", bf_size=DEFAULT_TRACE_BUFFER_SIZE, event_cfg: Optional["TraceEventConfig"]=None,
                         args=None):
     if os.getuid() != 0:
         logging.critical('Please run this script as root')
@@ -60,7 +60,7 @@ def ftrace_record_start(cpu_mask=None, output="ftrace.dat", record_time=60, bf_s
         event_cfg.futex = args.futex
 
     TraceRecord.trace_clear()
-    TraceRecord.trace_start(cpu_mask, output, record_time, event_cfg=event_cfg, buffer_size=bf_size)
+    TraceRecord.trace_start(cpu_mask, output, event_cfg=event_cfg, buffer_size=bf_size)
     return True
 
 def ftrace_record_stop(output = "ftrace.txt"):
@@ -181,6 +181,11 @@ class CPUParser:
         return cpumask_str
 
 class TraceRecord:
+    _INT_RETRY_COUNT = 3
+    _INT_INTERVAL_SEC = 0.5
+    _WAIT_TIMEOUT_SEC = 10
+    # Holds the running trace-cmd record subprocess (if any)
+    _record_process = None
     @staticmethod
     def trace_clear():
         TraceRecord.__run(['/usr/bin/trace-cmd', 'clear'])
@@ -190,7 +195,7 @@ class TraceRecord:
         TraceRecord.__run(['/usr/bin/trace-cmd', 'reset'])
 
     @staticmethod
-    def trace_start(cpu_mask, output, record_time, event_cfg, buffer_size=DEFAULT_TRACE_BUFFER_SIZE, ):
+    def trace_start(cpu_mask, output, event_cfg, buffer_size=DEFAULT_TRACE_BUFFER_SIZE, ):
         start_command = ['/usr/bin/trace-cmd', 'record', '-b', str(buffer_size), '-C', 'mono_raw']
 
         if event_cfg.sched:
@@ -209,13 +214,42 @@ class TraceRecord:
 
         start_command.extend(['-o', output])
 
-        if record_time > 0:
-            start_command.extend(['sleep', str(record_time)])
-        TraceRecord.__run(start_command)
+        # Start trace-cmd in background so we can stop it dynamically later
+        try:
+            logging.info("Starting trace-cmd record process" + " ".join(start_command))
+            TraceRecord._record_process = subprocess.Popen(start_command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception as e:
+            logging.error(f"Failed to start trace-cmd record: {e}")
 
     @staticmethod
     def trace_stop():
-        TraceRecord.__run(['/usr/bin/trace-cmd', 'stop'])
+        # If we launched a trace-cmd record subprocess, try to stop it gracefully
+        proc = TraceRecord._record_process
+        if proc:
+            try:
+                logging.info("Stopping trace-cmd record process")
+                # Try sending SIGINT a few times to let trace-cmd finish cleanly
+                for i in range(TraceRecord._INT_RETRY_COUNT):
+                    try:
+                        os.kill(proc.pid, signal.SIGINT)
+                    except Exception:
+                        pass
+                    time.sleep(TraceRecord._INT_INTERVAL_SEC)
+                    if proc.poll() is not None:
+                        break
+                proc.wait(timeout=TraceRecord._WAIT_TIMEOUT_SEC)
+                logging.info("trace-cmd record process stopped")
+            except subprocess.TimeoutExpired:
+                try:
+                    proc.terminate()
+                except Exception:
+                    pass
+                logging.warning("Force stopped trace-cmd record process")
+            finally:
+                TraceRecord._record_process = None
+        else:
+            # Fallback: run trace-cmd stop if we don't have a process handle
+            logging.error("No trace-cmd record process found.")
 
     @staticmethod
     def trace_show(output):
@@ -236,9 +270,19 @@ def normal_mode(args):
         if args.NSpid:
             nspid_recorder = ContainerPidMapper()
             nspid_recorder.start(None)
-        ftrace_record_start(args.cpu, args.output, args.record_time, args.bf_size, args)
+        ftrace_record_start(args.cpu, args.output, args.bf_size, args)
     except KeyboardInterrupt:
-        logging.info("User Interrupt Service Routine‌.")
+        ftrace_record_stop(args.output)
+        return
+    if args.record_time <= 0:
+        logging.warning('Record time equals -1, start long term record')
+        while True:
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                break
+    else:
+        time.sleep(args.record_time)
     ftrace_record_stop(args.output)
 
 
