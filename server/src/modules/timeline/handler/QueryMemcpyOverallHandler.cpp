@@ -17,9 +17,9 @@
  */
 
 #include "DataBaseManager.h"
-#include "QueryMemcpyOverallHandler.h"
-
 #include "MemcpyOverallDatabaseAccesser.h"
+#include "Paginator.h"
+#include "QueryMemcpyOverallHandler.h"
 
 namespace Dic::Module::Timeline {
 
@@ -51,20 +51,21 @@ bool QueryMemcpyOverallHandler::HandleRequest(std::unique_ptr<Protocol::Request>
         return false;
     }
 
-    response.pageParam.total = response.details.size();
-    response.pageParam.current = request.params.page.current;
-    response.pageParam.pageSize = request.params.page.pageSize;
     SendResponse(std::move(responsePtr), true);
     return true;
 }
 
-void BuildMemcpyOverallResult(const std::vector<MemcpyRecord>& records, MemcpyOverallResponse& response)
+void BuildMemcpyOverallResult(const std::vector<MemcpyRecord>& records, MemcpyOverallResponse& response,
+    uint32_t current, uint32_t pageSize)
 {
+    // std::map 自带排序
     std::map<uint32_t, StatsAccumulator> threadMap;
     std::map<uint32_t, std::map<std::string, StatsAccumulator>> typeMap;
+    std::map<uint32_t, std::string> threadNameMap;
 
     for (const auto& rec : records) {
         threadMap[rec.threadId].Update(rec.size, rec.duration);
+        threadNameMap[rec.threadId] = rec.threadName;
         typeMap[rec.threadId][rec.memcpyType].Update(rec.size, rec.duration);
     }
 
@@ -74,7 +75,7 @@ void BuildMemcpyOverallResult(const std::vector<MemcpyRecord>& records, MemcpyOv
     for (auto& [tid, tStat] : threadMap) {
         MemcpyOverallRes ts;
         ts.key = std::to_string(tid);
-        ts.name = std::to_string(tid);
+        ts.name = threadNameMap.at(tid);
         ts.totalSize = tStat.totalSize;
         ts.totalTime = tStat.totalTime;
         ts.number = tStat.count;
@@ -105,7 +106,9 @@ void BuildMemcpyOverallResult(const std::vector<MemcpyRecord>& records, MemcpyOv
         }
         result.push_back(std::move(ts));
     }
-    response.details = std::move(result);
+    Paginator<MemcpyOverallRes> paginator(result, pageSize);
+    response.pageParam.total = paginator.GetTotal();
+    response.details = paginator.GetPage(current);
 }
 
 bool QueryMemcpyOverallHandler::CalMemcpyData(MemcpyOverallRequest &request, MemcpyOverallResponse &response,
@@ -126,7 +129,9 @@ bool QueryMemcpyOverallHandler::CalMemcpyData(MemcpyOverallRequest &request, Mem
         return false;
     }
 
-    BuildMemcpyOverallResult(records, response);
+    BuildMemcpyOverallResult(records, response, request.params.page.current, request.params.page.pageSize);
+    response.pageParam.current = request.params.page.current;
+    response.pageParam.pageSize = request.params.page.pageSize;
     return true;
 }
 }
