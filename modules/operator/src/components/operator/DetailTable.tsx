@@ -16,7 +16,7 @@
  * -------------------------------------------------------------------------
  */
 import { ResizeTable, type ResizeTableRef } from '@insight/lib/resize';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Button, Tooltip, message, CollapsiblePanel } from '@insight/lib/components';
@@ -555,6 +555,9 @@ const DetailTable = ({ condition, filterType, session }: { condition: ConditionT
 const ExportBtn = ({ condition }: { condition: ConditionType }): JSX.Element => {
     const { t } = useTranslation('operator');
     const [loading, setLoading] = useState<boolean>(false);
+    const disableExport = useMemo(() => {
+        return (condition.rankId.length < 1) || (condition.dbPath.length < 1);
+    }, [condition.rankId, condition.dbPath]);
 
     const exportOp = async (): Promise<void> => {
         setLoading(true);
@@ -578,7 +581,14 @@ const ExportBtn = ({ condition }: { condition: ConditionType }): JSX.Element => 
         }
     };
 
-    return <Button onClick={exportOp} type="primary" size="middle" style={{ marginLeft: 'auto' }} loading={loading}>{t('export')}</Button>;
+    return <Button
+        onClick={exportOp}
+        type="primary"
+        size="middle"
+        style={{ marginLeft: 'auto' }}
+        loading={loading}
+        disabled={disableExport}
+    >{t('export')}</Button>;
 };
 
 export default DetailTable;
