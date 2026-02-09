@@ -64,6 +64,7 @@ private:
     static std::unique_ptr<Request> ToCommunicationKernelRequest(const Dic::json_t &json, std::string &error);
     static std::unique_ptr<Request> ToSystemViewOverallRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToSystemViewOverallMoreDetailsRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToMemcpyOverallRequest(const json_t &json, std::string &error);
     // response to json
     static std::optional<document_t> ToImportActionResponseJson(const Response &response);
     static std::optional<document_t> ToUnitThreadTracesResponseJson(const Response &response);
@@ -91,6 +92,7 @@ private:
     static std::optional<document_t> ToTableDataNameListResponseJson(const Response &response);
     static std::optional<document_t> ToTableDataDetailResponseJson(const Response &response);
     static std::optional<document_t> ToParseCardsResponseJson(const Response &response);
+    static std::optional<document_t> ToMemcpyOverallListResponseJson(const Response &response);
     // event to json
     static std::optional<document_t> ToParseSuccessEventJson(const Event &event);
     static std::optional<document_t> ToParseFailEventJson(const Event &event);

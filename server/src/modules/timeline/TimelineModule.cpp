@@ -50,6 +50,8 @@
 #include "RepositoryFactory.h"
 #include "TimelineModule.h"
 
+#include "QueryMemcpyOverallHandler.h"
+
 namespace Dic {
 namespace Module {
 using namespace Dic::Module::Timeline;
@@ -113,6 +115,7 @@ void TimelineModule::RegisterRequestHandlers()
                               std::make_unique<QueryExpAnaAICoreFreqHandler>());
     requestHandlerMap.emplace(REQ_RES_CREATE_CURVE,
                               std::make_unique<CreateCurveHandler>());
+    requestHandlerMap.emplace(REQ_RES_MEMCPY_OVERALL, std::make_unique<QueryMemcpyOverallHandler>());
 }
 
 void TimelineModule::OnRequest(std::unique_ptr<Protocol::Request> request)

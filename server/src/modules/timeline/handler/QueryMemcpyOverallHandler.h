@@ -53,10 +53,16 @@ struct StatsAccumulator {
     [[nodiscard]] double GetMinTime() const { return count ? minTime : 0.0; }
     [[nodiscard]] double GetMaxTime() const { return count ? maxTime : 0.0; }
     [[nodiscard]] double GetAvgSize() const {
-        return count ? static_cast<double>(totalSize) / static_cast<double>(count) : 0.0;
+        // 保留两位小数
+        constexpr int decimalPlaces = 2;
+        return NumberUtil::DoubleReservedNDigits(
+            (count ? static_cast<double>(totalSize) / static_cast<double>(count) : 0.0), decimalPlaces);
     }
     [[nodiscard]] double GetAvgTime() const {
-        return count ? totalTime / static_cast<double>(count) : 0.0;
+        // 保留两位小数
+        constexpr int decimalPlaces = 2;
+        return NumberUtil::DoubleReservedNDigits(
+            (count ? totalTime / static_cast<double>(count) : 0.0), decimalPlaces);
     }
 };
 
@@ -67,7 +73,9 @@ struct StatsAccumulator {
  */
 void BuildMemcpyOverallResult(
     const std::vector<MemcpyRecord>& records,
-    MemcpyOverallResponse& response
+    MemcpyOverallResponse& response,
+    uint32_t current,
+    uint32_t pageSize
 );
 
 class QueryMemcpyOverallHandler : public TimelineRequestHandler {

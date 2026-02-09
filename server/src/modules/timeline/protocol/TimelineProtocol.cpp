@@ -55,6 +55,7 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL, ToSystemViewOverallRequest);
     jsonToReqFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS, ToSystemViewOverallMoreDetailsRequest);
     jsonToReqFactory.emplace(REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ, ToExpAnaAICoreFreqRequest);
+    jsonToReqFactory.emplace(REQ_RES_MEMCPY_OVERALL, ToMemcpyOverallRequest);
 }
 
 void TimelineProtocol::RegisterResponseToJsonFuncs()
@@ -88,6 +89,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS, ToOverallMoreDetailsResponseJson);
     resToJsonFactory.emplace(REQ_RES_EXPERT_ANALYSIS_AICORE_FREQ, ToExpAnaAICoreFreqResponseJson);
     resToJsonFactory.emplace(REQ_RES_CREATE_CURVE, ToCreateCurveResponseJson);
+    resToJsonFactory.emplace(REQ_RES_MEMCPY_OVERALL, ToMemcpyOverallListResponseJson);
 }
 
 void TimelineProtocol::RegisterEventToJsonFuncs()
@@ -718,6 +720,21 @@ std::unique_ptr<Request>TimelineProtocol::ToSystemViewOverallMoreDetailsRequest(
     return reqPtr;
 }
 
+std::unique_ptr<Request> TimelineProtocol::ToMemcpyOverallRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<MemcpyOverallRequest> reqPtr = std::make_unique<MemcpyOverallRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info for memcpy overall command.";
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.page.current, json["params"], "current");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.page.pageSize, json["params"], "pageSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    return reqPtr;
+}
+
 #pragma endregion
 
 #pragma region << Response To Json>>
@@ -853,6 +870,11 @@ std::optional<document_t> TimelineProtocol::ToTableDataDetailResponseJson(const 
 std::optional<document_t> TimelineProtocol::ToParseCardsResponseJson(const Response &response)
 {
     return ToResponseJson<ParseCardsResponse>(dynamic_cast<const ParseCardsResponse &>(response));
+}
+
+std::optional<document_t> TimelineProtocol::ToMemcpyOverallListResponseJson(const Response &response)
+{
+    return ToResponseJson<MemcpyOverallResponse>(dynamic_cast<const MemcpyOverallResponse &>(response));
 }
 #pragma endregion
 
