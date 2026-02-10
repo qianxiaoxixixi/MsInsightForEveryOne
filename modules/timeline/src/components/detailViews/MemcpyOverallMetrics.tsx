@@ -44,12 +44,12 @@ import { getTimeOffset } from '../../insight/units/utils';
 
 export const memcpyOverallColumns = (t: TFunction): ColumnsType<GetMemcpyOverallResultItem> => [
     { title: t('Category'), dataIndex: 'name', ellipsis: true, width: 120 },
-    { title: t('Total Time(us)'), dataIndex: 'totalTime' },
+    { title: t('Total Time(ns)'), dataIndex: 'totalTime' },
     { title: t('Total Size(B)'), dataIndex: 'totalSize' },
     { title: t('Number'), dataIndex: 'number' },
-    { title: t('Avg Time(us)'), dataIndex: 'avgTime' },
-    { title: t('Min Time(us)'), dataIndex: 'minTime' },
-    { title: t('Max Time(us)'), dataIndex: 'maxTime' },
+    { title: t('Avg Time(ns)'), dataIndex: 'avgTime' },
+    { title: t('Min Time(ns)'), dataIndex: 'minTime' },
+    { title: t('Max Time(ns)'), dataIndex: 'maxTime' },
     { title: t('Avg Size(B)'), dataIndex: 'avgSize' },
     { title: t('Min Size(B)'), dataIndex: 'minSize' },
     { title: t('Max Size(B)'), dataIndex: 'maxSize' },
