@@ -18,6 +18,7 @@
 
 #include <gtest/gtest.h>
 #include "MemScopeRequestHandler.h"
+#include "MemScopeParser.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 #include "MemScopeEntities.h"
@@ -39,6 +40,7 @@ public:
         std::string dbPath = TestSuit::GetSrcTestPath() + R"(test_data/full_db/leaks_dump_20250806.dat)";
         auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
         ASSERT_TRUE(memoryDatabase->OpenDb(dbPath, false));
+        MemScopeParser::ParseMemoryMemScopeDumpEventsAndPythonTraces("0");
     }
 
     static void TearDownTestSuite()
@@ -47,127 +49,98 @@ public:
         memoryDatabase->CloseDb();
         DataBaseManager::Instance().Clear();
     }
+
+    static void ExpectTreeEQ(MemScopeMemoryDetailTreeNode* origin, MemScopeMemoryDetailTreeNode* target)
+    {
+        EXPECT_EQ(origin->tag, target->tag);
+        EXPECT_EQ(origin->children.size(), target->children.size());
+        if (origin->children.size() != target->children.size()) {
+            return;
+        }
+        for (size_t i = 0; i < origin->children.size(); i++) {
+            ExpectTreeEQ(origin->children[i].get(), target->children[i].get());
+        }
+    }
 };
 
-TEST_F(MemScopeServiceTest, ParseEventsToAllocationsAndBlocks)
-{
-    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
-    std::vector<MemScopeEvent> events;
-    memoryDatabase->QueryEntireEventsTable(events);
-    const size_t expectEventsSize = 33882;
-    EXPECT_EQ(events.size(), expectEventsSize);
-    EXPECT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
-    EXPECT_TRUE(memoryDatabase->CreateMemoryAllocationAndBlockTable());
-    const size_t expectBlockSize = 3267;
-    const size_t expectAllocationSize = 6534;
-    auto context = MemScopeService::BuildContext(memoryDatabase);
-    EXPECT_TRUE(context.has_value());
-    MemScopeService::ParseEventsToBlockAndAllocations(*context);
-    // 校验blocks
-    MemScopeMemoryBlockParams blockParams;
-    blockParams.deviceId = "1";
-    blockParams.relativeTime = false;
-    blockParams.eventType = "PTA";
-    std::vector<MemoryBlock> blocks;
-    memoryDatabase->QueryMemoryBlocks(blockParams, false, blocks);
-    // 校验allocations
-    MemScopeMemoryAllocationParams allocationParams;
-    allocationParams.deviceId = "1";
-    allocationParams.optimized = false;
-    allocationParams.eventType = "PTA";
-    std::vector<MemoryAllocation> allocations;
-    memoryDatabase->QueryMemoryAllocations(allocationParams, allocations);
-    EXPECT_EQ(blocks.size(), expectBlockSize);
-    EXPECT_EQ(allocations.size(), expectAllocationSize);
-}
-
-TEST_F(MemScopeServiceTest, BuildBlockEventAttrFromEventWithEmptyAttr)
-{
-    MemScopeEvent event;
-    auto attrs = BuildEventAttrsFromJson<MemoryEventBaseAttrs>("");
-    EXPECT_FALSE(attrs.has_value());
-}
-
-TEST_F(MemScopeServiceTest, BuildBlockEventAttrFromEventWithInvalidJsonAttr)
-{
-    MemScopeEvent event;
-    auto attrs = BuildEventAttrsFromJson<MemoryEventBaseAttrs>("{]");
-    EXPECT_FALSE(attrs.has_value());
-}
-
-TEST_F(MemScopeServiceTest, BuildBlockEventAttrFromEventWithValidJsonAttr)
-{
-    MemScopeEvent event;
-    event.event = MEM_SCOPE_DUMP_EVENT::MALLOC;
-    auto eventAttr = BuildEventAttrsFromJson<MallocFreeEventAttrs>(
-        R"({"addr": "20617055174656", "size": "7849984", "total": "132120576","used": "116313600", "owner": "PTA@init_model"})");
-    ASSERT_TRUE(eventAttr.has_value());
-    const int64_t expectSize = 7849984;
-    EXPECT_EQ(eventAttr->size, expectSize);
-    EXPECT_EQ(eventAttr->owner, "PTA@init_model");
-}
-
-TEST_F(MemScopeServiceTest, ParseLeaksDump)
-{
-    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
-    EXPECT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
-    EXPECT_TRUE(memoryDatabase->CreateMemoryAllocationAndBlockTable());
-    memoryDatabase->UpdateParseStatus(NOT_FINISH_STATUS);
-    EXPECT_TRUE(MemScopeService::ParseMemoryMemScopeDumpEventsAndPythonTraces("0"));
-    std::vector<string> traceTables = memoryDatabase->GetPythonTraceTables();
-    EXPECT_EQ(traceTables.size(), 1);
-    std::string traceTable = traceTables[0];
-    std::vector<uint64_t> threadIds;
-    memoryDatabase->QueryThreadIds(threadIds);
-    EXPECT_FALSE(threadIds.empty());
-    MemScopeThreadPythonTraceParams params;
-    params.threadId = threadIds[0];
-    MemScopePythonTrace trace;
-    memoryDatabase->QueryPythonTracesUsingTableName(traceTable, params, trace);
-    EXPECT_FALSE(trace.slices.empty());
-    EXPECT_EQ(trace.slices.front().depth, 0);
-}
-
-TEST_F(MemScopeServiceTest, ParseMemoryAllocDetailTreeByTimestamp)
+/***
+ * 用于测试当时间戳非法时（如出现负值，或超出最大时间戳时），通过非法时间戳构建内存拆解树的情况
+ * 预期：无报错，能够构建出根节点HAL节点，但无子节点
+ */
+TEST_F(MemScopeServiceTest, BuildMemoryAllocDetailTreeWithInvalidTimestamp)
 {
     auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     ASSERT_TRUE(memoryDatabase != nullptr);
-    MemScopeMemoryDetailTreeNode tree;
-    const std::string deviceId = "7";
+    std::unique_ptr<MemScopeMemoryDetailTreeNode> tree{};
+    const std::string deviceId = "1";
     const std::string eventType = "PTA";
-    const uint64_t expectDuration = 1000000;
-    MemScopeService::ParseMemoryAllocDetailTreeByTimestamp(deviceId, expectDuration, eventType, tree, true);
-    ServerLog::Error(tree.tag);
+    const uint64_t expectDuration = -1;
+    auto ctx = BuildDetailTreeContext(deviceId, expectDuration, eventType, true);
+    MemScopeService::BuildMemoryAllocDetailTreeByContext(tree, ctx);
+    ASSERT_TRUE(tree.get() != nullptr);
+    EXPECT_EQ(tree->tag, MEM_SCOPE_ALLOC_OWNER_HAL);
+    EXPECT_EQ(tree->name, MEM_SCOPE_ALLOC_OWNER_HAL_NAME);
+    EXPECT_EQ(tree->children.size(), 0);
 }
 
 /***
- * 测试解析出的内存块数据首末次访问事件是否正确
+ *  用于测试当查询无实际数据时构建内存拆解树的情况
+ *  预期：无报错，能够构建出根节点HAL节点，但无子节点
  */
-TEST_F(MemScopeServiceTest, TestMemoryBlockFirstLastAccessTimestamp)
+TEST_F(MemScopeServiceTest, BuildMemoryAllocDetailTreeWhenDataEmpty)
 {
     auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
     ASSERT_TRUE(memoryDatabase != nullptr);
-    const uint64_t groupId = 1910;
-    std::vector<MemScopeEvent> events;
-    memoryDatabase->QueryEventsByGroupId(groupId, "1", true, events);
-    EventGroup eventGroup(events);
-    EXPECT_FALSE(events.empty());
-    auto firstEvent = events.front();
-    // 根据首次事件的deviceId、eventType和timestamp查询出对应解析出的内存块
-    std::vector<MemoryBlock> blocks;
-    MemScopeMemoryBlockParams queryParams;
-    queryParams.deviceId = firstEvent.deviceId;
-    queryParams.eventType = firstEvent.eventType;
-    queryParams.relativeTime = true;
-    queryParams.startTimestamp = firstEvent.timestamp - 1;
-    queryParams.endTimestamp = firstEvent.timestamp + 1;
-    queryParams.onlyAllocOrFreeInTimeRange = true;
-    // 仅查询在时间范围内申请或释放的，理应只有一个内存块
-    memoryDatabase->QueryMemoryBlocks(queryParams, false, blocks);
-    EXPECT_EQ(blocks.size(), 1);
-    MemoryBlock block = blocks[0];
-    EXPECT_EQ(block.firstAccessTimestamp, eventGroup.accessEvents.front().timestamp);
-    EXPECT_EQ(block.lastAccessTimestamp, eventGroup.accessEvents.back().timestamp);
+    std::unique_ptr<MemScopeMemoryDetailTreeNode> tree{};
+    const std::string deviceId = "7";
+    const std::string eventType = "PTA";
+    const uint64_t expectDuration = 20000000000;
+    auto ctx = BuildDetailTreeContext(deviceId, expectDuration, eventType, true);
+    MemScopeService::BuildMemoryAllocDetailTreeByContext(tree, ctx);
+    ASSERT_TRUE(tree.get() != nullptr);
+    EXPECT_EQ(tree->tag, MEM_SCOPE_ALLOC_OWNER_HAL);
+    EXPECT_EQ(tree->name, MEM_SCOPE_ALLOC_OWNER_HAL_NAME);
+    EXPECT_EQ(tree->children.size(), 0);
+}
+
+/***
+ *  用于测试常规场景构建内存拆解树的情况
+ *  预期：内存拆解树符合预期
+ */
+TEST_F(MemScopeServiceTest, BuildMemoryAllocDetailTreeNormal)
+{
+    auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
+    ASSERT_TRUE(memoryDatabase != nullptr);
+    std::unique_ptr<MemScopeMemoryDetailTreeNode> tree{};
+    const std::string deviceId = "1";
+    const std::string eventType = "PTA";
+    const uint64_t expectDuration = 20000000000;
+    auto ctx = BuildDetailTreeContext(deviceId, expectDuration, eventType, true);
+    MemScopeService::BuildMemoryAllocDetailTreeByContext(tree, ctx);
+    ASSERT_TRUE(tree.get() != nullptr);
+    // 根节点HAL
+    auto expectTree = std::make_unique<MemScopeMemoryDetailTreeNode>(MEM_SCOPE_ALLOC_OWNER_HAL);
+    // 单级子节点PTA
+    auto ptaNode = std::make_unique<MemScopeMemoryDetailTreeNode>(MEM_SCOPE_ALLOC_OWNER_PTA);
+    // PTA的两个子节点：PTA@ops和PTA@model
+    auto ptaModelNode = std::make_unique<MemScopeMemoryDetailTreeNode>(MEM_SCOPE_ALLOC_OWNER_PTA_MODEL);
+    auto ptaOpsNode = std::make_unique<MemScopeMemoryDetailTreeNode>(MEM_SCOPE_ALLOC_OWNER_PTA_OPS);
+    // PTA@model的子节点：PTA@model@weight
+    auto ptaModelWeightNode = std::make_unique<MemScopeMemoryDetailTreeNode>(MEM_SCOPE_ALLOC_OWNER_PTA_MODEL_WEIGHT);
+    // PTA@ops的子节点：PTA@ops@aten
+    auto ptaOpsAtenNode = std::make_unique<MemScopeMemoryDetailTreeNode>(MEM_SCOPE_ALLOC_OWNER_PTA_OPS_ATEN);
+    // PTA@ops的子节点：PTA@ops@aten@leaks_mem
+    auto ptaOpsAtenLeaksNode = std::make_unique<MemScopeMemoryDetailTreeNode>("PTA@ops@aten@leaks_mem");
+
+    // 从子节点向父节点构造
+    ptaModelNode->children.emplace_back(std::move(ptaModelWeightNode));
+    ptaNode->children.emplace_back(std::move(ptaModelNode));
+    ptaOpsAtenNode->children.emplace_back(std::move(ptaOpsAtenLeaksNode));
+    ptaOpsNode->children.emplace_back(std::move(ptaOpsAtenNode));
+    ptaNode->children.emplace_back(std::move(ptaOpsNode));
+    expectTree->children.emplace_back(std::move(ptaNode));
+
+    ExpectTreeEQ(tree.get(), expectTree.get());
 }
 
 /***

@@ -26,8 +26,7 @@ namespace Module {
 namespace MemScope {
 // memscope owner可能的表达前缀
 // 为便于构造树形结构逻辑Owner, 实际不存在
-const std::string MEM_SCOPE_ALLOC_OWNER_HAL_CANN = "HAL_CANN";
-const std::string MEM_SCOPE_ALLOC_OWNER_HAL_FRAMEWORK = "HAL_FRAMEWORK";
+const std::string MEM_SCOPE_ALLOC_OWNER_HAL= "HAL";
 const std::string MEM_SCOPE_ALLOC_OWNER_HAL_NAME = "Process_Total_Memory_Allocation";
 const std::string MEM_SCOPE_ALLOC_OWNER_CANN = "CANN";
 const std::string MEM_SCOPE_ALLOC_OWNER_CANN_NAME = "CANN_Total_Memory_Allocation";
@@ -61,8 +60,7 @@ const std::string MEM_SCOPE_ALLOC_OWNER_PTA_WORKSPACE_NAME = "PTA_Workspace";
 // 缺省名
 const std::string MEM_SCOPE_ALLOC_OWNER_DEFAULT_NAME = "Other";
 const std::set<std::string> MEM_SCOPE_ALLOC_OWNER_FIXED_TAGS = {
-    MEM_SCOPE_ALLOC_OWNER_HAL_CANN,
-    MEM_SCOPE_ALLOC_OWNER_HAL_FRAMEWORK,
+    MEM_SCOPE_ALLOC_OWNER_HAL,
     MEM_SCOPE_ALLOC_OWNER_CANN,
     MEM_SCOPE_ALLOC_OWNER_ATB,
     MEM_SCOPE_ALLOC_OWNER_MINDSPORE,
@@ -85,8 +83,7 @@ const std::set<std::string> MEM_SCOPE_ALLOC_OWNER_CANN_BASE_TAGS = {
     MEM_SCOPE_ALLOC_OWNER_CANN
 };
 const std::unordered_map<std::string, std::string> MEM_SCOPE_ALLOC_OWNER_NAME_MAP = {
-    {MEM_SCOPE_ALLOC_OWNER_HAL_CANN, MEM_SCOPE_ALLOC_OWNER_HAL_NAME},
-    {MEM_SCOPE_ALLOC_OWNER_HAL_FRAMEWORK, MEM_SCOPE_ALLOC_OWNER_HAL_NAME},
+    {MEM_SCOPE_ALLOC_OWNER_HAL, MEM_SCOPE_ALLOC_OWNER_HAL_NAME},
     {MEM_SCOPE_ALLOC_OWNER_ATB, MEM_SCOPE_ALLOC_OWNER_ATB_NAME},
     {MEM_SCOPE_ALLOC_OWNER_PTA, MEM_SCOPE_ALLOC_OWNER_PTA_NAME},
     {MEM_SCOPE_ALLOC_OWNER_MINDSPORE, MEM_SCOPE_ALLOC_OWNER_MINDSPORE_NAME},
@@ -100,30 +97,20 @@ const std::unordered_map<std::string, std::string> MEM_SCOPE_ALLOC_OWNER_NAME_MA
     {MEM_SCOPE_ALLOC_OWNER_PTA_WORKSPACE, MEM_SCOPE_ALLOC_OWNER_PTA_WORKSPACE_NAME}
 };
 // 树最大深度
-const int MAX_TREE_DEPTH = 8;
+const int MAX_TREE_DEPTH = 20;
 
+// 基于标签生成的内存分类分级树
 class MemScopeMemoryDetailTreeNode {
 public:
-    MemScopeMemoryDetailTreeNode() : size(0) {} ;
-    MemScopeMemoryDetailTreeNode(std::string name, uint64_t size, std::string tag)
-        : name(std::move(name)),
-          size(size),
-          tag(std::move(tag)) {}
-
+    explicit MemScopeMemoryDetailTreeNode(std::string nodeTag);
     std::string name;
-    uint64_t size;
+    uint64_t size{0};
     std::string tag;
-    std::set<MemScopeMemoryDetailTreeNode> subNodes;
+    std::vector<std::unique_ptr<MemScopeMemoryDetailTreeNode>> children;
 
-    inline bool operator<(const MemScopeMemoryDetailTreeNode& node) const
-    {
-        return tag < node.tag;
-    }
-
-    void InsertSubNode(const std::string &subNodeName, uint64_t subNodeSize, const std::string &subNodeTag);
-    void InsertSubNode(MemScopeMemoryDetailTreeNode &subNode);
-    static bool IsValidOwnerTag(const std::string &tag);
-    static std::string GetNodeNameByOwnerTag(const std::string &tag);
+    static std::vector<std::unique_ptr<MemScopeMemoryDetailTreeNode>> BuildForestByOrderedTags(
+        const std::set<std::string>& sortedTags);
+    static std::string GetNodeNameByTag(const std::string& tag);
 };
 } // Memory
 } // Module

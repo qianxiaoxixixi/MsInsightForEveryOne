@@ -1012,10 +1012,10 @@ void MemScopeDatabase::QueryMemoryBlocksOwnersReleasedAfterTimestamp(const std::
     std::string sql;
     std::string errMsg;
     sql = StringUtil::FormatString("SELECT DISTINCT {} FROM {} "
-                                   "WHERE {} <= ? AND {} > ? AND {} == ? AND {} == ?;",
+                                   "WHERE {} <= ? AND {} > ? AND {} == ? AND {} == ? ORDER BY {};",
                                    BLOCK::OWNER, memoryBlockTable,
                                    BLOCK::START_TIMESTAMP, BLOCK::END_TIMESTAMP,
-                                   BLOCK::DEVICE_ID, BLOCK::EVENT_TYPE);
+                                   BLOCK::DEVICE_ID, BLOCK::EVENT_TYPE, BLOCK::OWNER);
     if (sql.empty()) {
         ServerLog::Error("[MemScope] Failed to query block owners, error: ", errMsg);
         return;

@@ -133,14 +133,14 @@ struct MemScopeMemoryAllocationsResponse : public JsonResponse {
 struct MemScopeMemoryDetailsResponse : public JsonResponse {
     MemScopeMemoryDetailsResponse() : JsonResponse(REQ_RES_MEM_SCOPE_MEMORY_DETAILS) {}
     uint64_t timestamp{};
-    MemScopeMemoryDetailTreeNode detail;
+    std::unique_ptr<MemScopeMemoryDetailTreeNode> detail;
 
     [[nodiscard]] std::optional<document_t> ToJson() const override
     {
         document_t json(kObjectType);
         auto& allocator = json.GetAllocator();
         ProtocolUtil::SetResponseJsonBaseInfo(*this, json);
-        auto body_json = ToMemScopeDetailTreeJson(detail, allocator);
+        auto body_json = ToMemScopeDetailTreeJson(detail.get(), allocator);
         if (!body_json.has_value()) {
             body_json = document_t(kObjectType);
         }
@@ -149,19 +149,18 @@ struct MemScopeMemoryDetailsResponse : public JsonResponse {
     }
 
     // 此处转json存在递归，但treeNode在构造时确保了层数不超过8
-    static std::optional<document_t> ToMemScopeDetailTreeJson(const MemScopeMemoryDetailTreeNode& treeNode,
+    static std::optional<document_t> ToMemScopeDetailTreeJson(MemScopeMemoryDetailTreeNode* treeNode,
                                                               Document::AllocatorType& allocator)
     {
+        if (treeNode == nullptr) { return std::nullopt; }
         document_t json(kObjectType);
-        JsonUtil::AddMember(json, "name", treeNode.name, allocator);
-        JsonUtil::AddMember(json, "tag", treeNode.tag, allocator);
-        JsonUtil::AddMember(json, "size", treeNode.size, allocator);
+        JsonUtil::AddMember(json, "name", treeNode->name, allocator);
+        JsonUtil::AddMember(json, "tag", treeNode->tag, allocator);
+        JsonUtil::AddMember(json, "size", treeNode->size, allocator);
         json_t subNodes(kArrayType);
-        for (auto& subNode : treeNode.subNodes) {
-            auto subNodeJson = ToMemScopeDetailTreeJson(subNode, allocator);
-            if (subNodeJson.has_value()) {
-                subNodes.PushBack(subNodeJson.value(), allocator);
-            }
+        for (auto& subNode : treeNode->children) {
+            auto subNodeJson = ToMemScopeDetailTreeJson(subNode.get(), allocator);
+            if (subNodeJson.has_value()) { subNodes.PushBack(subNodeJson.value(), allocator); }
         }
         JsonUtil::AddMember(json, "subNodes", subNodes, allocator);
         return std::optional<document_t>{std::move(json)};

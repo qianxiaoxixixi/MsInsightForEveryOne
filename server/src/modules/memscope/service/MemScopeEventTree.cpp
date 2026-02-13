@@ -15,57 +15,63 @@
  * See the Mulan PSL v2 for more details.
  * -------------------------------------------------------------------------
  */
+#include "MemScopeDefs.h"
 #include "MemScopeEventTree.h"
 
 namespace Dic::Module::MemScope {
-void MemScopeMemoryDetailTreeNode::InsertSubNode(const std::string &subNodeName, uint64_t subNodeSize,
-                                                 const std::string &subNodeTag)
+MemScopeMemoryDetailTreeNode::MemScopeMemoryDetailTreeNode(std::string nodeTag)
 {
-    subNodes.emplace(subNodeName, subNodeSize, subNodeTag);
+    tag = std::move(nodeTag);
+    name = GetNodeNameByTag(tag);
 }
 
-bool MemScopeMemoryDetailTreeNode::IsValidOwnerTag(const std::string &tag)
+std::vector<std::unique_ptr<MemScopeMemoryDetailTreeNode>> MemScopeMemoryDetailTreeNode::BuildForestByOrderedTags(
+    const std::set<std::string>& sortedTags)
 {
-    if (tag.empty()) {
-        return false;
-    }
-    auto it = MEM_SCOPE_ALLOC_OWNER_FIXED_TAGS.find(tag);
-    if (it != MEM_SCOPE_ALLOC_OWNER_FIXED_TAGS.end()) {
-        return true;
-    }
-    for (const auto &baseTag : MEM_SCOPE_ALLOC_OWNER_FIXED_TAGS) {
-        if (tag.compare(0, baseTag.size(), baseTag) == 0) {
-            return true;
+    std::vector<std::unique_ptr<MemScopeMemoryDetailTreeNode>> roots;
+    std::unordered_map<std::string, MemScopeMemoryDetailTreeNode*> nodeMap;
+
+    for (const std::string& fullTag : sortedTags) {
+        if (fullTag.empty()) continue;
+        const size_t lastAt = fullTag.find_last_of(OWNER_STRING_DELIMITER);
+        if (lastAt == std::string::npos) {
+            // 顶层节点 如（PTA、MINDSPORE、ATB等）
+            auto node = std::make_unique<MemScopeMemoryDetailTreeNode>(fullTag);
+            nodeMap[fullTag] = node.get();
+            roots.push_back(std::move(node));
+            continue;
         }
-        if (baseTag > tag.substr(0, baseTag.size())) {
-            break;
+        // 非顶层节点
+        std::string parentPath = fullTag.substr(0, lastAt);
+        auto it = nodeMap.find(parentPath);
+        if (it == nodeMap.end()) {
+            // 理论上不应该发生。前序应该处理好所有标签的拆解并排序
+            continue;
         }
+        MemScopeMemoryDetailTreeNode* parent = it->second;
+        auto child = std::make_unique<MemScopeMemoryDetailTreeNode>(fullTag);
+        MemScopeMemoryDetailTreeNode* childPtr = child.get();
+        parent->children.push_back(std::move(child));
+        nodeMap[fullTag] = childPtr;
     }
-    return false;
+    return roots;
 }
 
-void MemScopeMemoryDetailTreeNode::InsertSubNode(MemScopeMemoryDetailTreeNode &subNode)
-{
-    subNodes.insert(subNode);
-}
-
-std::string MemScopeMemoryDetailTreeNode::GetNodeNameByOwnerTag(const std::string &tag)
+std::string MemScopeMemoryDetailTreeNode::GetNodeNameByTag(const std::string& tag)
 {
     if (MEM_SCOPE_ALLOC_OWNER_NAME_MAP.find(tag) != MEM_SCOPE_ALLOC_OWNER_NAME_MAP.end()) {
         return MEM_SCOPE_ALLOC_OWNER_NAME_MAP.at(tag);
     }
     std::string lcpOwnerTag;
     std::string resultName;
-    for (auto &baseTag : MEM_SCOPE_ALLOC_OWNER_FIXED_TAGS) {
+    for (auto& baseTag : MEM_SCOPE_ALLOC_OWNER_FIXED_TAGS) {
         std::string tempLCP = StringUtil::FindLCP(tag, baseTag);
         if (tempLCP.size() > lcpOwnerTag.size()) {
             lcpOwnerTag = tempLCP;
             resultName = tag.substr(tempLCP.size());
         }
     }
-    if (resultName.empty()) {
-        resultName = MEM_SCOPE_ALLOC_OWNER_DEFAULT_NAME;
-    }
+    if (resultName.empty()) { resultName = MEM_SCOPE_ALLOC_OWNER_DEFAULT_NAME; }
     return resultName;
 }
-}  // Dic::Module::MemScope
+} // Dic::Module::MemScope
