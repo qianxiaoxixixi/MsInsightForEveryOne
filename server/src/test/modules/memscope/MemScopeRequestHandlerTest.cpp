@@ -19,13 +19,13 @@
 #include <WsSessionManager.h>
 #include "WsSessionImpl.h"
 #include "MemScopeProtocolRequest.h"
-#include "MemScopeService.h"
 #include "QueryMemScopeAllocationHandler.h"
 #include "QueryMemScopeBlockHandler.h"
 #include "QueryMemScopeMemoryDetailHandler.h"
 #include "QueryMemScopePythonTraceHandler.h"
 #include "QueryMemScopeEventHandler.h"
 #include "DataBaseManager.h"
+#include "MemScopeParser.h"
 #include "TestSuit.h"
 #include "TraceTime.h"
 
@@ -49,7 +49,7 @@ public:
         ASSERT_TRUE(memoryDatabase != nullptr);
         ASSERT_TRUE(memoryDatabase->OpenDb(dbPath, false));
         ASSERT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
-        ASSERT_TRUE(MemScopeService::ParseMemoryMemScopeDumpEventsAndPythonTraces("0"));
+        ASSERT_TRUE(MemScopeParser::ParseMemoryMemScopeDumpEventsAndPythonTraces("0"));
     }
     static void TearDownTestSuite()
     {

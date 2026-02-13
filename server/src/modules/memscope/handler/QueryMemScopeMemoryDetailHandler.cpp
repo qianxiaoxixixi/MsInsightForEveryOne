@@ -24,9 +24,9 @@ namespace Module {
 namespace MemScope {
 bool QueryMemScopeMemoryDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    auto &request = dynamic_cast<MemScopeMemoryDetailRequest &>(*requestPtr);
+    auto& request = dynamic_cast<MemScopeMemoryDetailRequest&>(*requestPtr);
     std::unique_ptr<MemScopeMemoryDetailsResponse> responsePtr = std::make_unique<MemScopeMemoryDetailsResponse>();
-    auto &response = *responsePtr;
+    auto& response = *responsePtr;
     SetBaseResponse(request, response);
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg)) {
@@ -38,9 +38,9 @@ bool QueryMemScopeMemoryDetailHandler::HandleRequest(std::unique_ptr<Protocol::R
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    if (!MemScopeService::ParseMemoryAllocDetailTreeByTimestamp(request.params.deviceId, request.params.timestamp,
-                                                                request.params.eventType, responsePtr->detail,
-                                                                request.params.relativeTime)) {
+    BuildDetailTreeContext buildCtx(request.params.deviceId, request.params.timestamp, request.params.eventType,
+                                    request.params.relativeTime);
+    if (!MemScopeService::BuildMemoryAllocDetailTreeByContext(response.detail, buildCtx)) {
         errorMsg = "Failed to query memory allocation detail.";
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;

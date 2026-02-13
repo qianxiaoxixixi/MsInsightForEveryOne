@@ -19,7 +19,7 @@
 #include <gtest/gtest.h>
 #include "MemScopeProtocolRequest.h"
 #include "DataBaseManager.h"
-#include "TraceTime.h"
+#include "MemScopeParser.h"
 #include "MemScopeDatabase.h"
 #include "MemScopeService.h"
 #include "MemScopeTableColumn.h"
@@ -37,7 +37,7 @@ public:
         auto memoryDatabase = DataBaseManager::Instance().GetMemScopeDatabase("0");
         ASSERT_TRUE(memoryDatabase->OpenDb(dbPath, false));
         ASSERT_TRUE(memoryDatabase->DropMemoryAllocationAndBlockTable());
-        ASSERT_TRUE(MemScopeService::ParseMemoryMemScopeDumpEventsAndPythonTraces("0"));
+        ASSERT_TRUE(MemScopeParser::ParseMemoryMemScopeDumpEventsAndPythonTraces("0"));
     }
     static void TearDownTestSuite()
     {

@@ -677,7 +677,7 @@ private:
  * @param csvLine csv文件单行
  * @return 切分后的字符串数组
  */
-static std::vector<std::string> SplitCsvLine(const std::string& csvLine)
+[[maybe_unused]] static std::vector<std::string> SplitCsvLine(const std::string& csvLine)
 {
     const char sep = ',';
     std::vector<std::string> result;
