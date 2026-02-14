@@ -19,9 +19,7 @@
 #ifndef PROFILER_SERVER_MEM_SCOPE_DEFS_H
 #define PROFILER_SERVER_MEM_SCOPE_DEFS_H
 
-#include <string>
-#include <set>
-#include <unordered_map>
+#include "pch.h"
 #include "FileDef.h"
 
 namespace Dic::Module::MemScope {
