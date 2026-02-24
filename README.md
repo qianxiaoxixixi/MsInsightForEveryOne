@@ -1,24 +1,21 @@
-# **MindStudio Insight**
+<h1 align="center">MindStudio Insight</h1>
+<div align="center">
+  <img src="./modules/framework/public/favicon.ico" width="200" alt="MindStudio Insight Logo">
+  <p>🚀 <b>昇腾 AI 全流程可视化调优利器</b></p>
+  
+  [![License](https://badgen.net/badge/License/MulanPSL-2.0/blue)](./License) [![Version](https://badgen.net/badge/Version/8.3.0/green)](https://gitcode.com/Ascend/msinsight/releases/tag_MindStudio_8.3.0) [![Ascend](https://img.shields.io/badge/Hardware-Ascend-orange.svg)](https://www.hiascend.com/)
+</div>
 
-## 最新消息
+## 🌟 最新动态
+- **[2026.2.04]** 🎉 **MindStudio Insight 26.0.0-alpha.1版本上线！** 聚焦**hostbound**问题定位跟**RL**性能分析优化，开启昇腾 AI 调优新体验。
+## 📖 简介
+**MindStudio Insight** 是专为昇腾 AI 开发者打造的深度可视化调优分析工具。它通过可视化手段呈现真实的软硬件运行数据，帮助开发者在天级时间内精准定位并解决性能瓶颈。
 
-- [2025.12.30]：MindStudio Insight项目首次上线
-
-## 简介
-
-### 概述
-
-MindStudio Insight是面向昇腾AI开发者的可视化调优工具，支持系统调优、算子调优、服务化调优和内存调优的能力，帮助开发者在训练、推理以及算子开发场景快速完成性能优化。
-
-MindStudio Insight提供了丰富的调优分析手段，能够可视化呈现真实软硬件运行数据，多维度分析性能瓶颈点，支持百卡、千卡及以上规模的可视化集群性能分析，助力开发者在天级时间内完成性能调优。
-
-### 优势
-
-- MindStudio Insight支持在时间线（Timeline）查看集群场景下的Profiling数据，并以单卡维度进行展示，且可以自动遍历输入路径下的db文件，或者所有的trace_view.json文件（PyTorch场景和MindSpore场景）和msprof*.json文件（TensorFlow场景和离线推理场景），无需手动合并文件，操作简单。
-
-- MindStudio Insight借助于数据库支持超大性能数据处理，可以支持20GB的集群性能数据分析，并且能够支持大模型场景下的性能调优。
-
-## 目录结构
+### 核心价值
+- **全场景覆盖：** 支持系统调优、算子调优、服务化调优及内存调优。
+- **超大规模支持：** 轻松应对百卡、千卡级集群分析，支持高达 **20GB+** 的性能数据处理。
+- **极简操作：** 自动遍历 Profiling 数据，无需手动合并文件，即插即用。
+## 📁目录结构
 
 ```tex
 ├── build                              # 构建脚本 
