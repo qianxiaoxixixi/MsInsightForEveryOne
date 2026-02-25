@@ -79,6 +79,7 @@ void QueryApiInstructionsDynamicHandler::SetResponseBody(SourceApiInstrDynamicRe
         TransformColumnData(item.floatColumnMap, col.floatMap);
         TransformColumnData(item.intColumnMap, col.intMap);
         TransformColumnData(item.stringColumnMap, col.stringMap);
+        TransformColumnData(item.jsonStringColumnMap, col.stringMap); // json_str 复用string map即可
         response.body.columnValues.emplace_back(col);
     }
 }
