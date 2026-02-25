@@ -245,13 +245,19 @@ void ProjectParserJson::ParserJsonData(const std::map<std::string, RankEntry> &r
             ServerLog::Warn("Failed to parse memory files.");
         }
         if (!isParseJson) {
-            const auto projectTypeEnum = static_cast<ProjectTypeEnum>(rankEntry.second.projectType);
+            /// FIX: JSON 解析情况目前有两种类型：trace view json 和 aclgraph debug json
+            /// 需要区分这两种 json
+            /// aclgraph debug json => Enum 就是对应的值，即 ACLGRAPH_DEBUG
+            /// trace view json     => Enum 统一归类为 TRACE，给 parse/cards 接口使用
+            auto projectTypeEnum = static_cast<ProjectTypeEnum>(rankEntry.second.projectType);
+            if (projectTypeEnum != ProjectTypeEnum::ACLGRAPH_DEBUG) {
+                projectTypeEnum = ProjectTypeEnum::TRACE;
+            }
             ParserStatusManager::Instance().SetPendingStatus(rankEntry.first,
                 { projectTypeEnum, rankEntry.second.parseFileList });
             continue;
         }
-        _fileParser.Parse(rankEntry.second.parseFileList,
-                                                    rankEntry.second.rankId,
+        _fileParser.Parse(rankEntry.second.parseFileList, rankEntry.second.rankId,
                                                     rankEntry.second.parseFolder, rankEntry.second.fileId);
     }
     auto projectTypeEnum = Global::ProjectExplorerManager::GetProjectType(projectInfos);
