@@ -48,6 +48,7 @@ struct DynamicColumn {
     std::unordered_map<std::string, std::vector<std::string>> stringColumnMap; // column name to data
     std::unordered_map<std::string, std::vector<int>> intColumnMap;
     std::unordered_map<std::string, std::vector<float>> floatColumnMap;
+    std::unordered_map<std::string, std::vector<std::string>> jsonStringColumnMap;
 };
 
 struct SourceFileInstructionDynamicCol : public DynamicColumn {
@@ -55,6 +56,21 @@ struct SourceFileInstructionDynamicCol : public DynamicColumn {
 
 struct SourceFileLineDynamicCol : public DynamicColumn {
     std::vector<std::pair<std::string, std::string>> addressRange;
+};
+
+class GRPStatusHelper {
+public:
+    GRPProgress UpdateGRPStatus(const std::string& grpName, int lifeTime, GRPStatus status);
+    int GetRegisterLifeTime(const std::string& grpName, int lifeTime);
+    int GetIndex(const std::string& grpName);
+    void ResetGRP(const std::string& grpName);
+    void Reset();
+
+private:
+    std::map<std::string, int> grpStatusMap_;
+    std::map<std::string, int> grpLifeTimeMap_;
+    std::map<std::string, int> grpIndex_;
+    std::vector<int> indexArray_;
 };
 
 class SourceInstructionParser {
@@ -109,6 +125,12 @@ protected:
         return apiFiles;
     }
 
+    /**
+     * @brief 对instruction字段做预处理
+     * @param doc
+     */
+    void PreprocessInstr(document_t &doc);
+
 private:
     const static uint16_t filePathLengthConst = 4096;
     const static uint16_t addressRangeSize = 2;
@@ -121,6 +143,7 @@ private:
     std::unordered_map<std::string, std::vector<SourceFileLineDynamicCol>> sourceLinesMap; // source file name to lines
     std::map<std::string, int> sourceLineColumnTypeMap; // source line column name to data type
     Position apiInstrPos{};
+    GRPStatusHelper grpStatusHelper;
 };
 
 }

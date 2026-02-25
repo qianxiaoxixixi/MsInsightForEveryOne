@@ -24,6 +24,6 @@ llt_cov
 junit
 out
 product
-
+.cache
 /opensource/
 /modules/framework/public/plugins

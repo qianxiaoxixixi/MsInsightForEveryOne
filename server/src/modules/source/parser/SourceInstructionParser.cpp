@@ -133,7 +133,8 @@ void SourceInstructionParser::ConvertApiInstrDynamic(const std::string &jsonStr)
     if (!JsonUtil::IsJsonArray(d, "Instructions")) {
         return;
     }
-    for (auto &instr : d["Instructions"].GetArray()) {
+    PreprocessInstr(d);
+    for (auto& instr : d["Instructions"].GetArray()) {
         ParseInstruction(instr);
     }
 }
@@ -155,6 +156,8 @@ void SourceInstructionParser::ParseInstruction(Value &instr)
             ProcessColumnDataArray<int>(columData, sourceFileInstruction.intColumnMap[columnName]);
         } else if (type == ColumDataType::FLOAT || type == ColumDataType::PERCENTAGE) {
             ProcessColumnDataArray<float>(columData, sourceFileInstruction.floatColumnMap[columnName]);
+        } else if (type == ColumDataType::JSON_STR) {
+            sourceFileInstruction.jsonStringColumnMap[columnName].push_back(JsonUtil::JsonDump(columData));
         }
     }
     instructionList.emplace_back(std::move(sourceFileInstruction));
@@ -530,6 +533,63 @@ std::vector<SourceFileLine> SourceInstructionParser::ConvertToLineArray(Value &l
     return sourceFileLines;
 }
 
+void SourceInstructionParser::PreprocessInstr(document_t& doc)
+{
+    auto& instructions = doc["Instructions"];
+    std::sort(instructions.GetArray().Begin(),
+              instructions.GetArray().End(),
+              [](const Value& a, const Value& b) {
+                  if (a.HasMember("Address") && b.HasMember("Address")) {
+                      return a["Address"].GetString() < b["Address"].GetString();
+                  }
+                  return true;
+              });
+    for (json_t& instruction : instructions.GetArray()) {
+        if (!instruction.IsObject()) {
+            continue;
+        }
+        if (!instruction.HasMember("GPR Status") || !instruction["GPR Status"].IsArray()) {
+            continue;
+        }
+        std::vector<GRPInfo> grpInfos;
+        int maxIndex = -1;
+        for (json_t& grpInfo : instruction["GPR Status"].GetArray()) {
+            GRPInfo info;
+            JsonUtil::SetByJsonKeyValue(info.regName, grpInfo, "regIndex");
+            JsonUtil::SetByJsonKeyValue(info.lifeTime, grpInfo, "survivalTime");
+            int status = 0;
+            JsonUtil::SetByJsonKeyValue(status, grpInfo, "regStatus");
+            info.status = static_cast<GRPStatus>(status);
+            info.index = grpStatusHelper.GetIndex(info.regName);
+            maxIndex = std::max(maxIndex, info.index);
+            info.lifeTime = grpStatusHelper.GetRegisterLifeTime(info.regName, info.lifeTime);
+            info.progress = grpStatusHelper.UpdateGRPStatus(info.regName, info.lifeTime, info.status);
+            grpInfos.emplace_back(std::move(info));
+        }
+        std::sort(grpInfos.begin(),
+                  grpInfos.end(),
+                  [](const GRPInfo& a, const GRPInfo& b) {
+                      return a.index < b.index;
+                  });
+        std::vector<GRPInfo> resultInfos(maxIndex + 1);
+        for (const auto& info : grpInfos) {
+            grpStatusHelper.ResetGRP(info.regName);
+            resultInfos[info.index] = info;
+        }
+        auto& allocator = doc.GetAllocator();
+        json_t grpStatusList(kArrayType);
+        for (const auto& info : resultInfos) {
+            json_t status(kObjectType);
+            JsonUtil::AddMember(status, "name", info.regName, allocator);
+            JsonUtil::AddMember(status, "state", static_cast<int>(info.status), allocator);
+            JsonUtil::AddMember(status, "progress", static_cast<int>(info.progress), allocator);
+            JsonUtil::AddMember(status, "length", info.lifeTime, allocator);
+            grpStatusList.PushBack(status, allocator);
+        }
+        instruction["GPR Status"].Swap(grpStatusList);
+    }
+}
+
 void SourceInstructionParser::Reset()
 {
     sourceFiles.clear();
@@ -541,6 +601,7 @@ void SourceInstructionParser::Reset()
     sourceLinesMap.clear();
     sourceLineColumnTypeMap.clear();
     apiInstrPos = {0, 0};
+    grpStatusHelper.Reset();
 }
 
 std::vector<std::string> SourceInstructionParser::GetCoreList()
@@ -658,6 +719,7 @@ std::vector<SourceFileInstructionDynamicCol> SourceInstructionParser::GetInstrDy
         GetValueInTargetCore(item.intColumnMap, col.intColumnMap, index);
         GetValueInTargetCore(item.floatColumnMap, col.floatColumnMap, index);
         GetValueInTargetCore(item.stringColumnMap, col.stringColumnMap, index);
+        GetValueInTargetCore(item.jsonStringColumnMap, col.jsonStringColumnMap, index);
         list.emplace_back(col);
     }
 
@@ -730,6 +792,67 @@ std::map<std::string, int> SourceInstructionParser::GetSourceLineColumnTypeMap()
     return sourceLineColumnTypeMap;
 }
 
-} // Dic
+GRPProgress GRPStatusHelper::UpdateGRPStatus(const std::string& grpName,
+                                             const int lifeTime,
+                                             GRPStatus status)
+{
+    // 当前寄存器在map中，分为两种情况：1. 寄存器生命周期未过期，2. 寄存器生命周期已过期
+    if (grpStatusMap_.find(grpName) != grpStatusMap_.end()) {
+        grpStatusMap_[grpName]--;
+        if (grpStatusMap_[grpName] == 0) {
+
+            return GRPProgress::END;
+        }
+        return GRPProgress::IN_USE;
+    }
+    grpStatusMap_[grpName] = lifeTime - 1;
+    grpLifeTimeMap_[grpName] = lifeTime;
+    return GRPProgress::BEGIN;
+}
+
+int GRPStatusHelper::GetRegisterLifeTime(const std::string& grpName, int lifeTime)
+{
+    return grpLifeTimeMap_.find(grpName) != grpLifeTimeMap_.end() ? grpLifeTimeMap_[grpName] : lifeTime;
+}
+
+int GRPStatusHelper::GetIndex(const std::string& grpName)
+{
+    /*
+     * 优先从map中找寻缓存，如果没有则扫描第一个可用的位置
+     */
+    if (grpIndex_.find(grpName) != grpIndex_.end()) {
+        return grpIndex_[grpName];
+    }
+    for (size_t i = 0; i < indexArray_.size(); i++) {
+        if (indexArray_[i] == 0) {
+            grpIndex_[grpName] = static_cast<int>(i);
+            indexArray_[i] = 1;
+            return static_cast<int>(i);
+        }
+    }
+    indexArray_.emplace_back(1);
+    const int index = static_cast<int>(indexArray_.size()) - 1;
+    grpIndex_[grpName] = index;
+    return index;
+}
+void GRPStatusHelper::ResetGRP(const std::string& grpName)
+{
+    if (grpStatusMap_[grpName] != 0 ) {
+        return;
+    }
+    grpStatusMap_.erase(grpName);
+    grpLifeTimeMap_.erase(grpName);
+    indexArray_[grpIndex_[grpName]] = 0;
+    grpIndex_.erase(grpName);
+}
+
+void GRPStatusHelper::Reset()
+{
+    grpStatusMap_.clear();
+    grpLifeTimeMap_.clear();
+    grpIndex_.clear();
+    indexArray_.clear();
+}
+} // namespace Source
 } // Module
 } // Source
