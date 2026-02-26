@@ -21,7 +21,6 @@
 - 除了上述两个新手友好issue外，我们也提供了其他的[issue模板](https://gitcode.com/Ascend/.gitcode/tree/master/.gitcode/ISSUE_TEMPLATE)来作为参考。
 - 此外，您也可以通过 [RFC](https://gitcode.com/Ascend/msinsight/issues?state=all&scope=all&page=1&categorysearch=%255B%257B%22field%22:%22labels%22,%22value%22:%255B%257B%22id%22:25328,%22name%22:%22rfc%22%257D%255D,%22label%22:%22rfc%22%257D%255D) 和 [Roadmap](https://gitcode.com/Ascend/msinsight/issues?state=all&scope=all&page=1&categorysearch=%255B%257B%22field%22:%22labels%22,%22value%22:%255B%257B%22id%22:22807,%22name%22:%22roadmap%22%257D%255D,%22label%22:%22roadmap%22%257D%255D)来了解开发计划与规划。
 
-
 # Pull Requests 与 Code Reviews
 
 感谢您提交 PR！为优化审查流程，请遵循以下指南：
@@ -39,9 +38,11 @@
 流水线编译通过后请联系[仓库管理和维护成员](https://gitcode.com/Ascend/msinsight/member)进行检视与合入
 
 # License
+
 请参阅 [LICENSE](./License) 文件以获取完整详细信息。
 
 # 构建与测试
+
 在提交PR之前，建议您先在本地搭建开发环境，构建`insight`并运行相关测试。
 
 **开发者测试相关要求**：
@@ -55,6 +56,7 @@
 1. 预冒烟测试是端到端的测试，用于验证软件的主要功能是否正常运行，涉及前端和后端。预冒烟测试使用测试框架Playwright。详细步骤可以参考[开发指南](https://gitcode.com/Ascend/msinsight/blob/master/docs/zh/developer_guide/development_guide.md)的3.5节。
 
 ## PR标题与分类
+
 只有特定类型的PR才会被审核。请在PR标题前添加合适的前缀，以明确PR类型。请使用以下分类之一:
 
 - `[Platform]`: 底座平台相关的新功能、优化或bug修复。
@@ -70,26 +72,36 @@
 - `[Servitization]`: 服务化调优相关的新功能、优化或bug修复。
 
 ## Commit Requirement
+
 为保持commit记录清晰，请确保每个PR仅包含一个commit。
 如果您的PR当前包含多个commits，请在提交前使用以下任一方法（包括但不限于）将其合并为单个commit。(尽管GitCode在合并PR时提供了`Squash 合并`的选项, 提前将PR整理为单个简洁的commit仍然被视为最佳实践，并且深受committer们的欢迎。)
+
 ### 方式一：交互式变基（推荐）
+
 - 查看需要合并的最近几个commit（例如最近3个）：
+
 ``` bash
 git log --oneline -n 3
 ```
+
 - 启动交互式rebase (将`N`替换为需要合并的commit数量):
+
 ``` bash
 git rebase -i HEAD~N
 ```
+
 - 在打开的编辑器中:
     - 保留第一个commit的`pick`。
     - 将其余commit前的`pick`修改为`squash`(或简写为`s`) 。
 - 保存并关闭。随后会打开新窗口，供您编写合并后的简洁、有意义的commit信息。
 - 强制推送更新后的分支 (仅限于您自己的特性分支):
+
 ``` bash
 git push --force-with-lease origin your-branch-name
 ```
+
 ### 方式二：reset + 新建commit
+
 ```bash
 # 获取最新的待合入的目标分支（如main）
 git fetch origin main
@@ -104,12 +116,11 @@ git commit -m "feat: concise description of your change"
 git push --force-with-lease origin your-branch-name
 
 ```
-> 提示: 如果您不确定应基于哪个目标分支，请查看仓库的默认分支或咨询Maintainer.
 
+> 提示: 如果您不确定应基于哪个目标分支，请查看仓库的默认分支或咨询Maintainer.
+<br/>
 > 警告：切勿对共享或受保护的分支执行强制推送。
 
 # 感谢
 
 我们感谢您对 MindStudio Insight 的贡献。您的每一份努力，都让这个项目变得更强大、更易用。祝您创造愉快，编程开心！
-
-

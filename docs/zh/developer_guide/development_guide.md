@@ -1,4 +1,4 @@
-# 开发指南
+# **开发指南**
 
 ## 1. MindStudio-Insight开发软件
 
@@ -31,13 +31,16 @@
 
 #### 3.1.3 配置clion设置
 
-1. 点击右上角的设置按钮 选择设置选项
+**1. 点击右上角的设置按钮 选择设置选项**
+
 ![Cli_setting](./figures/Cli_setting.png)
 
-2. 选择**构建、执行、部署**中的**工具链**选项，并且将**工具集**中的路径指向自己下载好的MinGW工具中
+**2. 选择构建、执行、部署中的工具链选项，并且将工具集*中的路径指向自己下载好的MinGW工具中**
+
 ![toolchain_setting](./figures/toolchain_setting.png)
 
-3. 选择**构建、执行、部署**中的**CMake**选项，并且将**工具链**指向自己下载好的MinGW
+**3. 选择构建、执行、部署中的CMake选项，并且将工具链指向自己下载好的MinGW**
+
 ![CMake_toolchain_setting](./figures/CMake_toolchain_setting.png)
 
 ### 3.2 第三方库的下载与执行编译
@@ -54,9 +57,11 @@ python preprocess_third_party.py
 ```
 
 **图3-1 download_third_party_success** 
+
 ![download_third_party_success](./figures/download_third_party_success.png)
 
 **图3-2 预运行成功** 
+
 ![preload_success](./figures/preload_success.png)
 
 #### 3.2.2 CMake编译
@@ -68,6 +73,7 @@ python preprocess_third_party.py
 - 如CMake重载成功则如下图所示
 
 **图3-3 重新加载CMake成功** 
+
 ![reload_CMake_success](./figures/reload_CMake_success.png)
 
 ### 3.3 Clion中的Main函数配置与启动，后端开发者测试
@@ -75,19 +81,22 @@ python preprocess_third_party.py
 #### 3.3.1 Main函数的配置 
 
 - 打开profiler_server旁的更多选项，选择编辑选项
+
 ![edit_options](./figures/edit_options.png)
 
 - 选择profiler_server选项，并且将参数修改为 --wsPort=9000 后点击确定保存
-  - 提示：端口可以设置为其他端口，以避免和其他端口冲突
-  - 警告：如果您的开发机器中已打开了Insight桌面端应用，请确认设置`wsPort`不会与已开启的insight产生端口冲突（Insight应用默认为`9000`, 但多开时将从`9000`端口逐个+1绑定占用，建议设置为`9050`~`9099`），否则可能导致前后端连接问题或其他未预期的异常，建议本地开发调试时，关闭所有已开启的Insight应用。
+注：端口可以设置为其他端口，以避免和其他端口冲突
+
 ![add_port](./figures/add_port.png)
 
 #### 3.3.2 启动构建profiler_server
 
 - 点击右上角的启动按钮，启动构建profiler_server
+
 ![start_build](./figures/start_build.png)
 
 - 构建成功如下图所示
+
 ![build_complete](./figures/build_complete.png)
 
 #### 3.3.3 后端开发者测试
@@ -95,12 +104,15 @@ python preprocess_third_party.py
 - 测试框架：GoogleTest
 
 - 覆盖率：后端覆盖率的要求是行覆盖率达到80%，分支覆盖率达到60%。Linux系统上，运行如下代码即可生成覆盖率，覆盖率文件位置是build_llt/output/cpp_coverage/result/index.html。
-```
+
+```bash
 cd build
 bash cpp_coverage.sh
 ```
+
 - 新增开发者测试：后端合入新特性代码时，要求同时补充DT，DT代码位置是server/src/test。在CLion设置的**构建、执行、部署**中的**CMake**选项中添加环境变量`DEV_TYPE=true`，然后重新加载CMake，就可以构建insight_test可执行文件。构建完成后，如果测试用例名称为`TEST_F(TestSuit, TestCase)`，那么执行如下命令就可以只执行TestSuit测试套件的用例，更多用法可以参考GoogleTest官方文档：
-```
+
+```bash
 ./insight_test --gtest_filter=TestSuit.*
 ```
 
@@ -110,17 +122,18 @@ bash cpp_coverage.sh
 
 - 安装pnpm依赖 
 
-```
+```bash
 npm install -g pnpm
 ```
 
 - 打开WebStorm进入modules文件夹下，执行安装指令
 
-```
+```bash
 pnpm install
 ```
 
 - 成功安装结果如下图所示
+
 ![setup_finished](./figures/setup_finished.png)
 
 #### 3.4.2 拉起前端模块服务
@@ -154,9 +167,11 @@ pnpm install
 - 在浏览器中输入localhost:5174启动网页端
 
 - 网页端启动成功如下图所示
+
 ![insight_start_success](./figures/insight_start_success.png)
 
 ### 3.5. 预冒烟测试
+
 预冒烟测试可以在Linux或Windows上进行
 
 #### 3.5.1 在Linux上进行预冒烟测试
@@ -167,13 +182,13 @@ pnpm install
 
 - 从镜像创建容器后，需要安装前端和后端需要的其它依赖，在容器中，执行build目录下的mindstudio_insight_gui_set_environment.sh脚本安装依赖
 
-```
+```bash
 bash build/mindstudio_insight_gui_set_environment.sh
 ```
 
 - 完成依赖安装后，在项目的根目录下执行
 
-```
+```bash
 bash build/mindstudio_insight_gui_run.sh
 ```
 
@@ -185,7 +200,7 @@ bash build/mindstudio_insight_gui_run.sh
 
 - 在e2e目录下，执行
 
-```
+```bash
 npm run test:smoke
 ```
 
@@ -444,6 +459,7 @@ export class Session {
     ....
 }
 ```
+
 **代码来源：** `modules/framework/src/moduleConfig.ts`
 
 需添加新模块至模块设置中
@@ -469,7 +485,7 @@ export interface ModuleConfig {
     name: 'xxx',
     requestName: 'xxx',
     attributes: {
-        src: isDev ? 'http://localhost:300x/' : './plugins/xxx/index.html',
+        src: isDev ? 'http://localhost:3000/xxx' : './plugins/xxx/index.html',
     },
     isXXX: true,
 },
@@ -507,6 +523,7 @@ export const resources = {
 ### 后端部分
 
 ### 后端开发结构对应
+
 server
 ├── src
 │   ├── modules
@@ -582,11 +599,12 @@ public:
     ...
 }
 ```
+
 **代码来源：** `server/src/CMakeLists.txt`
 
 CMake中要编译的新模块要添加在这里
 
-```
+```CMake
 # new Module
 include_directories(${SRC_HOME_DIR}/modules/xxx)
 include_directories(${SRC_HOME_DIR}/modules/xxx/xxx)
@@ -681,7 +699,7 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
 
 ```
 
-## 6 DB场景新增泳道
+## 5 DB场景新增泳道
 
 ### 前端部分
 
@@ -729,8 +747,8 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
        ...
    }
    ```
+
    **代码来源：** `modules/framework/src/units/Project.tsx`
-   
    
 3. 主服务将解析结果发送给微服务
 
@@ -745,8 +763,8 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
       ...
    }
    ```
-   **代码来源：** `modules/framework/src/centralServer/server.ts`
 
+   **代码来源：** `modules/framework/src/centralServer/server.ts`
 
 4. 微服务处理数据生成卡/泳道菜单
 
@@ -760,21 +778,23 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
          ...
       }
    ```
-   **代码来源：** `modules/timeline/src/connection/handler.ts`
 
+   **代码来源：** `modules/timeline/src/connection/handler.ts`
 
 5. 微服务接收并处理卡解析结果
 
    parse/success
+
    ```ts
    export const parseSuccessHandler: NotificationHandler = (data): void => {
      ...
    }
    ```
+
    **代码来源：** `modules/timeline/src/connection/handler.ts`
 
-
 6. 微服务获取泳道数据并绘制泳道图
+
    ```tsx
       const ThreadUnit = unit<ThreadMetaData>({
         name: 'Thread',
@@ -782,18 +802,18 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
         chart: chart()
       })
    ```
-   **代码来源：** `modules/timeline/src/insight/units/AscendUnit.tsx`
 
+   **代码来源：** `modules/timeline/src/insight/units/AscendUnit.tsx`
 
 ### 后端部分
 
-# 创建一个profiler.db文件
+#### 创建一个profiler.db文件
 
 ![create_profiler_db](./figures/create_profiler_db.png)
 
-# 创建表结构
+#### 创建表结构
 
-# slice
+**1. slice**
 
 表示timeline的一个长方形色块，对应trace文档的ph为X的数据
 
@@ -803,7 +823,7 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
 
 CREATE TABLE slice (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER, duration INTEGER, name TEXT, depth INTEGER, track_id INTEGER, cat TEXT, args TEXT, cname TEXT, end_time INTEGER, flag_id TEXT);
 
-# process
+**2. process**
 
 表示timeline的非叶子泳道，对应trace文档的ph为M的数据
 
@@ -819,13 +839,13 @@ CREATE TABLE "process" (
 PRIMARY KEY ("pid")
 );
 
-# thread
+**3. thread**
 
 表示timeline的叶子泳道，对应trace文档的ph为M的数据
 
 ![structure_thread](./figures/structure_thread.png)
 
-# counter
+**4. counter**
 
 表示折线图或者直方图数据，对应ph为C的数据
 
@@ -834,7 +854,7 @@ PRIMARY KEY ("pid")
 建表语句
 CREATE TABLE counter (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, pid TEXT,timestamp INTEGER, cat TEXT, args TEXT);
 
-# flow
+**5. flow**
 
 表示连线，对应ph为s，f，t的数据
 
@@ -843,7 +863,7 @@ CREATE TABLE counter (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, pid TEXT,
 建表语句
 CREATE TABLE flow (id INTEGER PRIMARY KEY AUTOINCREMENT, flow_id TEXT, name TEXT, cat TEXT, track_id INTEGER, timestamp INTEGER, type TEXT);
 
-# dataTable
+**6. dataTable**
 
 表示哪些表需要按照如下方式纯表展示
 
@@ -861,7 +881,7 @@ CREATE TABLE "data_table" (
 PRIMARY KEY ("id")
 );
 
-# data_link
+**7. data_link**
 
 表示字段与某张表的某个字段的关联关系
 
@@ -875,7 +895,7 @@ CREATE TABLE "data_link" (
 PRIMARY KEY ("source_name")
 );
 
-# translate
+**8. translate**
 
 表示文本的中英文翻译
 
@@ -889,36 +909,35 @@ CREATE TABLE "translate" (
 PRIMARY KEY ("key")
 );
 
-
-# 添加非叶子泳道
+#### 添加非叶子泳道
 
 在process表里添加二级泳道数据
 
 ![add_non_leaf_lane](./figures/add_non_leaf_lane.png)
 
-# 添加叶子泳道
+#### 添加叶子泳道
 
 ![add_leaf_lane](./figures/add_leaf_lane.png)
 
-# 添加叶子泳道里的色块数据
+#### 添加叶子泳道里的色块数据
 
 ![add_color_block_data](./figures/add_color_block_data.png)
 
-# 添加色块关联关系
+#### 添加色块关联关系
 
 ![adding_color_block_associations](./figures/adding_color_block_associations.png)
 
-# 添加直方图数据
+#### 添加直方图数据
 
 ![add_histogram_data](./figures/add_histogram_data.png)
 
-# 创建好的profiler.db拖入Insight即可看见新增泳道
+#### 创建好的profiler.db拖入Insight即可看见新增泳道
 
-# 7 开发者本地出包 指南
+## 6 开发者本地出包 指南
 
-## Windows环境
+### Windows环境
 
-### 环境依赖安装
+#### 环境依赖安装
 
 依赖安装用户可以自行进行，如果对安装依赖有疑问，可以见文档附录
 
@@ -939,7 +958,8 @@ PRIMARY KEY ("key")
 python requirements:
 
 运行时requirements：
-```
+
+```text
 click
 tabulate
 networkx
@@ -956,21 +976,18 @@ psutil
 ```
 
 开发时requirements：
+
 ```shell
 pyinstaller
 ```
 
-### 编译出包
+#### 编译出包
 
 1.进入项目根目录下server/build目录，执行python3 download_third_party.py && python3 preprocess_third_party.py
 
-2.如果是在Windows系统或者macOS系统，MindStudio Insight会集成Python解释器，用户需要在构建环境上手动安装可移植的Python解释器（同时包含pip），并将Python解释器的路径添加到环境变量MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER，建议Python版本3.12.10
-* 在Windows上，环境变量所在目录需要包含解释器python.exe，Python三方库会安装到拷贝后的Lib\site-packages目录下
-* 在macOS上，环境变量所在目录需要包含解释器bin/python3，Python三方库会安装到拷贝后的lib/python3.12/site-packages目录下，如果用户安装的Python解释器版本不为3.12，需手动修改server/build/build.py中变量version的值
+2.进入项目根目录下build目录，执行`python build.py`即可，产物位于项目根目录out目录下
 
-3.进入项目根目录下build目录，执行`python build.py`即可，产物位于项目根目录out目录下
-
-### windows环境依赖安装附录
+#### windows环境依赖安装附录
 
 + windows运行时安装（windows11SDK和MSVC）
 
@@ -983,8 +1000,6 @@ pyinstaller
   从[WinLibs - GCC+MinGW-w64 compiler for Windows](https://winlibs.com/))下载对应的软件包，注意选择MSVCRT版本（>11.2）以确保编译出来的包具备更好的迁移性
 
   下载后解压到任意目录下，然后修改系统中的PATH变量，向其中添加mingw64下bin目录路径，如下图所示，假设解压在C盘根目录下
-
-
 
 ![image-20251226103754205](./figures/mingw_path_add.png)
 
@@ -999,13 +1014,15 @@ pyinstaller
 
    安装方式：推荐使用官方工具 rustup 安装
    
-   官网：https://www.rust-lang.org
+   官网：<https://www.rust-lang.org>
    
    安装完成校验：
-   ```
+
+   ```bash
    rustc --version
    cargo --version
    ```
+
    说明：用于底座代码的编译与构建，建议使用稳定版并保持版本不低于要求。
    
 + Ninja
@@ -1014,7 +1031,7 @@ pyinstaller
    
    Windows 可通过官网下载二进制文件，或使用包管理工具（如 Chocolatey、Scoop）安装
 
-   官网：https://ninja-build.org
+   官网：<https://ninja-build.org>
    
    安装完成校验：
    
@@ -1026,15 +1043,17 @@ pyinstaller
 
    安装方式：通过 Node.js 官方安装包安装
    
-   官网：https://nodejs.org
+   官网：<https://nodejs.org>
    
    版本要求：v18.20.8 及以上（建议使用 LTS 版本）
 
    安装完成校验：
-   ```
+
+   ```bash
    node --version
    npm --version
    ```
+
    说明：用于前端工程的构建与依赖管理。
 
 + pnpm
@@ -1053,20 +1072,22 @@ pyinstaller
    
    安装方式：通过 Python 官方安装包安装
    
-   官网：https://www.python.org
+   官网：<https://www.python.org>
    
    版本要求：Python 3.11 及以上
    
    安装完成校验：
-   ```
+
+   ```bash
    python --version
    pip --version
    ```
+
    说明：用于集群工具及相关脚本的打包与运行，安装时请勾选“Add Python to PATH”。
 
-## Mac出包
+### Mac出包
 
-### 环境依赖
+#### 环境依赖
 
 | 软件名称     | 版本        | 用途         |
 | ------------ |-----------| ------------ |
@@ -1082,7 +1103,8 @@ pyinstaller
 python requirements:
 
 运行时requirements：
-```
+
+```text
 click
 tabulate
 networkx
@@ -1100,25 +1122,30 @@ dmgbuild
 ```
 
 开发时requirements：
+
 ```shell
 pyinstaller
 ```
 
+#### 编译出包
 
+##### Step 1. 预处理构建依赖
 
-### 编译出包
-
-#### Step 1. 预处理构建依赖
 - 进入项目根目录下执行:
+
 ``` shell
 cd server/build
 python3 download_third_party.py && python3 preprocess_third_party.py
 ```
-#### Step 2. 指定APP签名证书（可选）
+
+##### Step 2. 指定APP签名证书（可选）
+
 **注意**：请您确保已阅读并知悉[LICENSE](https://gitcode.com/Ascend/msinsight/blob/master/docs/LICENSE)要求。
+
 - 步骤说明：Insight MacOS ARM版本在构建出包时，会对产物APP进行MacOS的开发者证书签名。您可以通过环境变量配置指定签名所用证书。如不指定，缺省时使用临时证书进行签名，可能导致您的insight产物**无法通过网络进行分发**（具体表现可能为将临时签名的产物通过网络分发到其他设备时，安装后无法打开），若您仅在本地进行调试运行，使用时不受影响，可跳过此步骤。
 - 证书使用前置：要求为可用于签名的苹果开发者证书，并确保已正确导入钥匙串中（如登陆钥匙串~/Library/Keychains/login.keychain）。
 - 通过环境变量配置证书，支持**证书名**或**证书ID**。
+
 ```shell
 # 以证书名为"insight_cert"为例, 且使用前已将其导入了登陆钥匙串~/Library/Keychains/login.keychain
 export INSIGHT_APP_SIGN="insight_cert"
@@ -1126,5 +1153,6 @@ export INSIGHT_APP_SIGN="insight_cert"
 security unlock-keychain -p {您当前用户的密码} ~/Library/Keychains/login.keychain
 ```
 
-#### Step 3. 执行出包脚本
+##### Step 3. 执行出包脚本
+
 进入项目根目录下build目录，执行`python build.py`即可，产物位于项目根目录out目录下

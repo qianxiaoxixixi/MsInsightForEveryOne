@@ -1,11 +1,14 @@
 # Timeline模块文件目录结构逻辑
+
 core // 待进一步理清、拆分<br>
 handler // 前端请求处理handler<br>
 protocol // 前后端请求、响应、事件转换实现，JSON与数据结构间相互转换
 
 ## core/database
+
 Timeline模块作为Insight的核心功能，其实现代码非常多，特别是数据库查询相关操作，因此需要实现代码拆分，非数据库直接操作，而是调用数据库操作进一步完成任务，可以放在包外面。
-```
+
+```text
 core/database                           // 父目录
 -- TraceDatabaseDef.h                   // 数据结构定义
 -- TraceDatabaseConst.h                 // 常量定义，如表名等复用字段
@@ -27,4 +30,3 @@ core/database                           // 父目录
 
 -- TraceDatabaseHelper.h/cpp            // TraceDatabase下Text和DB下通用方法的实现
 ```
-

@@ -142,7 +142,6 @@
 | 60 | 数据对比          | 设置基准卡             | /                          |
 | 61 |               | 设置对比卡             | /                          |
 
-
 ## 四、开发知识
 
 ### 4.1 泳道绘制设计
@@ -643,7 +642,6 @@ const handleMouseUp =
 图解：
 ![image](./figures/timeline/26c0143e-30ad-4d64-9f0e-f3db473c0edd.png)
 
-
 ### 4.4 图形化窗格事件设计
 
 图形化窗格事件主要控制了用户在图形化窗格上，如果框选一块矩形区域。如图所示：
@@ -752,6 +750,7 @@ const onMouseUp = (e: MouseEvent): void => {
     chartInteractorRef.current.mouseUpAction(interactorMouseState, e);
 };
 ```
+
 关于 `mouseUpAction` 函数的代码如下，目的是更新 selectedRange：
 
 ```txt
@@ -775,6 +774,7 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
     ...
 };
 ```
+
 关于 `updateSessionStatus` 函数的代码如下，描述的是如何更新 selectedRange：
 
 ```ts
@@ -828,7 +828,6 @@ const moveDomain = (session: Session, direction: number): void => {
 > **设计说明**
 >
 > 直接修改 `session.domainRange`
-
 
 ### 4.5 Counter 类型泳道数据设计
 
@@ -1221,11 +1220,13 @@ void DbTraceDataBase::GetCounterUnitsAndDataTypes(PROCESS_TYPE type, std::vector
    
    bool TextTraceDatabase::InsertCounterList(const std::vector<Trace::CounterResultDescription> &eventList)
    ```
+
 2. 解析 json 文件时，触发的解析逻辑
 
    ```cpp
    eventHandleMap.emplace("C", std::bind(&EventParser::CounterEventsHandle, this, std::placeholders::_1));
    ```
+
 3. 例子：json 文件中关于 Counter 的片段
 
    ```tson
@@ -1336,7 +1337,6 @@ void DbTraceDataBase::GetCounterUnitsAndDataTypes(PROCESS_TYPE type, std::vector
 
    </details>
 
-
 #### 4.6.2 核心代码
 
 ##### 4.6.2.1 `unit/threadTraces` 相关逻辑
@@ -1402,7 +1402,6 @@ RepositoryFactory::RepositoryFactory()
 | 6  | OVERLAP_ANALYSIS | 是    | OVERLAP_ANALYSIS | `ROWID`        |           |
 | 7  | API              | 是    | PYTORCH_API      | `ROWID`        |           |
 
-
 ### 4.7 新增 Slice 泳道应该满足的易用性操作与相关接口
 
 | #  | 操作                                | 接口                                  |                                                                                 |
@@ -1418,10 +1417,10 @@ RepositoryFactory::RepositoryFactory()
 | 9  | 根据选中的 Slice 名称和时间区间获取其中的 Slice 列表 | `query/all/same/operators/duration` | ![alt text](./figures/timeline/4.7.9-select-name-time-to-search-slice-list.png) |
 | 10 | 点击泳道右键选择在事件视图中展示                  | `unit/eventView`                    | ![alt text](./figures/timeline/4.7.10-search-in-event-view.png)                 |
 
-
 ### 4.8 专家系统视图设计
 
 #### 4.8.1 关键设计
+
 专家建议为新增模块，叠加在原有的功能上，整体功能以当前数据为基础，进一步分析数据可能存在的问题。在流程上保持原有 profiling 文件的解析、查询不变，进而新增数据查询相关操作，因此在代码上基本不涉及代码重构，但是会修改数据查询相关实现文件，如 `VirtualTraceDatabase.cpp/h` 等文件。
 
 在具体业务方面，总体上专家建议可以分为单卡类的专家建议和集群的专家建议，单卡类的专家建议主要配合 Timeline 界面一起展示，集群类专家建议则需要在集群界面（如Summary 界面和 Communication 界面）进行展示。在上述需求中，除 “支持集群慢卡慢链路原因识别” 需求外，都是单卡类的专家建议。
@@ -1495,6 +1494,7 @@ Advisor 模块涉及 5 个新增的前后端请求/响应消息：
 #### 4.8.5 代码设计
 
 新增 Advisor 模块，包括 `AdvisorModule` 类和 `handler`、`process`、`protocol` 三个包：
+
 1. `handler` 包为处理前端请求的 `handler`，不同接口单独成文件，相互独立，后续可持续拓展，`AdvisorModule` 类除了定义 `Advisor` 类基本信息外，还完成上述 `handler` 注册至全局消息接口管理实例中；
 2. `process` 包为专家建议的处理实现，向上被 `handler` 调用，向下调用各类数据库查询接口，除完成数据查询外，还要完成数据组装、排序、过滤等等处理；
 3. `protocol` 包为前后端交互的协议格式和协议转换实现，除定义接口的数据结构外，还包括前端请求的 json 转换为 request 数据结构和后端响应的 response 数据结构转换为 json 以返回给前端，上述协议转换实现会按照接口字段注册至全局的协议转换管理实例中。
@@ -1578,24 +1578,24 @@ DbFlowRepo::QueryMsTx
 
 ##### 4.9.4.1 处理流程
 
-
 ![image](./figures/timeline/d1225d4b-7bb7-43c2-93c5-8b64b1673a75.png)
 
-##### 4.9.4.2 数据源统一通过以下接口获取，不区分db和text，底层保证了db和text返回的数据格式一致，详见:
+##### 4.9.4.2 数据源统一通过以下接口获取，不区分db和text，底层保证了db和text返回的数据格式一致，详见
+
 ```cpp
 dataEngine->QueryFlowPointByCategory
 ```
 
-##### 4.9.4.3 对连线点进行采样，具体逻辑详见:
+##### 4.9.4.3 对连线点进行采样，具体逻辑详见
+
 ```cpp
 flowAnalyzerPtr->ComputeScreenFlowPoint
 ```
 
 ##### 4.9.4.4 计算采样后连线点的深度
 
-##### 4.9.4.5 组装连线点成为连线，然后返回前端，详见:
+##### 4.9.4.5 组装连线点成为连线，然后返回前端，详见
 
 ```cpp
 flowAnalyzerPtr->ComputeUintFlows
 ```
-

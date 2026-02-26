@@ -1,4 +1,7 @@
+# MiText
+
 ## 特性
+
 - 支持多种文本类型：`default | primary | info | success | warning | error`
 - 支持不同层级对比度（`depth=1/2/3`）
 - 支持 **strong / italic / underline / delete** 样式

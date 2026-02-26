@@ -4,16 +4,22 @@
 
 ### 原始数据（ATT处理后文件）
 
-#### text场景：
+#### text场景
+
 ![communication_text_data](./figures/communication_text_data.png)
-#### db场景：
+
+#### db场景
+
 ![communication_db_data](./figures/communication_db_data.png)
 
 ### 处理后db数据内容
 
-#### text场景：
+#### text场景
+
 ![communication_processed_text_data](./figures/communication_processed_text_data.png)
-#### db场景：
+
+#### db场景
+
 ![communication_processed_db_data](./figures/communication_processed_db_data.png)
 
 | 页面数据 | url请求 | db数据类型 | text数据类型 |
