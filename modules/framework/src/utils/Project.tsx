@@ -130,6 +130,8 @@ export async function handleProjectAction({ action, project, isConflict, selecte
         if (newProject.projectName === activeDataSource.projectName && arraysValueEqual(newProject.projectPath, activeDataSource.projectPath)) {
             return;
         }
+        // 在发起导入请求前刷新激活数据源
+        activeDataSource.projectName = newProject.projectName;
 
         openLoading();
         // 切换项目
