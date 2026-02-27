@@ -58,7 +58,9 @@ class CpuAffinityCollector:
     # 输出
     # ==============================================================================
     def print_header(self):
-        if not self.csv_mode:
+        if self.csv_mode:
+            print("NPU_ID,NUMA,PID,PROCESS,TID,THREAD,PSR,CPU_AFFINITY")
+        else:
             print(
                 f"{'NPU_ID':<8} {'NUMA':<15} {'PID':<10} "
                 f"{'PROCESS':<20} {'TID':<10} "
@@ -389,13 +391,15 @@ def main():
     csv_mode = args.csv or os.environ.get("CSV") == "1"
 
     collector = CpuAffinityCollector(csv_mode)
-    print("🔍 开始扫描 CPU 绑定相关信息...\n")
+    if not csv_mode:
+        print("🔍 开始扫描 CPU 绑定相关信息...\n")
     collector.print_header()
 
     collector.scan_npu_process(args.npu_process)
     collector.scan_sq_task()
     collector.scan_datawork_process(args.datawork_process)
-    print("\n✅ 扫描完成！")
+    if not csv_mode:
+        print("\n✅ 扫描完成！")
 
 
 if __name__ == "__main__":
