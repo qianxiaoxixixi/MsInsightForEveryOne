@@ -128,9 +128,6 @@ if os.path.exists(OUTPUT_FILE) and os.path.getsize(OUTPUT_FILE) > 0:
 
 采集完成后可自动启动可视化界面，交互式分析热力图、散点图和筛选。
 
-
-## ❓ 常见问题 FAQ
-
 **Q：提示找不到 `npu-smi` 或超时。**
 
 A：确认 Ascend 驱动/工具已安装并在 `$PATH` 中，用 `which npu-smi` 验证，手动运行 `npu-smi info`。
