@@ -276,7 +276,8 @@ class DataProcessor:
             return pd.DataFrame()
             
         try:
-            df = pd.read_csv(self.filepath, header=None, names=self.CSV_COLUMNS, dtype=str)
+            df = pd.read_csv(self.filepath, header=0, dtype=str)
+            df.columns = df.columns.str.strip()
             logger.info(f"✅ CSV 读取成功，共 {len(df)} 行数据")
         except Exception as e:
             LoggerUtils.log_file_operation_error(logger, "读取/解析 CSV", self.filepath, e)
