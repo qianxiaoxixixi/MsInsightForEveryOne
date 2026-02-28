@@ -222,8 +222,9 @@ export class Connection {
         // 抛弃和当前激活项目不一致的请求结果
         const requestMsg = this._requestMsg.get(reqId);
         const currentProjectName = store.sessionStore.activeSession?.activeDataSource?.projectName ?? '';
+        const isImport = requestMsg?.command === 'import/action';
         const isOldRequest = requestMsg?.projectName !== undefined && requestMsg.projectName !== currentProjectName;
-        if (isOldRequest) {
+        if (!isImport && isOldRequest) {
             console.warn(`request #${reqId} has been abandoned`);
             this._requestMsg.delete(reqId);
             this._responseHandlers.delete(reqId);
