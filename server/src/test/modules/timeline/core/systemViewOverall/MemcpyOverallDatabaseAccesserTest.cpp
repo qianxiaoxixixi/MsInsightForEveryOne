@@ -274,7 +274,7 @@ TEST_F(MemcpyOverallDatabaseAccesserIntegrationTest, GetMemcpyDetailRecordsPaged
     const OrderParam orderParam;
     // 查询第一页（10条）
     bool success = accessor_->GetMemcpyDetailRecordsPaged(
-        0, MAX_TIME, "", "", 1, 10, OrderParam { "startTime", "ascend" }, records, total);
+        0, MAX_TIME, "", std::nullopt, 1, 10, OrderParam { "startTime", "ascend" }, records, total);
 
     EXPECT_TRUE(success) << "分页查询应成功";
     EXPECT_GT(total, 0u) << "总记录数应大于0";
@@ -307,13 +307,15 @@ TEST_F(MemcpyOverallDatabaseAccesserIntegrationTest, GetMemcpyDetailRecordsPaged
     std::vector<MemcpyDetailRecord> page1, page2;
 
     // 获取第一页（验证总记录数）
-    ASSERT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(0, MAX_TIME, "", "", 1, 10, OrderParam { "startTime", "ascend" }, page1, total));
+    ASSERT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(0, MAX_TIME, "", std::nullopt,
+        1, 10, OrderParam { "startTime", "ascend" }, page1, total));
     if (total <= 10) {
         GTEST_SKIP() << "总记录数不足，跳过跨页验证";
     }
 
     // 获取第二页
-    ASSERT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(0, MAX_TIME, "", "", 2, 10, OrderParam { "startTime", "ascend" }, page2, total));
+    ASSERT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(0, MAX_TIME, "", std::nullopt,
+        2, 10, OrderParam { "startTime", "ascend" }, page2, total));
 
     // 验证第二页非空且记录数合理
     EXPECT_GT(page2.size(), 0u);
@@ -328,7 +330,8 @@ TEST_F(MemcpyOverallDatabaseAccesserIntegrationTest, GetMemcpyDetailRecordsPaged
     // 验证总记录数一致性（两次查询total应相同）
     uint64_t total_check = 0;
     std::vector<MemcpyDetailRecord> dummy;
-    ASSERT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(0, MAX_TIME, "", "", 1, 1, OrderParam { "startTime", "ascend" }, dummy, total_check));
+    ASSERT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(0, MAX_TIME, "", std::nullopt,
+        1, 1, OrderParam { "startTime", "ascend" }, dummy, total_check));
     EXPECT_EQ(total, total_check) << "多次查询总记录数应保持一致";
 }
 
@@ -352,7 +355,7 @@ TEST_F(MemcpyOverallDatabaseAccesserIntegrationTest, GetMemcpyDetailRecordsPaged
     // 无过滤总记录数
     uint64_t totalAll = 0;
     std::vector<MemcpyDetailRecord> allRecords;
-    ASSERT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(0, MAX_TIME, "", "", 1, 10000,
+    ASSERT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(0, MAX_TIME, "", std::nullopt, 1, 10000,
         OrderParam { "startTime", "ascend" }, allRecords, totalAll));
 
     // 应用复合过滤
@@ -395,20 +398,20 @@ TEST_F(MemcpyOverallDatabaseAccesserIntegrationTest, GetMemcpyDetailRecordsPaged
 
     // 场景1: 页码超出范围（应返回空列表，total有效）
     EXPECT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(
-        0, MAX_TIME, "", "", 999999, 10, OrderParam { "startTime", "ascend" }, records, total));
+        0, MAX_TIME, "", std::nullopt, 999999, 10, OrderParam { "startTime", "ascend" }, records, total));
     EXPECT_TRUE(records.empty()) << "超大页码应返回空列表";
     EXPECT_GT(total, 0u) << "total应仍为有效总记录数";
 
     // 场景2: 页大小为0（实现应安全处理，返回空页）
     records.clear();
     EXPECT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(
-        0, MAX_TIME, "", "", 1, 0, OrderParam { "startTime", "ascend" }, records, total));
+        0, MAX_TIME, "", std::nullopt, 1, 0, OrderParam { "startTime", "ascend" }, records, total));
     EXPECT_TRUE(records.empty()) << "pageSize=0应返回空列表";
 
     // 场景3: 页大小超建议上限（验证大页查询）
     records.clear();
     EXPECT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(
-        0, MAX_TIME, "", "", 1, 2000, OrderParam { "startTime", "ascend" }, records, total));
+        0, MAX_TIME, "", std::nullopt, 1, 2000, OrderParam { "startTime", "ascend" }, records, total));
     EXPECT_LE(records.size(), total) << "大页查询应返回有效子集";
     if (total > 0) {
         EXPECT_GT(records.size(), 0u) << "应返回至少一条记录";
@@ -425,7 +428,7 @@ TEST_F(MemcpyOverallDatabaseAccesserIntegrationTest, GetMemcpyDetailRecordsPaged
     // 获取全量记录确定时间边界
     uint64_t totalAll = 0;
     std::vector<MemcpyDetailRecord> allRecords;
-    ASSERT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(0, MAX_TIME, "", "", 1, 10000,
+    ASSERT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(0, MAX_TIME, "", std::nullopt, 1, 10000,
         OrderParam { "startTime", "ascend" }, allRecords, totalAll));
     if (allRecords.size() < 2) GTEST_SKIP() << "记录不足，跳过时间过滤测试";
 
@@ -435,13 +438,13 @@ TEST_F(MemcpyOverallDatabaseAccesserIntegrationTest, GetMemcpyDetailRecordsPaged
     // 查询前半段
     uint64_t totalFirst = 0;
     std::vector<MemcpyDetailRecord> firstHalf;
-    ASSERT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(0, midRelTime, "", "", 1, 10000,
+    ASSERT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(0, midRelTime, "", std::nullopt, 1, 10000,
         OrderParam { "startTime", "ascend" }, firstHalf, totalFirst));
 
     // 查询后半段
     uint64_t totalSecond = 0;
     std::vector<MemcpyDetailRecord> secondHalf;
-    ASSERT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(midRelTime + 1, MAX_TIME, "", "", 1, 10000,
+    ASSERT_TRUE(accessor_->GetMemcpyDetailRecordsPaged(midRelTime + 1, MAX_TIME, "", std::nullopt, 1, 10000,
         OrderParam { "startTime", "ascend" }, secondHalf, totalSecond));
 
     // 验证时间范围准确性
@@ -466,7 +469,7 @@ TEST_F(MemcpyOverallDatabaseAccesserIntegrationTest, GetMemcpyDetailRecordsPaged
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     const uint64_t dangerousStart = std::numeric_limits<uint64_t>::max() + 1 - minTimestamp;
     EXPECT_FALSE(accessor_->GetMemcpyDetailRecordsPaged(dangerousStart, dangerousStart + 100,
-        "", "", 1, 10, OrderParam { "startTime", "ascend" }, records, total));
+        "", std::nullopt, 1, 10, OrderParam { "startTime", "ascend" }, records, total));
 }
 
 } // namespace Dic::Module::Timeline
