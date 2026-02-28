@@ -69,7 +69,7 @@ bool MemcpyOverallDatabaseAccesser::GetMemcpyRecords(const uint64_t startTime, c
 
 bool MemcpyOverallDatabaseAccesser::GetMemcpyDetailRecordsPaged(
     uint64_t startTime, uint64_t endTime,
-    const std::string& tid, const std::string& memcpyType,
+    const std::string& tid, const std::optional<std::string>& memcpyType,
     uint32_t current, uint32_t pageSize,
     const OrderParam &orderParam,
     std::vector<MemcpyDetailRecord>& records, uint64_t& total) const
@@ -269,7 +269,7 @@ MemcpyOverallDatabaseAccesser::BuildMemcpyDetailBaseQueryText(uint64_t startTime
 
 bool MemcpyOverallDatabaseAccesser::GetMemcpyDetailRecordsPagedFromText(
     uint64_t startTime, uint64_t endTime,
-    const std::string& tid, const std::string& memcpyType,
+    const std::string& tid, const std::optional<std::string>& memcpyType,
     uint32_t current, uint32_t pageSize,
     SortField orderByField, SortDirection orderDir,
     std::vector<MemcpyDetailRecord>& records, uint64_t& total) const
@@ -302,7 +302,7 @@ bool MemcpyOverallDatabaseAccesser::GetMemcpyDetailRecordsPagedFromText(
             std::string argsStr = resultSet->GetString("args");
             auto [operation, size] = ParseOperationAndSizeFromJson(argsStr);
 
-            if (operation != memcpyType) {
+            if (memcpyType.has_value() && operation != memcpyType) {
                 continue; // 跳过不匹配的类型
             }
 
@@ -333,7 +333,7 @@ bool MemcpyOverallDatabaseAccesser::GetMemcpyDetailRecordsPagedFromText(
 // ====== DB 库：构建基础查询（CTE 主体） ======
 std::pair<std::string, std::vector<std::string>>
 MemcpyOverallDatabaseAccesser::BuildMemcpyDetailBaseQueryDb(uint64_t startTime, uint64_t endTime,
-    const std::string& tidFilter, const std::string& memcpyTypeFilter)
+    const std::string& tidFilter, const std::optional<std::string>& memcpyTypeFilter)
 {
     std::vector<std::string> params;
     std::ostringstream sql;
@@ -366,9 +366,9 @@ MemcpyOverallDatabaseAccesser::BuildMemcpyDetailBaseQueryDb(uint64_t startTime, 
     }
 
     // memcpyType 过滤
-    if (!memcpyTypeFilter.empty()) {
+    if (memcpyTypeFilter.has_value()) {
         sql << "AND emo.name = ? ";
-        params.emplace_back(memcpyTypeFilter);
+        params.emplace_back(memcpyTypeFilter.value());
     }
 
     return {sql.str(), params};
@@ -398,9 +398,9 @@ void MemcpyOverallDatabaseAccesser::GetMemcpyDetailTotalFromDb(const std::string
 // ====== DB 库：分页查询主逻辑 ======
 bool MemcpyOverallDatabaseAccesser::GetMemcpyDetailRecordsPagedFromDb(
     uint64_t startTime, uint64_t endTime,
-    const std::string& tid, const std::string& memcpyType,
+    const std::string& tid, const std::optional<std::string>& memcpyType,
     uint32_t current, uint32_t pageSize,
-    std::string orderSql,
+    const std::string& orderSql,
     std::vector<MemcpyDetailRecord>& records, uint64_t& total) const
 {
     if (!database_) { return false; }

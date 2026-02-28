@@ -63,7 +63,7 @@ namespace Dic::Module::Timeline {
          * @param startTime 起始时间戳（相对时间）
          * @param endTime 结束时间戳（相对时间）
          * @param tid 线程ID（字符串，空表示不过滤）
-         * @param memcpyType 拷贝类型（如"H2D", "D2H"，空表示不过滤）
+         * @param memcpyType 拷贝类型（如"H2D", "D2H"，无值表示不过滤）
          * @param current: 页码（从1开始）
          * @param pageSize: 每页大小
          * @param orderParam:
@@ -74,7 +74,7 @@ namespace Dic::Module::Timeline {
          * @return 是否成功获取数据。当 startTime == endTime 时，查找全部数据
          */
         bool GetMemcpyDetailRecordsPaged(uint64_t startTime, uint64_t endTime,
-                                    const std::string& tid, const std::string& memcpyType,
+                                    const std::string& tid, const std::optional<std::string>& memcpyType,
                                     uint32_t current, uint32_t pageSize,
                                     const OrderParam &orderParam,
                                     std::vector<MemcpyDetailRecord>& records, uint64_t& total) const;
@@ -166,7 +166,7 @@ namespace Dic::Module::Timeline {
          * @param startTime 起始时间戳（绝对时间）
          * @param endTime 结束时间戳（绝对时间）
          * @param tid 线程ID（字符串，空表示不过滤）
-         * @param memcpyType 拷贝类型（如"H2D", "D2H"，空表示不过滤）
+         * @param memcpyType 拷贝类型（如"H2D", "D2H"，无值表示不过滤）
          * @param current: 页码（从1开始）
          * @param pageSize: 每页大小（建议上限1000）
          * @param orderByField: 排序属性
@@ -176,7 +176,7 @@ namespace Dic::Module::Timeline {
          * @return 是否成功获取数据
          */
         bool GetMemcpyDetailRecordsPagedFromText(uint64_t startTime, uint64_t endTime,
-                                            const std::string& tid, const std::string& memcpyType,
+                                            const std::string& tid, const std::optional<std::string>& memcpyType,
                                             uint32_t current, uint32_t pageSize,
                                             SortField orderByField, SortDirection orderDir,
                                             std::vector<MemcpyDetailRecord>& records, uint64_t& total) const;
@@ -186,16 +186,16 @@ namespace Dic::Module::Timeline {
          * @param startTime 起始时间戳（绝对时间）
          * @param endTime 结束时间戳（绝对时间）
          * @param tid 线程ID（字符串，空表示不过滤）
-         * @param memcpyType 拷贝类型（如"H2D", "D2H"，空表示不过滤）
+         * @param memcpyType 拷贝类型（如"H2D", "D2H"，无值表示不过滤）
          * @param current: 页码（从1开始）
          * @param pageSize: 每页大小（建议上限1000）
          * @param orderSql: 排序语句
          * @return 是否成功获取数据
          */
         bool GetMemcpyDetailRecordsPagedFromDb(uint64_t startTime, uint64_t endTime,
-                                          const std::string& tid, const std::string& memcpyType,
+                                          const std::string& tid, const std::optional<std::string>& memcpyType,
                                           uint32_t current, uint32_t pageSize,
-                                          std::string orderSql,
+                                          const std::string& orderSql,
                                           std::vector<MemcpyDetailRecord>& records, uint64_t& total) const;
 
         /**
@@ -212,7 +212,7 @@ namespace Dic::Module::Timeline {
          * @param startTime 起始时间（绝对时间，ns）
          * @param endTime   结束时间（绝对时间，ns）
          * @param tidFilter TID过滤条件（空字符串表示不过滤）
-         * @param memcpyTypeFilter memcpy操作类型过滤（如"H2D", "D2H"，空表示不过滤）
+         * @param memcpyTypeFilter memcpy操作类型过滤（如"H2D", "D2H"，无值表示不过滤）
          * @return pair.first: 完整WHERE条件的SELECT语句（不含ORDER/LIMIT）
          *         pair.second: 与SQL占位符顺序严格对应的参数列表
          * @note 返回的SQL可直接嵌入 WITH filtered AS (...) 使用
@@ -222,7 +222,7 @@ namespace Dic::Module::Timeline {
             uint64_t startTime,
             uint64_t endTime,
             const std::string& tidFilter,
-            const std::string& memcpyTypeFilter);
+            const std::optional<std::string>& memcpyTypeFilter);
 
         /**
          * @brief 构建TEXT数据库基础查询（用于CTE分页，依赖JSON1扩展）

@@ -76,7 +76,7 @@ bool QueryMemcpyDetailHandler::QueryMemcpyDetails(
 
         // 解析 categoryList: [tid, memcpyType]
         const std::string tid = request.params.categoryList[0]; // 可能为空字符串（表示不过滤）
-        std::string memcpyType;
+        std::optional<std::string> memcpyType;
         if (request.params.categoryList.size() > 1) {
             memcpyType = request.params.categoryList[1]; // 可能为空字符串
         }
