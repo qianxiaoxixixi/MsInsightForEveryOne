@@ -433,7 +433,7 @@ class SchedFtraceParse(FtraceParse):
         self.process_set = set()
         self.parse_sched_switch_pattern = re.compile(
             r'(?P<prev_comm>.+):(?P<prev_pid>\d+)\s+\[(?P<prev_prio>\d+)\]\s+(?P<prev_state>\w+)\s+==>\s+(?P<next_comm>.+):(?P<next_pid>\d+)\s+\[(?P<next_prio>\d+)\]')
-        self.parse_sched_wakeup_pattern = re.compile(r'(?P<comm>.+):(?P<pid>\d+)\s+\[(?P<prio>\d+)\]\s+CPU:(?P<cpu>\d+)')
+        self.parse_sched_wakeup_pattern = re.compile(r'(?P<comm>.+):(?P<pid>\d+)\s+\[(?P<prio>\d+)\].+CPU:(?P<cpu>\d+)')
 
         self.trace_event = []
 
