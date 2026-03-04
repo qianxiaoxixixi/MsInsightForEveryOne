@@ -106,7 +106,7 @@ def clean():
     if os.path.exists(framework_dist):
         shutil.rmtree(framework_dist)
     modules = ['cluster', 'memory', 'timeline', 'compute', 'jupyter', 'operator', 'lib', 'statistic', 'leaks',
-               'reinforcement-learning']
+               'reinforcement-learning', 'triton']
     for module in modules:
         build_dir = os.path.join(PROJECT_PATH, Const.MODULES_DIR, module, Const.BUILD_DIR)
         if os.path.exists(build_dir):
