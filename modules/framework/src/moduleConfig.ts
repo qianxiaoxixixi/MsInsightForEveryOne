@@ -25,6 +25,7 @@ export interface ModuleConfig {
     isCluster?: boolean;
     isCompute?: boolean;
     isLeaks?: boolean;
+    isTriton?: boolean;
     isIE?: boolean;
     isRL?: boolean;
     hasCachelineRecords?: boolean;
@@ -47,6 +48,7 @@ export const modulesConfig: ModuleConfig[] = [
         isOnlyTraceJson: true,
         isIE: true,
         isLeaks: true,
+        isTriton: true,
         isHybridParse: true,
     },
     {
@@ -136,5 +138,13 @@ export const modulesConfig: ModuleConfig[] = [
             src: isDev ? 'http://localhost:3008/' : './plugins/RL/index.html',
         },
         isRL: true,
+    },
+    {
+        name: 'Triton',
+        requestName: 'triton',
+        attributes: {
+            src: isDev ? 'http://localhost:3009/' : './plugins/Triton/index.html',
+        },
+        isTriton: true,
     },
 ];

@@ -21,6 +21,7 @@ import {
     parseMemorySuccessHandler,
     parseStatisticSuccessHandler,
     parseLeaksSuccessHandler,
+    parseTritonSuccessHandler,
     parseOperatorSuccessHandler,
     profilingExpertDataParsedHandler,
 } from './interceptorHandler';
@@ -28,6 +29,7 @@ import {
 const MEMORY_COMPLETED = 'parse/memoryCompleted';
 const STATISTIC_COMPLETED = 'parse/statisticCompleted';
 const LEAKS_COMPLETED = 'parse/leaksMemoryCompleted';
+const TRITON_COMPLETED = 'parse/tritonCompleted';
 const OPERATOR_COMPLETED = 'parse/operatorCompleted';
 const PARSE_HEATMAP_COMPLETED = 'parse/heatmapCompleted';
 
@@ -37,6 +39,7 @@ export const INTERCEPTOR_HANDLERS: Record<string, ResponseInterceptor<ResponseTy
 export const NOTIFICATION_INTERCEPTOR_HANDLERS: Record<string, NotificationInterceptor<any>> = {
     [MEMORY_COMPLETED]: parseMemorySuccessHandler,
     [LEAKS_COMPLETED]: parseLeaksSuccessHandler,
+    [TRITON_COMPLETED]: parseTritonSuccessHandler,
     [OPERATOR_COMPLETED]: parseOperatorSuccessHandler,
     [PARSE_HEATMAP_COMPLETED]: profilingExpertDataParsedHandler,
 };
