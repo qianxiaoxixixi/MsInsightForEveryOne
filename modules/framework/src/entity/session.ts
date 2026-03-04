@@ -28,7 +28,7 @@ import { SessionAction } from '@/utils/enum';
 import { deleteProjectDataPath } from '@/utils/Project';
 
 // Scene：数据场景：默认、集群、算子调优、Leaks、只trace.json文件
-export type Scene = 'Default' | 'Cluster' | 'Compute' | 'OnlyTraceJson' | 'IE' | 'Leaks' | 'RL' | 'HybridParse';
+export type Scene = 'Default' | 'Cluster' | 'Compute' | 'OnlyTraceJson' | 'IE' | 'Leaks' | 'RL' | 'HybridParse' | 'Triton';
 
 interface ContextMenu {
     visible: boolean;
@@ -106,6 +106,7 @@ export class Session {
     isFullDb: boolean = false;
     isOnlyTraceJson: boolean = false;
     isLeaks: boolean = false;
+    isTriton: boolean = false;
     isRL: boolean = false;
     isHybridParse: boolean = false;
     hasCachelineRecords: boolean = false;
@@ -162,6 +163,8 @@ export class Session {
             scene = 'OnlyTraceJson';
         } else if (this.isLeaks) {
             scene = 'Leaks';
+        } else if (this.isTriton) {
+            scene = 'Triton';
         } else if (this.isBinary) {
             scene = 'Compute';
         } else if (this.isCluster) {

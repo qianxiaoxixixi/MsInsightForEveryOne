@@ -128,6 +128,10 @@ export const parseLeaksSuccessHandler: NotificationInterceptor<ParseLeaksNotific
     updateSession({ deviceIds: data.deviceIds, threadIds: data.threadIds });
 };
 
+export const parseTritonSuccessHandler: NotificationInterceptor<ParseLeaksNotification> = (data): void => {
+    // TODO
+};
+
 export const profilingExpertDataParsedHandler: NotificationInterceptor<ParseHeatmapNotification> = (data): void => {
     const session = store.sessionStore.activeSession;
 

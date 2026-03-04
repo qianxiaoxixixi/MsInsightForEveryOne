@@ -21,7 +21,7 @@ import type { Scene, Session } from '@/entity/session';
 import { type MenuProps, message, Menu, Tooltip } from 'antd';
 import { safeJSONParse } from '@insight/lib/utils';
 
-import { type ModuleConfig, modulesConfig, MEM_SCOPE_MODULE_NAME } from '../../moduleConfig';
+import { type ModuleConfig, modulesConfig, MEM_SCOPE_MODULE_NAME } from '@/moduleConfig';
 import styled from '@emotion/styled';
 import { SessionAction } from '@/utils/enum';
 import { useTranslation } from 'react-i18next';
@@ -74,6 +74,7 @@ export function updateDataScene(data: Record<string, any>): void {
         isOnlyTraceJson: data.isOnlyTraceJson ?? false,
         instrVersion: data.instrVersion ?? -1,
         isLeaks: data.isLeaks ?? false,
+        isTriton: data.isTriton ?? false,
         isIE: data.isIE ?? false,
         isRL: false,
         isHybridParse: data.isCluster && data.isIE,
@@ -132,6 +133,8 @@ const Index = observer(({ session }: {session: Session}) => {
         , [scene, dataCompose, mergedModulesConfig]);
     const isLeaks = useMemo(() => availableModules.some(module => module.isLeaks && module.name === MEM_SCOPE_MODULE_NAME)
         , [availableModules]);
+    const isTriton = useMemo(() => availableModules.some(module => module.isTriton && module.name === 'Triton')
+        , [availableModules]);
     const getIcon = (tabTitle: string): React.ReactElement => {
         return <Tooltip mouseEnterDelay={1} title={
             tabTitle === 'Timeline'
@@ -150,7 +153,13 @@ const Index = observer(({ session }: {session: Session}) => {
             label: getIcon(config.name),
             key: config.name,
         }));
-        return isLeaks ? modules.filter(module => module.key === MEM_SCOPE_MODULE_NAME) : modules;
+        if (isLeaks) {
+            return modules.filter(module => module.key === MEM_SCOPE_MODULE_NAME);
+        }
+        if (isTriton) {
+            return modules.filter(module => module.key === 'Triton');
+        }
+        return modules;
     }, [availableModules, t]);
     const onClick: MenuProps['onClick'] = e => {
         setActiveModule(e.key);
@@ -200,7 +209,7 @@ const Index = observer(({ session }: {session: Session}) => {
         }
         setScene(session.scene);
         setDataCompose({ hasCachelineRecords: session.hasCachelineRecords, isRL: session.isRL });
-    }, [session.isBinary, session.isCluster, session.hasCachelineRecords, session.isOnlyTraceJson, session.isIE, session.isLeaks, session.isRL, session.isHybridParse]);
+    }, [session.isBinary, session.isCluster, session.hasCachelineRecords, session.isOnlyTraceJson, session.isIE, session.isLeaks, session.isTriton, session.isRL, session.isHybridParse]);
 
     // 添加监听新的页签加载后发送当前工程
     useEffect(() => {
@@ -261,8 +270,14 @@ const Index = observer(({ session }: {session: Session}) => {
     useEffect(() => {
         if (isLeaks) {
             setActiveModule(MEM_SCOPE_MODULE_NAME);
-        };
+        }
     }, [isLeaks]);
+
+    useEffect(() => {
+        if (isTriton) {
+            setActiveModule('Triton');
+        }
+    }, [isTriton]);
     return <Container>
         <Menu onClick={onClick} selectedKeys={[activeModule]} mode="horizontal" items={items} />
         <div className="tab-body">{availableModules.map(moduleConfig => (
