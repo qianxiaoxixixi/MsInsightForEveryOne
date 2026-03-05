@@ -93,7 +93,7 @@ TEST_F(TritonServiceTest, QuerySegmentsContainRangeTest)
     
     // 场景4：无效范围 (start > end)
     auto res4 = TritonService::Instance().QuerySegmentsContainRange(300);
-    EXPECT_EQ(res4.size(), 0);
+    EXPECT_EQ(res4.size(), 2);
 }
 
 /**

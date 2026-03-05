@@ -134,6 +134,8 @@ public:
                 vec.push_back(GetFloatWithoutKey(item));
             } else if constexpr (std::is_same_v<T, int>) {
                 vec.push_back(GetIntWithoutKey(item));
+            } else if constexpr (std::is_same_v<T, uint64_t>) {
+                vec.push_back(GetUint64WithoutKey(item));
             } else {
                 Server::ServerLog::Error("Get vector from json error: unsupported type!");
             }
@@ -304,6 +306,15 @@ public:
         }
         Server::ServerLog::Error("JSON is not a number when getting float without key. Returning 0.0.");
         return 0.0;
+    }
+
+    static inline uint64_t GetUint64WithoutKey(const json_t &json)
+    {
+        if (json.IsUint64()) {
+            return json.GetUint64();
+        }
+        Server::ServerLog::Error("JSON is not a uint64_t when getting uint64_t without key. Returning 0.");
+        return 0;
     }
 
     static inline std::optional<std::string> GetOptionalString(const json_t &json, std::string_view key)

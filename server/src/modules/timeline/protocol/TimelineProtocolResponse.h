@@ -67,6 +67,7 @@ struct ImportActionResBody {
     uint16_t version = 0x5a;
     bool isIE = false;
     bool isMultiDevice{false};
+    bool isTriton{false};
 };
 
 struct ImportActionResponse : public Response {

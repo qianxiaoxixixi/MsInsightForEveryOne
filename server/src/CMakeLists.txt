@@ -228,6 +228,17 @@ aux_source_directory(${SRC_HOME_DIR}/modules/rl/core DIC_MODULES_RL_CORE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/rl/protocol DIC_MODULES_RL_PROTOCOL_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/rl/handler DIC_MODULES_RL_HANDLER_SRC)
 
+# triton parser
+aux_source_directory(${SRC_HOME_DIR}/modules/triton DIC_MODULES_TRITON_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/triton/parser DIC_MODULES_TRITON_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/triton/protocol DIC_MODULES_TRITON_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/triton/service DIC_MODULES_TRITON_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/triton/handler DIC_MODULES_TRITON_SRC)
+include_directories(${SRC_HOME_DIR}/modules/triton)
+include_directories(${SRC_HOME_DIR}/modules/triton/parser)
+include_directories(${SRC_HOME_DIR}/modules/triton/protocol)
+include_directories(${SRC_HOME_DIR}/modules/triton/service)
+include_directories(${SRC_HOME_DIR}/modules/triton/handler)
 list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SRC}
         ${DIC_MODULES_BASE_SRC}
@@ -316,7 +327,8 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_RL_SRC}
         ${DIC_MODULES_RL_CORE_SRC}
         ${DIC_MODULES_RL_PROTOCOL_SRC}
-        ${DIC_MODULES_RL_HANDLER_SRC})
+        ${DIC_MODULES_RL_HANDLER_SRC}
+        ${DIC_MODULES_TRITON_SRC})
 add_subdirectory(entry)
 if (${_PROJECT_TYPE} MATCHES "test|fuzz")
     enable_testing()
