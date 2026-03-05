@@ -45,6 +45,7 @@
 #include "JsonParseMemPool.h"
 #include "MemScopeParser.h"
 #include "MemSnapshotParser.h"
+#include "ProjectParserTriton.h"
 
 namespace Dic::Module {
 using namespace Dic;
@@ -58,6 +59,10 @@ std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::strin
     // 判别顺序是优先判别只支持单个文件导入的memscope(leaks)/pickle bin ipynb npumonitor aclGraph_debug文件，然后判别服务化调优数据，最后判别系统调优数据
     // 判别系统调优数据时，优先db，然后text，都没有再寻找npumonitor数据
     const std::string filename = FileUtil::GetFileName(path);
+    std::string error;
+    if (!ProjectParserTriton().GetParseFileByImportFile(path, error).empty()) {
+        return std::make_pair(path, ParserType::TRITON_MEMORY);
+    }
     if (!FileUtil::IsFolder(path) && ProjectParserMemScope::IsMemScopeDbFile(filename)) {
         return std::make_pair(path, ParserType::DB_MEMSCOPE);
     }
@@ -112,6 +117,9 @@ std::shared_ptr<ProjectParserBase> ParserFactory::GetProjectParser(ParserType al
             break;
         case ParserType::PKL_MEM_SNAPSHOT:
             alloc = std::make_shared<ProjectParserMemSnapshot>();
+            break;
+        case ParserType::TRITON_MEMORY:
+            alloc = std::make_shared<ProjectParserTriton>();
             break;
         default:
             alloc = std::make_shared<ProjectParserBase>();

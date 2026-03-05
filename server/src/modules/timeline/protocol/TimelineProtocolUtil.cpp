@@ -104,6 +104,7 @@ void SetBodyAtt(const ImportActionResponse& response, MemoryPoolAllocator<::rapi
     JsonUtil::AddMember(body, "isLeaks", response.body.isLeaks, allocator);
     JsonUtil::AddMember(body, "isIE", response.body.isIE, allocator);
     JsonUtil::AddMember(body, "isMultiDevice", response.body.isMultiDevice, allocator);
+    JsonUtil::AddMember(body, "isTriton", response.body.isTriton, allocator);
 }
 
 template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(const UnitThreadTracesResponse &response)

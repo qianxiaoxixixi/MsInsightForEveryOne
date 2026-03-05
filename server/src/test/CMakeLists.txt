@@ -79,6 +79,7 @@ aux_source_directory(${TEST_HOME_DIR}/performance PERFORMANCE_TEST)
 aux_source_directory(${HOME_DIR}/src/protocol TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/rl TEST)
 aux_source_directory(${TEST_HOME_DIR}/framework TEST)
+aux_source_directory(${TEST_HOME_DIR}/modules/triton TEST)
 
 # 增加头文件include目录
 include_directories(
