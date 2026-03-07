@@ -50,10 +50,11 @@ bool Database::CreateDbIfNotExist(const std::string &dbPath)
             ServerLog::Error("Open db fail when create Db. path is: ", utfDbPath);
             return false;
         }
+        // 无论win/mac/linux，都需要关闭数据库
+        sqlite3_close(db);
 #ifdef _WIN32
         return true;
 #else
-        sqlite3_close(db); // 修改权限前先关闭数据库
         mode_t mode = 0640; // 业务数据权限要求设置为0640 （rw-r-----）
         result = FileUtil::ModifyFilePermissions(dbPathStr, mode);
         if (!result) {
