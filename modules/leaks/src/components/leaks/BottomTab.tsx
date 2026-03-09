@@ -120,6 +120,9 @@ const SliceDetail = observer(({ session }: { session: Session }): JSX.Element =>
         const result: Array<{ key: string; value: any }> = [];
         Object.entries(data).forEach(([key, value]) => {
             if (typeof value === 'object') {
+                if (Object.keys(value).length < 1) {
+                    return;
+                }
                 result.push({ key, value: <SliceDetailObjectItem data={value} /> });
             } else {
                 result.push({ key, value });
@@ -207,7 +210,7 @@ const SliceDetailObjectItem = observer(({ data }: { data: { [key: string]: any }
 
     return <>
         <Button type="link" size="small" style={{ padding: 0, minWidth: 0 }}
-            disabled={dataList.length < 1} onClick={() => setIsExpand(oVal => !oVal)} >
+            onClick={() => setIsExpand(oVal => !oVal)} >
             {`${isExpand ? '-' : '+'} ${t('detail')}`}
         </Button>
         {
