@@ -85,7 +85,8 @@ python preprocess_third_party.py
 ![edit_options](./figures/edit_options.png)
 
 - 选择profiler_server选项，并且将参数修改为 --wsPort=9000 后点击确定保存
-注：端口可以设置为其他端口，以避免和其他端口冲突
+  - 提示：端口可以设置为其他端口，以避免和其他端口冲突
+  - 警告：如果您的开发机器中已打开了Insight桌面端应用，请确认设置`wsPort`不会与已开启的insight产生端口冲突（Insight应用默认为`9000`, 但多开时将从`9000`端口逐个+1绑定占用，建议设置为`9050`~`9099`），否则可能导致前后端连接问题或其他未预期的异常，建议本地开发调试时，关闭所有已开启的Insight应用。
 
 ![add_port](./figures/add_port.png)
 
@@ -985,7 +986,11 @@ pyinstaller
 
 1.进入项目根目录下server/build目录，执行python3 download_third_party.py && python3 preprocess_third_party.py
 
-2.进入项目根目录下build目录，执行`python build.py`即可，产物位于项目根目录out目录下
+2.在Windows系统，MindStudio Insight会集成Python解释器。
+- 第一步：在构建环境上手动安装Python解释器（同时包含pip），建议Python版本3.12.10；
+- 第二步：设置环境变量 `MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER`为Python解释器的安装目录，该目录需要包含解释器python.exe。示例：如果Python解释器的安装目录为`D:\xxx\python`，且该目录下包含解释器`D:\xxx\python\python.exe`，则设置环境变量 `MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER`为`D:\xxx\python`。
+
+3.进入项目根目录下build目录，执行`python build.py`即可，产物位于项目根目录out目录下
 
 #### windows环境依赖安装附录
 
@@ -1153,6 +1158,13 @@ export INSIGHT_APP_SIGN="insight_cert"
 security unlock-keychain -p {您当前用户的密码} ~/Library/Keychains/login.keychain
 ```
 
-##### Step 3. 执行出包脚本
+##### Step 3. 设置集成Python解释器的环境变量
+
+- 在macOS系统，MindStudio Insight会集成Python解释器。
+  - 第一步：在构建环境上手动安装可移植的Python解释器（同时包含pip），建议Python版本3.12.10；
+  - 提示：“可移植”指将A机器上的Python文件夹拷贝到B机器上，在B机器上仍然可以直接使用。macOS上的某些Python版本，运行依赖绝对路径/Library下的动态库，当从A机器拷贝到B机器时，因为B机器/Library下无动态库，拷贝后的Python解释器无法运行。为了本地构建出的MindStudio Insight在其它机器上仍然可用，对macOS上安装的Python解释器要求可移植性。
+  - 第二步：设置环境变量 `MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER`为Python解释器的安装目录，该目录需要包含解释器bin/python3，如果用户安装的Python解释器版本不为3.12，需手动修改server/build/build.py中变量version的值。示例：如果Python解释器的安装目录为`/Users/xxx/python`，且该目录下包含解释器`/Users/xxx/python/bin/python3`，则设置环境变量 `MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER`为`/Users/xxx/python`。
+
+##### Step 4. 执行出包脚本
 
 进入项目根目录下build目录，执行`python build.py`即可，产物位于项目根目录out目录下
