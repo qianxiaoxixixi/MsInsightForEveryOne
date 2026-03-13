@@ -601,7 +601,14 @@ void ProjectParserJson::ParserSingleCardBaseline(const Global::ProjectExplorerIn
     // 判断项目类型，如果是算子调优数据，则直接解析
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos.projectType);
     // 创建db连接池
-    std::string dbPath = FileUtil::GetDbPath(jsonFiles[0]);
+    std::string dbPath;
+    // 设置单个json文件作为基线时，db文件名设置为`${该文件名称}_mindstudio_insight_data.db`，和导入单个json的db文件名保持一致
+    // 否则设置单个json作为基线，系统视图卡序号下拉框不会显示基线卡
+    if (StringUtil::EndWith(filePath, ".json")) {
+        dbPath = FileUtil::GetSingleFileIdWithDb(filePath);
+    } else {
+        dbPath = FileUtil::GetDbPath(jsonFiles[0]);
+    }
     bool isParsed = DataBaseManager::Instance().IsContainDatabasePath(dbPath);
     std::map<std::string, RankEntry> rankListMap = GetRankEntryMap({projectInfos}, !isParsed);
     // 过滤非目标目录下的节点
