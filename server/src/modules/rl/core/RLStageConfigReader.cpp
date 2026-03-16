@@ -29,7 +29,7 @@ RLMstxConfigReader::RLMstxConfigReader()
 std::vector<RLMstxConfig> RLMstxConfigReader::ReadConfigFile()
 {
     // check path
-    if (configPath.empty() || !FileUtil::CheckFilePath(configPath)) {
+    if (configPath.empty() || !FileUtil::CheckPathSecurity(configPath, CHECK_FILE_READ)) {
         Server::ServerLog::Info("No rl config file load into");
         return {};
     }

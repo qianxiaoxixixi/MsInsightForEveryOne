@@ -18,6 +18,8 @@
 
 #include <unordered_map>
 #include <cstring>
+#include <libgen.h>
+#include "RegexUtil.h"
 #include "FileUtil.h"
 
 namespace Dic {
@@ -200,6 +202,35 @@ bool FileUtil::IsRegularFile(const std::string &filePath)
 #endif
 }
 
+CheckResult FileUtil::CheckPathSecurity(const std::string& path, int mode)
+{
+    auto Enable = [mode]( PathCheckSense sense) {
+        return (mode & sense) == sense;
+    };
+    CheckResult result;
+    if (!CheckPathComm(path, result)) {
+        Server::ServerLog::Error("The file path is insecure, error msg=", result.errMsg);
+        return result;
+    }
+    if (Enable(PathCheckSense::CHECK_FILE_READ) || Enable(PathCheckSense::CHECK_FILE_WRITE)) {
+        if (!IsRegularFile(path)) {
+            result.Set(false, "The path is not a regular file.");
+            return result;
+        }
+        if (!CheckFileSize(path, true, NORMAL_MAX_FILE_SIZE)) {
+            result.Set(false, "File size exceed limits(20Gb)");
+            return result;
+        }
+    }
+    if (Enable(PathCheckSense::CHECK_DIR_WRITE) || Enable(PathCheckSense::CHECK_FILE_WRITE)) {
+        if (!CheckPathPermission(path, fs::perms::owner_write)) {
+            result.Set(false, "The path not have write permission.");
+            return result;
+        }
+    }
+    return result;
+}
+
 bool FileUtil::IsFilePathExist(const std::string &filePath)
 {
 #ifdef _WIN32
@@ -212,66 +243,51 @@ bool FileUtil::IsFilePathExist(const std::string &filePath)
 #endif
 }
 
-bool FileUtil::CheckFileValid(const std::string &filePath)
-{
-    if (!CheckDirValid(filePath)) {
-        Server::ServerLog::Error("The file path is insecure.");
-        return false;
-    }
-    if (!IsRegularFile(filePath)) {
-        Server::ServerLog::Error("The file is not a regular file.");
-        return false;
-    }
-    if (!FileUtil::CheckFileSize(filePath, true)) {
-        Server::ServerLog::Error("File size exceed limit");
-        return false;
-    }
-    return true;
-}
-
-bool FileUtil::CheckDirValid(const std::string &path)
+bool FileUtil::CheckPathComm(const std::string &path, CheckResult &result)
 {
     if (path.empty()) {
-        Server::ServerLog::Error("The path is empty. ");
+        result.Set(false, "The path is empty");
         Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_PATH_IS_EMPTY);
         return false;
     }
     std::string dir = GetAbsPath(path);
     if (dir.empty()) {
-        Server::ServerLog::Error("Failed to retrieve the absolute path.");
+        result.Set(false, "Failed to retrieve the absolute path.");
         Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_PATH_IS_EMPTY);
         return false;
     }
     if (!CheckFilePathLength(dir)) {
+        result.Set(false, "The length of path exceeds the limit.");
         return false;
     }
     if (CheckPathInvalidChar(dir)) {
+        result.Set(false, "The path contains invalid characters.");
         return false;
     }
     if (!CheckDirAccess(dir, 0)) {
-        Server::ServerLog::Error("The directory path not exists. path: %.", dir);
+        result.Set(false, "The path not exists");
         return false;
     }
     if (IsSoftLink(dir)) {
-        Server::ServerLog::Error("The path is soft link. path: %.", dir);
+        result.Set(false, "The path is soft link.");
         Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_PATH_IS_SOFT_LINK);
         return false;
     }
     if (!CheckDirAccess(dir, R_OK)) {
-        Server::ServerLog::Error("The path has no read access. path: %.", dir);
+        result.Set(false, "The path has no read access.");
         Dic::Common::SetCommonError(Dic::Common::ErrorCode::FILE_NOT_READ_ACCESS);
         return false;
     }
     if (!CheckPathOwner(dir)) {
-        Server::ServerLog::Error("The path's owner is not current user. path: %.", dir);
+        result.Set(false, "The path's owner is not current user.");
         Dic::Common::SetCommonError(Dic::Common::ErrorCode::PATH_OWNER_ERROR);
         return false;
     }
     if (!CheckWritableByOther(dir)) {
-        Server::ServerLog::Error("The path is writeable by other user.path: %", dir);
-        Dic::Common::SetCommonError(Dic::Common::ErrorCode::OTHER_CAN_WRITE);
+        result.Set(false, "The path could be writen by other user.");
         return false;
     }
+
     return true;
 }
 
@@ -284,31 +300,6 @@ bool FileUtil::CheckFilePathExist(const std::string& filePath)
     return true;
 }
 
-bool FileUtil::CheckFilePath(const std::string& filePath)
-{
-    std::string tempPath = FileUtil::PathPreprocess(filePath);
-    // 文件基础校验：校验文件最小权限、软连接、长度、特殊字符
-    if (!CheckDirValid(tempPath)) {
-        Server::ServerLog::Error("Invalid file path. There may be issues with file permissions, soft link, length,"
-                                 " or special characters");
-        return false;
-    }
-    if (!FileUtil::IsRegularFile(tempPath)) {
-        Server::ServerLog::Error("Invalid file path, cause by not regular file");
-        return false;
-    }
-    std::ifstream file(tempPath);
-    if (!file.good()) {
-        Server::ServerLog::Error("Fail to open file path");
-        return false;
-    }
-    file.close();
-    if (!CheckFileSize(tempPath, true)) {
-        Server::ServerLog::Warn("The size of file is too large");
-        return false;
-    }
-    return true;
-}
 
 bool FileUtil::CheckFilePathLength(const std::string& filePath)
 {
@@ -480,7 +471,7 @@ bool FileUtil::ConvertToRealPath(std::string &errorMsg, std::vector<std::string>
 
 bool FileUtil::ConvertToRealPath(std::string &errorMsg, std::string &path)
 {
-    // 通过上下文保证路径安全
+
     std::string realPath = GetRealPath(path);
     if (realPath.empty()) {
         errorMsg = "The conversion of the " + path +

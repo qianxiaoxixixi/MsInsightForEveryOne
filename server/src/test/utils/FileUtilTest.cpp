@@ -84,10 +84,10 @@ TEST(TestUtil, TestGetRankIdFromPath)
 {
     std::string rank = FileUtil::GetRankIdFromPath(
             TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json");
-    bool result = FileUtil::CheckFilePath(
-            TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json");
+    auto result = FileUtil::CheckPathSecurity(
+            TestSuit::GetSrcTestPath() + "test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json", CHECK_FILE_READ);
     EXPECT_EQ(rank, "test_rank_1");
-    EXPECT_EQ(result, true);
+    EXPECT_EQ(result.isSuccess, true);
 }
 
 TEST(TestUtil, TestGetDbPath)
@@ -137,12 +137,12 @@ TEST(TestUtil, CheckDirAccessSuccessWhenFileExist)
     EXPECT_EQ(FileUtil::CheckDirAccess(".//example.txt"), true);
     EXPECT_EQ(std::remove(".//example.txt"), 0);
 }
- 
+
 TEST(TestUtil, CheckDirAccessFailedWhenFileIsNotExist)
 {
     EXPECT_EQ(FileUtil::CheckDirAccess("./test1.text"), false);
 }
- 
+
 TEST(TestUtil, CheckFilePathLengthFailedWhenFilePathIsTooLong)
 {
 #ifdef _WIN32
@@ -153,7 +153,7 @@ TEST(TestUtil, CheckFilePathLengthFailedWhenFilePathIsTooLong)
     EXPECT_EQ(FileUtil::CheckFilePathLength(filePath), false);
 #endif
 }
- 
+
 TEST(TestUtil, CheckFilePathLengthSuccess)
 {
 #ifdef _WIN32
@@ -164,7 +164,7 @@ TEST(TestUtil, CheckFilePathLengthSuccess)
     EXPECT_EQ(FileUtil::CheckFilePathLength(filePath), true);
 #endif
 }
- 
+
 TEST(TestUtil, CheckFilePathExistSuccessWhenFileIsExist)
 {
     std::ofstream file(".//example.txt");
@@ -172,12 +172,12 @@ TEST(TestUtil, CheckFilePathExistSuccessWhenFileIsExist)
     EXPECT_EQ(FileUtil::CheckFilePathExist(".//example.txt"), true);
     EXPECT_EQ(std::remove(".//example.txt"), 0);
 }
- 
+
 TEST(TestUtil, CheckFilePathExistFailedWhenFileIsNotExist)
 {
     EXPECT_EQ(FileUtil::CheckFilePathExist(".//example_no_exist.txt"), false);
 }
- 
+
 TEST(TestUtil, IsAbsolutePathFailedWhenPathIsRelativePath)
 {
 #ifdef _WIN32
@@ -187,7 +187,7 @@ TEST(TestUtil, IsAbsolutePathFailedWhenPathIsRelativePath)
     EXPECT_EQ(FileUtil::IsAbsolutePath("./home/test"), false);
 #endif
 }
- 
+
 TEST(TestUtil, IsAbsolutePathCheckSuccessWhenPathIsAbsPath)
 {
 #ifdef _WIN32
@@ -196,12 +196,12 @@ TEST(TestUtil, IsAbsolutePathCheckSuccessWhenPathIsAbsPath)
     EXPECT_EQ(FileUtil::IsAbsolutePath("/root/home/test"), true);
 #endif
 }
- 
+
 TEST(TestUtil, GetAbsPathFailedWhenPathIsEmpty)
 {
     EXPECT_EQ(FileUtil::GetAbsPath(""), "");
 }
- 
+
 TEST(TestUtil, GetAbsPathSuccessWhenPathIsExist)
 {
     std::ofstream file(".//example.txt");
@@ -209,7 +209,7 @@ TEST(TestUtil, GetAbsPathSuccessWhenPathIsExist)
     EXPECT_NE(FileUtil::GetAbsPath(".//example.txt"), "");
     EXPECT_EQ(std::remove(".//example.txt"), 0);
 }
- 
+
 TEST(TestUtil, IsSoftLinkCheckFailedWhenPathIsExistAndIsNotSoftlink)
 {
     std::ofstream file(".//example.txt");
@@ -217,12 +217,12 @@ TEST(TestUtil, IsSoftLinkCheckFailedWhenPathIsExistAndIsNotSoftlink)
     EXPECT_EQ(FileUtil::IsSoftLink(".//example.txt"), false);
     EXPECT_EQ(std::remove(".//example.txt"), 0);
 }
- 
+
 TEST(TestUtil, IsSoftLinkCheckFailedWhenPathIsNotExist)
 {
     EXPECT_EQ(FileUtil::IsSoftLink(".//example_bot_exist.txt"), false);
 }
- 
+
 TEST(TestUtil, IsSoftLinkCheckSuccessWhenPathIsSoftlink)
 {
     // 源文件路径
@@ -244,33 +244,33 @@ TEST(TestUtil, IsSoftLinkCheckSuccessWhenPathIsSoftlink)
     EXPECT_NE(unlink(linkPath), -1);
     EXPECT_EQ(std::remove(srcPath), 0);
 }
- 
+
 TEST(TestUtil, CheckPathValidFailedWhenPathIsNotExist)
 {
-    EXPECT_EQ(FileUtil::CheckDirValid(".//example_bot_exist.txt"), false);
+    EXPECT_FALSE(FileUtil::CheckPathSecurity(".//example_bot_exist.txt",CHECK_FILE_READ));
 }
- 
+
 TEST_F(TestSuit, CheckPathValidFailedWhenPathIsEmpty)
 {
-    EXPECT_EQ(FileUtil::CheckDirValid(""), false);
+    EXPECT_FALSE(FileUtil::CheckPathSecurity(""));
 }
- 
+
 TEST(TestUtil, CheckPathValidFailedWhenFileIsExistedButPathIsTooLong)
 {
 #ifdef _WIN32
     std::string filePath(MAX_PATH, 'a');
-    EXPECT_EQ(FileUtil::CheckDirValid(filePath), false);
+    EXPECT_EQ(FileUtil::CheckPathComm(filePath, TODO), false);
 #else
     std::string filePath(PATH_MAX, 'a');
-    EXPECT_EQ(FileUtil::CheckDirValid(filePath), false);
+    EXPECT_FALSE(FileUtil::CheckPathSecurity(filePath));
 #endif
 }
- 
+
 TEST(TestUtil, CheckPathValidFailedWhenFileExistInvalidChar)
 {
-    EXPECT_EQ(FileUtil::CheckDirValid("te\\nst.text"), false);
+    EXPECT_FALSE(FileUtil::CheckPathSecurity("te\\nst.text"));
 }
- 
+
 TEST(TestUtil, CheckPathValidFailedWhenFileIsSoftlink)
 {
     // 源文件路径
@@ -283,26 +283,26 @@ TEST(TestUtil, CheckPathValidFailedWhenFileIsSoftlink)
     // 创建软链接
     DWORD flags = SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE;
     EXPECT_NE(CreateSymbolicLink(linkPath, srcPath, flags), 0);
-    EXPECT_EQ(FileUtil::CheckDirValid("te\\nst.text"), false);
+    EXPECT_EQ(FileUtil::CheckPathComm("te\\nst.text", TODO), false);
 #else
     // 创建软链接
     EXPECT_EQ(symlink(srcPath, linkPath), 0);
-    EXPECT_EQ(FileUtil::CheckDirValid("te\\nst.text"), false);
+    EXPECT_FALSE(FileUtil::CheckPathSecurity("te\\nst.text"));
 #endif
     EXPECT_NE(unlink(linkPath), -1);
     EXPECT_EQ(std::remove(srcPath), 0);
 }
- 
+
 TEST(TestUtil, CheckPathValidSuccessWhenFileIsExist)
 {
     // 源文件路径
     const char* srcPath = ".//example.txt";
     std::ofstream file(srcPath);
     file.close();
-    EXPECT_EQ(FileUtil::CheckDirValid(srcPath), true);
+    EXPECT_TRUE(FileUtil::CheckPathSecurity(srcPath,CHECK_FILE_READ));
     EXPECT_EQ(std::remove(srcPath), 0);
 }
- 
+
 TEST(TestUtil, CheckPathValidSuccessWhenFileIsExistAndPathIsInChinese)
 {
 #ifdef _WIN32
@@ -312,18 +312,18 @@ TEST(TestUtil, CheckPathValidSuccessWhenFileIsExistAndPathIsInChinese)
         std::cerr << "无法创建文件: " << GetLastError() << std::endl;
     }
     CloseHandle(hFile);
-    EXPECT_EQ(FileUtil::CheckDirValid(".\\测试001.txt"), true);
+    EXPECT_EQ(FileUtil::CheckPathComm(".\\测试001.txt", TODO), true);
     EXPECT_NE(DeleteFileW(filePath), 0);
 #else
     // 源文件路径
     const char* srcPath = ".//测试001.txt";
     std::ofstream file(srcPath);
     file.close();
-    EXPECT_EQ(FileUtil::CheckDirValid(srcPath), true);
+    EXPECT_TRUE(FileUtil::CheckPathSecurity(srcPath));
     EXPECT_EQ(std::remove(srcPath), 0);
 #endif
 }
- 
+
 TEST(TestUtil, CheckFileSizeSuccessWhenFileIsEmptyAndPathIsInChinese)
 {
 #ifdef _WIN32
@@ -351,11 +351,11 @@ TEST(TestUtil, CheckFileSizeSuccessWhenFileIsEmptyAndPathIsInChinese)
         file << "测试2" << std::endl;
         file.close();
     }
-    EXPECT_EQ(FileUtil::CheckDirValid(srcPath), true);
+    EXPECT_TRUE(FileUtil::CheckPathSecurity(srcPath, CHECK_FILE_READ));
     EXPECT_EQ(std::remove(srcPath), 0);
 #endif
 }
- 
+
 TEST(TestUtil, CheckFileSizeFailedWhenFileIsExistButIsEmpty)
 {
     // 源文件路径

@@ -410,7 +410,7 @@ public:
     {
         document_t document;
         document.SetNull();
-        if (!FileUtil::CheckFilePath(filePath)) {
+        if (!FileUtil::CheckPathSecurity(filePath, CHECK_FILE_READ)) {
             Server::ServerLog::Error("Invalid path, can't read json from file, path=", filePath);
             return document;
         }

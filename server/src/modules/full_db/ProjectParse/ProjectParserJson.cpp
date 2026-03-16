@@ -468,7 +468,7 @@ void ProjectParserJson::FindAscendFolder(const std::string &path, std::vector<st
     std::string traceFilePath = FileUtil::SplicePath(path, ASCEND_PROFILER_OUTPUT);
     traceFilePath = FileUtil::SplicePath(traceFilePath, "trace_view.json");
     // 检查traceFilePath是否存在且合法
-    if (FileUtil::CheckDirValid(traceFilePath)) {
+    if (FileUtil::CheckPathSecurity(traceFilePath, CHECK_FILE_READ)) {
         traceFiles.emplace_back(traceFilePath);
         return;
     }
@@ -693,7 +693,7 @@ void ProjectParserJson::ParserMetaData(const std::vector<Global::ProjectExplorer
         for (const auto &item: project.subParseFileInfo) {
             std::string parent = FileUtil::GetParentPath(item->parseFilePath);
             std::string metaDataFilePath = FileUtil::SplicePath(parent, PROFILER_METADATA_FILE);
-            if (!FileUtil::CheckDirValid(metaDataFilePath)) {
+            if (!FileUtil::CheckPathSecurity(metaDataFilePath, CHECK_FILE_READ)) {
                 ServerLog::Error("Meta data file % is not valid.", metaDataFilePath);
                 continue;
             }

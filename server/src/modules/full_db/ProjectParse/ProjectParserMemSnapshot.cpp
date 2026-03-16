@@ -69,7 +69,7 @@ std::vector<std::string> ProjectParserMemSnapshot::GetParseFileByImportFile(cons
                                                                             std::string& error)
 {
     // 注意importfile为完整路径
-    if (FileUtil::IsFolder(importFile) || !FileUtil::CheckFileValid(importFile)) {
+    if (FileUtil::IsFolder(importFile) || !FileUtil::CheckPathSecurity(importFile)) {
         error = "Supports import only from a single-file snapshot pickle.";
         return {};
     }

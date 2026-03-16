@@ -77,7 +77,7 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
         return false;
     }
     std::string dbDir = FileUtil::GetParentPath(dbPath);
-    if (!std::empty(dbDir) && !FileUtil::CheckDirValid(dbDir)) {
+    if (!std::empty(dbDir) && !FileUtil::CheckPathSecurity(dbDir, CHECK_DIR_WRITE)) {
         ServerLog::Error("This db dir is illegal path:", dbDir);
         return false;
     }
@@ -85,7 +85,7 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
         ServerLog::Error("Create db failed.Db path:", dbPath);
         return false;
     }
-    if (!FileUtil::CheckDirValid(dbPath)) {
+    if (!FileUtil::CheckPathSecurity(dbPath, CHECK_FILE_WRITE)) {
         ServerLog::Error("This db path is illegal.Db path:", dbPath);
         return false;
     }

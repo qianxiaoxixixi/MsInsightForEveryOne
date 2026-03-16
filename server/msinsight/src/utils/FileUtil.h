@@ -25,14 +25,11 @@
 #include <algorithm>
 #include <sys/stat.h>
 #include <fstream>
-#include <libgen.h>
 #include <numeric>
 #include "regex"
-#include "RegexUtil.h"
 #include "ServerLog.h"
 #include "FileDef.h"
 #include "StringUtil.h"
-#include "Status.h"
 #include "UtilErrorManager.h"
 
 #if defined(_WIN32)
@@ -70,6 +67,34 @@ namespace Dic {
 const std::string DB_REG =
         R"(((msprof_[0-9]{1,16}|((ascend_pytorch_profiler)(_[0-9]{1,16}){0,1})|)"
         R"(((ascend_mindspore_profiler)(_[0-9]{1,16}){0,1})|cluster_analysis|leaks_dump_\d+)\.db$))";
+enum PathCheckSense : int { // 根据使用场景去定义检查项，既灵活也为代码检视提供方便
+    CHECK_DIR_READ = 1,
+    CHECK_DIR_WRITE = 2,
+    CHECK_FILE_READ = 4,
+    CHECK_FILE_WRITE = 8,
+};
+
+class CheckResult {
+public:
+    CheckResult() = default;
+    CheckResult(bool isSuccess, const std::string &errMsg) : isSuccess(isSuccess), errMsg(errMsg) {}
+    explicit operator bool() const
+    {
+        return isSuccess;
+    }
+    bool operator!() const
+    {
+        return !isSuccess;
+    }
+    void Set(bool result, const std::string &msg = "")
+    {
+        isSuccess = result;
+        errMsg = msg;
+    }
+    bool isSuccess = true;
+    std::string  errMsg;
+};
+
 class FileUtil {
 public:
     static inline bool CheckDirAccess(const std::string &path, const int &mode = 0)
@@ -180,7 +205,7 @@ public:
             if (fileName == ".." || fileName == "." || fileName.empty()) {
                 continue;
             }
-            if (!CheckDirValid(SplicePath(currentPath, fileName))) {
+            if (!CheckPathComm(SplicePath(currentPath, fileName), TODO)) {
                 continue;
             }
             if ((fileInfo.attrib & _A_SUBDIR) != 0) {
@@ -228,7 +253,7 @@ public:
             if (stat(fullPath.c_str(), &pathStat) != 0) {
                 continue;
             }
-            if (strict && !CheckDirValid(fullPath)) {
+            if (strict && !CheckPathSecurity(fullPath)) {
                 continue;
             }
             if (!strict && S_ISLNK(pathStat.st_mode)) {
@@ -294,14 +319,14 @@ public:
     static inline bool CopyFileByPath(const std::string &sourceFilePath, const std::string &targetFilePath)
     {
         // 检查 源文件路径 合法性，包括文件最小权限、软连接、长度、特殊字符
-        if (!CheckFilePath(sourceFilePath)) {
+        if (!CheckPathSecurity(sourceFilePath, CHECK_FILE_READ)) {
             Server::ServerLog::Error("Source file path is invalid when copy file.");
             return false;
         }
         // 目标文件目录
         std::string targetDirPath = GetParentPath(targetFilePath);
         // 检查 目标文件目录 合法性、是否可写
-        if (!CheckDirValid(targetDirPath) || !CheckDirAccess(targetDirPath, W_OK)) {
+        if (!CheckPathSecurity(targetDirPath, CHECK_DIR_WRITE)) {
             Server::ServerLog::Error("Target directory is invalid or not writable when copy file.");
             return false;
         }
@@ -495,10 +520,11 @@ public:
     static bool IsFilePathExist(const std::string &filePath);
     static bool IsAbsolutePath(const std::string &path);
     static bool IsRegularFile(const std::string &filePath);
-    static bool CheckDirValid(const std::string &path);
-    static bool CheckFileValid(const std::string &filePath);
+    static CheckResult CheckPathSecurity(const std::string &path, int mode = PathCheckSense::CHECK_DIR_READ);
+protected:
+    static bool CheckPathComm(const std::string& path, CheckResult& result);
+public:
     static bool CheckFilePathExist(const std::string& filePath);
-    static bool CheckFilePath(const std::string& filePath);
     static bool CheckFilePathLength(const std::string& filePath);
     static uint32_t GetFilePathLengthLimit();
     static std::string GetAbsPath(const std::string &path);
@@ -516,7 +542,7 @@ public:
                                 const std::regex &jsonRegex, const std::regex &dbRegex);
     static std::vector<std::string> FindFirstByRegex(const std::string &path, int depth, const std::regex &fileRegex);
 
-    static bool CheckFileSize(const std::string &filePath, bool emptyAllow = false, size_t fileMaxSize = 20ULL * 1024 * 1024 * 1024);
+    static bool CheckFileSize(const std::string &filePath, bool emptyAllow = false, size_t fileMaxSize = NORMAL_MAX_FILE_SIZE);
 
     /**
     * @brief 检查路径中是否包含非法字符
@@ -536,6 +562,8 @@ public:
     static bool CheckWritableByOther(const std::string &filePath);
 
     static bool CheckWritableByOtherOrGroup(const std::string &filePath);
+protected:
+    constexpr static size_t NORMAL_MAX_FILE_SIZE = 20 *1024 * 1024 * 1024ULL;
     };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_FILEUTIL_H

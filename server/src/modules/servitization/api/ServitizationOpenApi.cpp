@@ -143,7 +143,7 @@ bool ServitizationOpenApi::ParseDir(const std::string& dir, const std::string& f
         std::string detachSqls;
         for (const auto &item: distributeFiles) {
             std::string distributePath = FileUtil::SplicePath(dir, item);
-            if (!FileUtil::CheckDirValid(distributePath)) {
+            if (!FileUtil::CheckPathSecurity(distributePath, CHECK_FILE_READ)) {
                 continue;
             }
             std::string alias = item.substr(0, item.size() - std::string(".db").size());
@@ -181,7 +181,7 @@ void ServitizationOpenApi::AttachSingleDb(const std::string& dir, const std::str
                                           std::shared_ptr<Database>& database)
 {
     std::string distributePath = FileUtil::SplicePath(dir, distributeFile);
-    if (!FileUtil::CheckDirValid(distributePath)) {
+    if (!FileUtil::CheckPathSecurity(distributePath, CHECK_FILE_READ)) {
         return;
     }
     std::string alias = distributeFile.substr(0, distributeFile.size() - 3);

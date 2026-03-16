@@ -232,7 +232,7 @@ void WsServer::PreLoadEventDir()
     if (eventDir.empty()) {
         return;
     }
-    if (!FileUtil::IsFolder(eventDir) ||  !FileUtil::CheckDirValid(eventDir)) {
+    if (!FileUtil::IsFolder(eventDir) ||  !FileUtil::CheckPathSecurity(eventDir, CHECK_FILE_READ)) {
         return;
     }
     std::vector<Dic::Module::Global::ProjectExplorerInfo> projectExplorerInfos;
