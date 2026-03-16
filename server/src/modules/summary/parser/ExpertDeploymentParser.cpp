@@ -20,6 +20,7 @@
 #include "SafeFile.h"
 #include "JsonUtil.h"
 #include "ClusterDef.h"
+#include "RegexUtil.h"
 #include "ExpertDeploymentParser.h"
 
 namespace Dic::Module::Summary {

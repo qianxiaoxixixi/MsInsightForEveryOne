@@ -65,7 +65,7 @@ bool TritonParser::IsParsed(const std::string &filePath)
     if (filePath.empty()) {
         return false;
     }
-    if (!FileUtil::CheckFilePath(filePath)) {
+    if (!FileUtil::CheckPathSecurity(filePath, CHECK_FILE_READ)) {
         return false;
     }
     std::string fileName = FileUtil::GetFileName(filePath);
@@ -74,7 +74,7 @@ bool TritonParser::IsParsed(const std::string &filePath)
 
 void TritonParser::BeforeParse(const std::string &parsedDir)
 {
-    if (!FileUtil::CheckFilePath(parsedDir)) {
+    if (!FileUtil::CheckPathSecurity(parsedDir, CHECK_FILE_READ)) {
         ServerLog::Error("Triton file dir is not safe, please check log for more information");
         return;
     }
@@ -122,7 +122,7 @@ bool TritonParser::CheckFileValid(const std::string &fileName, std::string &erro
         error = "Triton file name is required";
         return false;
     }
-    if (!FileUtil::CheckFilePath(fileName)) {
+    if (!FileUtil::CheckPathSecurity(fileName, CHECK_FILE_READ)) {
         error = "Triton file not satisfy safety requirement, please check the log for mor information";
         return false;
     }

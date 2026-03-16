@@ -29,13 +29,8 @@ std::ifstream OpenReadFileSafely(const std::string &path, std::ios::openmode mod
         return res;
     }
     std::string tmpPath = FileUtil::PathPreprocess(path);
-    if (!FileUtil::CheckFileValid(tmpPath)) {
+    if (!FileUtil::CheckPathSecurity(tmpPath, CHECK_FILE_READ)) {
         message = "Unable to open file safely, the file path is insecure or not a regular file.";
-        Server::ServerLog::Error(message + " path: " + path);
-        return res;
-    }
-    if (!FileUtil::CheckFileSize(path)) {
-        message = "Unable to open file safely, the file size does not comply with security regulations.";
         Server::ServerLog::Error(message + " path: " + path);
         return res;
     }

@@ -63,7 +63,7 @@ void ClusterFileParser::ParseCommunicationMatrix(const std::vector<std::string> 
 void ClusterFileParser::SaxParseJsonFile(const std::string& filePath, int saxHandlerType)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    bool checkFilePath = FileUtil::CheckFilePath(filePath);
+    auto checkFilePath = FileUtil::CheckPathSecurity(filePath, CHECK_FILE_WRITE);
     if (!checkFilePath) {
         return;
     }

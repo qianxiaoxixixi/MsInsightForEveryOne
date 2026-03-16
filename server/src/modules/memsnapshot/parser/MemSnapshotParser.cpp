@@ -133,7 +133,7 @@ MemSnapshotParserContext& MemSnapshotParser::GetParseContext() { return parseCon
 bool MemSnapshotParser::CheckIfParsingNeed(const MemSnapshotParserContext& context)
 {
     // 首先判断是否存在解析结果db文件，如果不存在则返回需要重新解析
-    if (!FileUtil::CheckFileValid(context.GetOutputDbPath())) {
+    if (!FileUtil::CheckPathSecurity(context.GetOutputDbPath(), CHECK_FILE_READ)) {
         Server::ServerLog::Info("[Snapshot] Parsing output db file cannot found or is not valid. Trying to re-parse.");
         return true;
     }
@@ -297,7 +297,7 @@ void MemSnapshotParser::ParseCallBack()
 bool MemSnapshotParser::TryOpenParsingResultDbAndSetVersion() const
 {
     const std::string dbPath = parseContext.GetOutputDbPath();
-    if (!FileUtil::CheckFileValid(dbPath)) {
+    if (!FileUtil::CheckPathSecurity(dbPath, CHECK_FILE_READ)) {
         Server::ServerLog::Error("[Snapshot] Double Check failed to verify the validity of the result database and "
                                  "establish a connection.");
         return false;

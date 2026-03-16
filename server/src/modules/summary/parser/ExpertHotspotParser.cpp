@@ -19,6 +19,7 @@
 #include "SafeFile.h"
 #include "NumberSafeUtil.h"
 #include "NumberUtil.h"
+#include "RegexUtil.h"
 
 namespace Dic::Module::Summary {
     bool ExpertHotspotParser::Parse(const std::string &filePath, const std::string &version)

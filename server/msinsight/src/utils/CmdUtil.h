@@ -63,7 +63,8 @@ public:
             badFlag = true;
             return *this;
         }
-        if (!FileUtil::CheckDirValid(execStr) || !StringUtil::ValidateCommandFilePathParam(execStr)) {
+        if (!FileUtil::CheckPathSecurity(execStr, CHECK_FILE_READ) ||
+            !StringUtil::ValidateCommandFilePathParam(execStr)) {
             Server::ServerLog::Error("Cmd not valid");
             badFlag = true;
             return *this;

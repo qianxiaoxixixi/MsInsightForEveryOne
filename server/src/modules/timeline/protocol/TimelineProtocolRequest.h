@@ -68,9 +68,9 @@ struct ImportActionParams {
         bool isSafePath = std::all_of(path.begin(), path.end(), [](const std::string &p) {
             if (FileUtil::IsFolder(p))
             {
-                return FileUtil::CheckDirValid(p);
+                return FileUtil::CheckPathSecurity(p);
             } else {
-                return FileUtil::CheckFileValid(p);
+                return FileUtil::CheckPathSecurity(p, CHECK_FILE_READ);
             }
         });
         if (!isSafePath) {

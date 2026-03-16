@@ -59,19 +59,19 @@ bool Dic::Module::CheckProjectValidHandler::HandleRequest(std::unique_ptr<Reques
 bool Dic::Module::CheckProjectValidHandler::CheckRequestParamsValid(ProjectCheckParams &params, ProjectErrorType &error)
 {
     std::string errorMsg;
-    bool safe = std::any_of(params.dataPath.begin(),
+    bool safe = std::all_of(params.dataPath.begin(),
                             params.dataPath.end(),
                             [&error](const std::string& p) {
                                 if (!CheckPathSafety(p, error)) {
-                                    return true;
+                                    return false;
                                 }
-                                return false;
+                                return true;
                             });
     if (!safe) {
         return false;
     }
     if (!params.ConvertToRealPath(errorMsg)) {
-        error = ProjectErrorType::IS_UNSAFE_PATH;
+        error = ProjectErrorType::FILE_NOT_EXISTS;
         return false;
     }
     uint64_t fileCount = 0;
@@ -121,7 +121,7 @@ bool Dic::Module::CheckProjectValidHandler::CheckFileSize(const fs::path &filePa
 }
 bool CheckProjectValidHandler::CheckPathSafety(const std::string& path, ProjectErrorType& error)
 {
-    if (!FileUtil::CheckDirValid(path)) {
+    if (!FileUtil::CheckPathSecurity(path)) {
         error = ProjectErrorType::IS_UNSAFE_PATH;
         return false;
     }
