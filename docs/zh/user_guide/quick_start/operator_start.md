@@ -71,4 +71,3 @@ MindStudio Insight 支持导入 [msOpProf](https://gitcode.com/Ascend/msopprof) 
 `REGIST_MATMUL_OBJ` 是一个宏，用于初始化 Matmul 对象并设置 Tiling 参数。根据昇腾官方文档，这个宏内部会执行一系列标量操作来配置 Cube 计算单元。
 
 > 结论：从仿真数据中定位到可优化的代码行，下一步将由算子开发工程师优化。
-

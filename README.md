@@ -7,7 +7,6 @@
   [![License](https://badgen.net/badge/License/MulanPSL-2.0/blue)](./License) [![Version](https://badgen.net/badge/Version/8.3.0/green)](https://gitcode.com/Ascend/msinsight/releases/tag_MindStudio_8.3.0) [![Ascend](https://img.shields.io/badge/Hardware-Ascend-orange.svg)](https://www.hiascend.com/)
 </div>
 
-
 ## 🌟 最新动态
 
 - **[2026.2.04]** 🎉 **MindStudio Insight 26.0.0-alpha.1版本上线！** 聚焦**hostbound**问题定位跟**RL**性能分析优化，开启昇腾 AI 调优新体验。
@@ -23,6 +22,7 @@
 - **极简操作：** 自动遍历 Profiling 数据，无需手动合并文件，即插即用。
 
 ### Demo
+
 <div style="
   padding: 4px 0 2px 0;            /* 极窄上下 */
   font-weight: 600;                 半粗体
@@ -79,6 +79,7 @@
 │   │   ├── utils                      # 工具类
 │   ├── third_party                    # 开源软件 
 ```
+
 </details>
 
 ## 🔖 版本说明
