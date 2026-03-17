@@ -68,7 +68,7 @@ const categoryMap: { [key: string]: string } = { MsTx: 'MSTX' };
 
 const FilterItem: React.FC<FilterItemProps> = observer(({ category, checkedCategories, setCheckedCategories, session }) => {
     const isChecked = checkedCategories.includes(category);
-    if (checkedCategories.length >= 10 && !isChecked) {
+    if ((!session.isSimulation && checkedCategories.length >= 10) && !isChecked) {
         return (
             <p style={{ marginBottom: 0 }}>
                 <Checkbox
@@ -457,7 +457,7 @@ const LinkLineFilterBody = observer(({ session, isSuspend, checkedCategories, se
                 </FilterList>
                 {!isEmptyData && <FilterButtonLine>
                     <Button type={'primary'} onClick={(): void => {
-                        if (displayCategories.length > 10) {
+                        if (!session.isSimulation && displayCategories.length > 10) {
                             message.warning(i18n.t('Line Warning', { ns: 'timeline' }));
                             return;
                         }
