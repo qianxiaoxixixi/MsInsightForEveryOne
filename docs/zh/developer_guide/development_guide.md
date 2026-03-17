@@ -987,6 +987,7 @@ pyinstaller
 1.进入项目根目录下server/build目录，执行python3 download_third_party.py && python3 preprocess_third_party.py
 
 2.在Windows系统，MindStudio Insight会集成Python解释器。
+
 - 第一步：在构建环境上手动安装Python解释器（同时包含pip），建议Python版本3.12.10；
 - 第二步：设置环境变量 `MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER`为Python解释器的安装目录，该目录需要包含解释器python.exe。示例：如果Python解释器的安装目录为`D:\xxx\python`，且该目录下包含解释器`D:\xxx\python\python.exe`，则设置环境变量 `MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER`为`D:\xxx\python`。
 
