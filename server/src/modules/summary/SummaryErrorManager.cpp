@@ -71,6 +71,6 @@ const std::string& GetErrorMessage(ErrorCode code)
 void SetSummaryError(ErrorCode code, const std::string& extendedMessage)
 {
     std::string message = extendedMessage.size() > 0 ? StringUtil::StrJoin(GetErrorMessage(code), ":", extendedMessage) : GetErrorMessage(code);
-    ModuleRequestHandler::SetResponseError({.code = static_cast<int>(code), .message = message});
+    ModuleRequestHandler::SetRequestContextError({.code = static_cast<int>(code), .message = message});
 }
 }  // namespace Dic::Module::Summary

@@ -30,11 +30,12 @@ public:
     virtual bool HandleRequest(std::unique_ptr<Request> requestPtr) = 0;
     virtual bool IsAsync();
     virtual std::string GetRequestKey(Request &requestPtr);
-public:
     static void SetBaseResponse(const Request &request, Response &response);
     static void SetResponseResult(Response &response, bool result, const std::string &errorMsg = "",
                                   const int errorCode = UNKNOW_ERROR);
-    static void SetResponseError(ErrorMessage error);
+    static void SetResponseErrorFromRequestContext(Response &response);
+    static void SetRequestContextError(ErrorMessage error);
+    static void ResetRequestContextError();
 protected:
     std::string command;
     std::string error;

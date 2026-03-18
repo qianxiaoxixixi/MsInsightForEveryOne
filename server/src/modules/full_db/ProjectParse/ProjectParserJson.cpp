@@ -49,7 +49,11 @@ void ProjectParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &p
     // 基础信息填充
     FillBaseResponseInfo(request, response, projectInfos);
     // 获取rankid及文件映射关系信息
+    // GetRankEntryMap()会调用FileUtil中的方法，而FileUtil中方法会抛出错误，但这些错误不会影响导入解析流程
+    // 所以调用方法前将错误保存，调用方法后将错误清空，避免抛出GetRankEntryMap()方法中遭遇的报错
+    ModuleRequestHandler::SetResponseErrorFromRequestContext(response);
     std::map<std::string, RankEntry> rankListMap = GetRankEntryMap(projectInfos, false);
+    ModuleRequestHandler::ResetRequestContextError();
     UpdateRankIdToDevice(rankListMap);
     std::for_each(rankListMap.begin(), rankListMap.end(), [](const auto& item) {
         Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT, item.second.fileId);
