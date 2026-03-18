@@ -74,6 +74,6 @@ const std::string& GetErrorMessage(ErrorCode code)
 
 void SetTimelineError(ErrorCode code)
 {
-    ModuleRequestHandler::SetResponseError({.code = static_cast<int>(code), .message = GetErrorMessage(code)});
+    ModuleRequestHandler::SetRequestContextError({.code = static_cast<int>(code), .message = GetErrorMessage(code)});
 }
 }  // namespace Dic::Module::Timeline

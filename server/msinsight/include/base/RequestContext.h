@@ -34,7 +34,7 @@ public:
         return instance;
     }
 
-    void resetError()
+    void ResetError()
     {
         error_ = {};
     }

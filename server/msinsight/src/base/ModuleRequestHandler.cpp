@@ -30,7 +30,7 @@ using namespace Dic::Server;
 
 bool ModuleRequestHandler::HandleRequestEntrance(std::unique_ptr<Request> requestPtr)
 {
-    RequestContext::GetInstance().resetError();
+    RequestContext::GetInstance().ResetError();
     unsigned int id = requestPtr->id;
     auto &requestFilter = RequestFilter::Instance();
     std::string key = GetRequestKey(*requestPtr);
@@ -78,15 +78,25 @@ void ModuleRequestHandler::SetResponseResult(Response &response, bool result, co
     }
     response.error = { .code = errorCode, .message = errorMsg };
 
+    SetResponseErrorFromRequestContext(response);
+}
+
+void ModuleRequestHandler::SetResponseErrorFromRequestContext(Response &response)
+{
     ErrorMessage error = RequestContext::GetInstance().GetError();
     if (!error.message.empty()) {
         response.error = { .code = error.code, .message = error.message };
     }
 }
 
-void ModuleRequestHandler::SetResponseError(ErrorMessage error)
+void ModuleRequestHandler::SetRequestContextError(ErrorMessage error)
 {
     RequestContext::GetInstance().SetError(error);
+}
+
+void ModuleRequestHandler::ResetRequestContextError()
+{
+    RequestContext::GetInstance().ResetError();
 }
 
 bool ModuleRequestHandler::IsAsync()

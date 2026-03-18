@@ -75,6 +75,6 @@ const std::string& GetErrorMessage(ErrorCode code)
 
 void SetCommonError(ErrorCode code)
 {
-    Module::ModuleRequestHandler::SetResponseError({.code = static_cast<int>(code), .message = GetErrorMessage(code)});
+    Module::ModuleRequestHandler::SetRequestContextError({.code = static_cast<int>(code), .message = GetErrorMessage(code)});
 }
 }  // namespace Dic::Common
