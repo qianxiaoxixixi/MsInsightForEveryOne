@@ -19,7 +19,6 @@
 #ifndef PROFILER_SERVER_TIMELINEPARAMSTRCUT_H
 #define PROFILER_SERVER_TIMELINEPARAMSTRCUT_H
 #include <string>
-#include <optional>
 #include <vector>
 #include <set>
 namespace Dic::Protocol {
@@ -41,7 +40,7 @@ struct TableDataDetailParams {
     std::string type;
     std::vector<Filtercondition> filterconditions;
     std::vector<EqualCondition> equalConditions;
-    bool CommonCheck(std::string& errorMsg)
+    bool CommonCheck(std::string& errorMsg) const
     {
         static const uint64_t PAGE_LIMIT = 500;
         if (pageSize == 0 || pageSize > PAGE_LIMIT) {

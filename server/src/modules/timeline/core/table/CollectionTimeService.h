@@ -18,7 +18,6 @@
 #ifndef PROFILER_SERVER_COLLECTIONTIMESERVICE_H
 #define PROFILER_SERVER_COLLECTIONTIMESERVICE_H
 #include <string>
-#include <mutex>
 #include <vector>
 namespace Dic::Module::Timeline {
 struct HostTimeStruct {

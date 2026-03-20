@@ -56,7 +56,7 @@ protected:
         TrackInfoManager::Instance().Reset();
     }
 
-    void CreateTestTable(sqlite3 *db)
+    void CreateTestTable(sqlite3 *db) const
     {
         DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
         DatabaseTestCaseMockUtil::CreateTable(db, taskInfoSql);
@@ -114,7 +114,7 @@ protected:
         dependency.enumHcclTransportTypeTableMock->SetDb(db);
     }
 
-    void TestMockGroupInfoCache()
+    void TestMockGroupInfoCache() const
     {
         std::vector<ParallelGroupInfo> infos = {{"172.16.4.45%eth0_64000_0_1739179801171386", "tp",
                                                  {"0", "5", "6"}}};

@@ -272,7 +272,7 @@ void SystemViewOverallTextRepo::QueryCommunicationOverlapOverallInfos(
     if (it == responseBody.end()) {
         double ratio = 0;
         double notOverlapTime = NS_TO_US * totalTime;
-        if (overallHelper.e2eTime != 0) {
+        if (overallHelper.e2eTime != 0.0) {
             ratio = NumberUtil::DoubleReservedNDigits(notOverlapTime / overallHelper.e2eTime * PERCENTAGE_RATIO_SCALE,
                                                       TWO);
         }

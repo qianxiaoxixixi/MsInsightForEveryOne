@@ -48,10 +48,10 @@ struct StatsAccumulator {
     }
 
     // 安全获取极值（count=0时返回0，避免前端处理NaN/异常值）
-    [[nodiscard]] uint64_t GetMinSize() const { return count ? minSize : 0; }
-    [[nodiscard]] uint64_t GetMaxSize() const { return count ? maxSize : 0; }
-    [[nodiscard]] double GetMinTime() const { return count ? minTime : 0.0; }
-    [[nodiscard]] double GetMaxTime() const { return count ? maxTime : 0.0; }
+    [[nodiscard]] uint64_t GetMinSize() const { return count != 0 ? minSize : 0; }
+    [[nodiscard]] uint64_t GetMaxSize() const { return count != 0 ? maxSize : 0; }
+    [[nodiscard]] double GetMinTime() const { return count != 0 ? minTime : 0.0; }
+    [[nodiscard]] double GetMaxTime() const { return count != 0 ? maxTime : 0.0; }
     [[nodiscard]] double GetAvgSize() const {
         // 保留两位小数
         constexpr int decimalPlaces = 2;

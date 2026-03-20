@@ -341,27 +341,27 @@ public:
 protected:
     using assign = std::function<void(T &, const std::unique_ptr<SqliteResultSet> &)>;
 
-    inline std::string &SelectStr()
+    inline std::string &SelectStr() const
     {
         return GetSqlStruct().selectStr;
     }
 
-    inline std::string &ConditionStr()
+    inline std::string &ConditionStr() const
     {
         return GetSqlStruct().conditionStr;
     }
 
-    inline std::string &OrderByStr()
+    inline std::string &OrderByStr() const
     {
         return GetSqlStruct().orderByStr;
     }
 
-    inline std::string &GroupByStr()
+    inline std::string &GroupByStr() const
     {
         return GetSqlStruct().groupByStr;
     }
 
-    inline SqlStruct &GetSqlStruct()
+    inline SqlStruct &GetSqlStruct() const
     {
         thread_local SqlStruct sqlStruct;
         return sqlStruct;
