@@ -62,6 +62,7 @@ export const parseCompletedHandler = (): void => {
         runInAction(() => {
             session.renderId = ++session.renderId % 1000;
             session.tritonParsed = true;
+            session.markLineInfo.clickTimestamp = -1;
         });
     }
 };
