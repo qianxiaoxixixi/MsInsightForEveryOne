@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import os from 'os';
 import * as path from 'path';
 
 /**
@@ -10,7 +11,30 @@ import * as path from 'path';
  * See https://playwright.dev/docs/test-configuration.
  */
 const isCI = !!process.env.CI;
+const getProfilerServerCmd = (port: number = 9000) => {
+    const platform = os.platform();
+    let serverBinDir = '../server/output/';
+    let profilerServer = 'profiler_server';
+    let logPath = path.resolve(__dirname, 'log/');
+    if (platform === 'win32') {
+        // windows平台当前固定使用mingw进行编译
+        serverBinDir += 'win_mingw64/bin/';
+        serverBinDir = path.resolve(__dirname, serverBinDir);
+        profilerServer += '.exe';
+        logPath = 'C:\\msinsight-log';
+    } else if (platform === 'darwin') {
+        // mac平台使用apple clang进行编译
+        serverBinDir += 'darwin/bin/';
+    } else if (platform === 'linux') {
+        // linux平台使用gcc编译，但arch不同输出目录不同
+        const arch = os.arch() === 'x64' ? 'x86_64' : 'aarch64';
+        serverBinDir += `linux-${arch}/bin/`;
+    } else {
+        throw new Error(`Unsupported platform: ${platform}`);
+    }
 
+    return `${serverBinDir}${profilerServer} --wsPort=${port} --logPath=${logPath}`;
+}
 export default defineConfig({
     testDir: './src/tests',
     /* Maximum time one test can run for. */
@@ -57,10 +81,7 @@ export default defineConfig({
     /* Run your local dev server before starting the tests */
     webServer: [
         {
-            command: isCI
-                /* Argument logPath should be an existing directory, otherwise importing data will fail. */
-                ? `../server/output/linux-aarch64/bin/profiler_server --wsPort=9000 --logPath=${path.resolve(__dirname, 'log/')}`
-                : `${path.resolve(__dirname, '../server/output/win_mingw64/bin/profiler_server.exe')} --wsPort=9000 --logPath=C:\\msinsight-log`,
+            command: getProfilerServerCmd(9000),
             reuseExistingServer: !isCI,
         },
         {
