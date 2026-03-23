@@ -22,7 +22,7 @@
 #include "TableDefs.h"
 
 namespace Dic::Module::FullDb {
-    std::string OverlapAnalysisParseUnit::GetUnitName()
+    std::string OverlapAnalysisParseUnit::GetUnitName() const
     {
         return OVERLAP_ANALYSIS_UNIT;
     }

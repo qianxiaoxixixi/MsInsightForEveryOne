@@ -33,7 +33,7 @@ namespace Dic::Core {
 
 void AddPathEnv(const std::string &newDir)
 {
-#if _WIN32
+#ifdef _WIN32
     char buffer[32767]; // PATH 的最大长度通常为 32767 字符
     DWORD length = GetEnvironmentVariable("PATH", buffer, sizeof(buffer));
     if (length == 0) {

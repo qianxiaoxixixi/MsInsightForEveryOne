@@ -268,7 +268,7 @@ void WsSessionImpl::Stop()
     stopTime = TimeUtil::Instance().NowUTC();
 }
 
-std::string WsSessionImpl::GetDeviceKey()
+std::string WsSessionImpl::GetDeviceKey() const
 {
     return deviceKey;
 }
@@ -278,7 +278,7 @@ void WsSessionImpl::SetDeviceKey(const std::string &device)
     deviceKey = device;
 }
 
-std::string WsSessionImpl::GetBundleName()
+std::string WsSessionImpl::GetBundleName() const
 {
     return bundleName;
 }

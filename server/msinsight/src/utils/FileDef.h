@@ -20,7 +20,6 @@
 #define PROFILER_SERVER_FILEDEF_H
 
 #include <string>
-#include <vector>
 namespace Dic {
 
 const std::string NAME = "Name";

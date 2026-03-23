@@ -23,7 +23,7 @@
 
 namespace Dic::Module::FullDb {
 
-std::string FtraceSchedStatisticsParseUnit::GetUnitName()
+std::string FtraceSchedStatisticsParseUnit::GetUnitName() const
 {
     return Dic::FTRACE_SCHED_STATISTICS_UNIT;
 }

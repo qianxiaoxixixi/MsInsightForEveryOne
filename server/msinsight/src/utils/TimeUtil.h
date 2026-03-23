@@ -85,7 +85,7 @@ public:
      *
      * @return UTC seconds
      */
-    uint32_t NowUTC()
+    uint32_t NowUTC() const
     {
         using std::chrono::system_clock;
         system_clock::time_point now = system_clock::now();

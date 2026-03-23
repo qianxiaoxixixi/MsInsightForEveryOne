@@ -81,7 +81,7 @@ public:
         }
     }
 
-    inline bool CreateBaseDirSymlink(const std::string& symlinkName)
+    inline bool CreateBaseDirSymlink(const std::string& symlinkName) const
     {
         if (symlinkName.size() > NAME_MAX) {
             std::cerr << "Create symlink failed: symlinkName exceeds max length of file name." << std::endl;
@@ -96,7 +96,7 @@ public:
         }
     }
 
-    inline bool CreateCircularSymlink(const std::string& symlinkName)
+    inline bool CreateCircularSymlink(const std::string& symlinkName) const
     {
         try {
             fs::create_symlink(baseDir + "/" + symlinkName, baseDir + "/" + symlinkName);

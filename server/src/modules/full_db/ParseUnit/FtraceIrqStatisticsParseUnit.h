@@ -26,7 +26,7 @@ namespace Dic::Module::FullDb {
 
 class FtraceIrqStatisticsParseUnit : public AbstractParseUnit<Timeline::TextTraceDatabase> {
 protected:
-    std::string GetUnitName() override;
+    std::string GetUnitName() const override;
     bool PreCheck(const ParseUnitParams &params, const std::shared_ptr<Timeline::TextTraceDatabase> &database,
                   std::string &error) override;
     bool HandleParseProcess(const ParseUnitParams &params, const std::shared_ptr<Timeline::TextTraceDatabase> &database,

@@ -19,9 +19,9 @@
 #ifndef PROFILER_SERVER_FULLDBPARSER_H
 #define PROFILER_SERVER_FULLDBPARSER_H
 
+#include <map>
 #include "FileParser.h"
 #include "ThreadPool.h"
-#include "map"
 #include "DbTraceDataBase.h"
 
 namespace Dic::Module::FullDb {

@@ -23,7 +23,7 @@
 
 namespace Dic::Module::FullDb {
 
-std::string FtraceIrqStatisticsParseUnit::GetUnitName()
+std::string FtraceIrqStatisticsParseUnit::GetUnitName() const
 {
     return Dic::FTRACE_IRQ_STATISTICS_UNIT;
 }

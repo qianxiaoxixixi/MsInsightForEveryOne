@@ -34,7 +34,7 @@ class IAbstractParseUnit {
 public:
     virtual ~IAbstractParseUnit() = default;
     virtual bool Handle(const ParseUnitParams &params) = 0;
-    virtual std::string GetUnitName() = 0;
+    virtual std::string GetUnitName() const = 0;
 };
 
 template<typename DatabaseType = Timeline::VirtualTraceDatabase>
@@ -46,7 +46,7 @@ public:
 
 protected:
     // 获取解析单元名称
-    std::string GetUnitName() override = 0;
+    std::string GetUnitName() const override = 0;
     // 前置校验
     virtual bool PreCheck(const ParseUnitParams &params, const std::shared_ptr<DatabaseType> &database,
                           std::string &error) = 0;

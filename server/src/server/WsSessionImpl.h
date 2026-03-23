@@ -53,9 +53,9 @@ public:
     void Start() override;
     void Stop();
     void WaitForExit(int milliSeconds = 10000) override;
-    std::string GetDeviceKey();
+    std::string GetDeviceKey() const;
     void SetDeviceKey(const std::string &device);
-    std::string GetBundleName();
+    std::string GetBundleName() const;
     void SetBundleName(const std::string &bundle);
 
 protected:

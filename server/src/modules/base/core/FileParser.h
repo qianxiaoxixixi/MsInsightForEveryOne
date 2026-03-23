@@ -91,7 +91,7 @@ public:
     virtual std::string GetError();
     virtual void Reset();
 
-    inline bool HasCallbackFuncSet()
+    inline bool HasCallbackFuncSet() const
     {
         return parseEndCallback && parseProgressCallback;
     }

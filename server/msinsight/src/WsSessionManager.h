@@ -22,7 +22,6 @@
 #include <memory>
 #include <string>
 #include <mutex>
-#include <optional>
 #include "WsSession.h"
 
 namespace Dic {

@@ -157,7 +157,7 @@ public:
         LogStr(str);
     }
 
-    inline std::string GetLogFilePath()
+    inline std::string GetLogFilePath() const
     {
         return this->filePath;
     }
@@ -228,7 +228,7 @@ private:
         }
     }
 
-    inline std::string SanitizeLogMessage(const std::string &message)
+    inline std::string SanitizeLogMessage(const std::string &message) const
     {
         std::string sanitized;
         for (char c : message) {
