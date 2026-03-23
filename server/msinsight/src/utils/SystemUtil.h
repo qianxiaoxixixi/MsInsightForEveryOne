@@ -19,7 +19,6 @@
 #ifndef PROFILER_SERVER_SYSTEM_UTIL_H
 #define PROFILER_SERVER_SYSTEM_UTIL_H
 
-#include <iostream>
 #ifdef _WIN32
 #include <winsock2.h>
 #include <windows.h>

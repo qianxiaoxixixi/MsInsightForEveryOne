@@ -20,7 +20,6 @@
 #define PROFILER_SERVER_REQUESTCONTEXT_H
 #include <memory>
 #include <string>
-#include <thread>
 #include <iostream>
 
 namespace Dic {

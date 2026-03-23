@@ -45,7 +45,7 @@ bool Database::CreateDbIfNotExist(const std::string &dbPath)
 #endif
     if (stat(dbPathStr.c_str(), &st) == -1) {
         int result = sqlite3_open(utfDbPath.c_str(), &db);
-        if (result) {
+        if (result != SQLITE_OK) {
             sqlite3_close(db); // 异常后关闭数据库
             ServerLog::Error("Open db fail when create Db. path is: ", utfDbPath);
             return false;
@@ -56,8 +56,8 @@ bool Database::CreateDbIfNotExist(const std::string &dbPath)
         return true;
 #else
         mode_t mode = 0640; // 业务数据权限要求设置为0640 （rw-r-----）
-        result = FileUtil::ModifyFilePermissions(dbPathStr, mode);
-        if (!result) {
+        bool modifyResult = FileUtil::ModifyFilePermissions(dbPathStr, mode);
+        if (!modifyResult) {
             ServerLog::Error("Can't set db file permissions.");
             return false;
         }
@@ -292,12 +292,12 @@ bool Database::QueryMetaVersion()
     return true;
 }
 
-std::string Database::GetMetaVersion()
+std::string Database::GetMetaVersion() const
 {
     return metaVersion;
 }
 
-bool Database::IsDatabaseVersionChange()
+bool Database::IsDatabaseVersionChange() const
 {
     if (!isOpen) {
         ServerLog::Error("The db file is not opened.");

@@ -22,7 +22,6 @@
 
 #include <string>
 #include <map>
-#include <functional>
 #include <mutex>
 #include <optional>
 #include <memory>

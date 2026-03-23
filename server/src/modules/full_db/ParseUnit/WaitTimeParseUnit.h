@@ -23,7 +23,7 @@
 namespace Dic::Module::FullDb {
 class WaitTimeParseUnit : public AbstractParseUnit<DbTraceDataBase> {
 protected:
-    std::string GetUnitName() override;
+    std::string GetUnitName() const override;
     bool PreCheck(const ParseUnitParams &params, const std::shared_ptr<DbTraceDataBase> &database,
                   std::string &error) override;
     bool HandleParseProcess(const ParseUnitParams &params, const std::shared_ptr<DbTraceDataBase> &database,

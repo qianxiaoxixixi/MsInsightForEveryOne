@@ -34,11 +34,11 @@ class DatabaseException : public std::exception {
 public:
     explicit DatabaseException(const char* message): message(message){};
     DatabaseException(const char* message, bool isError): isError(isError), message(message){};
-    const char* What()
+    const char* What() const
     {
         return message;
     };
-    void Log(std::string prefix)
+    void Log(std::string prefix) const
     {
         if (isError) {
             Server::ServerLog::Error(prefix, message);
@@ -70,9 +70,9 @@ public:
     bool ExecSql(const std::string &sql);
     bool DropSomeTables(const std::vector<std::string>& tableNames);
     bool DropAllTable();
-    bool IsDatabaseVersionChange();
+    bool IsDatabaseVersionChange() const;
     bool QueryMetaVersion();
-    std::string GetMetaVersion();
+    std::string GetMetaVersion() const;
     bool SetDataBaseVersion(const std::string& targetVersion = ""); // targetVersion仅作为内部方法使用，请勿引入外部输入
     std::string QueryValueFromMetaDataByName(const std::string &name);
 

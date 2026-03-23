@@ -23,7 +23,7 @@
 #include "TableDefs.h"
 
 namespace Dic::Module::FullDb {
-    std::string ConnectionCatsParseUnit::GetUnitName()
+    std::string ConnectionCatsParseUnit::GetUnitName() const
     {
         return CONNECTION_UNIT;
     }

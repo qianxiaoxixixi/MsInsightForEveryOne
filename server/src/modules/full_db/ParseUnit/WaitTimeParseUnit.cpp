@@ -23,7 +23,7 @@
 #include "TableDefs.h"
 
 namespace Dic::Module::FullDb {
-    std::string WaitTimeParseUnit::GetUnitName()
+    std::string WaitTimeParseUnit::GetUnitName() const
     {
         return WAIT_TIME_UNIT;
     }

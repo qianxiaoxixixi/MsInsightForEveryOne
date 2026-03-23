@@ -91,7 +91,7 @@ public:
         return *this;
     }
 
-    bool ExecuteWithResult(std::string &result)
+    bool ExecuteWithResult(std::string &result) const
     {
         // 组装请求
         if (badFlag) {
@@ -101,7 +101,7 @@ public:
         return ExecuteCmdWithResult(command, result);
     }
 
-    inline bool Valid() { return !badFlag; }
+    inline bool Valid() const { return !badFlag; }
 
 private:
     static const int bufferSize = 100;
