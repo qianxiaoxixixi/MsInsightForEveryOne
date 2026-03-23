@@ -211,6 +211,13 @@ export class Connection {
 
         // handle notifications
         if (!isResponse(msg)) {
+            if (msg.event === 'parse/leaksMemoryCompleted') {
+                const { toBeActivedProject } = store.sessionStore.activeSession;
+                if (toBeActivedProject !== undefined && toBeActivedProject.selectedFilePath !== msg.body.dbPath) {
+                    console.warn(`event #${msg.event} has been abandoned`);
+                    return;
+                }
+            }
             msg.body.dataSource = this._host;
             connector.send({ ...msg });
             return;
