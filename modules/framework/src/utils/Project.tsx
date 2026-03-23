@@ -141,6 +141,7 @@ export async function handleProjectAction({ action, project, isConflict, selecte
                 newProject.selectedFilePath = firstFilePath;
                 newProject.selectedRankId = selectedRankId;
             }
+            session.toBeActivedProject = newProject;
         }
         try {
             const res = await addDataPath(newProject, action, isConflict, session);
@@ -152,6 +153,7 @@ export async function handleProjectAction({ action, project, isConflict, selecte
             closeLoading();
             return;
         }
+        session.toBeActivedProject = undefined;
 
         // 保存文件路径
         const path = newProject.projectPath[0].includes(newProject.projectName) ? newProject.projectName : newProject.projectPath[0];

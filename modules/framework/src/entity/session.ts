@@ -22,6 +22,7 @@ import {
     FileOrDirectory,
     GLOBAL_HOST,
     LayerType,
+    Project,
 } from '@/centralServer/websocket/defs';
 import type { CompareData } from '@/utils/Compare';
 import { SessionAction } from '@/utils/enum';
@@ -147,6 +148,8 @@ export class Session {
     projectContentEditStatus: boolean = false;
     // [summary] MoE 热力图数据解析结果
     profilingExpertDataParsed: boolean | null = null;
+
+    toBeActivedProject: Project | undefined;
 
     // 数据源/项目管理
     private _dataSources: DataSource[] = [];
