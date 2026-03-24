@@ -565,7 +565,7 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorGraph(Protocol::StaticOperatorG
     if (!ExecuteStaticGraphTotalSize(requestParams, totalSql, totalSize)) {
         return false;
     }
-    if (totalSize == staticDefaultTotalSize) {
+    if (NumberUtil::IsDoubleEqual(totalSize, staticDefaultTotalSize)) {
         ServerLog::Error("Query static operator graph. Failed get TOTAL number. Error: ", sqlite3_errmsg(db));
         return false;
     }
