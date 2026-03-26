@@ -21,9 +21,30 @@ from pathlib import Path
 from typing import Dict, Any
 
 
+class SafeUnpickler(pickle.Unpickler):
+    """
+    安全的 Unpickler，只允许反序列化基本 Python 类型。
+    防止恶意 pickle 文件执行任意代码。
+    """
+
+    ALLOWED_CLASSES = {
+        'builtins': {'dict', 'list', 'tuple', 'set', 'str', 'int', 'float', 'bool', 'bytes', 'NoneType'},
+    }
+
+    def find_class(self, module: str, name: str):
+        if module in self.ALLOWED_CLASSES and name in self.ALLOWED_CLASSES[module]:
+            return super().find_class(module, name)
+
+        raise pickle.UnpicklingError(
+            f"Unsafe pickle: global '{module}.{name}' is not allowed. "
+            f"Only basic Python types are permitted for security."
+        )
+
+
 def load_pickle_to_dict(pickle_file: Path) -> dict:
     """
     从指定路径加载 pickle 文件，并确保其内容为 dict 类型。
+    使用 SafeUnpickler 进行安全反序列化，防止恶意代码执行。
 
     Args:
         pickle_file (Path): pickle 文件路径
@@ -34,16 +55,17 @@ def load_pickle_to_dict(pickle_file: Path) -> dict:
     Raises:
         FileNotFoundError: 文件不存在
         ValueError: 文件内容不是 dict 类型
-        pickle.UnpicklingError: 反序列化失败（如文件损坏或非 pickle 格式）
+        pickle.UnpicklingError: 反序列化失败（如文件损坏、非 pickle 格式或包含不安全类型）
     """
     if not pickle_file.is_file():
         raise FileNotFoundError(f"Cannot found pickle file: {pickle_file}")
 
     try:
         with open(pickle_file, "rb") as f:
-            data = pickle.load(f)
-    except Exception:
-        raise pickle.UnpicklingError(f"Cannot load pickle file: {pickle_file}")
+            unpickler = SafeUnpickler(f)
+            data = unpickler.load()
+    except Exception as e:
+        raise pickle.UnpicklingError(f"Cannot load pickle file: {pickle_file}, error: {e}") from e
 
     if not isinstance(data, dict):
         raise ValueError(f"The content of the pickle file is not of type dict, actual type: {type(data).__name__}")
