@@ -16,6 +16,7 @@
  * -------------------------------------------------------------------------
  */
 
+import { isWebGL2Supported } from '../tools/detection';
 import { MainThreadRender } from './mainThreadindex';
 export const StateWorker = new Worker(new URL('./', import.meta.url));
 
@@ -77,7 +78,7 @@ const MainThreadBackend = {
 };
 
 // 自动选择后端
-const backend = window.OffscreenCanvas !== undefined ? WorkerBackend : MainThreadBackend;
+const backend = isWebGL2Supported() ? WorkerBackend : MainThreadBackend;
 
 // 导出统一接口
 export const workerInitCanvas = backend.initCanvas;
