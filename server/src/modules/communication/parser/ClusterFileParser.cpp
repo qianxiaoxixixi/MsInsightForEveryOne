@@ -506,6 +506,15 @@ std::string ClusterFileParser::GetStrValue(std::map<std::string, size_t> &dataMa
     return tokens[index];
 }
 
+void UpdateTraceTimeOfDb(std::shared_ptr<FullDb::DbClusterDataBase> clusterDatabase) {
+    uint64_t min = UINT64_MAX;
+    uint64_t max = 0;
+    clusterDatabase->QueryExtremumTimestamp(min, max);
+    if (min != UINT64_MAX && max != 0) {
+        Timeline::TraceTime::Instance().UpdateTime(min, max);
+    }
+}
+
 // LCOV_EXCL_BR_START
 bool ClusterFileParser::ParserClusterOfDb()
 {
@@ -541,6 +550,12 @@ bool ClusterFileParser::ParserClusterOfDb()
     }
     if (!clusterDatabase->IsDatabaseVersionChange() && clusterDatabase->HasFinishedParseLastTime()) {
         ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
+        /// FIX: 单独导入 cluster_analysis.db 时，由于没有 Timeline 的数据需要解析，因此无法运行到 Timeline 的更新 TraceTime 的方法
+        /// 这导致 TraceTime 的 minTimestamp 是初始最大值。
+        /// 当后面查找通信算子缩略图的数据时，将 start_timestamp 的值减去 TraceTime 的 minTimestamp 后只能得到负值。
+        /// 数据处理时发现负值就改成了 0，因此通信算子缩略图的数据所有通信算子开始时间都是 0。
+        /// 解决方法：在 db 情况解析集群完成后，更新 TraceTime 的值。
+        UpdateTraceTimeOfDb(clusterDatabase);
         return true;
     }
 
@@ -556,6 +571,12 @@ bool ClusterFileParser::ParserClusterOfDb()
     clusterDatabase->UpdatesClusterParseStatus(FINISH_STATUS);
     ServerLog::Info("ParseClusterFiles is success");
     ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
+    /// FIX: 单独导入 cluster_analysis.db 时，由于没有 Timeline 的数据需要解析，因此无法运行到 Timeline 的更新 TraceTime 的方法
+    /// 这导致 TraceTime 的 minTimestamp 是初始最大值。
+    /// 当后面查找通信算子缩略图的数据时，将 start_timestamp 的值减去 TraceTime 的 minTimestamp 后只能得到负值。
+    /// 数据处理时发现负值就改成了 0，因此通信算子缩略图的数据所有通信算子开始时间都是 0。
+    /// 解决方法：在 db 情况解析集群完成后，更新 TraceTime 的值。
+    UpdateTraceTimeOfDb(clusterDatabase);
     return true;
 }
 
