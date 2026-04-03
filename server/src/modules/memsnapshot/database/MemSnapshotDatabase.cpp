@@ -422,7 +422,7 @@ std::string MemSnapshotDatabase::GetTableColumnTag(const std::string& tableName,
  */
 std::string MemSnapshotDatabase::BuildMemSnapshotFiltersParamSql(FiltersParam& queryParams, const std::string& tableName)
 {
-    std::unordered_map<std::string, std::string> normalFilters; // 普通字段过滤设置，可使用Database中的公用方法
+    SearchMap normalFilters; // 普通字段过滤设置，可使用Database中的公用方法
     std::string filtersSql;
     for (const auto& [colKey, targetStr] : queryParams.filters) {
         std::string colTag = GetTableColumnTag(tableName, colKey);
@@ -451,12 +451,12 @@ std::string MemSnapshotDatabase::BuildMemSnapshotFiltersParamSql(FiltersParam& q
 /**
  * 用于为MemSnapshot数据库中的表进行基于字段的范围查询时，根据查询参数构建WHERE子句的SQL语句
  * 由于部分列查询时是计算列，因此不能直接使用Database中的BuildQueryRangeFiltersConditionSql方法，需要根据计算列进行范围查询，如各类size
- * @param queryParams 范围查询参数
+ * @param queryParams 范围查询参数，注意！！！此处原列会被替换为计算列，需要使用copy
  * @return 构建好的WHERE子句SQL语句
  */
-std::string MemSnapshotDatabase::BuildMemSnapshotRangeFiltersParamSql(const RangeFiltersParam& queryParams)
+std::string MemSnapshotDatabase::BuildMemSnapshotRangeFiltersParamSql(RangeFiltersParam& queryParams)
 {
-    std::unordered_map<std::string, std::pair<double, double>> withCalculatedColRangeFilters;
+    RangeMap withCalculatedColRangeFilters;
     std::string sql;
     for (const auto& [colKey, bounds] : queryParams.rangeFilters) {
         // 不在计算列定义中
@@ -468,7 +468,8 @@ std::string MemSnapshotDatabase::BuildMemSnapshotRangeFiltersParamSql(const Rang
         auto calculatedCol = StringUtil::FormatString(CALCULATED_COLUMN_MAP[colKey], colKey);
         withCalculatedColRangeFilters[calculatedCol] = bounds;
     }
-    return BuildQueryRangeFiltersConditionSql(withCalculatedColRangeFilters);
+    queryParams.rangeFilters = withCalculatedColRangeFilters;
+    return BuildQueryRangeFiltersConditionSql(queryParams.rangeFilters);
 }
 
 int64_t MemSnapshotDatabase::QueryBlocksTable(const MemSnapshotBlockParams& queryParams,
@@ -546,8 +547,9 @@ std::string MemSnapshotDatabase::BuildQueryBlocksTableConditionSqlByParams(MemSn
     // 构造过滤参数
     if (!params.filters.empty() || !params.rangeFilters.empty()) {
         filtersCondition = true;
-        // 此处可能会修改params，取决于是否有dictionary字段过滤
+        // 此处可能会修改`params.filters`中对于dictionary字段过滤列
         conditionSql.append(BuildMemSnapshotFiltersParamSql(params, blockTablePrefix));
+        // 此处可能会修改`params.rangeFilters`中的计算值范围过滤列，将其替换为计算列
         conditionSql.append(BuildMemSnapshotRangeFiltersParamSql(params));
     }
     return conditionSql;
@@ -718,6 +720,7 @@ std::string MemSnapshotDatabase::BuildQueryTraceEntriesTableConditionSqlByParams
         filtersCondition = true;
         // 涉及到使用dictionary表进行映射，使用prefix即可
         conditionSql.append(BuildMemSnapshotFiltersParamSql(queryParams, traceEntryTablePrefix));
+        // 此处可能会修改`params.rangeFilters`中的计算值范围过滤列，将其替换为计算列
         conditionSql.append(BuildMemSnapshotRangeFiltersParamSql(queryParams));
     }
     return conditionSql;

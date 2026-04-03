@@ -503,6 +503,46 @@ TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithRangeFilters)
     }
 }
 
+// 测试查询blocks表搜索、范围搜索、排序、分页完整
+TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithMultipleFiltersCombined)
+{
+    MemSnapshotBlockParams params;
+    params.deviceId = "0";
+    params.eventType = "BLOCK";
+    params.currentPage = 1;
+    params.pageSize = 10;
+    params.orderBy = "size"; // 根据size排序
+    params.startEventIdx = 100; // 设置虚拟时间戳区间最小
+    params.endEventIdx = 5000; // 设置虚拟时间戳区间最大
+    params.filters["state"] = "allocated"; // 状态为active_allocated
+    params.rangeFilters["allocEventId"] = {0, 9999999}; // 模拟内存泄漏场景，过滤内存块的起点在采集时间之前
+    params.rangeFilters["freeEventId"] = {-1, -1}; // 模拟内存泄漏场景，过滤内存块的终点在采集时间之后（即未在采集区间释放）
+    params.rangeFilters["size"] = {1024, 1024 * 1024}; // 过滤大小在1MB到1GB之间的内存块
+
+    std::vector<BlockTableItemDTO> blocks;
+    int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
+
+    EXPECT_GE(totalCount, 0);
+    EXPECT_EQ(blocks.size(), std::min(totalCount, params.pageSize)); // 分页结果
+    double preBlockSize = 0;
+    for (const auto& block : blocks) {
+        // 测试排序
+        EXPECT_GE(block.size, preBlockSize);
+        preBlockSize = block.size;
+        // 测试满足虚拟时间戳区间
+        EXPECT_TRUE(block.allocEventId < 0 || static_cast<uint64_t>(block.allocEventId) <= params.endEventIdx);
+        EXPECT_TRUE(block.freeEventId < 0 || static_cast<uint64_t>(block.freeEventId) >= params.startEventIdx);
+        // 测试状态为active_allocated
+        EXPECT_EQ(block.state, BLOCK_STATE_ACTIVE_ALLOC);
+        // 申请事件id在[0, 9999999]之间
+        EXPECT_TRUE(0 <= block.allocEventId && static_cast<uint64_t>(block.allocEventId) <= 9999999);
+        // 释放事件id为-1（即未在采集区间释放）
+        EXPECT_EQ(block.freeEventId, -1);
+        // 大小在[1MB, 1GB]之间
+        EXPECT_TRUE(1024 <= block.size && block.size <= 1024 * 1024);
+    }
+}
+
 // 测试查询trace entries表带rangeFilters
 TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableWithRangeFilters)
 {
@@ -523,31 +563,7 @@ TEST_F(MemSnapshotDatabaseTest, QueryTraceEntriesTableWithRangeFilters)
     }
 }
 
-// 测试查询blocks表带多个过滤条件
-TEST_F(MemSnapshotDatabaseTest, QueryBlocksTableWithMultipleFiltersCombined)
-{
-    MemSnapshotBlockParams params;
-    params.deviceId = "0";
-    params.eventType = "BLOCK";
-    params.currentPage = 1;
-    params.pageSize = 10;
-    params.orderBy = "id";
-    params.startEventIdx = 100;
-    params.endEventIdx = 5000;
-    params.minSize = 1024;
-    params.maxSize = 10485760;
-    params.filters["state"] = "allocated";
-    
-    std::vector<BlockTableItemDTO> blocks;
-    int64_t totalCount = snapshotDb->QueryBlocksTable(params, blocks);
-    
-    EXPECT_GE(totalCount, 0);
-    for (const auto& block : blocks) {
-        EXPECT_GE(block.size, params.minSize);
-        EXPECT_LE(block.size, params.maxSize);
-        EXPECT_EQ(block.state, BLOCK_STATE_ACTIVE_ALLOC);
-    }
-}
+
 
 // 测试查询segment事件直到指定事件ID
 TEST_F(MemSnapshotDatabaseTest, QuerySegmentEventsUntil)
