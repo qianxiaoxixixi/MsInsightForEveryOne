@@ -114,7 +114,7 @@ private:
 
 
     std::string BuildMemSnapshotFiltersParamSql(FiltersParam& queryParams, const std::string& tableName);
-    std::string BuildMemSnapshotRangeFiltersParamSql(const RangeFiltersParam& queryParams);
+    std::string BuildMemSnapshotRangeFiltersParamSql(RangeFiltersParam& queryParams);
 
     // Blocks table query helpers
     int64_t QueryBlocksTableCount(const MemSnapshotBlockParams& queryParams);

@@ -1039,7 +1039,7 @@ std::string Database::QueryDatabaseVersion() const
     return version;
 }
 
-std::string Database::BuildQueryFiltersConditionSql(const std::unordered_map<std::string, std::string>& filters)
+std::string Database::BuildQueryFiltersConditionSql(const std::map<std::string, std::string>& filters)
 {
     std::string filtersSql;
     for (auto &filterPair : filters) {
@@ -1048,12 +1048,10 @@ std::string Database::BuildQueryFiltersConditionSql(const std::unordered_map<std
     return filtersSql;
 }
 
-std::string Database::BuildQueryRangeFiltersConditionSql(
-const std::unordered_map<std::string, std::pair<double, double>>& rangeFilters)
+std::string Database::BuildQueryRangeFiltersConditionSql(const std::map<std::string, std::pair<double, double>>& rangeFilters)
 {
     std::string sql;
     for (const auto& [colName, rangePair] : rangeFilters) {
-        (void)(rangePair);
         sql.append(StringUtil::FormatString(" AND ({} BETWEEN ? AND ?) ", colName));
     }
     return sql;
@@ -1064,7 +1062,7 @@ std::string Database::BuildQueryOrderSql(const std::string& orderBy, bool desc)
     return StringUtil::FormatString(" ORDER BY {} {} ", orderBy, desc ? "DESC" : "ASC");
 }
 
-void Database::CommonBindFiltersParams(const std::unordered_map<std::string, std::string>& filters,
+void Database::CommonBindFiltersParams(const std::map<std::string, std::string>& filters,
                                        sqlite3_stmt* stmt, int& bindIdx)
 {
     for (auto& filterPair : filters) {
@@ -1075,12 +1073,11 @@ void Database::CommonBindFiltersParams(const std::unordered_map<std::string, std
 }
 
 void Database::CommonBindRangeFiltersParams(
-    const std::unordered_map<std::string, std::pair<double, double>>& rangeFilters,
+    const std::map<std::string, std::pair<double, double>>& rangeFilters,
     sqlite3_stmt* stmt,
     int& bindIdx)
 {
     for (const auto& [colName, rangePair] : rangeFilters) {
-        (void)(colName);
         sqlite3_bind_double(stmt, bindIdx++, rangePair.first);
         sqlite3_bind_double(stmt, bindIdx++, rangePair.second);
     }
