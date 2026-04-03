@@ -76,9 +76,10 @@ public:
     }
 };
 
+using SearchMap = std::map<std::string, std::string>;
 class FiltersParam {
 public:
-    std::unordered_map<std::string, std::string> filters;
+    SearchMap filters;
 
     bool SetFiltersFromJson(const json_t &json,
                             const std::vector<TableViewColumn> &columns,
@@ -95,9 +96,10 @@ public:
                           std::string &errorMsg);
 };
 
+using RangeMap = std::map<std::string, std::pair<double, double>>;
 class RangeFiltersParam {
 public:
-    std::unordered_map<std::string, std::pair<double, double>> rangeFilters;
+    RangeMap rangeFilters;
 
     bool SetRangeFiltersFromJson(const json_t &json,
                                  const std::vector<TableViewColumn> &columns,
