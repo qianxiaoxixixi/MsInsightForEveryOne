@@ -21,7 +21,7 @@ MindStudio Insight支持在Windows、Linux和macOS系统上安装使用，并且
 |MindStudio-Insight_*{version}*_win.exe|适用于Windows系统的MindStudio Insight软件包，含有GUI的集成开发环境。|  
 |MindStudio-Insight_*{version}*_linux-aarch64.zip|适用于Linux系统aarch64架构的MindStudio Insight软件包。|  
 |MindStudio-Insight_*{version}*_linux-x86_64.zip|适用于Linux系统x86_64架构的MindStudio Insight软件包。|  
-|MindStudio-Insight_*{version}*_darwin-*{arch}*.dmg|适用于macOS系统的MindStudio Insight软件包，含有GUI的集成开发环境。|  
+|MindStudio-Insight_*{version}*_macos-*{arch}*.dmg|适用于macOS系统的MindStudio Insight软件包，含有GUI的集成开发环境。|  
 |mindstudio_insight_jupyterlab-{*version*}-py3-none-{*platform*}.whl|基于JupyterLab安装的软件包。|
 
 **软件完整性验证**
@@ -560,7 +560,7 @@ vncserver -localhost -geometry 1920x1080
 
 **安装步骤**
 
-1. 鼠标双击“MindStudio-Insight\__\{version\}_\_darwin-_\{arch\}_.dmg”软件包，进入许可协议界面，单击“Agree”，如[**图 1**  许可协议](#许可协议)所示。
+1. 鼠标双击“MindStudio-Insight\__\{version\}_\_macos-_\{arch\}_.dmg”软件包，进入许可协议界面，单击“Agree”，如[**图 1**  许可协议](#许可协议)所示。
 
     **图 1**  许可协议<a id="许可协议"></a>  
     ![](./figures/install_guide/license_agreement_1.png "许可协议")
