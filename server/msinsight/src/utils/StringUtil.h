@@ -249,7 +249,7 @@ static inline const std::wstring String2WString(const std::string& gbk)
     if (gbk.empty())
         return {};
     int size = MultiByteToWideChar(
-        936,
+        GetACP(),
         0,
         gbk.c_str(),
         -1,
@@ -259,7 +259,7 @@ static inline const std::wstring String2WString(const std::string& gbk)
     std::wstring result(size - 1, 0);
 
     MultiByteToWideChar(
-        936,
+        GetACP(),
         0,
         gbk.c_str(),
         -1,
@@ -280,7 +280,7 @@ static inline const std::string WString2String(const std::wstring& wstr)
         return {};
 
     int size = WideCharToMultiByte(
-        936,
+        GetACP(),
         0,
         wstr.c_str(),
         -1,
@@ -291,7 +291,7 @@ static inline const std::string WString2String(const std::wstring& wstr)
     );
     std::string result(size - 1, 0);
     WideCharToMultiByte(
-        936,
+        GetACP(),
         0,
         wstr.c_str(),
         -1,
