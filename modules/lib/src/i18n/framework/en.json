@@ -110,6 +110,7 @@
     },
     "Or": "Or",
     "Documentation": "Documentation",
+    "Help & Feedback": "Help & Feedback",
     "ImportExpertHotspotDataTips": "Please select the directory or file containing MoE expert heatmap data",
     "error": {
       "ConnectionError": "Connection Error",

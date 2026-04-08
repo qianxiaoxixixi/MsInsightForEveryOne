@@ -87,7 +87,7 @@ const StyledIcon = styled.div<{ color?: string;disabled?: boolean }>`
     vertical-align: text-top;
     text-rendering: optimizelegibility;
     -webkit-font-smoothing: antialiased;
-    & path {
+    > svg path {
         fill: ${(p): string | null => {
         const { disabled, color, theme } = p;
         if (disabled) {
