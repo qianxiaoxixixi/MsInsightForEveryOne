@@ -53,3 +53,8 @@ export function registerDragAndDropFile(): void {
         configurable: true,
     });
 }
+
+export const HELP_LINKS = {
+    documentation: 'https://msinsight.readthedocs.io/',
+    help_feedback: 'https://gitcode.com/Ascend/msinsight/issues',
+};

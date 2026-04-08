@@ -16,13 +16,11 @@
  * -------------------------------------------------------------------------
  */
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { KEYS, getShortcutKey } from '@insight/lib/utils';
 import styled from '@emotion/styled';
-import { Tooltip } from '@insight/lib/components';
-import { HelpIcon } from '@insight/lib/icon';
 
 const DELIMITER = '+';
 
@@ -106,44 +104,6 @@ const StyledModal = styled(Modal)`
     }
 `;
 
-const MAX_SIZE = 10 * 1024;
-const FILE_URL = 'public-URL.json';
-async function fetchJSON(url: string): Promise<any> {
-    const response = await fetch(url, { method: 'HEAD' });
-    const contentLength = response.headers.get('Content-Length');
-    if (contentLength && Number(contentLength) > MAX_SIZE) {
-        throw new Error('文件过大，已拒绝加载');
-    }
-
-    const dataResponse = await fetch(url);
-    return dataResponse.json();
-}
-const Header = (): JSX.Element => {
-    const { t } = useTranslation('framework');
-    const [url, setUrl] = useState('');
-
-    useEffect(() => {
-        fetchJSON(FILE_URL)
-            .then(data => setUrl(data.documentation))
-            .catch((error) => {
-                throw new Error(`JSON 解析失败：${(error as Error).message}`);
-            });
-    }, []);
-
-    return url
-        ? <div className="ShortcutModal__header">
-            <div className="name">
-                <Tooltip
-                    title={<img src="images/documentation.png" alt="Documentation"/>}>
-                    <HelpIcon style={{ cursor: 'pointer' }} height={20} width={20}/>
-                </Tooltip>
-                <div>{t('Documentation')}：</div>
-            </div>
-            <div className="value">{url}</div>
-        </div>
-        : <></>;
-};
-
 const Section = (props: { title?: string; children: React.ReactNode }): JSX.Element => (
     <>
         {props.title !== undefined && <h3>{props.title}</h3>}
@@ -196,7 +156,7 @@ const Shortcut = ({
         <div className="ShortcutModal__shortcut">
             <div>{label}</div>
             <div className="ShortcutModal__key-container">
-                {intersperse(splitShortcutKeys, t('Or'))}
+                {[...intersperse(splitShortcutKeys, t('Or'))]}
             </div>
         </div>
     );
@@ -219,7 +179,6 @@ export const ShortcutsModal = ({ open, onClose }: {open: boolean;onClose: () => 
         style={{ maxWidth: 800 }}
         wrapClassName="ShortcutModal"
     >
-        <Header />
         <Section>
             <ShortcutModule caption={t('tabs.Timeline')}>
                 <Shortcut

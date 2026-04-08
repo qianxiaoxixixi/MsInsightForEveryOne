@@ -44,7 +44,7 @@ function SwitchLanguage(): JSX.Element {
 
     return <Tooltip placement={'bottom'} title={'中文/English'}>
         <div onClick={handleToggleLang} data-testid="switch-lng">
-            { isChinese ? <LangZhIcon/> : <LangEnIcon/> }
+            { isChinese ? <LangZhIcon className="size-20" /> : <LangEnIcon className="size-20" /> }
         </div>
     </Tooltip>;
 }
