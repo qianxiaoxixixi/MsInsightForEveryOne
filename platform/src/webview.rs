@@ -83,8 +83,24 @@ fn create_webview(
                 handle_open_project_msg(&front_end_msg);
                 return;
             }
+            // "openUrl|***"表示打开外部链接，***是具体的链接路径
+            if front_end_msg.starts_with("openUrl") {
+                handle_open_url_msg(&front_end_msg);
+                return;
+            }
         })
         .build()
+}
+
+fn handle_open_url_msg(front_end_msg: &str) {
+    if let Some(index) = front_end_msg.find('|') {
+        if index + 1 >= front_end_msg.len() {
+            eprintln!("Front end message: open url has a syntax error");
+            return;
+        }
+        let url = &front_end_msg[index + 1..];
+        open_in_explorer(url);
+    }
 }
 
 fn handle_open_project_msg(front_end_msg: &str) {
@@ -120,9 +136,10 @@ fn open_in_explorer(path: &str) {
         .arg(path)
         .spawn()
     {
-        Ok(_) => format!("Opened {} in explorer successfully", path),
-        Err(e) => format!("Failed to open {} in explorer, error message: {}", path, e),
+        Ok(_) => format!("Opened {} successfully", path),
+        Err(e) => format!("Failed to open {}, error message: {}", path, e),
     };
+    println!("{}", result);
 }
 
 fn handle_user_event(webview: &WebView, path: PathBuf) {

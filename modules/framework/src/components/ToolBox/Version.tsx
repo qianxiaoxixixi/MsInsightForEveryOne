@@ -23,6 +23,14 @@ import { HelpIcon } from '@insight/lib/icon';
 import styled from '@emotion/styled';
 import { Popover } from '@insight/lib/components';
 import { ShortcutsModal } from '@/components/KbdShortcuts';
+import { HELP_LINKS } from '@/utils';
+import {
+    GoldOutlined,
+    FileTextOutlined,
+    QuestionCircleOutlined,
+    EditOutlined,
+    InfoCircleOutlined,
+} from '@ant-design/icons';
 
 // 软件首发年分
 const LAUNCH_YEAR = '2023';
@@ -40,12 +48,29 @@ const VersionContainer = styled.ul`
     }
 `;
 
+const PopoverItem = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .anticon {
+        color: ${(p): string => p.theme.textColorTertiary};
+    }
+
+    &:hover {
+        .anticon {
+            color: #ffffff;
+        }
+    }
+`;
+
 // 版本信息
 function Version(): JSX.Element {
     const { t } = useTranslation('framework');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [popoverVisible, setPopoverVisible] = useState(false);
     const [shortcutsVisible, setShortcutsVisible] = useState(false);
+
     const showVersion = (): void => {
         setIsModalOpen(true);
     };
@@ -71,15 +96,40 @@ function Version(): JSX.Element {
         window.ipc.postMessage('showLogInExplorer');
     };
 
+    const showDocumentation = (): void => {
+        window.ipc.postMessage(`openUrl|${HELP_LINKS.documentation}`);
+    };
+
+    const showHelpFeedback = (): void => {
+        window.ipc.postMessage(`openUrl|${HELP_LINKS.help_feedback}`);
+    };
+
     const handleShortcutsModalClose = (): void => {
         setShortcutsVisible(false);
     };
 
     const HelpPopoverContent = (): JSX.Element => {
         return <div>
-            <div className="mi-popover-item" onClick={showShortcutsModal}>{t('Keyboard shortcuts')}</div>
-            <div className="mi-popover-item" onClick={showLogInExplorer}>{t('Show Log in Explorer')}</div>
-            <div className="mi-popover-item" onClick={showVersion}>{t('About')}</div>
+            <PopoverItem className="mi-popover-item" onClick={showShortcutsModal}>
+                <GoldOutlined />
+                {t('Keyboard shortcuts')}
+            </PopoverItem>
+            <PopoverItem className="mi-popover-item" onClick={showLogInExplorer}>
+                <FileTextOutlined />
+                {t('Show Log in Explorer')}
+            </PopoverItem>
+            <PopoverItem className="mi-popover-item" onClick={showDocumentation}>
+                <QuestionCircleOutlined />
+                {t('Documentation')}
+            </PopoverItem>
+            <PopoverItem className="mi-popover-item" onClick={showHelpFeedback}>
+                <EditOutlined />
+                {t('Help & Feedback')}
+            </PopoverItem>
+            <PopoverItem className="mi-popover-item" onClick={showVersion}>
+                <InfoCircleOutlined />
+                {t('About')}
+            </PopoverItem>
         </div>;
     };
 
@@ -91,7 +141,7 @@ function Version(): JSX.Element {
             open={popoverVisible}
             getPopupContainer={(triggerNode: HTMLElement): HTMLElement => triggerNode}
         >
-            <HelpIcon tabIndex={-1} onBlur={handleBlur} onClick={handleHelpIconClick} data-testid="help-icon"/>
+            <HelpIcon className="size-20" tabIndex={-1} onBlur={handleBlur} onClick={handleHelpIconClick} data-testid="help-icon"/>
         </Popover>
         <Modal title={`${t('About')} MindStudio Insight`} open={isModalOpen} onCancel={closeVersion} destroyOnClose={true} footer={null}>
             <VersionContainer className="help-ul">
