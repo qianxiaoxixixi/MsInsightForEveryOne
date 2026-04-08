@@ -108,6 +108,7 @@
     },
     "Or": "或",
     "Documentation": "帮助文档",
+    "Help & Feedback": "求助与反馈",
     "ImportExpertHotspotDataTips": "请选择含有MoE专家热点数据的目录或文件",
     "error": {
       "ConnectionError": "连接异常",

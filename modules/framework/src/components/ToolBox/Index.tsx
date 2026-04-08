@@ -32,7 +32,7 @@ const Container = styled.div`
     margin-left: 10px;
     cursor: pointer;
   }
-  svg {
+  .size-20 > svg {
     width: 20px;
     height: 20px;
   }
