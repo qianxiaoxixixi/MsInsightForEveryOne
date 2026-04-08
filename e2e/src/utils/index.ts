@@ -44,6 +44,7 @@ export async function importData(page: Page, filePath: string = FilePath.TEXT): 
         await input.click();
         await input.fill(filePath);
         await input.press('Enter');
+        await page.waitForTimeout(1000);
         // 点击“确认”按钮
         await confirmBtn.click();
         await mainDialog.waitFor({ state: 'hidden', timeout: 3000 });
@@ -68,11 +69,6 @@ export async function clearAllData(page: Page, ws?: Promise<WebSocket>): Promise
     }
     await settingsBtn.click();
 
-    const isDeleteBtnDisabled = await deleteAllBtn.evaluate((el) => el.classList.contains('disabled'));
-
-    if (isDeleteBtnDisabled) {
-        return;
-    }
     await deleteAllBtn.click();
     await expect(deleteAllDialog).toBeVisible();
     await deleteAllConfirmBtn.click();
