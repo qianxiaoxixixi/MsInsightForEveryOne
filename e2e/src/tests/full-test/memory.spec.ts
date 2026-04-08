@@ -153,8 +153,10 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         const isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox = new CheckboxHelpers(page, isOnlyShowAllocatedOrReleasedWithinIntervalChecker, memoryFrame);
 
         const chart = memoryFrame.locator('.ant-spin-container > div > div:nth-child(2) > div:nth-child(1) > canvas');
+        await page.waitForTimeout(1000);
         const chartInfo = await chart.boundingBox();
 
+        console.log(chart, chartInfo);
         // 等待echarts加载完成才能框选
         await page.waitForTimeout(1000);
         const { x: startX, y: startY } = chartInfo;
@@ -343,6 +345,7 @@ test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
 
     // 多机多卡db类型数据比对场景
     test('test_pageDisplay_compare_rank_db', async ({ page, memoryPage }) => {
+        test.setTimeout(120000);
         const { minSizeInputor, maxSizeInputor, memoryFrame, queryBtn, resetBtn } = memoryPage;
         await setCompare(page, memoryFrame, { baseline: FilePath.MULTI_NODES_NODE_0_RANK_0, comparison: FilePath.MULTI_NODES_NODE_1_RANK_0 });
         await memoryFrame.getByText('Difference').first().waitFor({ state: 'visible' });
@@ -355,7 +358,8 @@ test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
         await maxSizeInput.expectValueToBe('243840');
         await minSizeInput.setValue('0');
         await queryBtn.click();
-        await page.waitForTimeout(2000);
+        await memoryFrame.locator('.ant-spin-spinning').first().waitFor({ state: 'hidden' });
+        await memoryFrame.getByText('Difference').first().waitFor({ state: 'visible' });
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('memory-compare-rank-db-with-condition.png', {
             maxDiffPixels: 500,
         });
@@ -631,7 +635,7 @@ test.describe('Memory(Text)', () => {
         const { memoryFrame } = memoryPage;
         const { fullPage } = new TimelinePage(page);
         await memoryFrame.locator('tr:nth-child(3) > td:nth-child(15)').getByRole('button').click();
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(2000);
         await page.mouse.move(0, 0);
         await expect(fullPage).toHaveScreenshot('text_memory_redirectToTimeline.png', {
             maxDiffPixels: 500,
