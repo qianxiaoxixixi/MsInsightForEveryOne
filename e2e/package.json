@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "test": "playwright test tests/full-test",
-    "test:smoke": "playwright test tests/smoke",
+    "test:smoke": "playwright test tests/smoke --max-failures 1",
     "jointTest": "npx playwright test tests/joint-test",
     "lint": "eslint . --ext .js,.ts,.cjs,.mts --fix --ignore-path .gitignore",
     "format": "prettier --write e2e/"
