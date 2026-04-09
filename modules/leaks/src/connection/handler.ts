@@ -163,4 +163,5 @@ export const removeRemoteHandler: NotificationHandler = (data): void => {
 
 export const parseFailHandler: NotificationHandler = (data): void => {
     errorCenter.handleError(new WsError(ErrorCode.PARSE_FAIL, data.error as string));
+    removeRemoteHandler(data);
 };
