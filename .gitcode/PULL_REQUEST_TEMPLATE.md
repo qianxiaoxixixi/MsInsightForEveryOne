@@ -1,5 +1,6 @@
 
-感谢您贡献的Pull Request！
+# 感谢您贡献的Pull Request
+
 在提交之前，请务必阅读 [CONTRIBUTING.md](https://gitcode.com/Ascend/msinsight/blob/master/CONTRIBUTING.md)。
 
 Thanks for sending a pull request!
@@ -24,7 +25,6 @@ If possible, please consider writing useful notes for better and faster reviews 
 Note that it means *any* user-facing change including all aspects such as API, interface or other behavior changes.
 -->
 
-
 ## 功能验证 (How was this patch tested?)
 <!--
 请确认CI已通过增量及存量的单元测试用例。
@@ -43,5 +43,3 @@ If tests were not added, please describe why they were not added and/or why it w
 - [_] Screenshot of local self-verification (please anonymize any sensitive information such as personal identifiers)
 - [_] Have new or modified unit test (UT) cases been added or adapted to cover the newly added or changed content?
 -->
-
-
