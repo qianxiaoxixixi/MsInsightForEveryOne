@@ -469,25 +469,29 @@ export const ParallelismGraph = observer(({ session, targetRankIndex, targetTrig
 
         const xCoord = Math.floor(originalX - (containerWidth / 4));
         const yCoord = Math.floor(originalY - (containerHeight / 4));
-        canvasContainerRef.current?.scrollTo(xCoord, yCoord);
+        // FIX: 修复当并行策略图图形数量大时，渲染耗时长，影响 scrollTo 执行时机太早导致失效的问题
+        // 这里将 scrollTo 的行为放在宏任务（setTimeout）中，后置执行时机解决
+        setTimeout(() => {
+            canvasContainerRef.current?.scrollTo(xCoord, yCoord);
 
-        const { scrollLeft = 0, scrollTop = 0 } = canvasContainerRef.current ?? {};
-        const top = originalY - scrollTop;
-        const left = originalX - scrollLeft;
+            const { scrollLeft = 0, scrollTop = 0 } = canvasContainerRef.current ?? {};
+            const top = originalY - scrollTop;
+            const left = originalX - scrollLeft;
 
-        let width = rectWidth;
-        let height = rectHeight;
+            let width = rectWidth;
+            let height = rectHeight;
 
-        if (lastExpandedRect) {
-            width += lastExpandedRect.originalX - originalX;
-            height += lastExpandedRect.originalY - originalY;
-        }
+            if (lastExpandedRect) {
+                width += lastExpandedRect.originalX - originalX;
+                height += lastExpandedRect.originalY - originalY;
+            }
 
-        locateTargetAnim({
-            top,
-            left,
-            width,
-            height,
+            locateTargetAnim({
+                top,
+                left,
+                width,
+                height,
+            });
         });
 
         runInAction(() => {
