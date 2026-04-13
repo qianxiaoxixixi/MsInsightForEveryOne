@@ -61,6 +61,7 @@ export const resources = {
         ...libEn,
         ...leaksEn,
         ...statisticEn,
+        ...rlEn,
         ...tritonEn,
     },
     zhCN: {
@@ -76,7 +77,6 @@ export const resources = {
         ...libZh,
         ...leaksZh,
         ...statisticZh,
-        ...rlEn,
         ...rlZh,
         ...tritonZh,
     },

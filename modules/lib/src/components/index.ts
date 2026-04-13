@@ -24,6 +24,7 @@ export { MIPagination as Pagination } from './MIPagination';
 export { MICheckbox as Checkbox } from './MICheckbox';
 export { MICheckboxGroup as CheckboxGroup } from './MICheckbox';
 export { MIFormItem as FormItem } from './MIFormItem';
+export { MIDescriptions, MIDescriptionsItem } from './MIDescriptions';
 export { MIChart } from './MIChart';
 export type { ChartsHandle } from './MIChart';
 export { MITree as Tree } from './MITree';
