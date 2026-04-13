@@ -5,17 +5,17 @@
 | 软件名 | 用途 |
 | --- | --- |
 | Webstorm(推荐)| 编写&启动前端 |
-| Clion(推荐) | 编写&启动C++后端 |
+| CLion(推荐) | 编写&启动C++后端 |
 
 ## 2. 开发环境配置
 
 | 软件名 | 版本要求 | 用途 |
 | --- | --- | --- |
-| Node.js | v18.17.1 以上 | 前端 |
-| Python | v3.11.x (推荐) | 工具脚本 |
-| MinGW | v11.2 (推荐msvcrt版本) | 执行编译程序 |
+| Node.js | v18.20.8+ | 前端 |
+| Python | 3.11+ | 工具脚本 |
+| MinGW | 10.0+ （msvcrt版本） | 执行编译程序 |
 | git | 无 | 代码的拉取与提交 |
-| cmake | 最低版本：3.16 <br> 最高版本：< 4.0 | 后端项目构建与编译 |
+| cmake | 3.16~3.20 | 后端项目构建与编译 |
 
 ## 3. 开发步骤
 
@@ -25,11 +25,11 @@
 
 [MindStudio-Insight](https://gitcode.com/Ascend/msinsight)
 
-#### 3.1.2 使用clion或其他软件打开MindStudio-Insight文件夹下的server文件夹
+#### 3.1.2 使用CLion或其他软件打开MindStudio-Insight文件夹下的server文件夹
 
 ![Cli_to_server_path](./figures/Cli_to_server_path.png)
 
-#### 3.1.3 配置clion设置
+#### 3.1.3 配置CLion设置
 
 **1. 点击右上角的设置按钮 选择设置选项**
 
@@ -47,7 +47,7 @@
 
 #### 3.2.1 下载第三方库与预运行第三方库
 
-在server文件夹下新建一个新的终端，在终端中运行如下代码,成功执行如下**图3-1 download_third_party_success**，**图3-2 预运行成功**所示
+在server文件夹下新建一个新的终端，在终端中运行如下代码，成功执行如下**图3-1 download_third_party_success**，**图3-2 预运行成功**所示
 注：在执行此步骤之前请保证网络畅通
 
 ```shell
@@ -76,7 +76,7 @@ python preprocess_third_party.py
 
 ![reload_CMake_success](./figures/reload_CMake_success.png)
 
-### 3.3 Clion中的Main函数配置与启动，后端开发者测试
+### 3.3 CLion中的Main函数配置与启动，后端开发者测试
 
 #### 3.3.1 Main函数的配置 
 
@@ -153,7 +153,7 @@ pnpm install
 | statistic | 服务化调优 |
 | timeline | 时间线 |
 
-- 进入模块项目中，在该模块的package.json文件中点击start即可启动该模块
+- 进入模块项目中，在该模块的package.json文件中执行`npm run start`命令即可启动该模块
 
 ![start_module](./figures/start_module.png)
 
@@ -286,10 +286,9 @@ npm run test:smoke
    ```json
    {
        "scripts": {
-           "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider craco start",
-           "build": "cross-env NODE_OPTIONS=\"==--max-old-space-size=3072 --openssl-legacy-provider\" NODE_ENV=production GENERATE_SOURCEMAP=false CI=false craco build",
-           "publishWin": "xcopy .\\build ..\\framework\\public\\plugins\\Timeline\\ /E /I /Y",
-           "publishLinux": "cp -rf ./build/* ../framework/public/plugins/Timeline",
+            "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider craco start",
+            "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production GENERATE_SOURCEMAP=false CI=false craco build",
+            "build:dev": "cross-env GENERATE_SOURCEMAP=true CI=false craco build",
            ... // 自定义配置
        }
    }
@@ -326,8 +325,8 @@ npm run test:smoke
    
    ```ts
    {
-        name: '[new_module]',   // 新模块的微服务名，自定义
-        requestName: '[new_module_request_name]', // 前后端交互的模块名，与后端协定
+        name: [new_module],   // 新模块的微服务名，自定义
+        requestName: [new_module_request_name], // 前后端交互的模块名，与后端协定
         attributes: {
             src: isDev ? 'http://localhost:[new_port]/' : './plugins/[new_module]/index.html', // 本地开发端口自行分配
         },
@@ -1003,7 +1002,7 @@ pyinstaller
 
 + mingw安装
 
-  从[WinLibs - GCC+MinGW-w64 compiler for Windows](https://winlibs.com/))下载对应的软件包，注意选择MSVCRT版本（>11.2）以确保编译出来的包具备更好的迁移性
+  从[WinLibs - GCC+MinGW-w64 compiler for Windows](https://winlibs.com/)下载对应的软件包，注意选择MSVCRT版本（>11.2）以确保编译出来的包具备更好的迁移性
 
   下载后解压到任意目录下，然后修改系统中的PATH变量，向其中添加mingw64下bin目录路径，如下图所示，假设解压在C盘根目录下
 
@@ -1011,7 +1010,7 @@ pyinstaller
 
 + nsProcess插件安装
 
-  首先需要安装NSIS，需要安装在C:\\program（x86)目录下。从[NsProcess plugin - NSIS](https://nsis.sourceforge.io/NsProcess_plugin)上 获取nsProcess的压缩包。把下载压缩包里面的Include/nsProcess.h 放到 C:\Program Files (x86)\NSIS\Include
+  首先需要安装NSIS，需要安装在C:\\program (x86)目录下。从[NsProcess plugin - NSIS](https://nsis.sourceforge.io/NsProcess_plugin)上 获取nsProcess的压缩包。把下载压缩包里面的Include/nsProcess.h 放到 C:\Program Files (x86)\NSIS\Include
 
   把Plugin/nsProcess.dll 放到 C:\Program Files (x86)\NSIS\Plugins\x86-unicode中
   把Plugin/nsProcessw.dll 放到 C:\Program Files (x86)\NSIS\Plugins\x86-unicode中
@@ -1041,7 +1040,9 @@ pyinstaller
    
    安装完成校验：
    
-   `ninja --version`
+   ```bash
+   ninja --version
+   ```
    
    说明：作为 CMake 的后台构建工具使用。
 
@@ -1066,11 +1067,15 @@ pyinstaller
 
    安装方式：在已安装 Node.js 的前提下，通过 npm 全局安装
    
-   `npm install -g pnpm`
+   ```bash
+   npm install -g pnpm
+   ```
    
    安装完成校验：
    
-   `pnpm --version`
+   ```bash
+   pnpm --version
+   ```
    
    说明：前端项目的包管理工具。
 
