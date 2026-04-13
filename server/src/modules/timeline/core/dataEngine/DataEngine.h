@@ -35,7 +35,7 @@ public:
     DataEngine(DataEngine &&) = delete;
     DataEngine &operator = (DataEngine &&) = delete;
     ~DataEngine() override = default;
-    void SetRepositoryFactory(std::shared_ptr<RepositoryFactoryInterface>) override;
+    void SetRepositoryFactory(std::shared_ptr<RepositoryFactoryInterface> repositoryFactoryInterface) override;
     void QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery,
         std::vector<SliceDomain> &sliceVec) override;
     void QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector<uint64_t> &sliceIds) override;
