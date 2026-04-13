@@ -707,7 +707,7 @@ vncserver -localhost -geometry 1920x1080
     - 如果未开启，可执行以下命令，开启MindStudio Insight插件。
 
         ```shell
-        jupyter server extension enable mindstudio_insight_jupyterlab
+        jupyter server extension enable --py mindstudio_insight_jupyterlab
         ```
 
 5. 开启MindStudio Insight插件后，重复操作[3](#jupyter_3)，打开MindStudio Insight工具。
