@@ -15,7 +15,7 @@
 **解决方案**
 
 1. 单击[链接](https://developer.microsoft.com/en-US/microsoft-edge/webview2/#download-section)，进入Microsoft官网。
-2. 下载“Evergreen Standalone Installer”中x64的安装包，如[**图 1**  WebView2安装包](#WebView2安装包)所示。
+2. 下载“Evergreen Standalone Installer”中的x64的安装包，如[**图 1**  WebView2安装包](#WebView2安装包)所示。
 
     **图 1**  WebView2安装包<a id="WebView2安装包"></a>    
     ![](./figures/FAQ/webview2_installer_1.png "WebView2安装包")
