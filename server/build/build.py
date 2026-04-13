@@ -58,7 +58,6 @@ OUTPUT_DIR = os.path.join(HOME_DIR, 'output')
 OUTPUT_OS_DIR = ''
 OUTPUT_BIN_DIR = ''
 OUTPUT_EXE_DIR = ''
-Spec_Path = os.path.join(BUILD_DIR, 'cluster_analysis.spec')
 
 LOG_DIR = os.path.join(BUILD_DIR, 'logs')
 LOG_FILE = os.path.join(LOG_DIR, 'build.log')
@@ -200,31 +199,23 @@ def pip_install_third_party_for_cluster_analysis():
         pip_site_packages_path = os.path.join(server_output_bin_python_dir, 'lib', 'python' + version, 'site-packages')
 
     # 集群分析工具依赖的三方库在Windows系统和macOS系统上需要安装到构建产物里
-    # 以下三方库通过import *显式导入，必须安装，同时这些三方库也会安装自己的依赖
+    # requirements.txt包含了通过import *显式导入的三方库和pandas使用到的三方库
+    # 这些三方库各自的依赖也需要安装到构建产物里，所有的直接和间接依赖都写在了requirements.txt中
     # 依赖关系：
     # tqdm->colorama
     # pandas->numpy, python-dateutil, pytz, tzdata
     # python-dateutil->six
-    # Python解释器使用绝对路径，三方库安装到指定目录
-    pip_install_cmds = [python_interpreter_path, '-m', 'pip', 'install',
-                        'pandas<=2.3.2', 'numpy<=1.26.4', 'PyYaml', 'tqdm',
-                        '--target', pip_site_packages_path]
-    result = execute_cmd(pip_install_cmds, None)
-    if result != 0:
-        build_log('Failed to pip install necessary third party packages for cluster analysis.')
-        return result
-    build_log('Successfully pip install necessary third party packages for cluster analysis.')
-    # 以下三方库为pandas的可选三方库，集群分析脚本中使用到，同时这些三方库也会安装自己的依赖
-    # 依赖关系：
     # sqlalchemy->greenlet, typing-extensions
-    pip_install_cmds = [python_interpreter_path, '-m', 'pip', 'install',
-                        'sqlalchemy', 'xlsxwriter>=3.0.6',
-                        '--target', pip_site_packages_path]
+    # Python解释器使用绝对路径，三方库安装到指定目录
+    requirements_path = os.path.join(BUILD_DIR, 'requirements.txt')
+    pip_install_cmds = [python_interpreter_path, '-m', 'pip', 'install', '-r', requirements_path,
+                        '--target', pip_site_packages_path, '-i', 'https://mirrors.aliyun.com/pypi/simple/',
+                        '--only-binary', ':all:', '--no-cache-dir']
     result = execute_cmd(pip_install_cmds, None)
     if result != 0:
-        build_log('Failed to pip install optional third party packages for cluster analysis.')
+        build_log('Failed to pip install third party packages for cluster analysis.')
         return result
-    build_log('Successfully pip install optional third party packages for cluster analysis.')
+    build_log('Successfully pip install third party packages for cluster analysis.')
     return 0
 
 
