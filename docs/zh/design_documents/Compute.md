@@ -30,7 +30,7 @@
 
 文件格式：*.json 
 判断逻辑：json文件中在第一个数组开始前，包含“profilingType”和“op“
-内容格式：traceEvent， 等同timeline的json文件
+内容格式：traceEvents， 等同timeline的json文件
 内容示例：
 
 ```JSON
@@ -85,7 +85,7 @@ visualize_data.bin中各个数据块数据类型分配原则：
 |0x0C |核间负载。  |
 |0x0D |roofline模型。  |
  
-json部分数据内容示例：
+JSON部分数据内容示例：
 0x01 代码文件:
 功能页面：
  ![compute_json_1](./figures/compute_json.png)
@@ -149,6 +149,7 @@ json部分数据内容示例：
           ],
           "Line": 100 // 代码行号
         }
+      ],
       "Source": string // 源代码文件路径
     }
   ]
@@ -182,7 +183,7 @@ json部分数据内容示例：
         "Pipe": 3,
         "TheoreticalStallCycles": 1,
         "Source": 3,
-        "RealStallCycles": 1，
+        "RealStallCycles": 1,
         "L2Cache Hit Rate": 3
      }
 },
@@ -199,11 +200,11 @@ json部分数据内容示例：
       "Pipe": string,     // 指令所属的指令队列,如"SCALAR"
       "TheoreticalStallCycles": [                    // 预期阻塞时间
         int
-       ],
+      ],
       "Source": string,     // 指令内容, 如"MOV_XD_IMM XD:X29,IMM"
       "RealStallCycles": [                    // 实际阻塞时间
         int
-       ]
+      ]
     }
   ]
 }
@@ -289,7 +290,7 @@ json部分数据内容示例：
     "block_dim": uint16,    // block dim数据
     "mix_block_dim": uint16,// mix算子下从核的数量
     "duration": float32,    // 算子总耗时
-    "device_id": unit16,    // 设备号
+    "device_id": uint16,    // 设备号
     "pid": str,                    // 进程号
     "block_detail": [       // 当op_type == aic/aiv时，有效
         {
@@ -415,7 +416,7 @@ json部分数据内容示例：
                 "ratio": float32,
                 "cycle": uint64,
                 "total_cycles": uint64,
-            }
+            },
             "advice": [ // 建议
                 string, string, ...
             ]
@@ -459,7 +460,7 @@ json部分数据内容示例：
                 string, string, ...
              ]
         },
-    ]
+    ],
 
     "advice": [ // 建议，目前为空，预留
         string, string, ...
@@ -617,7 +618,7 @@ struct CacheRecord {
 
 ```JSON
 {
-    "advice": "t1) core0 vector0 took more time than other vector cores.n",
+    "advice": "1) core0 vector0 took more time than other vector cores.",
     "op_detail": [
         {
             "core_detail": [
@@ -664,20 +665,25 @@ struct CacheRecord {
 ```JSON
 // roofline数据块
 {
- "multiple_rooflines": [{
-"title": "Memory Unit",             // 图表标题
-  "rooflines": [{
-   "bw": float,                   // 理论带宽 
-   "computility": float,            // 屋顶算力
-   "computility_name": str,       // 算力名称
-   "point": [float, float]          // 对应坐标点
-  }, {
-   "bw": float,                      
-   "computility": float,
-   "computility_name": str,
-   "point": [float, float]
-  }]
- }]
+ "multiple_rooflines": [
+    {
+      "title": "Memory Unit",             // 图表标题
+      "rooflines": [
+        {
+          "bw": float,                   // 理论带宽 
+          "computility": float,            // 屋顶算力
+          "computility_name": str,       // 算力名称
+          "point": [float, float]          // 对应坐标点
+        },
+        {
+          "bw": float,                      
+          "computility": float,
+          "computility_name": str,
+          "point": [float, float]
+        }
+      ]
+    }
+  ]
 }
 ```
  
@@ -1128,6 +1134,7 @@ struct CacheRecord {
           ],
           "Line": 100 // 代码行号
         }
+      ],
       "Source": string // 源代码文件路径
     }
   ]
@@ -1159,7 +1166,7 @@ struct CacheRecord {
         "Pipe": 3,
         "TheoreticalStallCycles": 1,
         "Source": 3,
-        "RealStallCycles": 1，
+        "RealStallCycles": 1,
         "L2Cache Hit Rate": 3
      }
 },
@@ -1176,11 +1183,11 @@ struct CacheRecord {
       "Pipe": string,     // 指令所属的指令队列,如"SCALAR"
       "TheoreticalStallCycles": [                    // 预期阻塞时间
         int
-       ],
+      ],
       "Source": string,     // 指令内容, 如"MOV_XD_IMM XD:X29,IMM"
       "RealStallCycles": [                    // 实际阻塞时间
         int
-       ]
+      ]
     }
   ]
 }
@@ -1262,7 +1269,7 @@ struct CacheRecord {
       {
         "Line": 0,
         "Instructions Executed": 15,
-        "Cycle": 15,
+        "Cycles": 15,
         "Address Range": [
           [
             "0x1269fe78",
@@ -1301,7 +1308,7 @@ struct CacheRecord {
   "command": "source/api/instructions",
   "moduleName": "source",
   "body": {
-    "instructions": "{\"Cores\":[\"core0.cubecore0\",\"core0.veccore0\"..."
+    "instructions": "{\"Cores\":[\"core0.cubecore0\",\"core0.veccore0\"...]}"
   }
 }
 ```
@@ -1610,7 +1617,7 @@ json格式说明：
     "block_dim": uint16,    // block dim数据
     "mix_block_dim": uint16,// mix算子下从核的数量
     "duration": float32,    // 算子总耗时
-    "device_id": unit16,    // 设备号
+    "device_id": uint16,    // 设备号
     "pid": str,                    // 进程号
     "block_detail": [       // 当op_type == aic/aiv时，有效
         {
@@ -1760,7 +1767,7 @@ Json结构说明：
                 string, string, ...
              ]
         },
-    ]
+    ],
 
     "advice": [ // 建议，目前为空，预留
         string, string, ...
@@ -1869,7 +1876,7 @@ TraceRecord结构体字段含义说明：
 
 Cache信息记录结构体设计：
 
-```Shell
+```cpp
 struct CacheRecord {
     uint32_t loadCount{0};
     uint32_t storeCount{0};
