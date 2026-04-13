@@ -22,7 +22,7 @@
 
 ![communication_processed_db_data](./figures/communication_processed_db_data.png)
 
-| 页面数据 | url请求 | db数据类型 | text数据类型 |
+| 页面数据 | URL请求 | db数据类型 | text数据类型 |
 | --- | --- | --- | --- |
 | ![communication_page_data_1](./figures/communication_page_data_1.png) | communication/matrix/bandwidthInfo | ![communication_db_data_1](./figures/communication_db_data_1.png) | ![communication_text_data_1_1](./figures/communication_text_data_1_1.png) ![communication_text_data_1_2](./figures/communication_text_data_1_2.png) |
 | ![communication_duration_iterations_1](./figures/communication_duration_iterations_1.png) | communication/duration/iterations | ![communication_duration_iterations_2](./figures/communication_duration_iterations_2.png) | ![communication_duration_iterations_3](./figures/communication_duration_iterations_3.png) |
