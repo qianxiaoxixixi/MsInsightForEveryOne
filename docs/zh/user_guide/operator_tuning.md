@@ -320,7 +320,7 @@ MindStudio Insight支持指令统计信息和单个指令详情信息查看。
     |执行指令数|Instructions Executed|该行代码在每个Core上执行的指令数量。|100|
     |时钟周期|Cycles|该行代码在每个Core上执行消耗的Cycles（时钟周期）。|100|
     |通用寄存器数|GPR Count|该行代码在每个Core上执行时使用的通用寄存器次数。仅当使用msopprof simulator采集的数据支持显示该参数。|10|
-    |L2Cache命中率|L2Cache Hit Rate|该行代码在所有Core上执行的L2 Cache命中率。仅当使用msopprof采集的数据支持显示该参数。|100%|
+    |L2 Cache命中率|L2 Cache Hit Rate|该行代码在所有Core上执行的L2 Cache命中率。仅当使用msopprof采集的数据支持显示该参数。|100%|
     |处理数据量(Bytes)|Process Bytes|该行代码在每个Core上执行处理的数据量之和，单位Byte。|2048|
 
 - 区域三：指令表，查看指令记录，包括地址、内容、数量、次数等，表中字段解释如[**表 2**  指令表字段说明](#指令表字段说明)所示。
@@ -337,7 +337,7 @@ MindStudio Insight支持指令统计信息和单个指令详情信息查看。
     |通用寄存器数|GPR Count|该行指令在每个Core上执行时使用的通用寄存器次数。仅当使用msopprof simulator采集的数据支持显示该参数。|10|
     |寄存器状态|GPR Status|寄存器依赖信息，以图形化展示。由多列带箭头的直线组成，每一列代表一个寄存器。其中左实心箭头表示为写，右空心箭头为读，竖线表示当前寄存器仍在使用。当鼠标悬停在寄存器上时，会显示寄存器信息。<br> 仅<term>Ascend 950PR/Ascend 950DT</term>导出的数据支持显示该参数。|-|
     |时钟周期|Cycles|该行指令在每个Core上执行消耗的Cycles（时钟周期）。|100|
-    |L2Cache命中率|L2Cache Hit Rate|该行指令在所有Core上执行的L2 Cache命中率。仅当使用msopprof采集的数据支持显示该参数。|72%|
+    |L2 Cache命中率|L2 Cache Hit Rate|该行指令在所有Core上执行的L2 Cache命中率。仅当使用msopprof采集的数据支持显示该参数。|72%|
     |处理数据量(Bytes)|Process Bytes|该行指令在每个Core上执行处理的数据量，单位Byte。|2048|
     |UB单元读冲突|UB Read Conflict|Vector计算类指令在UB Bank上读的冲突情况。仅当使用msopprof simulator采集的数据支持显示该参数。|1|
     |UB单元写冲突|UB Write Conflict|Vector计算类指令在UB Bank上写的冲突情况。仅当使用msopprof simulator采集的数据支持显示该参数。|0|
