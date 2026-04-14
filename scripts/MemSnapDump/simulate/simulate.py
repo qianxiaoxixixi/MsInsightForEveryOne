@@ -42,9 +42,9 @@ class SimulateDeviceSnapshot:
         if not snapshot_dict:
             raise RuntimeError("Cannot init snapshot from empty data.")
         self._loading_logger.info(f"Loading snapshot data...")
-        self.device_snapshot = DeviceSnapshot.from_dict(snapshot_dict, device)
+        self.device_snapshot = DeviceSnapshot.from_dict(snapshot_dict, device, ignore_inactive_blocks=True)
         self._loading_logger.info(f"Finished to load snapshot data: total of {len(self.device_snapshot.trace_entries)} "
-                            f"entries and {len(self.device_snapshot.segments)} segments.")
+                                  f"entries and {len(self.device_snapshot.segments)} segments.")
         self.hookers = dict[int, SimulateHooker]()
         self.simulated_allocator_context = AllocatorContext(snapshot=self.device_snapshot)
         self.simulated_allocator = SimulatedCachingAllocator(self.simulated_allocator_context)
@@ -89,7 +89,7 @@ class SimulateDeviceSnapshot:
             current_size = len(self.device_snapshot.trace_entries)
             if progress_update_point and progress_update_point[-1] * total_size >= current_size:
                 self._replay_logger.info(f"{(1 - progress_update_point[-1]) * 100}% of entries have been processed, "
-                                   f"{current_size} entries remain.")
+                                         f"{current_size} entries remain.")
                 progress_update_point.pop()
             for hooker in self.hookers.values():
                 if hooker and not hooker.post_undo_event(event, self.device_snapshot):
