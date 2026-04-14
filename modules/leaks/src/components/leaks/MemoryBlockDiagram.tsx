@@ -132,7 +132,7 @@ export const MemoryBlockDiagram = observer(({ session }: { session: Session }): 
         if (ref.current === null) {
             return;
         }
-        ref.current.focus();
+        ref.current.focus({ preventScroll: true });
         if (isClick.current) {
             isClick.current = false;
             isDragging.current = true;
