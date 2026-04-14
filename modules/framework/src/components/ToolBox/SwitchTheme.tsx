@@ -16,13 +16,26 @@
  * -------------------------------------------------------------------------
  */
 import React, { useEffect, useState } from 'react';
-import { Tooltip, Switch } from '@insight/lib/components';
+import styled from '@emotion/styled';
+import { Tooltip } from '@insight/lib/components';
+import { MoonOutlined, SunOutlined } from '@ant-design/icons';
 import { localStorageService, LocalStorageKey } from '@insight/lib';
 import { ThemeName } from '@/utils/enum';
 import { sendTheme } from '@/connection/sendNotification';
 import { useTranslation } from 'react-i18next';
 
-const useTheme = (): [ThemeName, (val: ThemeName) => void] => {
+const IconWrapper = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: ${({ theme }) => theme.iconColor};
+    svg {
+        width: 16px !important;
+        height: 16px !important;
+    }
+`;
+
+const useThemeState = (): [ThemeName, (val: ThemeName) => void] => {
     const [theme, setTheme] = useState(localStorageService.getItem(LocalStorageKey.THEME) ?? ThemeName.DARK);
 
     useEffect(() => {
@@ -36,14 +49,16 @@ const useTheme = (): [ThemeName, (val: ThemeName) => void] => {
 // 切换主题
 function SwitchTheme(): JSX.Element {
     const { t } = useTranslation('framework');
-    const [theme, setTheme] = useTheme();
+    const [theme, setTheme] = useThemeState();
     const isDarkTheme = theme === ThemeName.DARK;
     const onChange = (): void => {
         setTheme(isDarkTheme ? ThemeName.LIGHT : ThemeName.DARK);
     };
 
-    return <Tooltip placement={'bottom'} title={t('Switch Theme')}>
-        <Switch checked={isDarkTheme} onChange={onChange} size={'small'} className={`switch-theme ${isDarkTheme ? 'switch-theme-dark' : 'switch-theme-light'}`}/>
+    return <Tooltip placement={'bottom'} title={isDarkTheme ? t('Light Theme') : t('Dark Theme')}>
+        <IconWrapper onClick={onChange} className="switch-theme" data-testid="switch-theme">
+            {isDarkTheme ? <SunOutlined /> : <MoonOutlined />}
+        </IconWrapper>
     </Tooltip>;
 }
 

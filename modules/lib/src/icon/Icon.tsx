@@ -53,7 +53,7 @@ import { ReactComponent as FullTextSvg } from './img/full_text.svg';
 import { ReactComponent as FullTextActiveSvg } from './img/full_text_active.svg';
 
 import { CopyOutlined } from '@ant-design/icons';
-import { compareColors, useThemeColor } from '../utils/Color';
+import { compareColors } from '../utils/Color';
 import { useTheme } from '@emotion/react';
 
 interface ISVGProps extends React.SVGProps< SVGSVGElement > {
