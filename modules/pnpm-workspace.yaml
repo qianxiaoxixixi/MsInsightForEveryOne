@@ -9,5 +9,4 @@ packages:
   - 'statistic'
   - 'timeline'
   - 'reinforcement-learning'
-  - 'triton'
-  - 'triton-new'
+  - 'memory-on-chip'

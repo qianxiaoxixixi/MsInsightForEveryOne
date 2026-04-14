@@ -41,7 +41,7 @@ MODULES_MAP = {
     'compute': 'Compute',
     'statistic': 'Statistic',
     'leaks': 'Leaks',
-    'triton': 'Triton',
+    'memory-on-chip': 'memoryOnChip',
     'timeline': 'Timeline',
 }
 
