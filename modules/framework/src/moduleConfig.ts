@@ -35,6 +35,7 @@ export interface ModuleConfig {
 
 const isDev = process.env.REACT_APP_ENV === 'development';
 export const MEM_SCOPE_MODULE_NAME = 'MemScope';
+export const ON_CHIP_MEMORY_MODULE_NAME = 'On-Chip Memory'; // 原 Triton
 export const modulesConfig: ModuleConfig[] = [
     {
         name: 'Timeline',
@@ -140,10 +141,10 @@ export const modulesConfig: ModuleConfig[] = [
         isRL: true,
     },
     {
-        name: 'Triton',
+        name: ON_CHIP_MEMORY_MODULE_NAME,
         requestName: 'triton',
         attributes: {
-            src: isDev ? 'http://localhost:3009/' : './plugins/Triton/index.html',
+            src: isDev ? 'http://localhost:3009/' : './plugins/MemoryOnChip/index.html',
         },
         isTriton: true,
     },

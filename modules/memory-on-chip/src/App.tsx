@@ -1,7 +1,7 @@
 /*
  * -------------------------------------------------------------------------
  * This file is part of the MindStudio project.
- * Copyright (c) 2025 Huawei Technologies Co.,Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co.,Ltd.
  *
  * MindStudio is licensed under Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -15,21 +15,28 @@
  * See the Mulan PSL v2 for more details.
  * -------------------------------------------------------------------------
  */
-const {webpackCfg, configureConfig} = require('../build-config');
-const path = require('path');
+import React, { useEffect } from 'react';
+import { observer } from 'mobx-react-lite';
+import { Layout } from '@insight/lib/components';
+import { Home } from '@/pages/Home';
+import { connector } from '@/connection';
 
-const libPath = path.resolve(__dirname, '../lib/src');
-const echartsPath = require.resolve('echarts');
+const App: React.FC = observer(() => {
+    useEffect(() => {
+        connector.send({
+            event: 'getParseStatus',
+            body: {
+                from: 'On-Chip Memory',
+                requests: ['language', 'theme', 'tritonParsed'],
+            },
+        });
+    }, []);
 
-module.exports = {
-    devServer: {
-        port: 3010,
-        open: false,
-    },
-    webpack: {
-        alias: webpackCfg.alias,
-        configure: (webpackConfig) => {
-            return configureConfig(webpackConfig, [libPath, echartsPath]);
-        }
-    },
-};
+    return (
+        <Layout>
+            <Home />
+        </Layout>
+    );
+});
+
+export default App;

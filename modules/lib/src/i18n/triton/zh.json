@@ -4,10 +4,10 @@
     "Current Time": "当前时间",
     "sliceDetail": "选中详情",
     "stateDiagram": "内存池状态图",
-    "EmptyTips": "请点击上方的内存块图查看内存状态",
+    "EmptyTips": "请点击上方的内存块图查看内存分布",
     "Memory Life Cycle": "内存生命周期",
     "Memory Snapshot": "内存快照",
-    "Bank Conflicts Analysis": "Bank冲突分析图",
+    "Memory Layout": "内存分布",
     "Compile Failed": "编译失败",
     "Compile Success": "编译成功",
     "Error Info": "错误信息"

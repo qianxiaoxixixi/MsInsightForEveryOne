@@ -21,7 +21,7 @@ import type { Scene, Session } from '@/entity/session';
 import { type MenuProps, message, Menu, Tooltip } from 'antd';
 import { safeJSONParse } from '@insight/lib/utils';
 
-import { type ModuleConfig, modulesConfig, MEM_SCOPE_MODULE_NAME } from '@/moduleConfig';
+import { type ModuleConfig, modulesConfig, MEM_SCOPE_MODULE_NAME, ON_CHIP_MEMORY_MODULE_NAME } from '@/moduleConfig';
 import styled from '@emotion/styled';
 import { SessionAction } from '@/utils/enum';
 import { useTranslation } from 'react-i18next';
@@ -133,7 +133,7 @@ const Index = observer(({ session }: {session: Session}) => {
         , [scene, dataCompose, mergedModulesConfig]);
     const isLeaks = useMemo(() => availableModules.some(module => module.isLeaks && module.name === MEM_SCOPE_MODULE_NAME)
         , [availableModules]);
-    const isTriton = useMemo(() => availableModules.some(module => module.isTriton && module.name === 'Triton')
+    const isTriton = useMemo(() => availableModules.some(module => module.isTriton && module.name === ON_CHIP_MEMORY_MODULE_NAME)
         , [availableModules]);
     const getIcon = (tabTitle: string): React.ReactElement => {
         return <Tooltip mouseEnterDelay={1} title={
@@ -157,7 +157,7 @@ const Index = observer(({ session }: {session: Session}) => {
             return modules.filter(module => module.key === MEM_SCOPE_MODULE_NAME);
         }
         if (isTriton) {
-            return modules.filter(module => module.key === 'Triton');
+            return modules.filter(module => module.key === ON_CHIP_MEMORY_MODULE_NAME);
         }
         return modules;
     }, [availableModules, t]);
@@ -275,7 +275,7 @@ const Index = observer(({ session }: {session: Session}) => {
 
     useEffect(() => {
         if (isTriton) {
-            setActiveModule('Triton');
+            setActiveModule(ON_CHIP_MEMORY_MODULE_NAME);
         }
     }, [isTriton]);
     return <Container>
