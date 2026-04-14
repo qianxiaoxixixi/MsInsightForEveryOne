@@ -187,7 +187,7 @@ class Segment:
     alloc_or_map_event_idx: int = None
 
     @classmethod
-    def from_dict(cls, segment_dict: dict):
+    def from_dict(cls, segment_dict: dict, ignore_inactive_blocks: bool = False):
         segment = cls(
             address=segment_dict["address"],
             total_size=segment_dict["total_size"],
@@ -201,13 +201,15 @@ class Segment:
             is_expandable=segment_dict.get("is_expandable", False)
         )
         for block in segment_dict["blocks"]:
+            if ignore_inactive_blocks and block["state"] == BlockState.INACTIVE:
+                continue
             _block = Block.from_dict(block)
             _block.segment_ptr = segment
             segment.blocks.append(_block)
         return segment
 
     @classmethod
-    def build_from_event(cls, event: TraceEntry):
+    def build_from_event(cls, event: TraceEntry, with_inactive_block: bool = False):
         segment = cls(
             address=event.addr,
             total_size=event.size,
@@ -218,8 +220,7 @@ class Segment:
             active_size=0,
             is_expandable=event.action in ['segment_map', 'segment_unmap']
         )
-        # 从事件创建segment时，需要为segment填充一个inactive的block
-        segment.blocks = [Block(
+        segment.blocks = [] if not with_inactive_block else [Block(
             size=event.size,
             requested_size=event.size,
             address=event.addr,
@@ -267,7 +268,7 @@ class DeviceSnapshot:
     device: int
 
     @classmethod
-    def from_dict(cls, snapshot_dict: dict, device: int):
+    def from_dict(cls, snapshot_dict: dict, device: int, ignore_inactive_blocks: bool = False):
         segments_dict = snapshot_dict.get("segments", [])
         device_traces = snapshot_dict.get("device_traces", [])
         device_trace_list = device_traces[device] if 0 <= device <= len(device_traces) else []
@@ -283,12 +284,12 @@ class DeviceSnapshot:
             # 此时如果from_dict指定device为0或未指定而缺省为0，则未知归属的device也会纳入分析
             if segment_dict.get("device", 0) != device:
                 continue
-            _segment = Segment.from_dict(segment_dict)
+            _segment = Segment.from_dict(segment_dict, ignore_inactive_blocks=ignore_inactive_blocks)
             snapshot.segments.append(_segment)
             snapshot.total_allocated += _segment.allocated_size
             snapshot.total_reserved += _segment.total_size
             snapshot.total_activated += _segment.active_size
-        snapshot.segments.sort(key=lambda segment: segment.address)
+        snapshot.segments.sort(key=lambda segment: (segment.address, segment.stream))
         # 读取事件序列
         for idx, trace_entry_dict in enumerate(device_trace_list):
             trace_entry = TraceEntry.from_dict(trace_entry_dict)
@@ -304,7 +305,7 @@ class DeviceSnapshot:
             'device_traces': [[] for _ in range(self.device)] + [[trace.to_dict() for trace in self.trace_entries]]
         }
 
-    def find_segment_idx_by_addr(self, addr: int) -> int:
+    def find_segment_idx_by_addr(self, addr: int, stream: int = None) -> int:
         left = 0
         segments = self.segments
         right = len(segments) - 1
@@ -315,5 +316,17 @@ class DeviceSnapshot:
             elif addr >= segments[mid].address + segments[mid].total_size:
                 left = mid + 1
             else:
+                # 地址范围内，如果指定了 stream 还需验证 stream 匹配
+                if stream is not None and segments[mid].stream != stream:
+                    # 同地址按 stream 升序排列，根据大小关系确定搜索方向和 range
+                    step = -1 if stream < segments[mid].stream else 1
+                    end = -1 if step == -1 else len(segments)
+                    for i in range(mid + step, end, step):
+                        if addr < segments[i].address:
+                            break
+                        if addr < segments[i].address + segments[i].total_size and segments[i].stream == stream:
+                            return i
+                    return -1
                 return mid
         return -1
+
