@@ -24,7 +24,7 @@ DB格式：
 
 ### mstt集群分析工具
 
-[mstt集群分析工具](https://gitcode.com/Ascend/mstt/blob/master/profiler/msprof_analyze/README.md)
+[mstt集群分析工具](https://gitcode.com/Ascend/mstt/blob/26.0.0/profiler/msprof_analyze/README.md)
 
 Windows
 

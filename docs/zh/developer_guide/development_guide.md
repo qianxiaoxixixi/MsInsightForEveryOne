@@ -197,7 +197,7 @@ bash build/mindstudio_insight_gui_run.sh
 
 #### 3.5.2 在Windows上进行预冒烟测试
 
-- 在Windows上进行预冒烟测试，安装依赖参考[GUI指导文档](https://gitcode.com/Ascend/msinsight/blob/master/e2e/README.md)
+- 在Windows上进行预冒烟测试，安装依赖参考[GUI指导文档](https://gitcode.com/Ascend/msinsight/blob/26.0.0/e2e/README.md)
 
 - 在e2e目录下，执行
 
@@ -1151,7 +1151,7 @@ python3 download_third_party.py && python3 preprocess_third_party.py
 
 ##### Step 2. 指定APP签名证书（可选）
 
-**注意**：请您确保已阅读并知悉[LICENSE](https://gitcode.com/Ascend/msinsight/blob/master/docs/LICENSE)要求。
+**注意**：请您确保已阅读并知悉[LICENSE](https://gitcode.com/Ascend/msinsight/blob/26.0.0/docs/LICENSE)要求。
 
 - 步骤说明：Insight MacOS ARM版本在构建出包时，会对产物APP进行MacOS的开发者证书签名。您可以通过环境变量配置指定签名所用证书。如不指定，缺省时使用临时证书进行签名，可能导致您的insight产物**无法通过网络进行分发**（具体表现可能为将临时签名的产物通过网络分发到其他设备时，安装后无法打开），若您仅在本地进行调试运行，使用时不受影响，可跳过此步骤。
 - 证书使用前置：要求为可用于签名的苹果开发者证书，并确保已正确导入钥匙串中（如登陆钥匙串~/Library/Keychains/login.keychain）。
