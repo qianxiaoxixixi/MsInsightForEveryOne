@@ -156,6 +156,8 @@ importers:
 
   timeline: {}
 
+  triton-new: {}
+
 packages:
 
   '@adobe/css-tools@4.4.4':

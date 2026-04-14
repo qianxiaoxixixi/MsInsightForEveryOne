@@ -9,3 +9,5 @@ packages:
   - 'statistic'
   - 'timeline'
   - 'reinforcement-learning'
+  - 'triton'
+  - 'triton-new'

@@ -4,6 +4,12 @@
     "Current Time": "Current Time",
     "sliceDetail": "Slice Detail",
     "stateDiagram": "Memory Pool State Diagram",
-    "EmptyTips": "Please click on the chart above to view memory state"
+    "EmptyTips": "Please click on the chart above to view memory state",
+    "Memory Life Cycle": "Memory Life Cycle",
+    "Memory Snapshot": "Memory Snapshot",
+    "Bank Conflicts Analysis": "Bank Conflicts Analysis",
+    "Compile Failed": "Compile Failed",
+    "Compile Success": "Compile Success",
+    "Error Info": "Error Info"
   }
 }
