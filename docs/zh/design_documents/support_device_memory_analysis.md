@@ -87,7 +87,7 @@
 
 ## 2.1特性需求来源与价值概述
 
-在强化学习场景下，其包含多个generate_sequence、actor_update等多个不同的阶段，其内存变化也是非常复杂的，通过snapshot或MsMemScope能够深入分析各个阶段内存使用细节，为解决OOM和内存优化提供依据。
+在强化学习场景下，其包含多个generate_sequence、actor_update等多个不同的阶段，其内存变化也是非常复杂的，通过snapshot或msMemScope能够深入分析各个阶段内存使用细节，为解决OOM和内存优化提供依据。
 
 ## 2.2特性场景分析
 
