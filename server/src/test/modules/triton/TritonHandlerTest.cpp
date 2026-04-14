@@ -52,16 +52,19 @@ TEST_F(TritonHandlerTest, QueryTritonMemoryBlocksHandlerTest)
     s.start = 100;
     s.end = 200;
     TritonTensorBlock b;
-    b.id = 1;
+    b.id = "1";
     s.blocks.push_back(b);
-    std::vector<TritonTensorSegment> segments;
-    segments.push_back(s);
-    TritonService::Instance().UpdateRecord(std::move(segments));
+    std::map<std::string, TritonRecord> records;
+    TritonRecord record;
+    record.segments.push_back(s);
+    records["scope_test"] = record;
+    TritonService::Instance().UpdateRecord(std::move(records));
     
     // 构造请求
     auto req = std::make_unique<TritonMemoryBlocksRequest>();
     req->startTimestamp = 100;
     req->endTimestamp = 200;
+    req->scopeType = "scope_test";
     
     QueryTritonMemoryBlocksHandler handler;
     // 注意：HandleRequest 内部会调用 SendResponse。
@@ -78,6 +81,7 @@ TEST_F(TritonHandlerTest, QueryTritonBasicInfoHandlerTest)
 {
     TritonMemeHeader header;
     header.kernelName = "test_kernel";
+    header.memTypes = {"scope_test"};
     TritonService::Instance().SetHeader(std::move(header));
     
     auto req = std::make_unique<TritonBasicInfoRequest>();
@@ -95,12 +99,15 @@ TEST_F(TritonHandlerTest, QueryTritonMemoryUsageHandlerTest)
     TritonTensorSegment s;
     s.start = 100;
     s.end = 200;
-    std::vector<TritonTensorSegment> segments;
-    segments.push_back(s);
-    TritonService::Instance().UpdateRecord(std::move(segments));
+    std::map<std::string, TritonRecord> records;
+    TritonRecord record;
+    record.segments.push_back(s);
+    records["scope_test"] = record;
+    TritonService::Instance().UpdateRecord(std::move(records));
     
     auto req = std::make_unique<TritonMemoryUsageRequest>();
     req->timestamp = 150;
+    req->scopeType = "scope_test";
     
     QueryTritonMemoryUsageHandler handler;
     bool result = handler.HandleRequest(std::move(req));

@@ -22,6 +22,7 @@
 #include "ProjectAnalyze.h"
 #include "ProjectExplorerManager.h"
 #include "TritonParser.h"
+#include "ThreadPool.h"
 
 
 namespace Dic::Module {
