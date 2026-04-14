@@ -23,9 +23,7 @@
 #include <vector>
 #include <utility>
 #include <atomic>
-
-#include "DataBaseManager.h"
-
+#include "JsonUtil.h"
 namespace Dic::Module::Triton {
 struct ParseProgressInfo {
     uint64_t parsedSize{0};
@@ -57,8 +55,6 @@ protected:
     bool CheckFileValid(const std::string& fileName, std::string& error);
     ParseResult ParseOneTriton(const std::string& memFile);
     bool CheckDataValid(document_t& json);
-    void SendParseResultFailed(const ParseResult& result);
-    void SendParseResultSuccess(const ParseResult& result);
 private:
     std::vector<std::string> parsedFiles;
     std::atomic<bool> terminated{false};

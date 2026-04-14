@@ -18,72 +18,17 @@
 
 #ifndef PROFILER_SERVER_TRITONSERVICE_H
 #define PROFILER_SERVER_TRITONSERVICE_H
-#include <cstdint>
 #include <mutex>
 #include <string>
 #include <vector>
-
+#include <map>
+#include <memory>
+#include <string_view>
+#include "TritonMemoryDefs.h"
+#include "VirtualAddressManager.h"
 #include "GlobalDefs.h"
 
 namespace Dic::Module::Triton {
-
-struct TritonTensorBlock;
-/*
- * 对应一次tensor alloc
- */
-struct TritonTensorSegment {
-    uint64_t size{0};
-    bool tmpBuf{false};
-    std::string buffer;
-    std::string sourceLocation;
-    uint64_t start{0};
-    uint64_t end{0};
-    uint64_t allocate{0};
-    std::vector<TritonTensorBlock> blocks;
-};
-
-struct TritonTensorSegment;
-/*
- * 开启double buffer时会一个tensor会对应多个block
- */
-struct TritonTensorBlock {
-public:
-    TritonTensorBlock() = default;
-    TritonTensorBlock(const TritonTensorSegment& segment)
-    {
-        id = segment.allocate;
-        allocate = segment.allocate;
-        start = segment.start;
-        end = segment.end;
-        tmpBuf = segment.tmpBuf;
-        buffer = segment.buffer;
-        sourceLocation = segment.sourceLocation;
-    }
-    std::string GetAttrStr() const
-    {
-        document_t attr(rapidjson::kObjectType);
-        auto& allocator = attr.GetAllocator();
-        JsonUtil::AddMember(attr, "buffer", buffer, allocator);
-        JsonUtil::AddMember(attr, "offset", offset, allocator);
-        JsonUtil::AddMember(attr, "sourceLocation", sourceLocation, allocator);
-        JsonUtil::AddMember(attr, "allocLine", allocate, allocator);
-        JsonUtil::AddMember(attr, "tmpBuf", tmpBuf, allocator);
-        return JsonUtil::JsonDump(attr);
-    }
-    uint64_t id{};
-    uint64_t offset{0};
-    uint64_t size{0};
-    uint64_t allocate{0};
-    uint64_t start{0};
-    uint64_t end{0};
-    bool tmpBuf{false};
-    std::string sourceLocation; // 默认为空，当前端返回纯block形式时才赋值
-    std::string buffer;         // 默认为空，当前端返回纯block形式时才赋值
-};
-
-struct TritonMemeHeader {
-    std::string kernelName;
-};
 
 class TritonService {
 public:
@@ -92,15 +37,24 @@ public:
     TritonService(TritonService&&) = delete;
     TritonService& operator=(const TritonService&) = delete;
     void Reset();
-    void UpdateRecord(std::vector<TritonTensorSegment>&& segment);
+    void UpdateRecord(std::map<std::string, TritonRecord> &&records);
     void SetHeader(TritonMemeHeader&& header);
+    bool ContainsMemDataOf(const std::string& memType) const;
     [[nodiscard]] TritonMemeHeader GetHeader() const { return header_; }
-    [[nodiscard]] std::vector<TritonTensorSegment> QuerySegmentsContainRange(uint64_t timestamp) const;
-    [[nodiscard]] std::vector<TritonTensorBlock> QueryBlocksContainRange(uint64_t start, uint64_t end) const;
+    [[nodiscard]] std::vector<TritonTensorSegment> QuerySegmentsContainRange(const std::string &scopeType, uint64_t timestamp) const;
+    [[nodiscard]] std::vector<TritonTensorBlock> QueryBlocksContainRange(const std::string &scopeType, uint64_t start, uint64_t end) const;
+    void UpdateCompileInfo(const std::string& scopeType, std::pair<std::string, std::string>&& compileInfo);
+    [[nodiscard]] std::string GetCompileStatus(const std::string& scopeType) const;
+    [[nodiscard]] std::string GetCompileErrMsg(const std::string& scopeType) const;
+
 private:
-    TritonService() = default;
+    TritonService();
+    ~TritonService();
+    uint64_t GetMemorySize(std::string_view kernelName, std::string_view scopeType);
     TritonMemeHeader header_;
-    std::vector<TritonTensorSegment> segments_;  // 按start end 进行升序排序
+    std::map<std::string, TritonRecord> records_;
+    std::map<std::string, std::pair<std::string, std::string>> compileInfo_; // scopeType -- compileStatus, compileErrMsg
+    std::map<std::string, std::unique_ptr<VirtualAddressManager>> addressManager_; // memoryTpe -- manager
 };
 }
 
