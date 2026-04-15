@@ -30,6 +30,7 @@ const StyledSliceDetailDiv = styled.div`
     flex: 1;
     color: ${(props): string => props.theme.tableTextColor};
     font-size: 12px;
+    padding-top: 10px;
 
     .sliceDetailTitle {
         text-align: start;
@@ -40,13 +41,15 @@ const StyledSliceDetailDiv = styled.div`
         display: flex;
         text-align: left;
         line-height: 32px;
+        word-break: break-all;
+        padding-left: 24px;
         .sliceDetailName {
-            flex: 1;
-            padding-left: 24px;
+            flex: none;
+            width: 180px;
             font-weight: bold;
+            margin-right: 20px;
         }
         .sliceDetailMsg {
-            flex: 4;
             user-select: text;
             .iconContainer{
                 display: flex;
@@ -75,13 +78,13 @@ export const SelectedDataBase = observer((props: timeDetailProps): JSX.Element =
     const { renderer, hasTitle = false } = props;
     const { t } = useTranslation('timeline', { keyPrefix: 'sliceDetail' });
     return <StyledSliceDetailDiv>
-        {hasTitle && <div className = "sliceDetail">
-            <div className = "sliceDetailName">{t('Event(s)')}</div>
-            <div className = "sliceDetailMsg">{t('Link')}</div>
+        {hasTitle && <div className="sliceDetail">
+            <div className="sliceDetailName">{t('Event(s)')}</div>
+            <div className="sliceDetailMsg">{t('Link')}</div>
         </div>}
-        {renderer?.map((item, index) => <div className = "sliceDetail" key={`${item[0]}-${index}`}>
-            <div style={{ width: '30%' }} className = "sliceDetailName">{t(item[0], { defaultValue: item[0] })}</div>
-            <div style={{ width: '70%' }} className = "sliceDetailMsg">{item[1]}</div>
+        {renderer?.map((item, index) => <div className="sliceDetail" key={`${item[0]}-${index}`}>
+            <div className="sliceDetailName">{t(item[0], { defaultValue: item[0] })}</div>
+            <div className="sliceDetailMsg">{item[1]}</div>
         </div>)}
     </StyledSliceDetailDiv>;
 });
