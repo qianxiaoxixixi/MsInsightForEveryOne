@@ -309,7 +309,18 @@ const drawMaskRange = ({
             const bottom = (containerRect ? Math.min(rect.bottom, containerRect.bottom) : rect.bottom) - PAGE_PADDING;
             if (bottom > top) {
                 const maskRangeTemp = maskRange as number[];
-                ctx.clearRect(maskRangeTemp[0], top, maskRangeTemp[1] - maskRangeTemp[0], bottom - top);
+
+                /**
+                 * 改进点：纵向扩展清除范围
+                 * 减去 0.5 或 1 像素，确保把泳道的 border 完全包进“洞”里
+                 */
+                const offset = 0.5;
+                ctx.clearRect(
+                    maskRangeTemp[0],
+                    top - offset,
+                    maskRangeTemp[1] - maskRangeTemp[0],
+                    (bottom - top) + (offset * 2), // 高度相应增加，覆盖上下边缘
+                );
             }
         });
     } else {
