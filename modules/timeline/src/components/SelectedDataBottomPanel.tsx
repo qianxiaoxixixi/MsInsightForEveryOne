@@ -60,15 +60,12 @@ const StyledSliceArgsRow = styled.div`
     display: flex;
     margin-left: 24px;
     padding: 8px 0;
+    word-break: break-all;
 
     .key {
-        flex: auto;
-        max-width: 200px;
-        margin-right: 10px;
-    }
-
-    .value {
-        word-break: break-all;
+        flex: none;
+        width: 180px;
+        margin-right: 20px;
     }
 `;
 
