@@ -1,20 +1,20 @@
-// /*
-//  * -------------------------------------------------------------------------
-//  * This file is part of the MindStudio project.
-//  * Copyright (c)  2026 Huawei Technologies Co.,Ltd.
-//  *
-//  * MindStudio is licensed under Mulan PSL v2.
-//  * You can use this software according to the terms and conditions of the Mulan PSL v2.
-//  * You may obtain a copy of Mulan PSL v2 at:
-//  *
-//  *          http://license.coscl.org.cn/MulanPSL2
-//  *
-//  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
-//  * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
-//  * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
-//  * See the Mulan PSL v2 for more details.
-//  * -------------------------------------------------------------------------
-//  *
+/*
+ * -------------------------------------------------------------------------
+ * This file is part of the MindStudio project.
+ * Copyright (c) 2026 Huawei Technologies Co.,Ltd.
+ *
+ * MindStudio is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
+ * -------------------------------------------------------------------------
+ */
 
 #include <cstdio>
 #include <fstream>
@@ -66,13 +66,20 @@ TEST_F(TritonParserTest, ParseOneTritonSuccessTest)
         },
         "Record": [
             {
-                "alloc_time_in_ir": 1000,
-                "buffer": "buf1",
-                "source_location": "test.py:10",
-                "life_time_in_ir": [1000, 2000],
-                "extent": 1024,
-                "offset": [0, 1024],
-                "is_tmpbuf":false
+                "scope": "cc",
+                "status": "success",
+                "err_msg": "none",
+                "memory_info_array": [
+                    {
+                        "alloc_time_in_ir": 1000,
+                        "buffer": "buf1",
+                        "source_location": "test.py:10",
+                        "life_time_in_ir": [1000, 2000],
+                        "extent": 1024,
+                        "offset": [0, 1024],
+                        "is_tmpbuf":false
+                    }
+                ]
             }
         ]
     })";
@@ -85,10 +92,10 @@ TEST_F(TritonParserTest, ParseOneTritonSuccessTest)
     EXPECT_TRUE(result.IsSuccess());
     EXPECT_EQ(TritonService::Instance().GetHeader().kernelName, "mock_kernel");
 
-    auto segments = TritonService::Instance().QuerySegmentsContainRange(1000);
+    auto segments = TritonService::Instance().QuerySegmentsContainRange("cc", 1000);
     ASSERT_EQ(segments.size(), 1);
     EXPECT_EQ(segments[0].buffer, "buf1");
-    EXPECT_EQ(segments[0].size, 2048); // extend(1024) * offset.size(2)
+    EXPECT_EQ(segments[0].size, 256); // extend(1024) * offset.size(2)
 
     std::remove(tempFile.c_str());
 }
@@ -102,6 +109,35 @@ TEST_F(TritonParserTest, ParseOneTritonFailTest)
     std::string content = R"({
         "Record": []
     })"; // 缺失 Header
+
+    CreateTempJsonFile(tempFile, content);
+
+    TestTritonParser parser;
+    auto result = parser.TestParseOneTriton(tempFile);
+
+    EXPECT_FALSE(result.IsSuccess());
+
+    std::remove(tempFile.c_str());
+}
+
+/**
+ * @brief 场景说明：测试 TritonParser 对异常 Record 结构的错误处理。
+ */
+TEST_F(TritonParserTest, ParseOneTritonRecordFailTest)
+{
+    std::string tempFile = "temp_triton_record_fail.json";
+    std::string content = R"({
+        "Header": {
+            "KernelName": "mock_kernel"
+        },
+        "Record": [
+            {
+                "scope": "cc",
+                "status": "success"
+                // 缺失 memory_info_array
+            }
+        ]
+    })";
 
     CreateTempJsonFile(tempFile, content);
 

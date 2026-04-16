@@ -52,7 +52,8 @@ TEST_F(TritonProtocolTest, TritonMemoryBlocksRequestFromJsonTest)
         "command": "Triton/memory/blocks",
         "params": {
             "_startTimestamp": 100,
-            "_endTimestamp": 200
+            "_endTimestamp": 200,
+            "scope": "forward"
         }
     })";
 
@@ -64,6 +65,7 @@ TEST_F(TritonProtocolTest, TritonMemoryBlocksRequestFromJsonTest)
     auto *tritonReq = static_cast<TritonMemoryBlocksRequest *>(req.get());
     EXPECT_EQ(tritonReq->startTimestamp, 100);
     EXPECT_EQ(tritonReq->endTimestamp, 200);
+    EXPECT_EQ(tritonReq->scopeType, "forward");
 }
 
 /**
@@ -117,6 +119,34 @@ TEST_F(TritonProtocolTest, TritonBasicInfoRequestFromJsonTest)
 }
 
 /**
+ * @brief 场景说明：测试 TritonBasicInfoResponse 序列化为 JSON 的功能。
+ */
+TEST_F(TritonProtocolTest, TritonBasicInfoResponseToJsonTest)
+{
+    TritonBasicInfoResponse res;
+    res.id = 3;
+    res.kernelName = "test_kernel";
+    res.scopeTypes = {"forward", "backward"};
+
+    auto docOpt = res.ToJson();
+    ASSERT_TRUE(docOpt.has_value());
+
+    const auto &doc = docOpt.value();
+    EXPECT_TRUE(doc.HasMember("body"));
+    const auto &body = doc["body"];
+    
+    EXPECT_TRUE(body.HasMember("kernelName"));
+    EXPECT_STREQ(body["kernelName"].GetString(), "test_kernel");
+
+    EXPECT_TRUE(body.HasMember("scopeTypes"));
+    const auto &scopes = body["scopeTypes"];
+    EXPECT_TRUE(scopes.IsArray());
+    EXPECT_EQ(scopes.Size(), 2);
+    EXPECT_STREQ(scopes[0].GetString(), "forward");
+    EXPECT_STREQ(scopes[1].GetString(), "backward");
+}
+
+/**
  * @brief 场景说明：测试 TritonMemoryUsageRequest 从 JSON 字符串解析的功能。
  */
 TEST_F(TritonProtocolTest, TritonMemoryUsageRequestFromJsonTest)
@@ -129,7 +159,8 @@ TEST_F(TritonProtocolTest, TritonMemoryUsageRequestFromJsonTest)
         "type": "request",
         "projectName": "test",
         "params": {
-            "timestamp": 500
+            "timestamp": 500,
+            "scope": "backward"
         }
     })";
 
@@ -140,6 +171,7 @@ TEST_F(TritonProtocolTest, TritonMemoryUsageRequestFromJsonTest)
     ASSERT_NE(req, nullptr);
     auto *tritonReq = static_cast<TritonMemoryUsageRequest *>(req.get());
     EXPECT_EQ(tritonReq->timestamp, 500);
+    EXPECT_EQ(tritonReq->scopeType, "backward");
 }
 
 /**
@@ -152,14 +184,14 @@ TEST_F(TritonProtocolTest, TritonMemoryBlocksResponseToJsonTest)
     res.id = 1;
 
     TritonTensorBlock b1;
-    b1.id = 101;
+    b1.id = "101";
     b1.offset = 0x1000;
     b1.size = 1024;
     b1.start = 10;
     b1.end = 20;
 
     TritonTensorBlock b2;
-    b2.id = 102;
+    b2.id = "102";
     b2.offset = 0x2000;
     b2.size = 2048;
     b2.start = 30;
@@ -167,6 +199,9 @@ TEST_F(TritonProtocolTest, TritonMemoryBlocksResponseToJsonTest)
 
     res.blocks.push_back(b1);
     res.blocks.push_back(b2);
+
+    res.status = "Success";
+    res.errMsg = "";
 
     auto docOpt = res.ToJson();
     ASSERT_TRUE(docOpt.has_value());
@@ -179,7 +214,11 @@ TEST_F(TritonProtocolTest, TritonMemoryBlocksResponseToJsonTest)
     EXPECT_TRUE(blocks.IsArray());
     EXPECT_EQ(blocks.Size(), 2);
 
-    EXPECT_EQ(blocks[0]["id"].GetUint(), 101);
+    EXPECT_STREQ(blocks[0]["id"].GetString(), "101");
+    EXPECT_TRUE(body.HasMember("status"));
+    EXPECT_STREQ(body["status"].GetString(), "Success");
+    EXPECT_TRUE(body.HasMember("errMsg"));
+    EXPECT_STREQ(body["errMsg"].GetString(), "");
 }
 
 /**
@@ -199,7 +238,7 @@ TEST_F(TritonProtocolTest, TritonMemoryUsageResponseToJsonTest)
     s.sourceLocation = "test.py:10";
 
     TritonTensorBlock b;
-    b.id = 201;
+    b.id = "201";
     b.offset = 0x5100;
     b.size = 256;
     s.blocks.push_back(b);
@@ -219,7 +258,7 @@ TEST_F(TritonProtocolTest, TritonMemoryUsageResponseToJsonTest)
     EXPECT_TRUE(seg0.HasMember("blocks"));
     EXPECT_TRUE(seg0["blocks"].IsArray());
     EXPECT_EQ(seg0["blocks"].Size(), 1);
-    EXPECT_EQ(seg0["blocks"][0]["id"].GetUint(), 201);
+    EXPECT_STREQ(seg0["blocks"][0]["id"].GetString(), "201");
 }
 
 

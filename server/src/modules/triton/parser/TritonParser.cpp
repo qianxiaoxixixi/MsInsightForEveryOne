@@ -30,7 +30,6 @@
 #include "TritonProtocolEvent.h"
 #include "TritonService.h"
 #include "WsSender.h"
-
 namespace Dic::Module::Triton {
 using namespace Dic::Server;
 
@@ -68,12 +67,13 @@ bool TritonParser::IsParsed(const std::string &filePath) const
     if (!FileUtil::CheckPathSecurity(filePath, CHECK_FILE_READ)) {
         return false;
     }
-    std::string fileName = FileUtil::GetFileName(filePath);
+    const std::string fileName = FileUtil::GetFileName(filePath);
     return fileName == tritonMemFileName;
 }
 
 void TritonParser::BeforeParse(const std::string &parsedDir)
 {
+    TritonService::Instance().Reset();
     if (!FileUtil::CheckPathSecurity(parsedDir, CHECK_FILE_READ)) {
         ServerLog::Error("Triton file dir is not safe, please check log for more information");
         return;
@@ -128,6 +128,7 @@ bool TritonParser::CheckFileValid(const std::string &fileName, std::string &erro
     }
     return true;
 }
+
 ParseResult TritonParser::ParseOneTriton(const std::string &memFile)
 {
     document_t jsonDoc = JsonUtil::ReadJsonFromFile(memFile);
@@ -137,34 +138,53 @@ ParseResult TritonParser::ParseOneTriton(const std::string &memFile)
     TritonMemeHeader header;
     auto &headerJson = jsonDoc["Header"];
     JsonUtil::SetByJsonKeyValue(header.kernelName, headerJson, "KernelName");
-    std::vector<TritonTensorSegment> tensorSegments;
-    TritonService::Instance().SetHeader(std::move(header));
+
+    std::map<std::string, TritonRecord> scopeMap;
     auto &jsonRecord = jsonDoc["Record"];
-    tensorSegments.reserve(jsonRecord.Size());
+    
     for (const json_t &recordItem : jsonRecord.GetArray()) {
-        TritonTensorSegment segment;
-        JsonUtil::SetByJsonKeyValue(segment.allocate, recordItem, "alloc_time_in_ir");
-        JsonUtil::SetByJsonKeyValue(segment.buffer, recordItem, "buffer");
-        JsonUtil::SetByJsonKeyValue(segment.sourceLocation, recordItem, "source_location");
-        JsonUtil::SetByJsonKeyValue(segment.tmpBuf, recordItem, "is_tmpbuf");
-        auto lifeTime = JsonUtil::GetVector<uint64_t>(recordItem, "life_time_in_ir");
-        uint64_t start = lifeTime[0];
-        uint64_t end = lifeTime[1];
-        segment.start = start;
-        segment.end = end;
-        uint64_t extend = recordItem["extent"].GetUint64();
-        uint64_t blockCount = recordItem["offset"].Size();
-        segment.size = extend * blockCount;
-        segment.blocks.reserve(blockCount);
-        for (const auto &block : recordItem["offset"].GetArray()) {
-            TritonTensorBlock blockData(segment);
-            blockData.offset = block.GetUint64();
-            blockData.size = extend;
-            segment.blocks.emplace_back(std::move(blockData));
+        TritonRecord tritonRecord;
+        std::string status, errMsg, scope;
+        JsonUtil::SetByJsonKeyValue(scope, recordItem, "scope");
+        JsonUtil::SetByJsonKeyValue(status, recordItem, "status");
+        JsonUtil::SetByJsonKeyValue(errMsg, recordItem, "err_msg");
+        TritonService::Instance().UpdateCompileInfo(scope, {status, errMsg});
+        header.memTypes.push_back(scope);
+        auto &memInfoArray = recordItem["memory_info_array"];
+        tritonRecord.segments.reserve(memInfoArray.Size());
+    for (const json_t &memInfo : memInfoArray.GetArray()) {
+            TritonTensorSegment segment;
+            JsonUtil::SetByJsonKeyValue(segment.allocate, memInfo, "alloc_time_in_ir");
+            JsonUtil::SetByJsonKeyValue(segment.buffer, memInfo, "buffer");
+            JsonUtil::SetByJsonKeyValue(segment.sourceLocation, memInfo, "source_location");
+            JsonUtil::SetByJsonKeyValue(segment.tmpBuf, memInfo, "is_tmpbuf");
+            
+            auto lifeTime = JsonUtil::GetVector<uint64_t>(memInfo, "life_time_in_ir");
+            if (lifeTime.size() >= 2) {
+                segment.start = lifeTime[0];
+                segment.end = lifeTime[1];
+            } else {
+                segment.start = 0;
+                segment.end = 0;
+            }
+
+            uint64_t extend = memInfo["extent"].GetUint64() / 8;  // bite to Bytes
+            uint64_t blockCount = memInfo["offset"].Size();
+            segment.size = extend * blockCount;
+            segment.blocks.reserve(blockCount);
+
+            for (const auto &block : memInfo["offset"].GetArray()) {
+                TritonTensorBlock blockData(segment);
+                blockData.offset = block.GetUint64();
+                blockData.size = extend;
+                segment.blocks.emplace_back(std::move(blockData));
+            }
+            tritonRecord.segments.emplace_back(std::move(segment));
         }
-        tensorSegments.emplace_back(std::move(segment));
+        scopeMap[scope] = std::move(tritonRecord);
     }
-    TritonService::Instance().UpdateRecord(std::move(tensorSegments));
+    TritonService::Instance().SetHeader(std::move(header));
+    TritonService::Instance().UpdateRecord(std::move(scopeMap));
     return {true, "Success"};
 }
 
@@ -199,25 +219,42 @@ bool TritonParser::CheckDataValid(document_t &json)
         return false;
     }
 
-    constexpr std::array<const char *, 7> recordKeys = {
+    constexpr std::array<const char *, 3> recordItemKeys = {"scope", "status", "memory_info_array"};
+    constexpr std::array<const char *, 7> memoryInfoKeys = {
         "alloc_time_in_ir", "buffer", "extent", "is_tmpbuf", "life_time_in_ir", "offset", "source_location"};
+
     for (const json_t &recordItem : json["Record"].GetArray()) {
-        if (!HasExpectedMembers(recordItem, recordKeys)) {
+        if (!HasExpectedMembers(recordItem, recordItemKeys)) {
             ServerLog::Error("Triton Record item required keys are missing");
             return false;
         }
-        bool typesOk = recordItem["alloc_time_in_ir"].IsInt64() && recordItem["buffer"].IsString() &&
-            recordItem["extent"].IsInt64() && recordItem["is_tmpbuf"].IsBool() && recordItem["offset"].IsArray() &&
-            recordItem["source_location"].IsString();
-        if (!typesOk) {
+        
+        bool recordTypesOk = recordItem["scope"].IsString() && 
+                             recordItem["status"].IsString() && 
+                             recordItem["memory_info_array"].IsArray();
+        if (!recordTypesOk) {
             ServerLog::Error("Triton Record item value types are invalid");
             return false;
         }
 
-        const json_t &lifeTime = recordItem["life_time_in_ir"];
-        if (!lifeTime.IsArray()) {
-            ServerLog::Error("Triton life_time_in_ir format is invalid");
-            return false;
+        for (const json_t &memInfo : recordItem["memory_info_array"].GetArray()) {
+            if (!HasExpectedMembers(memInfo, memoryInfoKeys)) {
+                ServerLog::Error("Triton memory_info item required keys are missing");
+                return false;
+            }
+            bool typesOk = memInfo["alloc_time_in_ir"].IsInt64() && memInfo["buffer"].IsString() &&
+                memInfo["extent"].IsInt64() && memInfo["is_tmpbuf"].IsBool() && memInfo["offset"].IsArray() &&
+                memInfo["source_location"].IsString();
+            if (!typesOk) {
+                ServerLog::Error("Triton memory_info item value types are invalid");
+                return false;
+            }
+
+            const json_t &lifeTime = memInfo["life_time_in_ir"];
+            if (!lifeTime.IsArray()) {
+                ServerLog::Error("Triton life_time_in_ir format is invalid");
+                return false;
+            }
         }
     }
 

@@ -16,13 +16,23 @@
 //  * -------------------------------------------------------------------------
 //  *
 
-
 #include "TritonService.h"
 #include <algorithm>
-
-
+#include <limits>
 
 namespace Dic::Module::Triton {
+TritonService::TritonService()
+{
+}
+
+TritonService::~TritonService() = default;
+
+uint64_t TritonService::GetMemorySize(std::string_view kernelName, std::string_view memoryType)
+{
+    // current given 192kB
+    return 192*1024*8;
+}
+
 TritonService& TritonService::Instance()
 {
     static TritonService instance;
@@ -32,13 +42,20 @@ TritonService& TritonService::Instance()
 void TritonService::Reset()
 {
     header_ = {};
-    segments_.clear();
+    records_.clear();
+    addressManager_.clear();
+    compileInfo_.clear();
 }
 
-void TritonService::UpdateRecord(std::vector<TritonTensorSegment>&& segment)
+void TritonService::UpdateRecord(std::map<std::string, TritonRecord> &&records)
 {
-    // 插入数据本身有序
-    segments_ = std::move(segment);
+    records_ = std::move(records);
+    for (auto& [type, record] : records_) {
+        if (addressManager_.find(type) == addressManager_.end()) {
+            addressManager_[type] = std::make_unique<VirtualAddressManager>();
+        }
+        addressManager_[type]->ManageRecord(record);
+    }
 }
 
 void TritonService::SetHeader(TritonMemeHeader&& header)
@@ -46,45 +63,78 @@ void TritonService::SetHeader(TritonMemeHeader&& header)
     header_ = std::move(header);
 }
 
-std::vector<TritonTensorSegment> TritonService::QuerySegmentsContainRange(uint64_t timestamp) const
+bool TritonService::ContainsMemDataOf(const std::string &memType) const
+{
+    if (records_.find(memType) != records_.end()) {
+        return true;
+    }
+    Server::ServerLog::Warn("Not found current memory type data");
+    return false;
+}
+
+std::vector<TritonTensorSegment> TritonService::QuerySegmentsContainRange(const std::string &memoryType, uint64_t timestamp) const
 {
     std::vector<TritonTensorSegment> result;
-    std::for_each(segments_.begin(), segments_.end(), [&result, timestamp](const TritonTensorSegment& seg)
-    {
-        if (seg.start <= timestamp && timestamp <= seg.end)
-        {
+    if (!ContainsMemDataOf(memoryType)) {
+        return result;
+    }
+    for (const auto& seg : records_.at(memoryType).segments) {
+        if (seg.start <= timestamp && timestamp <= seg.end) {
             result.push_back(seg);
         }
-    });
+    }
     return result;
 }
-std::vector<TritonTensorBlock> TritonService::QueryBlocksContainRange(uint64_t start, uint64_t end) const
+
+std::vector<TritonTensorBlock> TritonService::QueryBlocksContainRange(const std::string &memoryType,
+    uint64_t start, uint64_t end) const
 {
     std::vector<TritonTensorBlock> result;
     auto tranSegmentToBlock = [](const TritonTensorSegment& item, std::vector<TritonTensorBlock>& blocks) {
-        for (auto block : item.blocks) { // 复制语义循环，完成数据复制
-            block.buffer = item.buffer;
-            block.sourceLocation = item.sourceLocation;
-            blocks.push_back(std::move(block));
+        for (const auto& block : item.blocks) {
+            TritonTensorBlock newBlock = block;
+            newBlock.buffer = item.buffer;
+            newBlock.sourceLocation = item.sourceLocation;
+            blocks.push_back(std::move(newBlock));
         }
     };
-    if (start == 0 && end == std::numeric_limits<uint64_t>::max()) {
-        for (const auto& segment : segments_) {
-            tranSegmentToBlock(segment, result);
-        }
-    }
-    if (start > end) {
+    if (!ContainsMemDataOf(memoryType)) {
         return result;
     }
-    for (const auto& segment : segments_) {
-        if (segment.start > start || segment.end < end) {
-            break;
-        }
-        if (segment.start <= start && segment.end >= end) {
+
+    bool isFullRange = (start == 0 && end == std::numeric_limits<uint64_t>::max());
+    const TritonRecord& record = records_.at(memoryType);
+    for (const auto& segment : record.segments) {
+        if (isFullRange) {
             tranSegmentToBlock(segment, result);
+        } else if (start <= end) {
+            if (segment.start <= start && segment.end >= end) {
+                tranSegmentToBlock(segment, result);
+            }
         }
     }
     return result;
+}
+
+void TritonService::UpdateCompileInfo(const std::string& scopeType, std::pair<std::string, std::string>&& compileInfo)
+{
+    compileInfo_[scopeType] = std::move(compileInfo);
+}
+
+std::string TritonService::GetCompileStatus(const std::string& scopeType) const
+{
+    if (compileInfo_.find(scopeType) == compileInfo_.end()) {
+        return "Unknown";
+    }
+    return compileInfo_.at(scopeType).first;
+}
+
+ std::string TritonService::GetCompileErrMsg(const std::string& scopeType) const
+{
+    if (compileInfo_.find(scopeType) == compileInfo_.end()) {
+        return "Unknown";
+    }
+    return compileInfo_.at(scopeType).second;
 }
 } // Triton
 // Module
