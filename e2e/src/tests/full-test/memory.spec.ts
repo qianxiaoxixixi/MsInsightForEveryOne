@@ -127,8 +127,10 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
     test('test_redirectToTimeline', async ({ page, memoryPage }) => {
         const { memoryFrame } = memoryPage;
         const { fullPage } = new TimelinePage(page);
+        await page.waitForTimeout(2000);
         await memoryFrame.locator('tr:nth-child(3) > td:nth-child(15)').getByRole('button').click();
 
+        await page.waitForTimeout(1000);
         await page.mouse.move(0, 0);
         await expect(fullPage).toHaveScreenshot('redirect-to-timeline.png', {
             maxDiffPixels: 500,
@@ -186,6 +188,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         const { memoryFrame } = memoryPage;
 
         const searchPromise = waitForResponse(await ws, (res) => res?.command === 'Memory/view/operator');
+        await page.waitForTimeout(1000);
         await memoryFrame.getByLabel('Name').getByRole('button').click();
         await memoryFrame.getByPlaceholder('Search Name').fill('aten::empty_strided');
         await memoryFrame.getByRole('button', { name: 'search Search' }).click();
@@ -585,6 +588,7 @@ test.describe('Memory(Text)', () => {
     test('query_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage, ws }) => {
         const { memoryFrame } = memoryPage;
         const searchPromise = waitForResponse(await ws, (res) => res?.command === 'Memory/view/operator');
+        await page.waitForTimeout(1000);
         await memoryFrame.getByLabel('Name').getByRole('button').click();
         await memoryFrame.getByPlaceholder('Search Name').fill('aten::empty_strided');
         await memoryFrame.getByRole('button', { name: 'search Search' }).click();
@@ -634,6 +638,7 @@ test.describe('Memory(Text)', () => {
     test('test_redirectToTimeline_when_rightClickTable', async ({ page, memoryPage }) => {
         const { memoryFrame } = memoryPage;
         const { fullPage } = new TimelinePage(page);
+        await page.waitForTimeout(2000);
         await memoryFrame.locator('tr:nth-child(3) > td:nth-child(15)').getByRole('button').click();
         await page.waitForTimeout(2000);
         await page.mouse.move(0, 0);

@@ -18,7 +18,7 @@ npx playwright install
 
 测试数据可以在数据仓库中下载
 
-在utils/constants.ts 中可以定义测试文件路径，目前所有测试数据都放在 D:\GUI_TEST_DATA 路徑测试 目录下，请自行创建该目录或将配置更改为本地文件路径。
+在utils/constants.ts 中可以定义测试文件路径，目前所有测试数据都放在 C:\msinsight-quick-start-demo\GUI-test-data 路徑测试 目录下，请自行创建该目录或将配置更改为本地文件路径。
 
 ### 4、运行用例
 
@@ -37,6 +37,8 @@ npm run test timeline.spec.ts
 npm run test -- -g test_unitsExpandAndCollapse_when_click
 # 查看测试报告
 npx playwright show-report
+# 更新某个测试文件所有快照
+npx playwright test tests/full-test/framework.spec.ts -u
 ```
 
 ### 自动化写用例
