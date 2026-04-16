@@ -1002,7 +1002,7 @@ pyinstaller
 
 + mingw安装
 
-  从[WinLibs - GCC+MinGW-w64 compiler for Windows](https://winlibs.com/)下载对应的软件包，注意选择MSVCRT版本（>11.2）以确保编译出来的包具备更好的迁移性
+  从[WinLibs - GCC+MinGW-w64 compiler for Windows](https://www.winlibs.com/)下载对应的软件包，注意选择MSVCRT版本（>11.2）以确保编译出来的包具备更好的迁移性
 
   下载后解压到任意目录下，然后修改系统中的PATH变量，向其中添加mingw64下bin目录路径，如下图所示，假设解压在C盘根目录下
 
