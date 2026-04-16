@@ -40,13 +40,8 @@ test.describe('Memory', () => {
     test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
-        await clearAllData(page);
         await importData(page, FilePath.SMOKE_DATA);
         await allCardParsedPromise;
-    });
-
-    test.afterEach(async ({ page, ws }) => {
-        await clearAllData(page, ws);
     });
 
     // 展示折线图
