@@ -53,10 +53,6 @@ test.describe('Communication', () => {
             await loadingDialog.waitFor({ state: 'detached' });
         }
     });
-    
-    test.afterEach(async ({ page, ws }) => {
-        await clearAllData(page, ws);
-    });
 
     // 展示通信矩阵和HCCL图和通信耗时
     test('display communication matrix and HCCL graph and communication time', async ({ page, communicationPage }) => {

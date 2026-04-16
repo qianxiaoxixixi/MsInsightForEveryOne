@@ -58,10 +58,6 @@ test.describe('Summary', () => {
         }
     });
 
-    test.afterEach(async ({ page, ws }) => {
-        await clearAllData(page, ws);
-    });
-
     // 展示并行策略图和计算通信概览柱状图
     test('display parallelism and performance chart', async ({ page, summaryPage }) => {
         await expect(page.locator('iframe[name="Summary"]').contentFrame().getByTestId('parallelism-graph-placeholder')).toBeVisible();
