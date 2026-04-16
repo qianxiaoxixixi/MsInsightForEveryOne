@@ -40,13 +40,8 @@ test.describe('Timeline', () => {
     test.beforeEach(async ({ page, timelinePage, ws }) => {
         allPagesSuccessRes = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await timelinePage.goto();
-        await clearAllData(page);
         await importData(page, FilePath.SMOKE_DATA);
         await allPagesSuccessRes;
-    });
-
-    test.afterEach(async ({ page, ws }) => {
-        await clearAllData(page, ws);
     });
 
     // 展示标志

@@ -25,11 +25,6 @@ test.describe('Framework', () => {
     test.beforeEach(async ({ page }) => {
         const frameworkPage = new FrameworkPage(page);
         await frameworkPage.goto();
-        await clearAllData(page);
-    });
-
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
     });
 
     // 查看帮助信息
