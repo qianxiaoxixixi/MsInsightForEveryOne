@@ -41,7 +41,7 @@ test.describe('Framework', () => {
         const frameworkPage = new FrameworkPage(page);
         await frameworkPage.switchThemeBtn.click();
         await page.mouse.move(0, 0);
-        await expect(page).toHaveScreenshot('theme.png', { maxDiffPixels: 500 });
+        await expect(page).toHaveScreenshot('theme.png', { maxDiffPixels: 100 });
     });
 
     // 切换中英文
@@ -49,7 +49,7 @@ test.describe('Framework', () => {
         const frameworkPage = new FrameworkPage(page);
         await frameworkPage.switchLanguageBtn.click();
         await page.mouse.move(0, 0);
-        await expect(page).toHaveScreenshot('language.png', { maxDiffPixels: 500 });
+        await expect(page).toHaveScreenshot('language.png', { maxDiffPixels: 100 });
     });
 
     // 查看帮助信息
