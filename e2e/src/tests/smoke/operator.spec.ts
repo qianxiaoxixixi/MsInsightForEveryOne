@@ -40,13 +40,8 @@ test.describe('Operator', () => {
     test.beforeEach(async ({ page, operatorPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await operatorPage.goto();
-        await clearAllData(page);
         await importData(page, FilePath.SMOKE_DATA);
         await allCardParsedPromise;
-    });
-
-    test.afterEach(async ({ page, ws }) => {
-        await clearAllData(page, ws);
     });
 
     // 展示饼图
