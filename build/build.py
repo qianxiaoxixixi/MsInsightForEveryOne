@@ -30,6 +30,7 @@ import subprocess
 import stat
 import sys
 from datetime import datetime, timezone
+import argparse
 import json
 import zipfile
 from typing import List
@@ -42,6 +43,7 @@ if WORKSPACE_PATH is not None:
 
 
 class Const:
+    DEFAULT_BUILD_VERSION = '26.0.0'
     WINDOWS_OS = 'Windows'
     MAC_OS = 'Darwin'
     LINUX_OS = 'Linux'
@@ -638,44 +640,23 @@ def exec_command(command, path, module_name):
         logging.error('[%s]Failed to execute %s.', module_name, ' '.join(command))
     return process.returncode
 
-
-# 获取版本信息，将从config.ini中读取到的版本后去掉最后一个后缀
-def get_version_from_config(file_path, default_version):
-    version = default_version
-    with open(file_path, 'r') as file:
-        for line in file:
-            kv = line.split('=')
-            if len(kv) != 2:
-                continue
-            if kv[0].strip() == "version":
-                # 读取到的版本后去掉最后一个后缀
-                version_info = kv[1].strip().split('.')
-                version = '.'.join(version_info[:-1])
-    return version
-
-
 # 加载版本相关信息，参数为默认的版本数据
-def load_version_info(default_version):
-    # 获取config.ini文件路径，该文件位于Ascend-Insight项目同级目录下的/manifest/dependency/config.ini
-    file_path = os.path.join(os.path.dirname(PROJECT_PATH), Const.MANIFEST_DIR, Const.DEPENDENCY_DIR, Const.CONFIG_INI)
-    version = default_version
-    modify_time = datetime.now(tz=timezone.utc).strftime("%Y/%m/%d")
-    # 判断文件是否存在，不存在直接使用默认版本号和修改时间
-    if os.path.exists(file_path):
-        version = get_version_from_config(file_path, default_version)
-    # 创建（覆盖）版本信息文件
-    create_version_info_file(version, modify_time)
-    return version
-
+def init_version_info(build_version: str):
+    build_time = datetime.now(tz=timezone.utc).strftime("%Y/%m/%d")
+    # 1. 【前端】 创建（更新）版本信息文件
+    update_frontend_version(build_version, build_time)
+    # 2. 【后端】 创建（更新）版本信息文件
+    # 3. 【产物】设置产物版本信息文件
+    update_app_version(build_version)
 
 # 创建、修改版本信息文件，文件目录在framework/src/下，文件名为version_info.json
-def create_version_info_file(version, modify_time):
+def update_frontend_version(version, build_time):
     output_path = os.path.join(PROJECT_PATH, Const.MODULES_DIR, Const.FRAMEWORK_DIR, Const.SRC_DIR, 'version_info.json')
     # os.O_WRONLY表示只写入，os.O_CREAT在文件不存在时会创建文件，os.O_TRUNC会清空原文件内容
     flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
     mode = stat.S_IWUSR
     with os.fdopen(os.open(output_path, flags, mode), "w") as f:
-        data = {'version': version, 'modifyTime': modify_time}
+        data = {'version': version, 'modifyTime': build_time}
         f.write(json.dumps(data))
 
 
@@ -745,12 +726,12 @@ def update_winexe_version_info(version: str) -> None:
         logging.error('Failed to write main.rc because %s', e)
 
 
-def build_product_parallel(vscode_version, idea_version, os_name):
+def build_product_parallel(vscode_version, build_version, whl_version, os_name):
     logging.info('Start to build products')
     funcs = [build_package, build_jupyterlab]
     args_list = [
-        (idea_version, os_name),
-        (vscode_version, os_name)
+        (build_version, os_name),
+        (whl_version, os_name)
     ]
     if os.getenv('BUILD_VSCODE'):
         funcs.append(build_vscode)
@@ -785,14 +766,15 @@ def replace_placeholders_in_file(file_path, placeholder, replacement):
         file.truncate()  # 清除文件指针当前位置后面的内容
 
 
-def update_plugins_version(version):
+def update_app_version(build_version):
+    # 替换main.rc信息
+    update_winexe_version_info(build_version)
     # 替换installer.nsi中的版本信息
     installer_nsi_path = os.path.join(PROJECT_PATH, Const.PLATFORM_DIR, 'bundle', 'installer.nsi')
-    replace_placeholders_in_file(installer_nsi_path, Const.PLUGINS_VERSION_PLACEHOLDER, version)
-
+    replace_placeholders_in_file(installer_nsi_path, Const.PLUGINS_VERSION_PLACEHOLDER, build_version)
     # 替换Cargo.toml中的版本信息
     cargo_toml_path = os.path.join(PROJECT_PATH, Const.PLATFORM_DIR, "Cargo.toml")
-    replace_placeholders_in_file(cargo_toml_path, Const.PLUGINS_VERSION_PLACEHOLDER, version)
+    replace_placeholders_in_file(cargo_toml_path, Const.PLUGINS_VERSION_PLACEHOLDER, build_version)
 
 
 def huaweicloud_install_plugin(profiler_path):
@@ -884,14 +866,25 @@ def clean_build_cache():
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    if len(sys.argv) > 1 and sys.argv[1].lower() == 'clean':
+    parser = argparse.ArgumentParser(description='Build for Insight')
+    parser.add_argument('-r', '--revision', type=str, default=None,
+                        help='Specify the revision version')
+    parser.add_argument('-b', '--build_version', type=str, default=None,
+                        help='Specify the build version')
+    parser.add_argument('-w', '--whl_version', type=str, default=None,
+                        help='Specify the whl version')
+    parser.add_argument('type', nargs='?', default=None,
+                        help='Optional type, e.g. clean')
+    args, unknown = parser.parse_known_args()
+    if unknown:
+        logging.warning('[%s] Ignoring unrecognized argument(s): %s', 'main', ' '.join(unknown))
+    if args.type and args.type.lower() == 'clean':
         return clean_build_cache()
-    idea_version = load_version_info('26.0.0')
-    # 修改Windows产物exe版本信息
-    update_winexe_version_info(idea_version)
-    update_plugins_version(idea_version)
+    build_version = args.build_version or Const.DEFAULT_BUILD_VERSION
+    whl_version = args.whl_version or Const.DEFAULT_BUILD_VERSION
+    init_version_info(build_version)
     # vscode_version不允许存在字母，因此这里做进一步处理，将字母内容去掉
-    vscode_version = ''.join(ch for ch in idea_version if not ch.isalpha())
+    vscode_version = ''.join(ch for ch in whl_version if not ch.isalpha())
     init()
     result = build_server()
     if result != 0:
@@ -901,7 +894,7 @@ def main():
     if result != 0:
         logging.error('Failed to build frontend.')
         return 1
-    return build_product_parallel(vscode_version, idea_version, get_os_tag())
+    return build_product_parallel(vscode_version, build_version, whl_version, get_os_tag())
 
 
 if __name__ == "__main__":
