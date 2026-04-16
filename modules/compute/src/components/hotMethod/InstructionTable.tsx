@@ -146,8 +146,8 @@ const StallSamplingCell = ({ stallSampling, maxWidth = 120 }: { stallSampling: a
 };
 
 // 更新指令表的显示列
-export const getInstrColumns = (dynamicFields: Record<string, FieldType>, t: TFunction, curInstrData: InstrsColumnType[]): ColumnsType<InstrsColumnType> => {
-    const columns: ColumnsType<InstrsColumnType> = getDynamicInstrColumns(t, dynamicFields, curInstrData);
+export const getInstrColumns = (dynamicFields: Record<string, FieldType>, t: TFunction, curInstrData: InstrsColumnType[], GPRStatusWidth: number): ColumnsType<InstrsColumnType> => {
+    const columns: ColumnsType<InstrsColumnType> = getDynamicInstrColumns(t, dynamicFields, curInstrData, GPRStatusWidth);
     // 没有有筛选功能的列
     const unfilterableCols = ['index', 'RealStallCycles', 'Register Dependencies', 'Stall Sampling(All Samples)', 'Stall Sampling(Not Issue)'];
     columns.forEach((col: ColumnType<InstrsColumnType>) => {
@@ -312,7 +312,7 @@ const endCols = ['Cycles', 'StallCycles'];
 const notDisplayedCols = ['AscendC Inner Code', 'RealStallCycles', 'TheoreticalStallCycles'];
 const noSortCols = ['GPR Status'];
 
-export const getDynamicInstrColumns = (t: TFunction, dynamicFields: Record<string, FieldType> = {}, curInstrData: InstrsColumnType[] = []):
+export const getDynamicInstrColumns = (t: TFunction, dynamicFields: Record<string, FieldType> = {}, curInstrData: InstrsColumnType[] = [], GPRStatusWidth: number):
 ColumnsType<InstrsColumnType> => {
     const dynamicCols = Object.keys(dynamicFields).filter(col => dynamicFields[col] !== FieldType.SKIP);
     // 兼容无动态列版本
@@ -324,6 +324,11 @@ ColumnsType<InstrsColumnType> => {
         ...allCols.filter(colName => !headerCols.includes(colName) && !notDisplayedCols.includes(colName) && !endCols.includes(colName)),
         ...endCols.filter(colName => allCols.includes(colName)),
     ];
-    return cols.map(colName => getColConfig<InstrsColumnType>(
-        { colName, fieldType: dynamicFields[colName], presetCols: instrsColsConfig, t, defaultSort: !noSortCols.includes(colName) }));
+    return cols.map(colName => {
+        const colConfig = getColConfig<InstrsColumnType>({ colName, fieldType: dynamicFields[colName], presetCols: instrsColsConfig, t, defaultSort: !noSortCols.includes(colName) });
+        if (colName === 'GPR Status') {
+            colConfig.width = GPRStatusWidth;
+        }
+        return colConfig;
+    });
 };
