@@ -232,9 +232,10 @@ const Index = observer(({ session }: { session: Session }) => {
 });
 
 // 查询指令
-async function getInstrs(coreName: string): Promise<{ instructions: InstrsColumnType[]; fields: Record<string, FieldType>;count: number }> {
+async function getInstrs(coreName: string): Promise<{ instructions: InstrsColumnType[]; fields: Record<string, FieldType>; count: number; GPRStatusLengthMax: number }> {
+    let GPRStatusLengthMax = 0;
     if (coreName === '') {
-        return { instructions: [], fields: {}, count: 0 };
+        return { instructions: [], fields: {}, count: 0, GPRStatusLengthMax };
     }
     const res = await queryDynamicInstr({ coreName });
     // 动态列
@@ -252,6 +253,7 @@ async function getInstrs(coreName: string): Promise<{ instructions: InstrsColumn
             formatData[fieldName] = formatDecimal(item[fieldName] as number);
         });
         const GPRStatus = safeJSONParse(item['GPR Status'], []);
+        GPRStatusLengthMax = Math.max(GPRStatusLengthMax, GPRStatus.length);
         return {
             ...item,
             ...formatData,
@@ -271,7 +273,7 @@ async function getInstrs(coreName: string): Promise<{ instructions: InstrsColumn
         item.maxCycles = maxCycles;
     });
 
-    return { instructions: list, fields, count };
+    return { instructions: list, fields, count, GPRStatusLengthMax };
 };
 
 function isRelatedInstruction({ instr, session, selectedCodeLine }: {
@@ -305,6 +307,7 @@ const InstructionTable = observer(({
 }: IProps) => {
     const { t } = useTranslation('source');
     const [allInstrs, setAllInstrs] = useState<InstrsColumnType[]>([]);
+    const [GPRStatusWidth, setGPRStatusWidth] = useState(0);
     // 是否关联指令
     const isRelatedInstr = useCallback((instr: InstrsColumnType): boolean => isRelatedInstruction({ instr, session, selectedCodeLine })
         , [selectedCodeLine, session.instructionSelectSource, session.cacheUnit.addressRange]);
@@ -316,11 +319,12 @@ const InstructionTable = observer(({
 
     // 动态列
     const [dynamicInstrFields, setDynamicInstrFields] = useState<Record<string, FieldType>>({});
-    const instrColumns = useMemo(() => getInstrColumns(dynamicInstrFields, t, showInstrs), [dynamicInstrFields, t, showInstrs]);
+    const instrColumns = useMemo(() => getInstrColumns(dynamicInstrFields, t, showInstrs, GPRStatusWidth), [dynamicInstrFields, t, showInstrs]);
 
     async function updateInstrs(): Promise<void> {
         // 指令记录
-        getInstrs(condition.core).then(({ instructions: newInstrlist, fields, count }) => {
+        getInstrs(condition.core).then(({ instructions: newInstrlist, fields, count, GPRStatusLengthMax }) => {
+            setGPRStatusWidth(++GPRStatusLengthMax * 16); // 16，GPRStatus列中每一个节点的宽度为16px
             setDynamicInstrFields(fields);
             setAllInstrs(newInstrlist);
             setInstrLimit(pre => ({ ...pre, overlimit: count > MAX_INSTRUCTION, current: count }));
@@ -529,7 +533,7 @@ function InstructionTableNopage({
             },
         })}
         pagination={false}
-        scroll={{ y: tableHeight, rowHeight: ROW_HEIGHT, scrollToFirstRowOnChange: false, x: 'max-content' }}
+        scroll={{ y: tableHeight, rowHeight: ROW_HEIGHT, scrollToFirstRowOnChange: false }}
         virtual={true}
         onChange={(pagination, newFilters, newSorter, extra): void => {
             switch (extra.action) {
@@ -599,7 +603,7 @@ function InstructionTablePage({
             },
         })}
         pagination={GetPageConfigWhithPageData(page, setPage, [PAGE_LIMIT])}
-        scroll={{ y: tableHeight - 50, rowHeight: ROW_HEIGHT, x: 'max-content' }}
+        scroll={{ y: tableHeight - 50, rowHeight: ROW_HEIGHT }}
         virtual={true}
         onChange={(pagination, newFilters, newSorter, extra): void => {
             switch (extra.action) {
