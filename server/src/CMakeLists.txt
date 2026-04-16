@@ -236,11 +236,14 @@ aux_source_directory(${SRC_HOME_DIR}/modules/triton/parser DIC_MODULES_TRITON_SR
 aux_source_directory(${SRC_HOME_DIR}/modules/triton/protocol DIC_MODULES_TRITON_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/triton/service DIC_MODULES_TRITON_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/triton/handler DIC_MODULES_TRITON_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/triton/allocator DIC_MODULES_TRITON_SRC)
 include_directories(${SRC_HOME_DIR}/modules/triton)
 include_directories(${SRC_HOME_DIR}/modules/triton/parser)
 include_directories(${SRC_HOME_DIR}/modules/triton/protocol)
 include_directories(${SRC_HOME_DIR}/modules/triton/service)
 include_directories(${SRC_HOME_DIR}/modules/triton/handler)
+include_directories(${SRC_HOME_DIR}/modules/triton/allocator)
+include_directories(${SRC_HOME_DIR}/modules/triton/defs)
 list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SRC}
         ${DIC_MODULES_BASE_SRC}

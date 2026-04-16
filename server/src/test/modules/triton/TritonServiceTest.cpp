@@ -18,6 +18,7 @@
 
 #include <gtest/gtest.h>
 #include <vector>
+#include <map>
 #include <limits>
 #include "TritonService.h"
 
@@ -47,14 +48,18 @@ TEST_F(TritonServiceTest, BasicUpdateAndGetTest)
     
     EXPECT_EQ(TritonService::Instance().GetHeader().kernelName, "test_kernel");
     
-    std::vector<TritonTensorSegment> segments;
+    std::map<std::string, TritonRecord> records;
+    TritonRecord record;
+
     TritonTensorSegment s1;
     s1.start = 100;
     s1.end = 200;
-    segments.push_back(s1);
+    record.segments.push_back(s1);
     
-    TritonService::Instance().UpdateRecord(std::move(segments));
-    auto result = TritonService::Instance().QuerySegmentsContainRange(150);
+    records["scope_test"] = record;
+
+    TritonService::Instance().UpdateRecord(std::move(records));
+    auto result = TritonService::Instance().QuerySegmentsContainRange("scope_test", 150);
     EXPECT_EQ(result.size(), 1);
     EXPECT_EQ(result[0].start, 100);
 }
@@ -65,34 +70,42 @@ TEST_F(TritonServiceTest, BasicUpdateAndGetTest)
  */
 TEST_F(TritonServiceTest, QuerySegmentsContainRangeTest)
 {
-    std::vector<TritonTensorSegment> segments;
+    std::map<std::string, TritonRecord> records;
+    TritonRecord record;
+
     TritonTensorSegment s1;
     s1.start = 100;
     s1.end = 500;
-    segments.push_back(s1);
+    record.segments.push_back(s1);
     
     TritonTensorSegment s2;
     s2.start = 200;
     s2.end = 400;
-    segments.push_back(s2);
+    record.segments.push_back(s2);
     
-    TritonService::Instance().UpdateRecord(std::move(segments));
+    records["scope_test"] = record;
+    
+    TritonService::Instance().UpdateRecord(std::move(records));
     
     // 场景1：查询范围完全包含在 s1 中，但不包含在 s2 中
-    auto res1 = TritonService::Instance().QuerySegmentsContainRange(150);
+    auto res1 = TritonService::Instance().QuerySegmentsContainRange("scope_test", 150);
     EXPECT_EQ(res1.size(), 1);
     EXPECT_EQ(res1[0].start, 100);
     
     // 场景2：查询范围包含在 s1 和 s2 中
-    auto res2 = TritonService::Instance().QuerySegmentsContainRange(250);
+    auto res2 = TritonService::Instance().QuerySegmentsContainRange("scope_test", 250);
     EXPECT_EQ(res2.size(), 2);
     
     // 场景3：查询范围超出了所有 segment
-    auto res3 = TritonService::Instance().QuerySegmentsContainRange(50);
+    auto res3 = TritonService::Instance().QuerySegmentsContainRange("scope_test", 50);
     EXPECT_EQ(res3.size(), 0);
     
-    // 场景4：无效范围 (start > end)
-    auto res4 = TritonService::Instance().QuerySegmentsContainRange(300);
+    // 场景4：无效范围 (start > end) -> 这里传入的是timestamp，不是range，QuerySegmentsContainRange(uint64_t timestamp)
+    // 之前测试用例写的是 QuerySegmentsContainRange(300)，如果 timestamp=300，应该包含在s1(100-500)和s2(200-400)中
+    // 之前的注释 "场景4：无效范围 (start > end)" 似乎是针对QueryBlocksContainRange的？或者是理解错误。
+    // QuerySegmentsContainRange(timestamp) checks if start <= timestamp <= end.
+    // timestamp = 300: 100<=300<=500 (True), 200<=300<=400 (True). Result size 2.
+    auto res4 = TritonService::Instance().QuerySegmentsContainRange("scope_test", 300);
     EXPECT_EQ(res4.size(), 2);
 }
 
@@ -102,7 +115,9 @@ TEST_F(TritonServiceTest, QuerySegmentsContainRangeTest)
  */
 TEST_F(TritonServiceTest, QueryBlocksContainRangeTest)
 {
-    std::vector<TritonTensorSegment> segments;
+    std::map<std::string, TritonRecord> records;
+    TritonRecord record;
+
     TritonTensorSegment s1;
     s1.start = 100;
     s1.end = 500;
@@ -110,20 +125,27 @@ TEST_F(TritonServiceTest, QueryBlocksContainRangeTest)
     s1.buffer = "buf1";
     
     TritonTensorBlock b1;
-    b1.id = 1;
+    b1.id = "1";
     s1.blocks.push_back(b1);
-    segments.push_back(s1);
+    record.segments.push_back(s1);
     
-    TritonService::Instance().UpdateRecord(std::move(segments));
+    records["scope_test"] = record;
+    
+    TritonService::Instance().UpdateRecord(std::move(records));
     
     // 场景1：查询包含该 block 的范围
-    auto res1 = TritonService::Instance().QueryBlocksContainRange(150, 450);
+    auto res1 = TritonService::Instance().QueryBlocksContainRange("scope_test", 150, 450);
     ASSERT_EQ(res1.size(), 1);
-    EXPECT_EQ(res1[0].id, 1);
+    EXPECT_EQ(res1[0].id, "00");
     EXPECT_EQ(res1[0].sourceLocation, "loc1");
     EXPECT_EQ(res1[0].buffer, "buf1");
     
     // 场景2：查询不包含该 block 的范围
-    auto res2 = TritonService::Instance().QueryBlocksContainRange(50, 600);
+    auto res2 = TritonService::Instance().QueryBlocksContainRange("scope_test", 50, 600);
+    // 50 <= 150(start of query) && 600 >= 450(end of query) -> False logic check
+    // QueryBlocksContainRange: if (segment.start <= start && segment.end >= end)
+    // s1: [100, 500]
+    // res1: start=150, end=450. 100<=150 && 500>=450. True.
+    // res2: start=50, end=600. 100<=50 (False).
     EXPECT_EQ(res2.size(), 0);
 }
