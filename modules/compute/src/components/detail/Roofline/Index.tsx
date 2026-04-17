@@ -136,13 +136,11 @@ const allTabItems: ITab[] = [
         label: 'Memory Transfer',
         key: 'memoryPath',
         contents: ['Memory Pipe Cube', 'Memory Pipe Vector', 'Memory Transfer(Cube)', 'Memory Transfer(Vector)'],
-        surportSocs: ['910'],
     },
     {
         label: 'Pipeline',
         key: 'pipeline',
         contents: ['Pipe Line Cube', 'Pipe Line Vector', 'Pipeline(Cube)', 'Pipeline(Vector)'],
-        surportSocs: ['910'],
     },
 ];
 
@@ -153,10 +151,8 @@ const defaultData: IData = {
 };
 
 function getTabItems(data: IData, tDetails: TFunction): Tab[] {
-    const soc = data?.soc ?? '';
     const allRooflineCharts = data?.data ?? [];
-    const tabItems = allTabItems.filter(tab =>
-        tab.surportSocs === undefined || tab.surportSocs.find(surportSoc => soc.includes(surportSoc)) !== undefined);
+    const tabItems = allTabItems;
     return tabItems.map((tabItem, index) => {
         const rooflineCharts = tabItem.contents.reduce<IRooflineChart[]>((pre, cur) => {
             const curChart = allRooflineCharts.find(chart => chart.title === cur);
