@@ -24,7 +24,7 @@ import type { AlignType } from 'rc-table/lib/interface';
 import type { InstrsColumnType } from './defs';
 import { FieldType, NOT_APPLICABLE } from './defs';
 import { Tooltip } from '@insight/lib/components';
-import Bar, { BarType, StallBar } from './Bar';
+import Bar, { BarType } from './Bar';
 import { limitInput, colorPalette } from '@insight/lib/utils';
 import { RegisterDependency } from '@/components/hotMethod/RegisterDependency';
 
@@ -149,7 +149,7 @@ const StallSamplingCell = ({ stallSampling, maxWidth = 120 }: { stallSampling: a
 export const getInstrColumns = (dynamicFields: Record<string, FieldType>, t: TFunction, curInstrData: InstrsColumnType[], GPRStatusWidth: number): ColumnsType<InstrsColumnType> => {
     const columns: ColumnsType<InstrsColumnType> = getDynamicInstrColumns(t, dynamicFields, curInstrData, GPRStatusWidth);
     // 没有有筛选功能的列
-    const unfilterableCols = ['index', 'RealStallCycles', 'Register Dependencies', 'Stall Sampling(All Samples)', 'Stall Sampling(Not Issue)'];
+    const unfilterableCols = ['index', 'Register Dependencies', 'Stall Sampling(All Samples)', 'Stall Sampling(Not Issue)'];
     columns.forEach((col: ColumnType<InstrsColumnType>) => {
         if (col.dataIndex !== undefined && !unfilterableCols.includes(String(col.dataIndex))) {
             const filters = getFilters(curInstrData, String(col.dataIndex));
@@ -207,14 +207,6 @@ const instrsColsConfig = [
         width: 150,
         ellipsis: true,
         render: (stallSampling: any): React.ReactNode => StallSamplingCell({ stallSampling, maxWidth: 120 }),
-        className: 'height20',
-    },
-    {
-        title: 'StallCycles',
-        ellipsis: true,
-        width: 115,
-        render: (realStallCycles: number | string, record: InstrsColumnType): string | React.ReactElement =>
-            <StallBar real={record.RealStallCycles as number} theoretical={record.TheoreticalStallCycles as number}/>,
         className: 'height20',
     },
     {
@@ -292,24 +284,14 @@ export const getColConfig = <T extends object>({ colName, fieldType, presetCols,
         };
 };
 
-const checkHasStallCycles = (curInstrData: InstrsColumnType[]): boolean => {
-    for (let i = 0; i < curInstrData.length; i++) {
-        if (curInstrData[i].RealStallCycles <= 0 && curInstrData[i].TheoreticalStallCycles <= 0) {
-            continue;
-        }
-        return curInstrData[i].RealStallCycles >= 0 && curInstrData[i].TheoreticalStallCycles >= 0;
-    }
-    return false;
-};
-
 // 默认显示列
 const defaultCols = ['#', 'Address', 'Pipe', 'Source', 'Instructions Executed', 'Cycles'];
 // 如果存在放在前面
 const headerCols = ['#', 'Address', 'Pipe', 'Source', 'Instructions Executed'];
 // 如果存在放在最后的列
-const endCols = ['Cycles', 'StallCycles'];
+const endCols = ['Cycles', 'RealStallCycles'];
 // 不显示的列
-const notDisplayedCols = ['AscendC Inner Code', 'RealStallCycles', 'TheoreticalStallCycles'];
+const notDisplayedCols = ['AscendC Inner Code'];
 const noSortCols = ['GPR Status'];
 
 export const getDynamicInstrColumns = (t: TFunction, dynamicFields: Record<string, FieldType> = {}, curInstrData: InstrsColumnType[] = [], GPRStatusWidth: number):
@@ -317,9 +299,6 @@ ColumnsType<InstrsColumnType> => {
     const dynamicCols = Object.keys(dynamicFields).filter(col => dynamicFields[col] !== FieldType.SKIP);
     // 兼容无动态列版本
     const allCols = dynamicCols.length === 0 ? [...defaultCols] : ['#', ...dynamicCols];
-    if ((dynamicCols.length === 0 && checkHasStallCycles(curInstrData)) || dynamicCols.includes('RealStallCycles')) {
-        allCols.push('StallCycles');
-    }
     const cols = [...headerCols.filter(colName => allCols.includes(colName)),
         ...allCols.filter(colName => !headerCols.includes(colName) && !notDisplayedCols.includes(colName) && !endCols.includes(colName)),
         ...endCols.filter(colName => allCols.includes(colName)),
