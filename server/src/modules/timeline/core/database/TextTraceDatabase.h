@@ -156,6 +156,7 @@ public:
     bool QueryByteAlignmentAnalyzerData(std::vector<CommunicationLargeOperatorInfo> &data) override;
     bool QueryByteAlignmentAnalyzerRawData(std::vector<std::pair<std::string, std::string>> &rawData);
 
+    std::vector<Process> QueryAllProcess();
     static void ProcessByteAlignmentAnalyzerDataForText(std::vector<CommunicationLargeOperatorInfo> &result,
                                                         std::vector<std::pair<std::string, std::string>> rawData);
 
@@ -213,7 +214,6 @@ private:
 
     void QuerySimulationUintFlows(const Protocol::UnitFlowsParams &requestParams, Protocol::UnitFlowsBody &responseBody,
         uint64_t minTimestamp);
-    std::vector<Process> QueryAllProcess();
 
     std::map<std::string, std::vector<Thread>> QueryAllThreadInfo();
 

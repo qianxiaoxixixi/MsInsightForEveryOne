@@ -276,6 +276,7 @@ void DataBaseManager::Clear()
     rankId2FileIdMap.clear();
     dataTypeMap.clear();
     fileTypeMap.clear();
+    rankIdToDeviceIdMap.clear();
 }
 
 void DataBaseManager::Clear(DatabaseType type)
@@ -602,7 +603,12 @@ void DataBaseManager::UpdateRankIdToDeviceId(const std::string &fileId,
 std::string DataBaseManager::GetDeviceIdFromRankId(const std::string &rankId)
 {
     std::string fileId = GetFileIdByRankId(rankId);
-    return rankIdToDeviceIdMap[fileId + rankId];
+    const auto key = fileId + rankId;
+    if (rankIdToDeviceIdMap.count(key) == 0) {
+        ServerLog::Warn("Don't find deviceId in rankIdToDeviceIdMap");
+        return "";
+    }
+    return rankIdToDeviceIdMap[key];
 }
 
 std::shared_ptr<Summary::VirtualSummaryDataBase> DataBaseManager::GetSummaryDatabaseWithCluster(
