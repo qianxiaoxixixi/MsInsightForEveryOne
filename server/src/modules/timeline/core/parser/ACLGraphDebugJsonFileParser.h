@@ -41,7 +41,7 @@ public:
     ~ACLGraphDebugJsonFileParser() override = default;
 protected:
     // 后处理 Hook 函数
-    bool PostParse(std::shared_ptr<TextTraceDatabase> db) override;
+    bool PostParse(std::shared_ptr<TextTraceDatabase> db, const std::string &rankId) override;
 private:
     /// @brief 按 trackId 分组，使用移动语义避免拷贝
     static std::unordered_map<uint64_t, std::vector<SliceDto>>

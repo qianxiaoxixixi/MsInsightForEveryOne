@@ -68,8 +68,8 @@ public:
     using ACLGraphDebugJsonFileParser::ACLGraphDebugJsonFileParser;
 
     // 将 protected 方法提升为 public（安全转发）
-    bool PostParse(std::shared_ptr<TextTraceDatabase> db) override {
-        return ACLGraphDebugJsonFileParser::PostParse(std::move(db));
+    bool PostParse(std::shared_ptr<TextTraceDatabase> db, const std::string &rankId = "") override {
+        return ACLGraphDebugJsonFileParser::PostParse(std::move(db), rankId);
     }
 };
 

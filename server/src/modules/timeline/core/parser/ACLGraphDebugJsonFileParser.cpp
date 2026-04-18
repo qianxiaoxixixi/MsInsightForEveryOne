@@ -22,7 +22,7 @@
 
 namespace Dic::Module::Timeline {
 
-bool ACLGraphDebugJsonFileParser::PostParse(std::shared_ptr<TextTraceDatabase> db)
+bool ACLGraphDebugJsonFileParser::PostParse(std::shared_ptr<TextTraceDatabase> db, const std::string &rankId)
 {
     std::vector<SliceDto> slices;
     // ===== 1. 从数据库获取原始 SliceDto 列表 =====
