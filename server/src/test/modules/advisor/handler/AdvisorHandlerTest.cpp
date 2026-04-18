@@ -45,6 +45,7 @@ public:
         DataBaseManager::Instance().SetDataType(DataType::DB, dbPath);
         DataBaseManager::Instance().SetFileType(FileType::PYTORCH, dbPath);
         DataBaseManager::Instance().CreateTraceConnectionPool("0", dbPath);
+        DataBaseManager::Instance().UpdateRankIdToDeviceId(dbPath, "0", "0");
     }
     static void TearDownTestSuite()
     {

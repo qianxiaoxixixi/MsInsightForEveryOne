@@ -873,8 +873,35 @@ std::string ProjectParserJson::GetFileIdWithDb(const std::string &filePath)
     return FileUtil::GetDbPath(dbPath, rankId);
 }
 
+bool IsSingleJSONWithoutValidDeviceId(const std::map<std::string, RankEntry> &rankEntry) {
+    // 检查是否只有一个元素
+    if (rankEntry.size() != 1) {
+        return false;
+    }
+
+    // 获取唯一的元素
+    const auto& entry = *rankEntry.begin();
+    const std::string& deviceId = entry.second.deviceId;
+
+    // 检查是否所有字符都不是数字，或者包含非数字字符
+    // 如果字符串为空，或者包含非数字字符，返回 true
+    if (deviceId.empty()) {
+        return true;
+    }
+
+    // 检查是否包含非数字字符
+    return std::any_of(deviceId.begin(), deviceId.end(),
+                                   [](unsigned char c) { return !std::isdigit(c); });
+}
+
 void ProjectParserJson::UpdateRankIdToDevice(std::map<std::string, RankEntry> &rankEntry)
 {
+    if (IsSingleJSONWithoutValidDeviceId(rankEntry)) {
+        // 如果是单 JSON 文件，且对应的 deviceId 不是数字，只设置 TraceConnectionPool 不设置 rankIdToDeviceIdMap
+        const auto& entry = *rankEntry.begin();
+        DataBaseManager::Instance().CreateTraceConnectionPool(entry.first, entry.second.fileId);
+        return;
+    }
     for (auto &[rankId, entry]: rankEntry) {
         DataBaseManager::Instance().CreateTraceConnectionPool(rankId, entry.fileId);
         DataBaseManager::Instance().UpdateRankIdToDeviceId(entry.fileId, rankId, entry.deviceId);

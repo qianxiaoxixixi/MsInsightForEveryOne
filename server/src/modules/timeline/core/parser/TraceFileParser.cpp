@@ -114,6 +114,10 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr,
             ProjectParserBase::SendUnitFinishNotify(fileId, true, item);
         }
         ParseUnitManager::Instance().ExecuteUnitList({rankId}, FTRACE_STATUS_LIST);
+        // FIX: 修复单 JSON 单 DeviceId 文件导入时，无法从文件路径知道 rankId deviceId 映射的问题，再次更新 rankIdToDeviceIdMap
+        if (DataBaseManager::Instance().GetDeviceIdFromRankId(rankId).empty()) {
+            UpdateRankIdDeviceIdMapByProcessData(database, rankId);
+        }
         return true;
     }
     if (!database->DropTable() || !database->CreateTable() || !database->UpdateParseStatus(NOT_FINISH_STATUS)) {
@@ -132,64 +136,64 @@ std::string TraceFileParser::ComputeStatusInfoFromPathArr(const std::vector<std:
     return statusInfo;
 }
 
-void TraceFileParser::InitFileProcess(const std::vector<std::string> &filePathArr, const std::string &fileId)
+void TraceFileParser::InitFileProcess(const std::vector<std::string> &filePathArr, const std::string &rankId)
 {
     auto start = std::chrono::high_resolution_clock::now();
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     for (const auto &filePath : filePathArr) {
-        ServerLog::Info("Start parse. file id:", fileId, ". path:", filePath);
+        ServerLog::Info("Start parse. rank id:", rankId, ". path:", filePath);
         auto splitFile = SplitFile(filePath);
-        fileProgressMap[fileId] = std::make_unique<FileProgress>(0, FileUtil::GetFileSize(filePath.c_str()));
+        fileProgressMap[rankId] = std::make_unique<FileProgress>(0, FileUtil::GetFileSize(filePath.c_str()));
         if (splitFile.empty()) {
             ServerLog::Error("Failed to split file. filePath: %", filePath);
-            ParseEndCallBack(fileId, "", false, "Failed to split file: " + filePath);
+            ParseEndCallBack(rankId, "", false, "Failed to split file: " + filePath);
             continue;
         }
 
         for (const auto &pos : splitFile) {
-            auto task = [this, filePath = std::string(filePath), fileId = std::string(fileId), pos]()
+            auto task = [this, filePath = std::string(filePath), rankId = std::string(rankId), pos]()
             {
-                ParseTask(filePath, fileId, pos); // 安全调用成员函数
+                ParseTask(filePath, rankId, pos); // 安全调用成员函数
             };
             auto future = threadPool_->AddTask(std::move(task), TraceIdManager::GetTraceId());
             futures->emplace_back(std::move(future));
         }
     }
-    auto endTask = [this, fileId = std::string(fileId), filePathArr/* 按值捕获 */, futures, start]()
+    auto endTask = [this, rankId = std::string(rankId), filePathArr/* 按值捕获 */, futures, start]()
     {
-        EndParseTask(fileId, filePathArr, futures, start); // 安全调用成员函数
+        EndParseTask(rankId, filePathArr, futures, start); // 安全调用成员函数
     };
     threadPool_->AddTask(endTask, TraceIdManager::GetTraceId());
 }
 
-void TraceFileParser::ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos)
+void TraceFileParser::ParseTask(const std::string &filePath, const std::string &rankId, std::pair<int64_t, int64_t> pos)
 {
-    if (ParserStatusManager::Instance().GetParserStatus(fileId) != ParserStatus::RUNNING) {
-        ServerLog::Info("Parse task skip this file. ID:", fileId);
+    if (ParserStatusManager::Instance().GetParserStatus(rankId) != ParserStatus::RUNNING) {
+        ServerLog::Info("Parse task skip this file. ID:", rankId);
         return;
     }
-    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(fileId);
+    auto db = DataBaseManager::Instance().GetTraceDatabaseByRankId(rankId);
     if (db == nullptr) {
-        ServerLog::Warn("Failed to get connection when parse timeline json,ID: ", fileId);
+        ServerLog::Warn("Failed to get connection when parse timeline json,ID: ", rankId);
         return;
     }
     std::shared_ptr<TextTraceDatabase> databasePtr =
             std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (databasePtr == nullptr) {
-        ServerLog::Warn("Failed to get text connection when parse timeline json,ID: ", fileId);
+        ServerLog::Warn("Failed to get text connection when parse timeline json,ID: ", rankId);
         return;
     }
-    EventParser eventParser(filePath, fileId, databasePtr);
+    EventParser eventParser(filePath, rankId, databasePtr);
     if (!eventParser.Parse(pos.first, pos.second)) {
-        if (ParserStatusManager::Instance().SetTerminateStatus(fileId) == ParserStatus::RUNNING) {
+        if (ParserStatusManager::Instance().SetTerminateStatus(rankId) == ParserStatus::RUNNING) {
             // 只发送一次解析失败事件
-            ParseEndCallBack(fileId, "", false, eventParser.GetError());
+            ParseEndCallBack(rankId, "", false, eventParser.GetError());
         }
     }
     // 发送单卡解析进度事件
-    std::unique_ptr<FileProgress> &curFileProgress = fileProgressMap[fileId];
+    std::unique_ptr<FileProgress> &curFileProgress = fileProgressMap[rankId];
     curFileProgress->AddToParsedSize(pos.second - pos.first);
-    parseProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
+    parseProgressCallback(rankId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
                                    curFileProgress->GetProgressPercentage());
 }
 
@@ -233,16 +237,56 @@ void TraceFileParser::EndParseTask(const std::string &rankId, const std::vector<
     }
     ServerLog::Info("Update depth completed. ID:", rankId);
     ParseUnitManager::Instance().ExecuteUnitList({rankId}, FTRACE_STATUS_LIST);
-    ParseEndCallBack(rankId, database->GetDbPath(), true, "");
-    if (PostParse(database)) {
+    if (PostParse(database, rankId)) {
         ParserStatusManager::Instance().SetFinishStatus(rankId);
     } else {
         ParserStatusManager::Instance().SetTerminateStatus(rankId);
     }
+    ParseEndCallBack(rankId, database->GetDbPath(), true, "");
 }
 
-bool TraceFileParser::PostParse(std::shared_ptr<TextTraceDatabase> db)
+void TraceFileParser::UpdateRankIdDeviceIdMapByProcessData(std::shared_ptr<TextTraceDatabase> db,
+                                                           const std::string &rankId)
 {
+    // FIX: 修复单 JSON 文件导入 deviceId 使用的 rankId(即文件名)，在查询时转成 int 由于非数字所以默认为 0 的问题
+    // 有的单 JSON 文件 process 上 label 写的是 `NPU {number}`。这个情况下 deviceId 应该是 number。
+    // 因此需要更新 DataBaseManager 中的 rankIdToDeviceIdMap [key: fileId + rankId , value: deviceId] 映射表
+    // 1. 获取 process 列表
+    const std::vector<Process> processes = db->QueryAllProcess();
+    if (processes.empty()) {
+        Server::ServerLog::Warn("No found processes");
+        return;
+    }
+    // 2. 获取 label 中的 number 的集合
+    std::unordered_set<std::string> uniqueNumbers;
+    for (const auto& process : processes) {
+        const std::string& label = process.label;
+        if (StringUtil::StartWith(label, "NPU ")) {
+            if (std::all_of(label.begin() + 4, label.end(), ::isdigit)) {
+                // 提取数字部分并转换为整数
+                std::string number = label.substr(4);
+                uniqueNumbers.insert(number);
+            }
+            continue;
+        }
+        if (label == "NPU") { // 对于 "NPU" label，默认设置为 0
+            uniqueNumbers.insert("0");
+        }
+    }
+    // 3. 只处理 number 集合为 1 的情况：更新 DataBaseManager 中的 rankIdToDeviceIdMap
+    if (uniqueNumbers.size() == 1) {
+        const std::string deviceId = *uniqueNumbers.begin();
+        const std::string fileId = DataBaseManager::Instance().GetFileIdByRankId(rankId);
+        DataBaseManager::Instance().UpdateRankIdToDeviceId(fileId, rankId, deviceId);
+    }
+}
+
+bool TraceFileParser::PostParse(std::shared_ptr<TextTraceDatabase> db, const std::string &rankId)
+{
+    // FIX: 修复单 JSON 单 DeviceId 文件导入时，无法从文件路径知道 rankId deviceId 映射的问题，再次更新 rankIdToDeviceIdMap
+    if (DataBaseManager::Instance().GetDeviceIdFromRankId(rankId).empty()) {
+        UpdateRankIdDeviceIdMapByProcessData(db, rankId);
+    }
     return true; // do nothing
 }
 
@@ -295,20 +339,20 @@ void TraceFileParser::Reset()
     ServerLog::Info("End Reset trace Parser");
 }
 
-void TraceFileParser::DeleteParseFiles(const std::vector<std::string> &fileIds)
+void TraceFileParser::DeleteParseFiles(const std::vector<std::string> &rankIds)
 {
-    for (const auto &fileId : fileIds) {
-        auto status = ParserStatusManager::Instance().SetTerminateStatus(fileId);
-        auto kernelStatus = ParserStatusManager::Instance().SetTerminateStatus(KERNEL_PREFIX + fileId);
-        auto memoryStatus = ParserStatusManager::Instance().SetTerminateStatus(MEMORY_PREFIX + fileId);
-        ServerLog::Info("Before delete file. id:", fileId, ", status:", static_cast<int>(status),
+    for (const auto &rankId : rankIds) {
+        auto status = ParserStatusManager::Instance().SetTerminateStatus(rankId);
+        auto kernelStatus = ParserStatusManager::Instance().SetTerminateStatus(KERNEL_PREFIX + rankId);
+        auto memoryStatus = ParserStatusManager::Instance().SetTerminateStatus(MEMORY_PREFIX + rankId);
+        ServerLog::Info("Before delete file. id:", rankId, ", status:", static_cast<int>(status),
             ", kernelStatus:", static_cast<int>(kernelStatus), ", memoryStatus:", static_cast<int>(memoryStatus));
     }
-    ParserStatusManager::Instance().WaitAllFinished(fileIds);
-    for (const auto &fileId : fileIds) {
-        auto oldStatus = ParserStatusManager::Instance().GetParserStatus(fileId);
-        ServerLog::Info("Clear cache. id:", fileId, ", status:", static_cast<int>(oldStatus));
-        CacheManager::Instance().ClearCacheByRankId(fileId);
+    ParserStatusManager::Instance().WaitAllFinished(rankIds);
+    for (const auto &rankId : rankIds) {
+        auto oldStatus = ParserStatusManager::Instance().GetParserStatus(rankId);
+        ServerLog::Info("Clear cache. id:", rankId, ", status:", static_cast<int>(oldStatus));
+        CacheManager::Instance().ClearCacheByRankId(rankId);
     }
 }
 
