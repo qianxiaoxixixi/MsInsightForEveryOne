@@ -62,6 +62,10 @@ export class Painter {
             for (let j = 0; j < path.length - 1; j++) {
                 this.drawShape(path[j], path[j + 1], size, addr, options, isHighlight);
             }
+            if (isHighlight) {
+                this.drawShape(path[0], [path[0][0], path[0][1] + size], 0, addr, options, isHighlight);
+                this.drawShape(path[path.length - 1], [path[path.length - 1][0], path[path.length - 1][1] + size], 0, addr, options, isHighlight);
+            }
         }
     }
 
@@ -69,7 +73,7 @@ export class Painter {
         if (this.context === null) {
             return;
         }
-        const { zoom } = options;
+        const { zoom, transform } = options;
 
         const lx = (p0[0] - zoom.offset) * zoom.x;
         const ly = p0[1] * zoom.y;
@@ -87,5 +91,17 @@ export class Painter {
 
         this.context.fillStyle = getColorStringByAddr(addr, isHighlight); // 填充颜色
         this.context.fill(); // 填充图形
+        if (isHighlight) {
+            this.context.strokeStyle = '#000000';
+            this.context.lineWidth = 2 / transform.scale;
+            this.context.beginPath();
+            this.context.moveTo(lx, ly);
+            this.context.lineTo(rx, ry);
+            this.context.stroke();
+            this.context.beginPath();
+            this.context.moveTo(lx, ly + h);
+            this.context.lineTo(rx, ry + h);
+            this.context.stroke();
+        }
     }
 }

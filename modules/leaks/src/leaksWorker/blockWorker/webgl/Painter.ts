@@ -17,6 +17,7 @@
  */
 
 import { MemoryBlockProgram } from './programs/MemoryBlockProgram';
+import { MemoryBlockBorderProgram } from './programs/MemoryBlockBorderProgram';
 import shaders from './shaders';
 
 export class Painter {
@@ -24,6 +25,7 @@ export class Painter {
     readonly canvas: OffscreenCanvas;
     memoryBlockProgram: MemoryBlockProgram | null = null;
     memoryBlockHightlightProgram: MemoryBlockProgram | null = null;
+    memoryBlockBorderHightlightProgram: MemoryBlockBorderProgram | null = null;
     private uniformData: Float32Array;
 
     constructor(canvas: OffscreenCanvas) {
@@ -45,6 +47,7 @@ export class Painter {
         this.gl = gl;
         this.memoryBlockProgram = new MemoryBlockProgram(this.gl, this.uniformData, shaders.memoryBlock);
         this.memoryBlockHightlightProgram = new MemoryBlockProgram(this.gl, this.uniformData, shaders.memoryBlock);
+        this.memoryBlockBorderHightlightProgram = new MemoryBlockBorderProgram(this.gl, this.uniformData, shaders.memoryBlockBorder);
     }
 
     private updateUniformData(options: RenderOptions): void {
@@ -73,6 +76,7 @@ export class Painter {
         this.updateUniformData(options);
         this.memoryBlockProgram?.render(options);
         this.memoryBlockHightlightProgram?.render(options);
+        this.memoryBlockBorderHightlightProgram?.render(options);
         gl.disable(gl.BLEND);
     }
 }

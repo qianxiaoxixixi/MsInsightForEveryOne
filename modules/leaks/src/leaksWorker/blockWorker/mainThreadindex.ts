@@ -29,6 +29,9 @@ export class MainThreadRender {
     viewport: RenderOptions['viewport'] = { width: 0, height: 0 };
     zoom: RenderOptions['zoom'] = { x: 1, y: 1, offset: 0 };
     renderer: NativeRenderer | null = null;
+
+    hoverItem: Block | null = null;
+    clickItem: Block | null = null;
     session: Session;
 
     constructor() {
@@ -44,6 +47,8 @@ export class MainThreadRender {
     };
 
     setMemoryBlockDataHandler(payload: Omit<SetMemoryBlocksDataPayload, 'type'>): void {
+        this.clickItem = null;
+        this.hoverItem = null;
         this.memoryBlockData = buildBlockViewPath(payload.data);
         const { maxTimestamp, minTimestamp, maxSize, minSize } = this.memoryBlockData;
         this.zoom = getZoom(this.memoryBlockData, this.canvas);
@@ -80,18 +85,19 @@ export class MainThreadRender {
 
     debouncedSearchBlockData = debounce((payload: Omit<HoverItemPayload, 'type'>): void => {
         if (this.memoryBlockData?.blocks?.length > 0) {
-            const result = searchBlockDataByPoint(this.memoryBlockData.blocks, payload, this.transform, this.zoom);
-            this.renderer?.setHighlightData(result === null ? [] : [result]);
+            this.hoverItem = searchBlockDataByPoint(this.memoryBlockData.blocks, payload, this.transform, this.zoom);
+            this.renderHighlightData();
             runInAction(() => {
-                this.session.leaksWorkerInfo.hoverItem = result;
+                this.session.leaksWorkerInfo.hoverItem = this.hoverItem;
             });
         }
     }, 10);
 
     clickItemHandler(payload: Omit<HoverItemPayload, 'type'>): void {
-        const result = searchBlockDataByPoint(this.memoryBlockData.blocks, payload, this.transform, this.zoom);
+        this.clickItem = searchBlockDataByPoint(this.memoryBlockData.blocks, payload, this.transform, this.zoom);
+        this.renderHighlightData();
         runInAction(() => {
-            this.session.leaksWorkerInfo.clickItem = result;
+            this.session.leaksWorkerInfo.clickItem = this.clickItem;
         });
     };
 
@@ -99,10 +105,19 @@ export class MainThreadRender {
         this.debouncedSearchBlockData(payload);
     };
 
+    // 通过这个方法，优先高亮hover数据
+    renderHighlightData(): void {
+        const result = this.hoverItem === null ? this.clickItem : this.hoverItem;
+        this.renderer?.setHighlightData(result === null ? [] : [result]);
+    };
+
     destroyHandler(): void {
         this.memoryBlockData = { maxTimestamp: 0, minTimestamp: 0, maxSize: 0, minSize: 0, blocks: [] };
         this.transform = { x: 0, y: 0, scale: 1 };
         this.zoom = { x: 1, y: 1, offset: 0 };
+        this.clickItem = null;
+        this.hoverItem = null;
+        this.renderHighlightData();
         runInAction(() => {
             this.session.leaksWorkerInfo.sizeInfo = {
                 maxTimestamp: 0,
