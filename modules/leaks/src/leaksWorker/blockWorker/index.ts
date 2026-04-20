@@ -27,6 +27,9 @@ let viewport: RenderOptions['viewport'];
 let zoom: RenderOptions['zoom'];
 let renderer: WebGLRenderer | null;
 
+let hoverItem: Block | null = null;
+let clickItem: Block | null = null;
+
 const initCanvasHandler = async (payload: InitCanvasPayload): Promise<void> => {
     canvas = payload.canvas as OffscreenCanvas;
     renderer = new WebGLRenderer(canvas, payload.devicePixelRatio);
@@ -35,6 +38,8 @@ const initCanvasHandler = async (payload: InitCanvasPayload): Promise<void> => {
 };
 
 const setMemoryBlockDataHandler = (payload: SetMemoryBlocksDataPayload): void => {
+    clickItem = null;
+    hoverItem = null;
     memoryBlockData = buildBlockViewPath(payload.data);
     const { maxTimestamp, minTimestamp, maxSize, minSize } = memoryBlockData;
     zoom = getZoom(memoryBlockData, canvas);
@@ -81,25 +86,35 @@ const transformHandler = (payload: TransformPayload): void => {
 
 const debouncedSearchBlockData = debounce((payload: HoverItemPayload): void => {
     if (memoryBlockData?.blocks?.length > 0) {
-        const result = searchBlockDataByPoint(memoryBlockData.blocks, payload, transform, zoom);
-        renderer?.setHighlightData(result === null ? [] : [result]);
-        self.postMessage({ type: 'hoverItemResult', result });
+        hoverItem = searchBlockDataByPoint(memoryBlockData.blocks, payload, transform, zoom);
+        renderHighlightData();
+        self.postMessage({ type: 'hoverItemResult', result: hoverItem });
     }
 }, 10);
 
 const clickItemHandler = (payload: HoverItemPayload): void => {
-    const result = searchBlockDataByPoint(memoryBlockData.blocks, payload, transform, zoom);
-    self.postMessage({ type: 'clickItemResult', result });
+    clickItem = searchBlockDataByPoint(memoryBlockData.blocks, payload, transform, zoom);
+    renderHighlightData();
+    self.postMessage({ type: 'clickItemResult', result: clickItem });
 };
 
 const hoverItemHandler = (payload: HoverItemPayload): void => {
     debouncedSearchBlockData(payload);
 };
 
+// 通过这个方法，优先高亮hover数据
+const renderHighlightData = (): void => {
+    const result = hoverItem === null ? clickItem : hoverItem;
+    renderer?.setHighlightData(result === null ? [] : [result]);
+};
+
 const destroyHandler = (): void => {
     memoryBlockData = { maxTimestamp: 0, minTimestamp: 0, maxSize: 0, minSize: 0, blocks: [] };
     transform = { x: 0, y: 0, scale: 1 };
     zoom = { x: 1, y: 1, offset: 0 };
+    clickItem = null;
+    hoverItem = null;
+    renderHighlightData();
     self.postMessage({
         type: 'dataInfo',
         sizeInfo: {

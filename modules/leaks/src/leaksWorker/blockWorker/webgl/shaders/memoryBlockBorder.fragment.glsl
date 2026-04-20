@@ -1,3 +1,4 @@
+#version 300 es
 /*
  * -------------------------------------------------------------------------
  * This file is part of the MindStudio project.
@@ -16,20 +17,11 @@
  * -------------------------------------------------------------------------
  */
 
-import memoryBlockVertexShader from './memoryBlock.vertex.glsl';
-import memoryBlockFragmentShader from './memoryBlock.fragment.glsl';
-import memoryBlockBorderVertexShader from './memoryBlockBorder.vertex.glsl';
-import memoryBlockBorderFragmentShader from './memoryBlockBorder.fragment.glsl';
+precision highp float;
 
-const shaders = {
-    memoryBlock: {
-        vertexShader: memoryBlockVertexShader,
-        fragmentShader: memoryBlockFragmentShader,
-    },
-    memoryBlockBorder: {
-        vertexShader: memoryBlockBorderVertexShader,
-        fragmentShader: memoryBlockBorderFragmentShader,
-    },
-};
+out vec4 fragColor;
 
-export default shaders;
+void main() {
+    fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    return;
+}

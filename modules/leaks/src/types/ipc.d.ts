@@ -37,7 +37,7 @@ interface ResizeCanvasPayload {
 
 interface TransformPayload {
     type: 'transform';
-    transform: Transform;
+    transform: RenderOptions['transform'];
 };
 
 interface HoverItemPayload {
