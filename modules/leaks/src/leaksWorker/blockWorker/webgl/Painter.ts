@@ -45,8 +45,8 @@ export class Painter {
         });
         if (gl === null) { throw new Error('WebGL2 not supported'); }
         this.gl = gl;
-        this.memoryBlockProgram = new MemoryBlockProgram(this.gl, this.uniformData, shaders.memoryBlock);
-        this.memoryBlockHightlightProgram = new MemoryBlockProgram(this.gl, this.uniformData, shaders.memoryBlock);
+        this.memoryBlockProgram = new MemoryBlockProgram(this.gl, this.uniformData, shaders.memoryBlock, false);
+        this.memoryBlockHightlightProgram = new MemoryBlockProgram(this.gl, this.uniformData, shaders.memoryBlock, true);
         this.memoryBlockBorderHightlightProgram = new MemoryBlockBorderProgram(this.gl, this.uniformData, shaders.memoryBlockBorder);
     }
 

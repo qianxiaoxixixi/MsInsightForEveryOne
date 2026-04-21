@@ -154,28 +154,25 @@ export const buildBlockViewPath = (blockView: SetMemoryBlocksDataPayload['data']
         }
         // 否则为释放事件, 需要在currentBlocks中找到被释放的块，根据内存分配时的特征，使用倒序查找更合适
         let freeBlockIdx = -1;
+        const freeSize = blockPtr.size;
         for (let i = currentBlocks.length - 1; i >= 0; i--) {
             const block = currentBlocks[i];
-            currentTotalSize -= block.size;
-            addPathPoint(block, time, currentTotalSize);
+            // 取block.path路径点中最后一次的高度，保持不变的插入一个点
+            const lastPoint = block.path?.[block.path.length - 1] ?? [0, 0];
+            addPathPoint(block, time, lastPoint[1]);
             if (block.id === blockPtr.id) {
                 freeBlockIdx = i;
                 break;
             }
+            // 非此次释放块，在1个时间步之后插入新的下落点
+            addPathPoint(block, time + 1, lastPoint[1] - freeSize);
         }
         if (freeBlockIdx < 0) {
             // 查找失败，报错返回
             return;
         }
-        const freeBlock: Block = currentBlocks[freeBlockIdx];
-        addPathPoint(freeBlock, time, currentTotalSize);
+        currentTotalSize -= freeSize;
         currentBlocks.splice(freeBlockIdx, 1);
-        const tmpTime: number = index + 1 < sortedEvents.length ? (time + sortedEvents[index + 1].time) / 2 : blockView.maxTimestamp;
-        for (let i = freeBlockIdx; i <= currentBlocks.length - 1; i++) {
-            const block = currentBlocks[i];
-            addPathPoint(block, tmpTime, currentTotalSize);
-            currentTotalSize += block.size;
-        }
     });
     // 处理剩余块
     for (let i = currentBlocks.length - 1; i >= 0; i--) {

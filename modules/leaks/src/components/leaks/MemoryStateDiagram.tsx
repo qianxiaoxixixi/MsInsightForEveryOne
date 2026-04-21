@@ -383,13 +383,18 @@ const StateDiagramCanvas = observer(({ session }: { session: Session }): JSX.Ele
         if (ref.current === null) {
             return;
         }
-        if (isClick.current) {
-            isClick.current = false;
-            isDragging.current = true;
-        }
         const rect = ref.current.getBoundingClientRect();
         const currentX = ev.clientX - rect.left;
         const currentY = ev.clientY - rect.top;
+
+        if (isClick.current) {
+            const moved = Math.abs(currentX - dragStartPoint.current.x) > 1 ||
+                          Math.abs(currentY - dragStartPoint.current.y) > 1;
+            if (moved) {
+                isClick.current = false;
+                isDragging.current = true;
+            }
+        }
         if (!isDragging.current) {
             workerHoverItem({ clientX: currentX, clientY: currentY });
             return;
