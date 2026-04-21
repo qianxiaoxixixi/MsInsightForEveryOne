@@ -16,13 +16,19 @@
  * -------------------------------------------------------------------------
  */
 
-import { getColorByAddr } from '@/leaksWorker/tools/color';
+import { hashHexAddressToIndex } from '@/leaksWorker/tools/color';
 import { Program } from './Program';
 
 export class MemoryBlockProgram extends Program {
+    readonly isHighlight: boolean;
     protected batches: Float32Array[] = [];
     protected maxInstanceDataSize: number = 10000000;
     hasBuffer = false;
+
+    constructor(gl: WebGL2RenderingContext, uniformData: Float32Array, shader: Shader, isHighlight: boolean = false) {
+        super(gl, uniformData, shader);
+        this.isHighlight = isHighlight;
+    }
 
     bindBuffer(): void {
         const gl = this.gl;
@@ -32,7 +38,7 @@ export class MemoryBlockProgram extends Program {
         this.instanceBuffer = this.createBuffer(4 * this.maxInstanceDataSize);
         gl.bindVertexArray(this.vao);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
-        const stride = 9 * 4;
+        const stride = 6 * 4;
         gl.enableVertexAttribArray(0);
         gl.vertexAttribPointer(0, 2, gl.FLOAT, false, stride, 0);
         gl.vertexAttribDivisor(0, 1);
@@ -43,23 +49,23 @@ export class MemoryBlockProgram extends Program {
         gl.vertexAttribPointer(2, 1, gl.FLOAT, false, stride, 16);
         gl.vertexAttribDivisor(2, 1);
         gl.enableVertexAttribArray(3);
-        gl.vertexAttribPointer(3, 4, gl.FLOAT, false, stride, 20);
+        gl.vertexAttribPointer(3, 1, gl.FLOAT, false, stride, 20);
         gl.vertexAttribDivisor(3, 1);
-        gl.bindVertexArray(null);
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+        this.cleanupGL();
     }
 
-    processData(data: RenderData['blocks'], isHighlight: boolean = false): void {
+    processData(data: RenderData['blocks']): void {
         this.batches = [];
-        let batch = [];
+        let batch: number[] = [];
         for (let i = 0; i < data.length; i++) {
             const { path, size, addr } = data[i];
-            if (batch.length + path.length * 9 > this.maxInstanceDataSize) {
+            const colorIndex = hashHexAddressToIndex(addr);
+            if (batch.length + path.length * 6 > this.maxInstanceDataSize) {
                 this.batches.push(new Float32Array(batch));
                 batch = [];
             }
             for (let j = 0; j < path.length - 1; j++) {
-                batch.push(...path[j], ...path[j + 1], size, ...getColorByAddr(addr, isHighlight));
+                batch.push(...path[j], ...path[j + 1], size, colorIndex);
             }
         }
         this.batches.push(new Float32Array(batch));
@@ -72,21 +78,17 @@ export class MemoryBlockProgram extends Program {
             return;
         }
         const gl = this.gl;
-        const uniformData = this.uniformData;
         gl.useProgram(this.program);
-        gl.uniform2f(this.uniformLoc.uScale, uniformData[0], uniformData[1]);
-        gl.uniform2f(this.uniformLoc.uTranslate, uniformData[2], uniformData[3]);
-        gl.uniform2f(this.uniformLoc.uResolution, uniformData[4], uniformData[5]);
-        gl.uniform2f(this.uniformLoc.uZoom, uniformData[6], uniformData[7]);
-        gl.uniform1f(this.uniformLoc.uOffset, uniformData[8]);
+        this.setBaseUniforms();
+        gl.uniform1f(this.uniformLoc.uOffset, this.uniformData[8]);
+        this.setColorUniforms(this.isHighlight);
         gl.bindVertexArray(this.vao);
         for (let i = 0; i < this.batches.length; i++) {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.batches[i], 0);
-            const instanceCount = this.batches[i].length / 9;
+            const instanceCount = this.batches[i].length / 6;
             gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, instanceCount);
         }
-        gl.bindVertexArray(null);
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+        this.cleanupGL();
     }
 }

@@ -16,6 +16,8 @@
  * -------------------------------------------------------------------------
  */
 
+import { GL_COLORS, GL_HIGHLIGHT_COLORS } from '@/leaksWorker/tools/color';
+
 export abstract class Program {
     readonly uniformLoc: Record<string, WebGLUniformLocation | null> = {};
     gl: WebGL2RenderingContext;
@@ -23,20 +25,24 @@ export abstract class Program {
     vao: WebGLVertexArrayObject | null = null;
     instanceBuffer: WebGLBuffer | null = null;
     readonly uniformData: Float32Array;
+
     constructor(gl: WebGL2RenderingContext, uniformData: Float32Array, shader: Shader) {
         this.gl = gl;
         this.uniformData = uniformData;
-
         this.program = this.createProgram(shader.vertexShader, shader.fragmentShader);
         this.uniformLoc.uScale = gl.getUniformLocation(this.program, 'uScale');
         this.uniformLoc.uTranslate = gl.getUniformLocation(this.program, 'uTranslate');
         this.uniformLoc.uResolution = gl.getUniformLocation(this.program, 'uResolution');
         this.uniformLoc.uZoom = gl.getUniformLocation(this.program, 'uZoom');
+        this.uniformLoc.uBorderColor = gl.getUniformLocation(this.program, 'uBorderColor');
+        for (let i = 0; i < GL_COLORS.length; i++) {
+            this.uniformLoc[`uColors[${i}]`] = gl.getUniformLocation(this.program, `uColors[${i}]`);
+        }
         this.vao = gl.createVertexArray();
         gl.bindVertexArray(this.vao);
     }
 
-    protected createShader = (type: number, source: string): WebGLShader => {
+    protected createShader(type: number, source: string): WebGLShader {
         const gl = this.gl;
         const shader = gl.createShader(type);
         if (shader === null) {
@@ -50,9 +56,9 @@ export abstract class Program {
             throw new Error(`Shader compilation failed: ${info}`);
         }
         return shader;
-    };
+    }
 
-    protected createProgram = (vertexSource: string, fragmentSource: string): WebGLProgram => {
+    protected createProgram(vertexSource: string, fragmentSource: string): WebGLProgram {
         const gl = this.gl;
         const vertexShader = this.createShader(gl.VERTEX_SHADER, vertexSource);
         const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, fragmentSource);
@@ -71,9 +77,9 @@ export abstract class Program {
         gl.deleteShader(vertexShader);
         gl.deleteShader(fragmentShader);
         return program;
-    };
+    }
 
-    createBuffer = (size: number): WebGLBuffer => {
+    createBuffer(size: number): WebGLBuffer {
         const gl = this.gl;
         const buffer = gl.createBuffer();
         if (buffer === null) {
@@ -83,7 +89,35 @@ export abstract class Program {
         gl.bufferData(gl.ARRAY_BUFFER, size, gl.DYNAMIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
         return buffer;
-    };
+    }
+
+    setBaseUniforms(): void {
+        const gl = this.gl;
+        const d = this.uniformData;
+        gl.uniform2f(this.uniformLoc.uScale, d[0], d[1]);
+        gl.uniform2f(this.uniformLoc.uTranslate, d[2], d[3]);
+        gl.uniform2f(this.uniformLoc.uResolution, d[4], d[5]);
+        gl.uniform2f(this.uniformLoc.uZoom, d[6], d[7]);
+    }
+
+    setColorUniforms(isHighlight: boolean = false): void {
+        const gl = this.gl;
+        const colors = isHighlight ? GL_HIGHLIGHT_COLORS : GL_COLORS;
+        for (let i = 0; i < colors.length; i++) {
+            gl.uniform4f(this.uniformLoc[`uColors[${i}]`], colors[i][0], colors[i][1], colors[i][2], colors[i][3]);
+        }
+    }
+
+    updateSubBuffer(data: Float32Array, size: number): void {
+        const gl = this.gl;
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, data.subarray(0, size));
+    }
+
+    cleanupGL(): void {
+        this.gl.bindVertexArray(null);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+    }
 
     destroy(): void {
         if (this.instanceBuffer) {
@@ -98,5 +132,5 @@ export abstract class Program {
             this.gl.deleteProgram(this.program);
             this.program = null;
         }
-    };
+    }
 }

@@ -22,12 +22,12 @@ precision highp float;
 layout(location = 0) in float x;
 layout(location = 1) in float y;
 layout(location = 2) in float width;
-layout(location = 3) in vec4 aColor;
 
 uniform vec2 uScale;
 uniform vec2 uTranslate;
 uniform vec2 uResolution;
 uniform vec2 uZoom;
+uniform vec4 uBorderColor;
 
 out vec4 vColor;
 
@@ -71,5 +71,5 @@ void main() {
 
     vec2 clipPos = (pos / uResolution) * 2.0f - 1.0f;
     gl_Position = vec4(clipPos.x, -clipPos.y, 0.0f, 1.0f);
-    vColor = aColor;
+    vColor = uBorderColor;
 }

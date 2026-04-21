@@ -19,15 +19,18 @@
 
 precision highp float;
 
+const int COLOR_COUNT = 10;
+
 layout(location = 0) in float x;
 layout(location = 1) in float y;
 layout(location = 2) in float width;
-layout(location = 3) in vec4 aColor;
+layout(location = 3) in float colorIndex;
 
 uniform vec2 uScale;
 uniform vec2 uTranslate;
 uniform vec2 uResolution;
 uniform vec2 uZoom;
+uniform vec4 uColors[COLOR_COUNT];
 
 out vec4 vColor;
 
@@ -71,5 +74,6 @@ void main() {
 
     vec2 clipPos = (pos / uResolution) * 2.0f - 1.0f;
     gl_Position = vec4(clipPos.x, -clipPos.y, 0.0f, 1.0f);
-    vColor = aColor;
+    int index = min(int(colorIndex), COLOR_COUNT - 1);
+    vColor = uColors[index];
 }

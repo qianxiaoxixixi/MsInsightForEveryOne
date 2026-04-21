@@ -16,77 +16,57 @@
  * -------------------------------------------------------------------------
  */
 
-import { getColorByIndex } from '@/leaksWorker/tools/color';
+import { GL_COLORS } from '@/leaksWorker/tools/color';
 import { Program } from './Program';
 
 export class MemoryStateProgram extends Program {
     protected glInstanceData: Float32Array = new Float32Array();
     protected glInstanceDataSize: number = 0;
     hasBuffer = false;
+    protected stride = 4;
 
     bindBuffer(): void {
         const gl = this.gl;
         if (this.instanceBuffer) {
-            this.gl.deleteBuffer(this.instanceBuffer);
+            gl.deleteBuffer(this.instanceBuffer);
         }
         this.instanceBuffer = this.createBuffer(4 * this.glInstanceDataSize);
         gl.bindVertexArray(this.vao);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
-        const stride = 7 * 4;
+        const strideBytes = this.stride * 4;
         gl.enableVertexAttribArray(0);
-        gl.vertexAttribPointer(0, 1, gl.FLOAT, false, stride, 0);
+        gl.vertexAttribPointer(0, 1, gl.FLOAT, false, strideBytes, 0);
         gl.vertexAttribDivisor(0, 1);
         gl.enableVertexAttribArray(1);
-        gl.vertexAttribPointer(1, 1, gl.FLOAT, false, stride, 4);
+        gl.vertexAttribPointer(1, 1, gl.FLOAT, false, strideBytes, 4);
         gl.vertexAttribDivisor(1, 1);
         gl.enableVertexAttribArray(2);
-        gl.vertexAttribPointer(2, 1, gl.FLOAT, false, stride, 8);
+        gl.vertexAttribPointer(2, 1, gl.FLOAT, false, strideBytes, 8);
         gl.vertexAttribDivisor(2, 1);
         gl.enableVertexAttribArray(3);
-        gl.vertexAttribPointer(3, 4, gl.FLOAT, false, stride, 12);
+        gl.vertexAttribPointer(3, 1, gl.FLOAT, false, strideBytes, 12);
         gl.vertexAttribDivisor(3, 1);
-        gl.bindVertexArray(null);
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    }
-
-    updateSubBuffer(): void {
-        const gl = this.gl;
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
-        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.glInstanceData.subarray(0, this.glInstanceDataSize));
+        this.cleanupGL();
     }
 
     processData(data: Segment[]): void {
         let totalLength = 0;
-
-        // 提前计算所需buffer的长度
         for (let i = 0; i < data.length; i++) {
-            totalLength += data[i].blocks.length * 7;
+            totalLength += data[i].blocks.length * this.stride;
         }
 
         const needRealloc = !this.glInstanceData || this.glInstanceData.length < totalLength;
-
-        let instanceData: Float32Array;
-        if (needRealloc) {
-            // 创建新的buffer
-            instanceData = new Float32Array(totalLength);
-        } else {
-            // 复用已有buffer，但只清空/覆盖前 totalLength 个元素
-            instanceData = this.glInstanceData;
-        }
+        const instanceData = needRealloc ? new Float32Array(totalLength) : this.glInstanceData;
 
         let offset = 0;
         for (let i = 0; i < data.length; i++) {
             const segment = data[i];
             for (let j = 0; j < segment.blocks.length; j++) {
-                const color = getColorByIndex(j);
                 const block = segment.blocks[j];
                 instanceData[offset++] = segment.offsetX + block.offset;
                 instanceData[offset++] = segment.offsetY;
                 instanceData[offset++] = block.size;
-                instanceData[offset++] = color[0];
-                instanceData[offset++] = color[1];
-                instanceData[offset++] = color[2];
-                instanceData[offset++] = color[3];
+                instanceData[offset++] = j % GL_COLORS.length;
             }
         }
 
@@ -95,7 +75,7 @@ export class MemoryStateProgram extends Program {
         if (needRealloc) {
             this.bindBuffer();
         } else {
-            this.updateSubBuffer();
+            this.updateSubBuffer(instanceData, totalLength);
         }
         this.hasBuffer = true;
     }
@@ -105,18 +85,12 @@ export class MemoryStateProgram extends Program {
             return;
         }
         const gl = this.gl;
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
-        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.glInstanceData, 0);
-        const instanceCount = this.glInstanceDataSize / 7;
-        const uniformData = this.uniformData;
+        this.updateSubBuffer(this.glInstanceData, this.glInstanceDataSize);
         gl.useProgram(this.program);
-        gl.uniform2f(this.uniformLoc.uScale, uniformData[0], uniformData[1]);
-        gl.uniform2f(this.uniformLoc.uTranslate, uniformData[2], uniformData[3]);
-        gl.uniform2f(this.uniformLoc.uResolution, uniformData[4], uniformData[5]);
-        gl.uniform2f(this.uniformLoc.uZoom, uniformData[6], uniformData[7]);
+        this.setBaseUniforms();
+        this.setColorUniforms();
         gl.bindVertexArray(this.vao);
-        gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, instanceCount);
-        gl.bindVertexArray(null);
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+        gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, this.glInstanceDataSize / this.stride);
+        this.cleanupGL();
     }
 }

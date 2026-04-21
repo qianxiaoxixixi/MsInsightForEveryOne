@@ -49,7 +49,7 @@ export class WebGLRenderer {
     }
 
     setHighlightData(highlightData: RenderData['blocks'] = []): this {
-        this.painter.memoryBlockHightlightProgram?.processData(highlightData, true);
+        this.painter.memoryBlockHightlightProgram?.processData(highlightData);
         this.painter.memoryBlockBorderHightlightProgram?.processData(highlightData);
         this.renderFrame();
         return this;
