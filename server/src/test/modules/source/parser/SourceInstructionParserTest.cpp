@@ -85,14 +85,14 @@ TEST(SourceInstructionParserTest, testConvertApiInstrNewWithValidJsonData)
     EXPECT_TRUE(list.size() == 2);
     auto instr = list[1];
     EXPECT_EQ(instr.stringColumnMap["string"].size(), 1);
-    EXPECT_EQ(instr.stringColumnMap["string"][0], "0x1269f000");
+    EXPECT_EQ(instr.stringColumnMap["string"][0], "0x1269f001");
     EXPECT_EQ(instr.stringColumnMap["string list"].size(), 2);
-    EXPECT_EQ(instr.stringColumnMap["string list"][1], "bb");
+    EXPECT_EQ(instr.stringColumnMap["string list"][1], "bb1");
 
     EXPECT_EQ(instr.intColumnMap["int"].size(), 1);
-    EXPECT_EQ(instr.intColumnMap["int"][0], 1);
+    EXPECT_EQ(instr.intColumnMap["int"][0], 11);
     EXPECT_EQ(instr.intColumnMap["int list"].size(), 2);
-    EXPECT_EQ(instr.intColumnMap["int list"][1], 2);
+    EXPECT_EQ(instr.intColumnMap["int list"][1], 22);
     EXPECT_EQ(instr.floatColumnMap["float"].size(), 1);
     EXPECT_EQ(instr.floatColumnMap["float list"].size(), 2);
 }
@@ -366,15 +366,15 @@ TEST(SourceInstructionParserTest, testPreprocessInstrSortsAndUpdatesGRPStatus)
     auto &instructions = doc["Instructions"];
     ASSERT_TRUE(instructions.IsArray());
     ASSERT_EQ(instructions.Size(), 2);
-    EXPECT_STREQ(instructions[0]["Address"].GetString(), "0x2");
-    EXPECT_STREQ(instructions[1]["Address"].GetString(), "0x1");
+    EXPECT_STREQ(instructions[0]["Address"].GetString(), "0x1");
+    EXPECT_STREQ(instructions[1]["Address"].GetString(), "0x2");
 
     ASSERT_TRUE(instructions[0].HasMember("GPR Status"));
     auto &firstStatus = instructions[0]["GPR Status"];
     ASSERT_TRUE(firstStatus.IsArray());
     ASSERT_EQ(firstStatus.Size(), 1);
     EXPECT_STREQ(firstStatus[0]["name"].GetString(), "R1");
-    EXPECT_EQ(firstStatus[0]["state"].GetInt(), static_cast<int>(GRPStatus::READ));
+    EXPECT_EQ(firstStatus[0]["state"].GetInt(), static_cast<int>(GRPStatus::WRITE));
     EXPECT_EQ(firstStatus[0]["progress"].GetInt(), static_cast<int>(GRPProgress::BEGIN));
     EXPECT_EQ(firstStatus[0]["length"].GetInt(), 2);
 
@@ -383,7 +383,7 @@ TEST(SourceInstructionParserTest, testPreprocessInstrSortsAndUpdatesGRPStatus)
     ASSERT_TRUE(secondStatus.IsArray());
     ASSERT_EQ(secondStatus.Size(), 1);
     EXPECT_STREQ(secondStatus[0]["name"].GetString(), "R1");
-    EXPECT_EQ(secondStatus[0]["state"].GetInt(), static_cast<int>(GRPStatus::WRITE));
+    EXPECT_EQ(secondStatus[0]["state"].GetInt(), static_cast<int>(GRPStatus::READ));
     EXPECT_EQ(secondStatus[0]["progress"].GetInt(), static_cast<int>(GRPProgress::END));
     EXPECT_EQ(secondStatus[0]["length"].GetInt(), 2);
 }

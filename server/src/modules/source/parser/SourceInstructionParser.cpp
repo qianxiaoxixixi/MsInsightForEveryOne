@@ -17,6 +17,7 @@
  */
 
 #include "SourceInstructionParser.h"
+#include <unordered_map>
 #include "SafeFile.h"
 #include "ServerLog.h"
 #include "BinFileParseUtil.h"
@@ -577,13 +578,29 @@ std::vector<SourceFileLine> SourceInstructionParser::ConvertToLineArray(Value &l
 void SourceInstructionParser::PreprocessInstr(document_t& doc)
 {
     auto& instructions = doc["Instructions"];
+    // 利用缓存，计算次数从 2NlogN -> N
+    std::unordered_map<const char*, uint64_t> addrCache;
     std::sort(instructions.GetArray().Begin(),
               instructions.GetArray().End(),
-              [](const Value& a, const Value& b) {
-                  if (a.HasMember("Address") && b.HasMember("Address")) {
-                      return a["Address"].GetString() < b["Address"].GetString();
+              [&addrCache](const Value& a, const Value& b) {
+                  auto parseAddr = [&addrCache](const char* str) -> uint64_t {
+                      if (!str) {
+                          return 0;
+                      }
+                      auto it = addrCache.find(str);
+                      if (it != addrCache.end()) {
+                          return it->second;
+                      }
+                      uint64_t addr = std::stoull(str, nullptr, 16);
+                      addrCache[str] = addr;
+                      return addr;
+                  };
+                  if (!a.HasMember("Address") || !b.HasMember("Address")) {
+                      return false;
                   }
-                  return true;
+                  const char* addrA = a["Address"].GetString();
+                  const char* addrB = b["Address"].GetString();
+                  return parseAddr(addrA) < parseAddr(addrB);
               });
     for (json_t& instruction : instructions.GetArray()) {
         if (!instruction.IsObject()) {
@@ -754,7 +771,6 @@ std::vector<SourceFileInstructionDynamicCol> SourceInstructionParser::GetInstrDy
     }
     // never below zero
     size_t index = static_cast<size_t>(std::distance(apiCores.begin(), targetCore));
-
     for (const auto &item: instructionList) {
         SourceFileInstructionDynamicCol col;
         GetValueInTargetCore(item.intColumnMap, col.intColumnMap, index);
