@@ -72,15 +72,15 @@ TEST_F(ComputeQuerySourceApiDynamicHandlerTest,
     auto dataList = response.body.columnValues;
     EXPECT_TRUE(!dataList.empty());
     auto data  = dataList[0];
-    EXPECT_EQ(data.stringMap["Address"], "0x1134e2d8");
-    EXPECT_EQ(data.stringMap["AscendC Inner Code"], "/test/vec_add1_simt.cpp:50");
-    EXPECT_EQ(data.intMap["Cycles"], 62); // Cycles is 62
+    EXPECT_EQ(data.stringMap["Address"], "0x1134e288");
+    EXPECT_EQ(data.stringMap["AscendC Inner Code"], "/test/compiler/tikcpp/tikcfw/interface/kernel_operator_simt_float_intrinsics.h:104");
+    EXPECT_EQ(data.intMap["Cycles"], 32); // Cycles is 62
     EXPECT_EQ(data.intMap["Instructions Executed"], 4); // Instructions Executed is 4
-    EXPECT_EQ(data.stringMap["Pipe"], "RVECLD");
+    EXPECT_EQ(data.stringMap["Pipe"], "RVECEX");
     EXPECT_EQ(data.intMap["TheoreticalStallCycles"], 8); // TheoreticalStallCycles is 8
     EXPECT_EQ(data.stringMap["Source"],
-              "SIMT_LDG [PEX:6|P],[Rn:0|R],[Rn1:1|R],[Rd:0|R],[#ofst:9],[cop:1],[l2_cache_hint:0]");
-    EXPECT_EQ(data.intMap["RealStallCycles"], 13); // RealStallCycles is 13
+              "SIMT_IADD [PEX:6|P],[Rm:3|R],[Rn:8|R],[Rd:3|R],[waitBitMask:3],[stallCyc:7],[yeild:0],[inv:0]");
+    EXPECT_EQ(data.intMap["RealStallCycles"], 75); // RealStallCycles is 13
 }
 
 TEST_F(ComputeQuerySourceApiHandlerTest, testQueryApiInstructionsDynamicHandlerRequestWithValidData)
