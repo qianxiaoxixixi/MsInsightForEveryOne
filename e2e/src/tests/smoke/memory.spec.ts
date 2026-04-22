@@ -39,6 +39,7 @@ let allPagesSuccessRes: Promise<unknown>;
 test.describe('Memory', () => {
     test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
+        await page.waitForTimeout(2000);
         await memoryPage.goto();
         await importData(page, FilePath.SMOKE_DATA);
         await allCardParsedPromise;
@@ -47,5 +48,6 @@ test.describe('Memory', () => {
     // 展示折线图
     test('display line chart', async ({ page, memoryPage }) => {
         await expect(page.locator('iframe[name="Memory"]').contentFrame().locator('canvas')).toBeVisible();
+        await page.waitForTimeout(2000);
     });
 });

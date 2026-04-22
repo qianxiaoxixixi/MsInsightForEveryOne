@@ -57,6 +57,7 @@ test.describe('Source', () => {
         const filePath = FilePath.OP_SIMULATOR_BIN;
         await importData(page, filePath);
         await sourcePage.goto();
+        await page.mouse.move(0, 0);
         const coreValue = sourcePage.sourceFrame.getByText('core0');
         await expect(coreValue).toBeVisible();
     });

@@ -17,8 +17,8 @@
  */
 
 import { test as baseTest, expect, WebSocket } from '@playwright/test';
-import { CommunicationPage, FrameworkPage, TimelinePage } from '@/page-object';
-import { clearAllData, importData, setupWebSocketListener, waitForWebSocketEvent } from '@/utils';
+import { CommunicationPage, FrameworkPage } from '@/page-object';
+import { importData, setupWebSocketListener, waitForWebSocketEvent } from '@/utils';
 import { FilePath } from '@/utils/constants';
 
 interface TestFixtures {
@@ -43,6 +43,7 @@ test.describe('Communication', () => {
         clusterCompletedRes = waitForWebSocketEvent(page, (res) => res?.event === 'parse/clusterCompleted');
 
         const { loadingDialog } = new FrameworkPage(page);
+        await page.waitForTimeout(2000);
         await page.goto('/');
         await importData(page, FilePath.SMOKE_DATA);
         await allPagesSuccessRes;
@@ -62,5 +63,6 @@ test.describe('Communication', () => {
         await page.locator('iframe[name="Communication"]').contentFrame().getByRole('radio', { name: 'Communication Duration' }).click();
         await expect(page.locator('iframe[name="Communication"]').contentFrame().locator('#hccl canvas')).toBeVisible();
         await expect(page.locator('iframe[name="Communication"]').contentFrame().locator('#main canvas')).toBeVisible();
+        await page.waitForTimeout(2000);
     });
 });

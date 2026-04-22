@@ -68,7 +68,7 @@ export default defineConfig({
         headless: true,
         launchOptions: {
             args: [
-                '--use-gl=swiftshader', 
+                '--use-gl=swiftshader',
                 '--disable-gpu-compositing',
                 '--disable-webgl',
             ],

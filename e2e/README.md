@@ -16,7 +16,7 @@ npx playwright install
 
 ### 3、准备测试数据
 
-测试数据可以在数据仓库中下载
+测试数据可以在数据仓库中下载: https://gitcode.com/zhangruoyu2/msinsight-quick-start-demo.git
 
 在utils/constants.ts 中可以定义测试文件路径，目前所有测试数据都放在 C:\msinsight-quick-start-demo\GUI-test-data 路徑测试 目录下，请自行创建该目录或将配置更改为本地文件路径。
 
@@ -39,6 +39,8 @@ npm run test -- -g test_unitsExpandAndCollapse_when_click
 npx playwright show-report
 # 更新某个测试文件所有快照
 npx playwright test tests/full-test/framework.spec.ts -u
+# 更新某个测试用例快照
+npx playwright test -g test_lock_selected_area_then_click_operator_detail -u
 ```
 
 ### 自动化写用例

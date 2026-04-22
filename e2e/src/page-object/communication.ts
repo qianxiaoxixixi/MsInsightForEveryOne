@@ -58,6 +58,7 @@ export class CommunicationPage {
     async goto(): Promise<void> {
         const frameworkPage = new FrameworkPage(this.page);
         await frameworkPage.clickTab('communication');
+        await this.page.mouse.move(0,0);
     }
 
     // 切换到通信耗时分析

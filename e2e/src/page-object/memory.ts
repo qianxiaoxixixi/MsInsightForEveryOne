@@ -53,5 +53,6 @@ export class MemoryPage {
         const frameworkPage = new FrameworkPage(this.page);
         await frameworkPage.goto();
         await frameworkPage.clickTab('memory');
+        await this.page.mouse.move(0,0);
     }
 }

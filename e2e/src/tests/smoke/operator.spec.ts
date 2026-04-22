@@ -39,6 +39,7 @@ let allPagesSuccessRes: Promise<unknown>;
 test.describe('Operator', () => {
     test.beforeEach(async ({ page, operatorPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
+        await page.waitForTimeout(2000);
         await operatorPage.goto();
         await importData(page, FilePath.SMOKE_DATA);
         await allCardParsedPromise;
@@ -48,5 +49,6 @@ test.describe('Operator', () => {
     test('display pie chart', async ({ page, operatorPage }) => {
         await expect(page.locator('iframe[name="Operator"]').contentFrame().locator('#opTypeChart canvas')).toBeVisible();
         await expect(page.locator('iframe[name="Operator"]').contentFrame().locator('#computeChart canvas')).toBeVisible();
+        await page.waitForTimeout(2000);
     });
 });
