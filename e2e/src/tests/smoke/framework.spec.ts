@@ -24,6 +24,7 @@ import { clearAllData } from '@/utils';
 test.describe('Framework', () => {
     test.beforeEach(async ({ page }) => {
         const frameworkPage = new FrameworkPage(page);
+        await page.waitForTimeout(2000);
         await frameworkPage.goto();
     });
 
@@ -39,5 +40,6 @@ test.describe('Framework', () => {
         await frameworkPage.helpInfoBtn.click();
         await page.getByText('About').click();
         await expect(helpInfoDialog).toBeVisible();
+        await page.waitForTimeout(2000);
     });
 });

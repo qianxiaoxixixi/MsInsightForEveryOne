@@ -40,5 +40,6 @@ export class OperatorPage {
         const frameworkPage = new FrameworkPage(this.page);
         await frameworkPage.goto();
         await frameworkPage.clickTab('operator');
+        await this.page.mouse.move(0,0);
     }
 }

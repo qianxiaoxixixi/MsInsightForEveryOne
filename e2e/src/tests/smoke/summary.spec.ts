@@ -41,10 +41,11 @@ test.describe('Summary', () => {
     test.beforeEach(async ({ page, summaryPage, ws }) => {
         allPagesSuccessRes = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         clusterCompletedRes = waitForWebSocketEvent(page, (res) => res?.event === 'parse/clusterCompleted');
-        
+
         const { loadingDialog } = new FrameworkPage(page);
         const { fullmask } = summaryPage;
 
+        await page.waitForTimeout(2000);
         await page.goto('/');
         await importData(page, FilePath.SMOKE_DATA);
         await allPagesSuccessRes;
@@ -60,7 +61,9 @@ test.describe('Summary', () => {
 
     // 展示并行策略图和计算通信概览柱状图
     test('display parallelism and performance chart', async ({ page, summaryPage }) => {
-        await expect(page.locator('iframe[name="Summary"]').contentFrame().getByTestId('parallelism-graph-placeholder')).toBeVisible();
+        const { parallelismGraphPlaceholder } = summaryPage;
+        await expect(parallelismGraphPlaceholder).toBeVisible();
         await expect(page.locator('iframe[name="Summary"]').contentFrame().getByTestId('performance-chart').locator('canvas')).toBeVisible();
+        await page.waitForTimeout(2000);
     });
 });

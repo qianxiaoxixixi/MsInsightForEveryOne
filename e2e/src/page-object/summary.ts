@@ -106,5 +106,6 @@ export class SummaryPage {
     async goto(): Promise<void> {
         const frameworkPage = new FrameworkPage(this.page);
         await frameworkPage.clickTab('summary');
+        await this.page.mouse.move(0,0);
     }
 }

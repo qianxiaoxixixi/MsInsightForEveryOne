@@ -194,6 +194,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await memoryFrame.getByRole('button', { name: 'search Search' }).click();
         await searchPromise;
 
+        await page.waitForTimeout(1000);
         await memoryFrame.getByLabel('Size(KB)').getByRole('button').click();
         await memoryFrame.getByPlaceholder('Min').fill('0');
         await memoryFrame.getByPlaceholder('Max').fill('30');
@@ -594,6 +595,7 @@ test.describe('Memory(Text)', () => {
         await memoryFrame.getByRole('button', { name: 'search Search' }).click();
         await searchPromise;
 
+        await page.waitForTimeout(1000);
         await memoryFrame.getByLabel('Size(KB)').getByRole('button').click();
         await memoryFrame.getByPlaceholder('Min').fill('0');
         await memoryFrame.getByPlaceholder('Max').fill('30');
@@ -651,11 +653,13 @@ test.describe('Memory(Text)', () => {
     test('query_memoryDetailTable_by_jointFiltering', async ({ page, memoryPage, ws }) => {
         const { memoryFrame } = memoryPage;
         const searchPromise = waitForResponse(await ws, (res) => res?.command === 'Memory/view/operator');
+        await page.waitForTimeout(1000);
         await memoryFrame.getByLabel('Name').getByRole('button').click();
         await memoryFrame.getByPlaceholder('Search Name').fill('aten::empty_strided');
         await memoryFrame.getByRole('button', { name: 'search Search' }).click();
         await searchPromise;
 
+        await page.waitForTimeout(1000);
         await memoryFrame.getByLabel('Size(KB)').getByRole('button').click();
         await memoryFrame.getByPlaceholder('Min').fill('0');
         await memoryFrame.getByPlaceholder('Max').fill('30');

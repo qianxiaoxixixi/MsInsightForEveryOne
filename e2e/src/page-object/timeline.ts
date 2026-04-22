@@ -62,6 +62,7 @@ export class TimelinePage {
         const frameworkPage = new FrameworkPage(this.page);
         await frameworkPage.goto();
         await frameworkPage.clickTab('timeline');
+        await this.page.mouse.move(0,0);
     }
 
     async expandUnit(unitLocator: Locator): Promise<void> {

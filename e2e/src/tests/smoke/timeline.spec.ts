@@ -39,6 +39,7 @@ let allPagesSuccessRes: Promise<unknown>;
 test.describe('Timeline', () => {
     test.beforeEach(async ({ page, timelinePage, ws }) => {
         allPagesSuccessRes = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
+        await page.waitForTimeout(2000);
         await timelinePage.goto();
         await importData(page, FilePath.SMOKE_DATA);
         await allPagesSuccessRes;
@@ -47,5 +48,6 @@ test.describe('Timeline', () => {
     // 展示标志
     test('display marker', async ({ page, timelinePage }) => {
         await expect(page.locator('iframe[name="Timeline"]').contentFrame().getByTestId('tool-marker')).toBeVisible();
+        await page.waitForTimeout(2000);
     });
 });
