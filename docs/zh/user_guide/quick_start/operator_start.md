@@ -4,10 +4,9 @@ MindStudio Insight 支持导入 [msOpProf](https://gitcode.com/Ascend/msopprof) 
 
 ## 环境准备
 
-算子性能优化中，负载不均衡、Scalar 占比过高、流水并行度不足等问题屡见不鲜。
-[msOpProf](https://gitcode.com/Ascend/msopprof) 工具可以采集上板和仿真两类数据。上板数据聚焦真实硬件环境下的性能信息。仿真数据从仿真器中采集，可以得到细粒度的指令流水图、代码热点图等信息。
+算子性能优化中，负载不均衡、Scalar 占比过高、流水并行度不足等问题屡见不鲜。msOpProf工具可以采集上板和仿真两类数据。上板数据聚焦真实硬件环境下的性能信息。仿真数据从仿真器中采集，可以得到细粒度的指令流水图、代码热点图等信息。
 
-现在假设已经使用 [msOpProf](https://gitcode.com/Ascend/msopprof) 采集了一份 `matmul_leakyrelu` 算子的上板数据和仿真数据。
+现在假设已经使用msOpProf采集了一份 `matmul_leakyrelu` 算子的上板数据和仿真数据。
 
 算子数据：[点击下载](https://gitcode.com/zhangruoyu2/msinsight-quick-start-demo/blob/main/operator)
 
