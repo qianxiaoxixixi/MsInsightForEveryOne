@@ -1001,12 +1001,15 @@ pyinstaller
   ![image-20251226102953614](./figures/MSVC_install.png)
 
 + mingw安装
-
-  从[WinLibs - GCC+MinGW-w64 compiler for Windows](https://www.winlibs.com/)下载对应的软件包，注意选择MSVCRT版本（>11.2）以确保编译出来的包具备更好的迁移性
-
-  下载后解压到任意目录下，然后修改系统中的PATH变量，向其中添加mingw64下bin目录路径，如下图所示，假设解压在C盘根目录下
-
+  **安装包获取**
+  从[WinLibs - GCC+MinGW-w64 compiler for Windows](https://www.winlibs.com/)下载,版本选择11.0以上。通常提供两种运行时版本usvct和mscv，建议选择前者，win10以上系统均默认提供前者
+  **安装**
+  下载后解压，此处以C盘根目录为例，用户可以自己选择合适的目录解压。
+  **环境变量配置**
+  windows系统搜索环境变量配置功能，选择修改系统环境变量，找到PATH变量，向其中添加第二步中解压的mingw路径下的bin目录，如下图所示
 ![image-20251226103754205](./figures/mingw_path_add.png)
+ **安装验证**
+  打开终端后输入命令 g++ -v , 输出正常版本信息即可
 
 + nsProcess插件安装
 
