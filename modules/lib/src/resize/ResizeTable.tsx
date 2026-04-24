@@ -457,7 +457,7 @@ export function ResizeTableInner<T extends object>(prop: ResizeTableProps<T>, re
     const {
         columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, style, virtual = false,
         scroll, dataSource, pagination, expandable, onChange, rowHoverable = true,
-        className, locale, allowCopy = false, resetScroll = true, ...restProps
+        className, locale, allowCopy = true, resetScroll = true, ...restProps
     } = prop;
     const [columns, setColumns] = useState<ColumnsType<T>>([]);
     const marginY = scroll?.y ? (scroll.y - EMPTY_VIEW_HEIGHT) / 2 : 50;
