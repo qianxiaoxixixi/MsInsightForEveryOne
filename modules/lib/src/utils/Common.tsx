@@ -767,7 +767,7 @@ const getColData = (obj: ObjectKeyString, data: ObjectKeyString, col: any): void
         } else {
             const { content = undefined, children = [] } = { ...itemData, ...(itemData.props ?? {}) };
             obj[dataKey] = content ?? (
-                Array.isArray(children) ? children.map(colData => typeof colData !== 'object' ? colData : '').join('') : children);
+                Array.isArray(children) ? children.map(colData => typeof colData !== 'object' ? colData : JSON.stringify(colData)).join('') : children);
         }
     }
 };
@@ -780,11 +780,21 @@ const dataFormat = ({ header, data }: TableHeaderAndData): string => {
     result = `${result}\n`;
     data.forEach(item => {
         header.forEach(headerItem => {
-            result = `${result}${item[headerItem.key]}\t`;
+            result = `${result}${wrapValue(item[headerItem.key])}\t`;
         });
         result = `${result}\n`;
     });
     return result;
+};
+
+const wrapValue = (value: string | number): string | number => {
+    if (typeof value !== 'string') {
+        return value;
+    }
+    if (value.includes('\n') || value.includes('\t') || value.includes('"')) {
+        return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
 };
 
 export const colorPalette: Array<keyof Theme['colorPalette']> = [

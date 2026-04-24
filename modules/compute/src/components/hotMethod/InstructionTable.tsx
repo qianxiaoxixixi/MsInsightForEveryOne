@@ -211,9 +211,10 @@ const instrsColsConfig = [
     },
     {
         title: 'GPR Status',
+        key: 'GPR Status',
         ellipsis: true,
         width: 115,
-        render: (record: InstrsColumnType): string | React.ReactElement => {
+        render: (_: any, record: InstrsColumnType): string | React.ReactElement => {
             return <RegisterDependency
                 tracks={record['GPR Status']}
                 cellPadding={6} />;
