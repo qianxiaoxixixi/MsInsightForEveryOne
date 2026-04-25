@@ -81,10 +81,10 @@ class TraceEntry:
     @classmethod
     def from_dict(cls, trace_dict: dict):
         trace_entry = cls(
-            action=trace_dict["action"],
-            addr=int(trace_dict["addr"]),
-            size=int(trace_dict["size"]),
-            stream=int(trace_dict["stream"]),
+            action=trace_dict.get("action", "unknown"),
+            addr=int(trace_dict.get("addr", 0)), 
+            size=int(trace_dict.get("size", 0)),
+            stream=int(trace_dict.get("stream", 0)),
             _origin=trace_dict,
             frames=[Frame.from_dict(_frame_dict) for _frame_dict in trace_dict.get("frames", [])]
         )
