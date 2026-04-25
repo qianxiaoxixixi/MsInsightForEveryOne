@@ -149,6 +149,16 @@ MindStudio Insight由华为公司的下列部门联合贡献：
 算子调优 <zh/user_guide/operator_tuning>
 内存调优 <zh/user_guide/memory_tuning>
 服务化调优 <zh/user_guide/service_optimization>
+案例 <wiki/Case_Studies>
+```
+
+```{toctree}
+:maxdepth: 2
+:caption: 常见问题
+:hidden:
+
+FAQ <wiki/FAQ>
+问题反馈<wiki/Issue_Feedback>
 ```
 
 ```{toctree}
