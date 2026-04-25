@@ -16,6 +16,7 @@
  * -------------------------------------------------------------------------
  */
 #include "BaselineManagerService.h"
+#include "ProjectParserFactory.h"
 #include "ProjectExplorerManager.h"
 #include "GlobalDefs.h"
 #include "BaselineManager.h"
@@ -48,6 +49,8 @@ bool SetBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     response.body.cluster = baselineInfo.clusterBaseLine;
     response.body.fileId = baselineInfo.fileId;
     SendResponse(std::move(responsePtr), res);
+    // 发送解析成功消息（注意需在返回set/Baseline响应体之后）
+    ProjectParserBase::SendAllParseSuccess();
     return res;
 }
 } // end of namespace Module

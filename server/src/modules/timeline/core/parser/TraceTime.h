@@ -58,8 +58,11 @@ private:
     std::mutex mutex;
     uint64_t maxTimestamp{};
     uint64_t minTimestamp{};
+    // cardTimeDurationMap记录原始卡起止时间，key代表fileId，其中Host和Device分别拥有不同的fileId，
+    // pair分别记录区间原始开始时间戳和原始结束时间戳，UTC时间，单位ns
     std::unordered_map<std::string, std::pair<uint64_t, uint64_t>> cardTimeDurationMap;
     std::unordered_map<std::string, uint64_t> rankMinTimestampMap;
+    // cardGroupTimeDurations记录合并区间后的起止时间
     std::vector<CardGroup> cardGroupTimeDurations;
     bool isSimulation = false;
     void UpdateCardGroupTime(uint64_t min, uint64_t max);
