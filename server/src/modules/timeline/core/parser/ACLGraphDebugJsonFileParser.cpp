@@ -18,6 +18,7 @@
 
 #include <memory>
 #include "ServerLog.h"
+#include "DataBaseManager.h"
 #include "ACLGraphDebugJsonFileParser.h"
 
 namespace Dic::Module::Timeline {
@@ -53,6 +54,10 @@ bool ACLGraphDebugJsonFileParser::PostParse(std::shared_ptr<TextTraceDatabase> d
             return false;
         }
         Server::ServerLog::Info("[ACLGraph] PostParse completed: ", compacted.size(), " slices compacted");
+    }
+    // FIX: 修复单 JSON 单 DeviceId 文件导入时，无法从文件路径知道 rankId deviceId 映射的问题，再次更新 rankIdToDeviceIdMap
+    if (DataBaseManager::Instance().GetDeviceIdFromRankId(rankId).empty()) {
+        UpdateRankIdDeviceIdMapByProcessData(db, rankId);
     }
     return true;
 }

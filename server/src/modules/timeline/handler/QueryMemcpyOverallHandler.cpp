@@ -47,9 +47,10 @@ bool QueryMemcpyOverallHandler::HandleRequest(std::unique_ptr<Protocol::Request>
 
     std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId);
     if (deviceId.empty()) {
-        error = "Failed to get deviceId for memcpy view overall statistics.";
-        SetTimelineError(ErrorCode::GET_DEVICE_ID_FAILED);
-        return false;
+        // 部分数据会缺少deviceId，查询结果会为空，所以直接返回true，而不是报错，并加上日志提示
+        ServerLog::Warn("DeviceId is empty for memcpy view overall statistics.");
+        SendResponse(std::move(responsePtr), true);
+        return true;
     }
     request.params.deviceId = deviceId;
 
