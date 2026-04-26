@@ -269,7 +269,7 @@ void TraceFileParser::UpdateRankIdDeviceIdMapByProcessData(std::shared_ptr<TextT
             }
             continue;
         }
-        if (label == "NPU") { // 对于 "NPU" label，默认设置为 0
+        if (label == "NPU" || label == "") { // 对于 "NPU" label或者缺少label字段的数据，默认设置为 0
             uniqueNumbers.insert("0");
         }
     }
