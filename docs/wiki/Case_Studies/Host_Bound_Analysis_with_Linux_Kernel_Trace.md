@@ -1,26 +1,28 @@
-# 问题背景
+# 基于Linux Kernel Trace的Host Bound问题分析
+
+## 问题背景
 
 在大模型中，CPU主要负责任务的下发，NPU负责任务执行。在现网问题中，无论推理或训练领域，HostBound都是现网的高发问题。
 HostBound模型在Profiling中经常表现为下发时间长，Device和Host侧对应出现大量空泡，如下图所示：
 ![842bfe3a7d79452ca4b5d31783d3f068.png](figures/Host_Bound_Analysis_with_Linux_Kernel_Trace/host-bound-bubble.png)
 HostBound问题通常会采集ftrace数据分析CPU调度问题，但缺乏工具将ftrace的数据和profiling的信息整合。MindStudio Insight提供了工具脚本实现两种数据同时展示，提高HostBound问题定位的效率。
 
-# 定位思路
+## 定位思路
 
 1. 绑核、流水优化、内存分配库替换三板斧
 2. 同时采集ftrace和profiling数据(容器场景下，ftrace和profiling应在同一容器内执行)
 3. 将ftrace数据转换为MindStudio Insight可识别的数据
 4. 同时导入MindStudio Insight 分析进程调度情况
 
-# 模型Profiling数据采集
+## 模型Profiling数据采集
 
 参考：
 [msprof采集通用命令-CANN商用版8.2.RC1-昇腾社区 (hiascend.com)](https://www.hiascend.com/document/detail/zh/canncommercial/82RC1/devaids/Profiling/atlasprofiling_16_0010.html#ZH-CN_TOPIC_0000002370195313__section2176155111323)
 [PyTorch训练/在线推理场景性能分析-昇腾社区 (hiascend.com)](https://www.hiascend.com/document/detail/zh/canncommercial/82RC1/devaids/Profiling/atlasprofiling_16_0006.html)
 
-# Linux Kernel ftrace数据采集
+## Linux Kernel ftrace数据采集
 
-## **1、Linux Kernel ftrace数据介绍**
+### **1、Linux Kernel ftrace数据介绍**
 
 Linux 内核内置了多种跟踪(trace)工具，其中 ftrace 作为从 2.6.27 版本开始引入主流内核的跟踪框架，可用于看管和调试内核中发生的各类事件，帮助开发人员深入分析系统运行时的内部行为。ftrace 支持多种跟踪器，例如函数调用跟踪、上下文切换跟踪、中断延迟分析等，能够有效辅助定位内核态性能问题与调度异常。在如下示例中，我们仅开启了与 CPU 进程调度相关的事件(sched)进行数据采集，具体输出如下：
 
@@ -56,16 +58,16 @@ Linux 内核内置了多种跟踪(trace)工具，其中 ftrace 作为从 2.6.27 
 [trace-cmd](https://www.trace-cmd.org/Documentation/trace-cmd/)是 ftrace 的一个前端命令行工具。它封装了直接操作 /sys/kernel/debug/tracing/ 下复杂文件的过程，提供了更简单易用的命令接口
 ![f184a4b046ac4c93a05a1487f112247d.PNG](figures/Host_Bound_Analysis_with_Linux_Kernel_Trace/ftrace-output-example.png)
 
-## **2、Linux Kernel数据采集操作**
+### **2、Linux Kernel数据采集操作**
 
-### 前置准备
+#### 前置准备
 
 + 安装trace-cmd命令
   Ubuntu安装命令：`sudo apt-get install trace-cmd`
   CentOs安装命令：`sudo yum install trace-cmd`
 + 获取MindStudio Insight提供的采集脚本trace_record.py(见附件)，推荐profiling和ftrace数据同步采集
   
-  ### 非侵入式采集
+#### 非侵入式采集
   
   这种方式不需要修改现有代码，将trace_record.py脚本作为整体使用。优点在于无需修改代码，快速上手，但是同时灵活性较低。
   作为整体脚本使用时提供以下参数：
@@ -90,7 +92,7 @@ Linux 内核内置了多种跟踪(trace)工具，其中 ftrace 作为从 2.6.27 
   1. 在终端中启动训练脚本`python train.py`
   2. 同时在另一终端中启动采集脚本，采集60s，`python trace_record.py --record_time=60`
 
-### 侵入式采集
+#### 侵入式采集
 
 利用trace_record脚本中提供的接口，在代码对应位置调用接口。优点在于灵活性高，可对特定的逻辑进行采集。
 
@@ -125,7 +127,7 @@ import ftrace_record
     ftrace_record_stop(output='/tmp/ftrace.txt')
 ```
 
-## **3、数据采集后处理**
+### **3、数据采集后处理**
 
 MindStudio Insight提供了ftrace格式数据，转换为流水图数据脚本trace_convert.py(见附件)，使用方法如下：
 
@@ -155,7 +157,7 @@ Example:
 假设第一步采集的profiling数据在目录 result_dir/ctl_1418857_20251025030529768_ascend_pt下，对应的ftrace文件保存在result_dir/ftrace.txt中
 执行命令：`python trace_convert.py --input=result_dir/ftrace.txt --profiling_data=result_dir/ctl_1418857_20251025030529768_ascend_pt`
 
-# 联合分析
+## 联合分析
 
 1. 在MindStudio Insight中导入profiling数据
 2. 在工程管理中向当前工程添加转换后的结果文件，就可以得到两种数据并存的流水图

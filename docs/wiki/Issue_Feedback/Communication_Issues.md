@@ -1,12 +1,14 @@
-# A3日志通信域有异常值
+# Communication相关问题汇总
 
-## 问题描述
+## A3日志通信域有异常值
+
+### 问题描述
 
 A3四卡8die的作业，通信域中有异常大的值，工具版本8.2.RC1
 
 ![image.png](figures/Communication_Issues/a3-allgather-aicpu-kernel.png)
 
-## 解决方法
+### 解决方法
 
 这个字符串不是异常值，是profiling在不同集合通信域采集到的不同哈希值，用于区分不同集合通信域的唯一标识。在profiling采集不到通信域具体类型时，会用这个唯一标识值区分同一个RankSet但不同通信域的情况(比如上图中有两个包含RankSet为0, 1, 2 ,3, 4, 5的通信域，但并不是同一个通信域，里面的通信行为也有不同)。
 

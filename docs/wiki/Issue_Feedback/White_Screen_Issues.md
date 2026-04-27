@@ -1,6 +1,8 @@
-# MindStudio打开白屏
+# 白屏问题汇总
 
-## 问题描述
+## MindStudio打开白屏
+
+### 问题描述
 
 版本:MindStudio 8.2.RC1.B120
 
@@ -8,7 +10,7 @@
 
 ![image](figures/White_Screen_Issues/mindstudio-white-screen.png)
 
-## 解决方法
+### 解决方法
 
 使用前后端分离启动的方式可以临时解决。
 

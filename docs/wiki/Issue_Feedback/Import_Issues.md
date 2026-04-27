@@ -1,6 +1,8 @@
-# MindStudio Insight打开profiling数据文件，信息显示不全
+# 导入相关问题汇总
 
-## 问题描述
+## MindStudio Insight打开profiling数据文件，信息显示不全
+
+### 问题描述
 
 用MindStudio insight打开profiling文件夹./localhost.localdomain_355720_20251204222740460_ascend_pt，只显示CANN层以上的profiling信息
 
@@ -14,7 +16,7 @@ MindStudio版本信息：8.2
 
 硬件使用 A5。
 
-## 解决方法
+### 解决方法
 
 A5当前导出db存在已知问题，手动拦截了db导出。
 
