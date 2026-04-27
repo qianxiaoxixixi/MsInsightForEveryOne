@@ -44,7 +44,7 @@ $ pip install jupyterlab==4.0.11
 
 <h3 id="3.2">3.2 安装包准备</h3>
 
-参照 [章节2](##2.%20参考资料) 中提供的链接下载指定版本的MindStudio Insight Jupyter的whl包
+参照 [章节2](#2) 中提供的链接下载指定版本的MindStudio Insight Jupyter的whl包
 
 <h3 id="3.3">3.3 包安装及服务查看</h3>
 
