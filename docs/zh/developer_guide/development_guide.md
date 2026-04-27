@@ -43,6 +43,45 @@
 
 ![CMake_toolchain_setting](./figures/CMake_toolchain_setting.png)
 
+#### 3.1.4 配置pre-commit代码检查工具
+
+pre-commit 是一款基于 Git 钩子的开源代码质量管控工具，在代码提交前会自动完成代码校验、格式规范化等工作。项目要求本地启用 pre-commit 完成代码校验后再提交。
+[pre-commit本地运行指南](https://gitcode.com/Ascend/community/blob/master/docs/contributor/pre-commit-guide.md)
+
+**1. 安装 pre-commit**
+
+```bash
+pip install pre-commit
+```
+
+**2. 安装 Git 钩子**
+
+在项目根目录下执行，注册 Git 钩子。后续执行 `git commit` 时将自动触发代码检查。
+
+```bash
+pre-commit install
+```
+
+**3. 执行代码检查**
+
+在提交代码前，扫描暂存区的改动文件，自动完成格式化与合规性检查。
+
+```bash
+git add .
+pre-commit run
+```
+
+检查过程中，格式化类问题（如代码缩进、换行等）会被自动修复，修复后需重新 `git add`。未能自动修复的错误请根据提示人工修复。
+
+**4. 提交代码**
+
+钩子安装成功后，正常提交代码即可，pre-commit 会自动运行。若自动修复后无其他问题，提交将直接成功。
+
+```bash
+git add .
+git commit -S -m "提交信息"
+```
+
 ### 3.2 第三方库的下载与执行编译
 
 #### 3.2.1 下载第三方库与预运行第三方库
