@@ -1,6 +1,6 @@
 # **🚀 快速开始（算子调优篇）**
 
-MindStudio Insight 支持导入 [msOpProf](https://gitcode.com/Ascend/msopprof) 工具采集的、运行在昇腾 AI 处理器上的算子性能数据。用户可根据展现的算子关键性能指标，快速定位算子的软、硬件性能瓶颈，进行算子性能调优。
+MindStudio Insight 支持导入 [msOpProf](https://gitcode.com/Ascend/msopprof/blob/26.0.0/docs/zh/quick_start/msopprof_quick_start.md) 工具采集的、运行在昇腾 AI 处理器上的算子性能数据。用户可根据展现的算子关键性能指标，快速定位算子的软、硬件性能瓶颈，进行算子性能调优。
 
 ## 环境准备
 

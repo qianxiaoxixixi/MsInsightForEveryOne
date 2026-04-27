@@ -1,12 +1,12 @@
 # **🚀 快速开始（系统调优篇）**
 
-MindStudio Insight 支持导入 [msProf](https://gitcode.com/Ascend/msprof) 工具采集的、运行在昇腾 AI 处理器上的模型系统性能数据。用户可根据展现的模型关键性能指标，快速定位模型的软、硬件性能瓶颈，进行系统性能调优。
+MindStudio Insight 支持导入 [msProf](https://gitcode.com/Ascend/msprof/blob/26.0.0/docs/zh/quick_start.md)工具采集的、运行在昇腾 AI 处理器上的模型系统性能数据。用户可根据展现的模型关键性能指标，快速定位模型的软、硬件性能瓶颈，进行系统性能调优。
 
 ## 环境准备
 
-大模型在集群场景下使用时，常常会出现快慢卡现象，降低模型性能。[msProf](https://gitcode.com/Ascend/msprof) 工具可以采集并解析训练、推理过程中的AI模型运行数据、昇腾AI处理器系统数据等。
+大模型在集群场景下使用时，常常会出现快慢卡现象，降低模型性能。**msProf**工具可以采集并解析训练、推理过程中的AI模型运行数据、昇腾AI处理器系统数据等。
 
-现在假设已经使用 [msProf](https://gitcode.com/Ascend/msprof) 采集了一份某模型的双机16卡的系统性能数据。
+现在假设已经使用**msProf**采集了一份某模型的双机16卡的系统性能数据。
 
 系统数据：[点击下载](https://gitcode.com/zhangruoyu2/msinsight-quick-start-demo/blob/main/system)
 
