@@ -1,52 +1,114 @@
 # **开发指南**
 
-## 1. MindStudio-Insight开发软件
+## 1. 代码仓目录说明
+
+### 1.1 顶层目录结构
+
+```text
+├── build                              # 构建脚本
+├── docs                               # 项目文档
+├── e2e                                # 端到端测试用例
+├── modules                            # 前端模块目录
+│   ├── build                          # 前端构建脚本
+│   ├── cluster                        # 概览、通信模块
+│   ├── compute                        # 算子调优模块
+│   ├── framework                      # 前端主框架模块（基础功能）
+│   ├── leaks                          # 内存泄露检查模块
+│   ├── lib                            # 公共库目录
+│   ├── memory                         # 内存模块
+│   ├── memory-on-chip                 # 片上内存模块
+│   ├── operator                       # 算子模块
+│   ├── reinforcement-learning         # 强化学习模块
+│   ├── statistic                      # 服务化调优模块
+│   ├── timeline                       # 时间线模块
+│   └── triton                         # Triton 模块
+├── platform                           # 底座目录（Rust/Tauri）
+├── plugins                            # 插件目录
+├── scripts                            # 脚本目录
+└── server                             # 后端服务模块
+    ├── build                          # 构建脚本
+    ├── cmake                          # CMake 配置脚本
+    ├── src                            # 后端源码
+    │   ├── channel                    # 网络通讯
+    │   ├── defs                       # 全局定义
+    │   ├── entry/server/bin           # 程序入口
+    │   ├── protocol                   # 消息定义
+    │   ├── modules                    # 业务模块
+    │   │   ├── base                   # 模块共用基类
+    │   │   ├── global                 # 全局消息
+    │   │   ├── timeline               # timeline 消息处理
+    │   │   │   ├── core               # 核心处理逻辑
+    │   │   │   ├── handler            # 消息处理
+    │   │   │   └── protocol           # 消息格式转换
+    │   │   └── ...                    # 其他业务模块
+    │   ├── server                     # server 服务
+    │   ├── test                       # 后端开发者测试
+    │   └── utils                      # 工具类
+    └── third_party                    # 第三方依赖
+```
+
+### 1.2 前端模块说明
+
+| 文件夹名称 | 对应模块 |
+| --- | --- |
+| cluster | 概览（summary）、通信（communication） |
+| compute | 算子调优 |
+| framework | 基础功能（微前端基座） |
+| leaks | 内存泄露检查 |
+| memory | 内存 |
+| operator | 算子 |
+| reinforcement-learning | 强化学习 |
+| statistic | 服务化调优 |
+| timeline | 时间线 |
+
+## 2. 开发环境搭建
+
+### 2.1 推荐开发软件
 
 | 软件名 | 用途 |
 | --- | --- |
-| Webstorm(推荐)| 编写&启动前端 |
-| CLion(推荐) | 编写&启动C++后端 |
+| WebStorm（推荐） | 编写 & 启动前端 |
+| CLion（推荐） | 编写 & 启动 C++ 后端 |
 
-## 2. 开发环境配置
+### 2.2 环境依赖
 
 | 软件名 | 版本要求 | 用途 |
 | --- | --- | --- |
 | Node.js | v18.20.8+ | 前端 |
+| pnpm | 无要求 | 前端包管理 |
 | Python | 3.11+ | 工具脚本 |
-| MinGW | 10.0+ （msvcrt版本） | 执行编译程序 |
-| git | 无 | 代码的拉取与提交 |
+| MinGW | 10.0+（msvcrt 版本） | 执行编译程序 |
+| git | 无 | 代码拉取与提交 |
 | cmake | 3.16~3.20 | 后端项目构建与编译 |
 
-## 3. 开发步骤
+### 2.3 代码下载
 
-### 3.1 代码下载及环境配置
-
-#### 3.1.1 fork代码到自己仓库，并使用git从自己远程仓库clone代码到本地
+#### 2.3.1 Fork 代码到自己仓库，并使用 git 从远程仓库 clone 代码到本地
 
 [MindStudio-Insight](https://gitcode.com/Ascend/msinsight)
 
-#### 3.1.2 使用CLion或其他软件打开MindStudio-Insight文件夹下的server文件夹
+#### 2.3.2 使用 CLion 打开 server 文件夹
 
 ![Cli_to_server_path](./figures/Cli_to_server_path.png)
 
-#### 3.1.3 配置CLion设置
+### 2.4 配置 CLion 设置
 
-**1. 点击右上角的设置按钮 选择设置选项**
+**1. 点击右上角的设置按钮，选择设置选项**
 
 ![Cli_setting](./figures/Cli_setting.png)
 
-**2. 选择构建、执行、部署中的工具链选项，并且将工具集*中的路径指向自己下载好的MinGW工具中**
+**2. 选择构建、执行、部署中的工具链选项，将工具集路径指向已安装的 MinGW**
 
 ![toolchain_setting](./figures/toolchain_setting.png)
 
-**3. 选择构建、执行、部署中的CMake选项，并且将工具链指向自己下载好的MinGW**
+**3. 选择构建、执行、部署中的 CMake 选项，将工具链指向 MinGW**
 
 ![CMake_toolchain_setting](./figures/CMake_toolchain_setting.png)
 
-#### 3.1.4 配置pre-commit代码检查工具
+### 2.5 配置 pre-commit 代码检查工具
 
 pre-commit 是一款基于 Git 钩子的开源代码质量管控工具，在代码提交前会自动完成代码校验、格式规范化等工作。项目要求本地启用 pre-commit 完成代码校验后再提交。
-[pre-commit本地运行指南](https://gitcode.com/Ascend/community/blob/master/docs/contributor/pre-commit-guide.md)
+[pre-commit 本地运行指南](https://gitcode.com/Ascend/community/blob/master/docs/contributor/pre-commit-guide.md)
 
 **1. 安装 pre-commit**
 
@@ -82,56 +144,53 @@ git add .
 git commit -S -m "提交信息"
 ```
 
-### 3.2 第三方库的下载与执行编译
+## 3. 编译、构建、运行
 
-#### 3.2.1 下载第三方库与预运行第三方库
+### 3.1 第三方库的下载与编译
 
-在server文件夹下新建一个新的终端，在终端中运行如下代码，成功执行如下**图3-1 download_third_party_success**，**图3-2 预运行成功**所示
-注：在执行此步骤之前请保证网络畅通
+在 server 文件夹下新建终端，运行如下代码。**执行此步骤之前请保证网络畅通**。
 
 ```shell
-cd build
+cd server/build
 python download_third_party.py
 python preprocess_third_party.py
 ```
 
-**图3-1 download_third_party_success** 
+**下载第三方库成功**
 
 ![download_third_party_success](./figures/download_third_party_success.png)
 
-**图3-2 预运行成功** 
+**预运行成功**
 
 ![preload_success](./figures/preload_success.png)
 
-#### 3.2.2 CMake编译
+### 3.2 CMake 编译
 
-- 点击右下角的CMake按钮，选择重新加载CMake项目
+- 点击右下角的 CMake 按钮，选择重新加载 CMake 项目
 
 ![reload_CMake](./figures/reload_CMake.png)
 
-- 如CMake重载成功则如下图所示
-
-**图3-3 重新加载CMake成功** 
+- CMake 重载成功如下图所示
 
 ![reload_CMake_success](./figures/reload_CMake_success.png)
 
-### 3.3 CLion中的Main函数配置与启动，后端开发者测试
+### 3.3 后端启动
 
-#### 3.3.1 Main函数的配置 
+#### 3.3.1 启动参数配置
 
-- 打开profiler_server旁的更多选项，选择编辑选项
+- 打开 profiler_server 旁的更多选项，选择编辑选项
 
 ![edit_options](./figures/edit_options.png)
 
-- 选择profiler_server选项，并且将参数修改为 --wsPort=9000 后点击确定保存
+- 选择 profiler_server 选项，将参数修改为 `--wsPort=9000` 后点击确定保存
   - 提示：端口可以设置为其他端口，以避免和其他端口冲突
-  - 警告：如果您的开发机器中已打开了Insight桌面端应用，请确认设置`wsPort`不会与已开启的insight产生端口冲突（Insight应用默认为`9000`, 但多开时将从`9000`端口逐个+1绑定占用，建议设置为`9050`~`9099`），否则可能导致前后端连接问题或其他未预期的异常，建议本地开发调试时，关闭所有已开启的Insight应用。
+  - 警告：如果您的开发机器中已打开了 Insight 桌面端应用，请确认设置 `wsPort` 不会与已开启的 insight 产生端口冲突（Insight 应用默认为 `9000`，但多开时将从 `9000` 端口逐个 +1 绑定占用，建议设置为 `9050`~`9099`），否则可能导致前后端连接问题或其他未预期的异常，建议本地开发调试时，关闭所有已开启的 Insight 应用。
 
 ![add_port](./figures/add_port.png)
 
-#### 3.3.2 启动构建profiler_server
+#### 3.3.2 构建并启动 profiler_server
 
-- 点击右上角的启动按钮，启动构建profiler_server
+- 点击右上角的启动按钮
 
 ![start_build](./figures/start_build.png)
 
@@ -139,60 +198,29 @@ python preprocess_third_party.py
 
 ![build_complete](./figures/build_complete.png)
 
-#### 3.3.3 后端开发者测试
-
-- 测试框架：GoogleTest
-
-- 覆盖率：后端覆盖率的要求是行覆盖率达到80%，分支覆盖率达到60%。Linux系统上，运行如下代码即可生成覆盖率，覆盖率文件位置是build_llt/output/cpp_coverage/result/index.html。
-
-```bash
-cd build
-bash cpp_coverage.sh
-```
-
-- 新增开发者测试：后端合入新特性代码时，要求同时补充DT，DT代码位置是server/src/test。在CLion设置的**构建、执行、部署**中的**CMake**选项中添加环境变量`DEV_TYPE=true`，然后重新加载CMake，就可以构建insight_test可执行文件。构建完成后，如果测试用例名称为`TEST_F(TestSuit, TestCase)`，那么执行如下命令就可以只执行TestSuit测试套件的用例，更多用法可以参考GoogleTest官方文档：
-
-```bash
-./insight_test --gtest_filter=TestSuit.*
-```
-
-### 3.4. 在WebStorm启动前端
+### 3.4 前端启动
 
 #### 3.4.1 安装前端依赖
 
-- 安装pnpm依赖 
+- 安装 pnpm 包管理工具
 
 ```bash
 npm install -g pnpm
 ```
 
-- 打开WebStorm进入modules文件夹下，执行安装指令
+- 在 modules 目录下执行安装指令
 
 ```bash
 pnpm install
 ```
 
-- 成功安装结果如下图所示
+- 安装成功结果如下图所示
 
 ![setup_finished](./figures/setup_finished.png)
 
 #### 3.4.2 拉起前端模块服务
 
-- MindStudio-Insight采用模块设计，其中framework模块为基础功能模块，其他模块可按需启动加载
-
-| 文件夹名称 | 对应模块 |
-| --- | --- |
-| cluster | 概览（summary）、通信（communication） |
-| compute | 算子调优 |
-| framework | 基础功能 |
-| leaks | 内存泄露检查 |
-| memory | 内存 |
-| operator | 算子 |
-| reinforcement-learning | 强化学习 |
-| statistic | 服务化调优 |
-| timeline | 时间线 |
-
-- 进入模块项目中，在该模块的package.json文件中执行`npm run start`命令即可启动该模块
+MindStudio-Insight 采用模块设计，framework 模块为基础功能模块，其他模块可按需启动加载。进入模块项目中，在对应 `package.json` 文件中执行 `npm run start` 命令即可启动该模块。
 
 ![start_module](./figures/start_module.png)
 
@@ -200,225 +228,315 @@ pnpm install
 
 ![start_success](./figures/start_success.png)
 
-**请注意，请确保framework模块启动成功，否则无法启动网页端MindStudio-Insight**
+**请注意，请确保 framework 模块启动成功，否则无法启动网页端 MindStudio-Insight。**
 
-#### 3.4.3 开发者环境下运行MindStudio-Insight
+#### 3.4.3 开发者环境下运行 MindStudio-Insight
 
-- 在浏览器中输入localhost:5174启动网页端
+- 在浏览器中输入 `localhost:5174` 启动网页端
 
 - 网页端启动成功如下图所示
 
 ![insight_start_success](./figures/insight_start_success.png)
 
-### 3.5. 预冒烟测试
+### 3.5 本地出包
 
-预冒烟测试可以在Linux或Windows上进行
+#### 3.5.1 Windows 环境
 
-#### 3.5.1 在Linux上进行预冒烟测试
+**环境依赖**
 
-- 在Linux上进行预冒烟测试推荐使用docker
+| 软件名称 | 版本 | 用途 |
+| --- | --- | --- |
+| rust | 1.89 | 底座编译构建 |
+| windows11SDK | 10.0.22000.0+ | Windows 平台基础开发运行时 |
+| MSVC | v143 | Windows 平台基础开发运行时 |
+| mingw | 10.0+（msvcrt 版本） | 后台编译器 |
+| Ninja | 无要求 | 后台编译 |
+| cmake | 3.16~3.20 | 后端构建 |
+| nsis | 无要求 | 安装包打包软件 |
+| nsProcess 插件 | unicode support | 检查是否有重复运行 |
+| node | v18.20.8+ | 前端构建 |
+| pnpm | 无要求 | 前端构建 |
+| python | 3.11+ | 集群工具打包 |
 
-- 要安装测试框架Playwright及其相关依赖，建议使用Playwright官方镜像，参考[Playwright官网](https://playwright.dev/docs/docker)，镜像tag为v1.57.0-jammy
+Python 运行时依赖：
 
-- 从镜像创建容器后，需要安装前端和后端需要的其它依赖，在容器中，执行build目录下的mindstudio_insight_gui_set_environment.sh脚本安装依赖
-
-```bash
-bash build/mindstudio_insight_gui_set_environment.sh
+```text
+click
+tabulate
+networkx
+jinja2
+PyYaml
+tqdm
+prettytable
+ijson
+xlsxwriter>=3.0.6
+sqlalchemy
+numpy<=1.26.4
+pandas<=2.3.2
+psutil
 ```
 
-- 完成依赖安装后，在项目的根目录下执行
+Python 开发时依赖：
 
-```bash
-bash build/mindstudio_insight_gui_run.sh
+```shell
+pyinstaller
 ```
 
-以进行预冒烟测试，并查看结果
+**编译出包步骤**
 
-#### 3.5.2 在Windows上进行预冒烟测试
+1. 进入项目根目录下 `server/build` 目录，执行 `python3 download_third_party.py && python3 preprocess_third_party.py`
+2. 在 Windows 系统，MindStudio Insight 会集成 Python 解释器：
+   - 第一步：在构建环境上手动安装 Python 解释器（同时包含 pip），建议 Python 版本 3.12.10
+   - 第二步：设置环境变量 `MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER` 为 Python 解释器的安装目录，该目录需包含 `python.exe`。示例：如 Python 安装目录为 `D:\xxx\python`，则设置环境变量为 `D:\xxx\python`
+3. 进入项目根目录下 `build` 目录，执行 `python build.py`，产物位于项目根目录 `out` 目录下
 
-- 在Windows上进行预冒烟测试，安装依赖参考[GUI指导文档](https://gitcode.com/Ascend/msinsight/blob/master/e2e/README.md)
+**依赖安装附录**
 
-- 在e2e目录下，执行
+- Windows 运行时安装（windows11SDK 和 MSVC）：下载 Visual Studio Installer，双击打开，选择如下依赖（通常默认即可）：
 
-```bash
-npm run test:smoke
+  ![MSVC_install](./figures/MSVC_install.png)
+
+- MinGW 安装：从 [WinLibs](https://www.winlibs.com/) 下载，版本选择 11.0 以上。下载后解压，将解压后 mingw 路径下的 bin 目录添加到系统 PATH 环境变量：
+
+  ![mingw_path_add](./figures/mingw_path_add.png)
+
+  验证安装：终端执行 `g++ -v`，正常输出版本信息即可。
+
+- nsProcess 插件安装：首先安装 NSIS（需装在 `C:\Program Files (x86)` 下）。从 [NsProcess plugin](https://nsis.sourceforge.io/NsProcess_plugin) 获取压缩包，将 `Include/nsProcess.h` 放到 `C:\Program Files (x86)\NSIS\Include`，将 `Plugin/nsProcess.dll` 和 `Plugin/nsProcessw.dll` 放到 `C:\Program Files (x86)\NSIS\Plugins\x86-unicode`。
+
+- Rust：推荐通过 [rustup](https://www.rust-lang.org) 安装，验证：`rustc --version` 和 `cargo --version`。
+
+- Ninja：通过 [官网](https://ninja-build.org) 下载二进制文件或包管理器安装，验证：`ninja --version`。
+
+- Node.js：通过 [官网](https://nodejs.org) 安装 LTS 版本（v18.20.8+），验证：`node --version`。
+
+- pnpm：`npm install -g pnpm`，验证：`pnpm --version`。
+
+- Python：通过 [官网](https://www.python.org) 安装 3.11+，勾选"Add Python to PATH"，验证：`python --version`。
+
+#### 3.5.2 Mac 环境
+
+**环境依赖**
+
+| 软件名称 | 版本 | 用途 |
+| --- | --- | --- |
+| rust | 1.89 | 底座编译构建 |
+| cargo-bundle | 无要求 | 打包 |
+| Ninja | 无要求 | 后台编译 |
+| node | v18.20.8+ | 前端构建 |
+| pnpm | 无要求 | 前端构建 |
+| python | 3.11+ | 集群工具打包 |
+| clang | 15 | 编译 |
+| cmake | 3.16~3.20 | 后端构建 |
+
+Python 运行时依赖：
+
+```text
+click
+tabulate
+networkx
+jinja2
+PyYaml
+tqdm
+prettytable
+ijson
+xlsxwriter>=3.0.6
+sqlalchemy
+numpy<=1.26.4
+pandas<=2.3.2
+psutil
+dmgbuild
 ```
 
-以进行预冒烟测试，并查看结果
+Python 开发时依赖：
 
-## 4 新增模块开发
+```shell
+pyinstaller
+```
 
-- 此部分只展示架构部分开发以及接入，具体模块实现逻辑请根据实际情况设计开发
+**编译出包步骤**
 
-### 前端部分
+**Step 1. 预处理构建依赖**
 
-1. 添加新模块目录
+```shell
+cd server/build
+python3 download_third_party.py && python3 preprocess_third_party.py
+```
 
-   在 modules 目录创建新的模块
+**Step 2. 指定 APP 签名证书（可选）**
 
-   ```shell
-       .
-       ├── modules
-       │   ├── framework
-       │   ├── new_module
-       │   └── package.json
-   ```
+> 注意：请您确保已阅读并知悉 [LICENSE](https://gitcode.com/Ascend/msinsight/blob/master/docs/LICENSE) 要求。
 
-   新模块可参考如下目录结构
+Insight macOS ARM 版本在构建出包时，会对产物 APP 进行 macOS 开发者证书签名。您可以通过环境变量配置签名证书。如不指定，缺省时使用临时证书签名，可能导致产物无法通过网络分发（本地调试运行不受影响）。
 
-   ```shell
-       .
-       ├── new_module
-       │   ├── src
-       │   │   ├── assets
-       │   │   ├── components
-       │   │   ├── connection
-       │   │   ├── store
-       │   │   ├── theme
-       │   │   ├── units
-       │   │   ├── App.tsx
-       │   │   ├── index.tsx
-       │   │   └── index.css
-       │   ├── craco.config.js
-       │   ├── tsconfig.json
-       │   └── package.json
-   ```
+- 证书使用前置：要求为可用于签名的苹果开发者证书，并确保已正确导入钥匙串中（如登录钥匙串 `~/Library/Keychains/login.keychain`）。
+- 通过环境变量配置证书，支持**证书名**或**证书 ID**。
 
-2. 构建配置
-   
-   craco.config.js
+```shell
+# 以证书名为 "insight_cert" 为例
+export INSIGHT_APP_SIGN="insight_cert"
+# 解锁钥匙串
+security unlock-keychain -p {您当前用户的密码} ~/Library/Keychains/login.keychain
+```
 
-   ```js
-   const { webpackCfg, configureConfig } = require("../build-config");
+**Step 3. 设置集成 Python 解释器的环境变量**
 
-   const path = require("path");
+在 macOS 系统，MindStudio Insight 会集成 Python 解释器：
 
-   const libPath = path.resolve(__dirname, "../lib/src");
-   const echartsPath = require.resolve("echarts");
+- 第一步：在构建环境上手动安装可移植的 Python 解释器（同时包含 pip），建议 Python 版本 3.12.10
+  - 提示："可移植"指将 A 机器上的 Python 文件夹拷贝到 B 机器上仍可直接使用。macOS 上某些 Python 版本依赖 `/Library` 下的动态库，需确保安装的是可移植版本
+- 第二步：设置环境变量 `MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER` 为 Python 解释器的安装目录，该目录需包含 `bin/python3`。如 Python 安装目录为 `/Users/xxx/python`，则设置环境变量为 `/Users/xxx/python`。如 Python 版本不为 3.12，需手动修改 `server/build/build.py` 中的 version 变量值
 
-   module.exports = {
-     devServer: {
-       port: 3001,
-       open: false,
-       client: {
-         overlay: {
-           runtimeErrors: (error) => {
-             // 禁止界面展示错误：ResizeObserver loop completed with undelivered notifications
-             return !error?.message.includes("ResizeObserver");
-           },
-         },
-       },
-     },
-     webpack: {
-       alias: webpackCfg.alias,
-       configure: (webpackConfig) => {
-         return configureConfig(webpackConfig, [libPath, echartsPath]);
-       },
-     },
-   };
-   ```
+**Step 4. 执行出包脚本**
 
-3. 基础 scripts 配置
-   
-   package.json
+进入项目根目录下 `build` 目录，执行 `python build.py`，产物位于项目根目录 `out` 目录下。
 
-   ```json
-   {
-       "scripts": {
-            "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider craco start",
-            "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production GENERATE_SOURCEMAP=false CI=false craco build",
-            "build:dev": "cross-env GENERATE_SOURCEMAP=true CI=false craco build",
-           ... // 自定义配置
-       }
-   }
-   ```
+## 4. 开发流程
 
-4. src 中必要模块
+### 4.1 新增模块开发
 
-   **theme：** 主题
+#### 4.1.1 前端部分
 
-   theme/index.ts
+**1. 添加新模块目录**
 
-   ```ts
-   export { themeInstance } from "@insight/lib/theme";
-   export type { ThemeItem } from "@insight/lib/theme";
-   ```
+在 `modules` 目录下创建新的模块，参考如下目录结构：
 
-   **connection：** 通信
+```text
+.
+├── modules
+│   ├── framework
+│   ├── new_module
+│   │   ├── src
+│   │   │   ├── assets
+│   │   │   ├── components
+│   │   │   ├── connection
+│   │   │   ├── store
+│   │   │   ├── theme
+│   │   │   ├── units
+│   │   │   ├── App.tsx
+│   │   │   ├── index.tsx
+│   │   │   └── index.css
+│   │   ├── craco.config.js
+│   │   ├── tsconfig.json
+│   │   └── package.json
+│   └── package.json
+```
 
-   connection/index.ts
+**2. 构建配置**
 
-   ```ts
-   import { ClientConnector } from "@insight/lib/connection";
-   export default new ClientConnector({
-     getTargetWindow: (): any[] => [window.parent],
-     module: [new_module_request_name],
-   });
-   ```
+`craco.config.js`：
 
-   其他部分根据新模块的实际需求自定义
+```js
+const { webpackCfg, configureConfig } = require("../build-config");
 
-5. 在主服务中加入新模块（微服务）
+const path = require("path");
 
-   framework 模块的 moduleConfig.ts 中，在 modulesConfig 中配置新模块
-   
-   ```ts
-   {
-        name: [new_module],   // 新模块的微服务名，自定义
-        requestName: [new_module_request_name], // 前后端交互的模块名，与后端协定
-        attributes: {
-            src: isDev ? 'http://localhost:[new_port]/' : './plugins/[new_module]/index.html', // 本地开发端口自行分配
+const libPath = path.resolve(__dirname, "../lib/src");
+const echartsPath = require.resolve("echarts");
+
+module.exports = {
+  devServer: {
+    port: 3001,
+    open: false,
+    client: {
+      overlay: {
+        runtimeErrors: (error) => {
+          // 禁止界面展示错误：ResizeObserver loop completed with undelivered notifications
+          return !error?.message.includes("ResizeObserver");
         },
-        isDefault: true, // 默认是否显示该微服务
-        ... // 其他配置条件
-    }
-   ```
-
-**代码来源：** `build/build.py`
-
-新增模块的构建后清理
-
-```python
-def clean():
-    out = os.path.join(PROJECT_PATH, Const.OUT_DIR)
-    if os.path.exists(out):
-        shutil.rmtree(out)
-    ascend_insight = os.path.join(PROJECT_PATH, Const.PRODUCT_DIR)
-    if os.path.exists(ascend_insight):
-        shutil.rmtree(ascend_insight)
-    framework_dist = os.path.join(PROJECT_PATH, Const.MODULES_DIR, Const.FRAMEWORK_DIR, 'build')
-    if os.path.exists(framework_dist):
-        shutil.rmtree(framework_dist)
-    # 需在此处添加你的新增模块
-    modules = ['cluster', 'memory', 'timeline', 'compute', 'jupyter', 'operator', 'lib', 'statistic', 'leaks',
-               'reinforcement-learning']
-    for module in modules:
-        build_dir = os.path.join(PROJECT_PATH, Const.MODULES_DIR, module, Const.BUILD_DIR)
-        if os.path.exists(build_dir):
-            shutil.rmtree(build_dir)
+      },
+    },
+  },
+  webpack: {
+    alias: webpackCfg.alias,
+    configure: (webpackConfig) => {
+      return configureConfig(webpackConfig, [libPath, echartsPath]);
+    },
+  },
+};
 ```
 
-**代码来源：** `build/build.py`
+**3. 基础 scripts 配置**
 
-新增模块的名称以及构建
+`package.json`：
 
-```python
-# 在这里添加你的模块以及对应的模块名称
-MODULES_MAP = {
-    'cluster': 'Cluster',
-    'reinforcement-learning': 'RL',
-    'memory': 'Memory',
-    'operator': 'Operator',
-    'compute': 'Compute',
-    'statistic': 'Statistic',
-    'leaks': 'Leaks',
-    'timeline': 'Timeline',
+```json
+{
+    "scripts": {
+        "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider craco start",
+        "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production GENERATE_SOURCEMAP=false CI=false craco build",
+        "build:dev": "cross-env GENERATE_SOURCEMAP=true CI=false craco build",
+        "..." : "// 自定义配置"
+    }
 }
 ```
 
-**代码来源：** `modules/framework/src/components/TabPane/Index.tsx`
+**4. src 中必要模块**
 
-该函数用于根据输入的数据对象 data 更新场景信息，并将更新后的场景信息传递给 updateSession 函数。主要目的是收集和处理各种场景标志，用于后续的会话管理或数据处理。
+**theme：主题**
+
+`theme/index.ts`：
+
+```ts
+export { themeInstance } from "@insight/lib/theme";
+export type { ThemeItem } from "@insight/lib/theme";
+```
+
+**connection：通信**
+
+`connection/index.ts`：
+
+```ts
+import { ClientConnector } from "@insight/lib/connection";
+export default new ClientConnector({
+  getTargetWindow: (): any[] => [window.parent],
+  module: [new_module_request_name],
+});
+```
+
+其他部分根据新模块的实际需求自定义。
+
+**5. 在主服务中加入新模块（微服务）**
+
+framework 模块的 `moduleConfig.ts` 中，在 `modulesConfig` 中配置新模块：
+
+```ts
+{
+    name: [new_module],   // 新模块的微服务名，自定义
+    requestName: [new_module_request_name], // 前后端交互的模块名，与后端协定
+    attributes: {
+        src: isDev ? 'http://localhost:[new_port]/' : './plugins/[new_module]/index.html', // 本地开发端口自行分配
+    },
+    isDefault: true, // 默认是否显示该微服务
+    // ... 其他配置条件
+}
+```
+
+**6. 在 `ModuleConfig` 接口中添加新模块的属性**
+
+**代码来源：** `modules/framework/src/moduleConfig.ts`
+
+```ts
+export interface ModuleConfig {
+    name: string;
+    requestName: Lowercase<string>;
+    attributes: IframeHTMLAttributes<HTMLIFrameElement>;
+    isDefault?: boolean;
+    isCluster?: boolean;
+    isCompute?: boolean;
+    isLeaks?: boolean;
+    isIE?: boolean;
+    isRL?: boolean;
+    hasCachelineRecords?: boolean;
+    isOnlyTraceJson?: boolean;
+    isHybridParse?: boolean;
+    // 在此处添加新模块的属性
+}
+```
+
+**7. 在更新数据场景中添加新模块处理**
+
+**代码来源：** `modules/framework/src/components/TabPane/Index.tsx`
 
 ```tsx
 export function updateDataScene(data: Record<string, any>): void {
@@ -441,7 +559,6 @@ export function updateDataScene(data: Record<string, any>): void {
 
 // 在此处添加新增模块，对应页签改变的处理
 useEffect(() => {
-    // 删除工程的场景：不改变页签
     if (session.isBinary === null && session.isCluster === null) {
         return;
     }
@@ -450,18 +567,15 @@ useEffect(() => {
 }, [session.isBinary, session.isCluster, session.hasCachelineRecords, session.isOnlyTraceJson, session.isIE, session.isLeaks, session.isRL, session.isHybridParse]);
 ```
 
+**8. 在 Session 类中添加新模块场景**
+
 **代码来源：** `modules/framework/src/entity/session.ts`
 
-在此处添加新增模块对应的导入数据场景
-
 ```ts
-// 在此处添加新增模块对应的导入数据场景
 // Scene：数据场景：默认、集群、算子调优、Leaks、只trace.json文件
 export type Scene = 'Default' | 'Cluster' | 'Compute' | 'OnlyTraceJson' | 'IE' | 'Leaks' | 'RL' | 'HybridParse';
 
 export class Session {
-    // 需添加新模块至场景中
-    // 场景
     isCluster: boolean | null = false;
     isBinary: boolean | null = false;
     isIE: boolean | null = false;
@@ -473,9 +587,8 @@ export class Session {
     isHybridParse: boolean = false;
     hasCachelineRecords: boolean = false;
     instrVersion: number = -1;
+    // 在此处添加新模块场景属性
 
-    // 需添加新模块至场景中
-    // 导入数据场景：默认、集群、算子调优、只trace.json
     get scene(): Scene {
         let scene: Scene;
         if (this.isHybridParse) {
@@ -495,55 +608,24 @@ export class Session {
         }
         return scene;
     }
-    ....
+    // ...
 }
 ```
 
-**代码来源：** `modules/framework/src/moduleConfig.ts`
-
-需添加新模块至模块设置中
-
-```ts
-// 需添加新模块至模块设置中
-export interface ModuleConfig {
-    name: string;
-    requestName: Lowercase<string>;
-    attributes: IframeHTMLAttributes<HTMLIFrameElement>;
-    isDefault?: boolean;
-    isCluster?: boolean;
-    isCompute?: boolean;
-    isLeaks?: boolean;
-    isIE?: boolean;
-    isRL?: boolean;
-    hasCachelineRecords?: boolean;
-    isOnlyTraceJson?: boolean;
-    isHybridParse?: boolean;
-}
-// 需添加新模块至模块设置中，下为模块样例，注意端口号不要与其他模块冲突
-{
-    name: 'xxx',
-    requestName: 'xxx',
-    attributes: {
-        src: isDev ? 'http://localhost:3000/xxx' : './plugins/xxx/index.html',
-    },
-    isXXX: true,
-},
-```
+**9. 在公共模块中添加查询接口和中英文翻译**
 
 **代码来源：** `modules/lib/src/connection/index.ts`
 
 ```ts
-// 新增模块的查询接口要写在connection中
+// 新增模块的查询接口要写在 connection 中
 ```
 
 **代码来源：** `modules/lib/src/i18n/index.ts`
 
-新增模块的中英文切换由公共模块统一管理
-
 ```ts
 // 新增模块的中英文切换由公共模块统一管理
-import xxxEn from './leaks/en.json';
-import xxxZh from './leaks/zh.json';
+import xxxEn from './xxx/en.json';
+import xxxZh from './xxx/zh.json';
 
 export const resources = {
     enUS: {
@@ -559,31 +641,76 @@ export const resources = {
 };
 ```
 
-### 后端部分
+**10. 构建脚本更新**
 
-### 后端开发结构对应
+**代码来源：** `build/build.py`
 
+新增模块的构建后清理：
+
+```python
+def clean():
+    out = os.path.join(PROJECT_PATH, Const.OUT_DIR)
+    if os.path.exists(out):
+        shutil.rmtree(out)
+    ascend_insight = os.path.join(PROJECT_PATH, Const.PRODUCT_DIR)
+    if os.path.exists(ascend_insight):
+        shutil.rmtree(ascend_insight)
+    framework_dist = os.path.join(PROJECT_PATH, Const.MODULES_DIR, Const.FRAMEWORK_DIR, 'build')
+    if os.path.exists(framework_dist):
+        shutil.rmtree(framework_dist)
+    # 需在此处添加你的新增模块
+    modules = ['cluster', 'memory', 'timeline', 'compute', 'jupyter', 'operator', 'lib', 'statistic', 'leaks',
+               'reinforcement-learning']
+    for module in modules:
+        build_dir = os.path.join(PROJECT_PATH, Const.MODULES_DIR, module, Const.BUILD_DIR)
+        if os.path.exists(build_dir):
+            shutil.rmtree(build_dir)
+```
+
+新增模块的名称以及构建：
+
+```python
+# 在这里添加你的模块以及对应的模块名称
+MODULES_MAP = {
+    'cluster': 'Cluster',
+    'reinforcement-learning': 'RL',
+    'memory': 'Memory',
+    'operator': 'Operator',
+    'compute': 'Compute',
+    'statistic': 'Statistic',
+    'leaks': 'Leaks',
+    'timeline': 'Timeline',
+}
+```
+
+#### 4.1.2 后端部分
+
+**1. 后端模块目录结构**
+
+``` shell
 server
 ├── src
-│   ├── modules
-│   │   ├── xxx_module
-│   │   │   ├── database 
-│   │   │   │   ├── xxxBase.h
-│   │   │   │   └── xxxBase.cpp
-│   │   │   ├── handler
-│   │   │   └── protocol
+│   └── modules
+│       └── xxx_module
+│           ├── database
+│           │   ├── xxxBase.h
+│           │   └── xxxBase.cpp
+│           ├── handler
+│           └── protocol
+```
 
-### 后端代码层面
+**2. 协议处理**
 
 **代码来源：** `server/msinsight/include/base/ProtocolUtil.h`
 
-JSON的协议处理，Response的传递在这里编写
+JSON 的协议处理、Response 的传递在这里编写：
 
 ```c++
 struct JsonResponse : public Response {
     explicit JsonResponse(const std::string &command) : Response(command) {}
     [[nodiscard]] virtual std::optional<document_t> ToJson() const = 0;
 };
+
 struct Event : public ProtocolMessage {
     explicit Event(const std::string &e) : event(e)
     {
@@ -593,10 +720,12 @@ struct Event : public ProtocolMessage {
     std::string event;
     bool result = false;
 };
+
 struct JsonEvent : public Event {
     explicit JsonEvent(const std::string &e) : Event(e) {}
     [[nodiscard]] virtual std::optional<document_t> ToJson() const = 0;
 };
+
 class ProtocolUtil {
 public:
     ProtocolUtil() = default;
@@ -609,15 +738,10 @@ public:
     std::optional<document_t> ToJson(const Response &response, std::string &error);
     std::optional<document_t> ToJson(const Event &event, std::string &error);
 
-    // set base info
-    // request
     static bool SetRequestBaseInfo(Request &request, const json_t &json);
-    // response
     static void SetResponseJsonBaseInfo(const Response &response, document_t &json);
-    // event
     static void SetEventJsonBaseInfo(const Event &event, document_t &json);
 
-    // common json to request
     template <class SubRequest>
     static std::unique_ptr<Request> BuildRequestFromJson(const json_t &json, std::string &error)
     {
@@ -625,7 +749,7 @@ public:
                       "SubRequest must have a static FromJson method returning std::unique_ptr<Request>");
         return SubRequest::FromJson(json, error);
     }
-    // response to json
+
     static std::optional<document_t> CommonResponseToJson(const Response &response)
     {
         try {
@@ -635,15 +759,15 @@ public:
             return std::nullopt;
         }
     }
-    ...
-}
+    // ...
+};
 ```
+
+**3. CMake 配置**
 
 **代码来源：** `server/src/CMakeLists.txt`
 
-CMake中要编译的新模块要添加在这里
-
-```CMake
+```cmake
 # new Module
 include_directories(${SRC_HOME_DIR}/modules/xxx)
 include_directories(${SRC_HOME_DIR}/modules/xxx/xxx)
@@ -655,14 +779,13 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_XXX_SRC}
         ${DIC_MODULES_XXX_XXX_SRC}
 )
-
 ```
+
+**4. 注册 Plugin**
 
 **代码来源：** `server/src/modules/Plugins.cpp`
 
-在此处添加新模块的相关信息
-
-```CPP
+```cpp
 /*
  * -------------------------------------------------------------------------
  * This file is part of the MindStudio project.
@@ -705,14 +828,13 @@ namespace Dic::Module {
     Core::PluginRegister IE_PLUGIN(std::make_unique<IE::IEPlugin>());
     Core::PluginRegister MEMORY_DETAIL_PLUGIN(std::make_unique<MemoryDetail::MemoryDetailPlugin>());
 }
-
 ```
+
+**5. 添加模块名常量**
 
 **代码来源：** `server/src/modules/defs/ProtocolDefs.h`
 
-在此处添加新模块信息
-
-```h
+```cpp
 // 在此处添加新模块信息
 const std::string MODULE_XXX = "xxx";
 
@@ -723,496 +845,636 @@ const std::string MODULE_MEMORY_DETAIL = "memory_detail";
 const std::string MODULE_OPERATOR = "operator";
 const std::string MODULE_SOURCE = "source";
 const std::string MODULE_ADVISOR = "advisor";
-
 ```
+
+**6. 全量 DB 查询（如涉及）**
 
 **代码来源：** `server/src/modules/full_db/database/FullDbParser.cpp`
 
-如果涉及全量db查询，请将在此添加查询，例如如下方法中：
-
-```CPP
-// 如果涉及全量db查询，请将在此添加查询，例如如下方法中：
+```cpp
+// 如果涉及全量db查询，请在此添加查询
 void FullDbParser::Reset()
 
-void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::future<void>>> &futures, std::string &dbId,std::unique_ptr<ThreadPool> &pool)
-
+void FullDbParser::BuildProfilingInitTask(
+    std::shared_ptr<std::vector<std::future<void>>> &futures,
+    std::string &dbId,
+    std::unique_ptr<ThreadPool> &pool)
 ```
 
-## 5 DB场景新增泳道
+### 4.2 DB 场景新增泳道
 
-### 前端部分
+#### 4.2.1 前端部分
 
-1. 配置DB场景显示模块
+**1. 配置 DB 场景显示模块**
 
-   framework/src/moduleConfig.ts
+`framework/src/moduleConfig.ts`：
 
-   ```ts
-   
-    [
-       {
-          name: 'Timeline',
-          requestName: 'timeline',
-          attributes: {
-             src: isDev ? 'http://localhost:3000/' : './plugins/Timeline/index.html',
-          },
-          isIE: true,
-       },
-       {
+```ts
+[
+    {
+        name: 'Timeline',
+        requestName: 'timeline',
+        attributes: {
+            src: isDev ? 'http://localhost:3000/' : './plugins/Timeline/index.html',
+        },
+        isIE: true,
+    },
+    {
+        name: 'Statistic',
+        requestName: 'statistic',
+        attributes: {
+            src: isDev ? 'http://localhost:3006/' : './plugins/Statistic/index.html',
+        },
+        isIE: true,
+    }
+]
+```
 
-          name: 'Statistic',
-          requestName: 'statistic',
-          attributes: {
-             src: isDev ? 'http://localhost:3006/' : './plugins/Statistic/index.html',
-          },
-          isIE: true,
-       }
-    ]
+**2. 导入 DB 文件**
 
-   ```
+选择 DB 文件并发送解析指令 `import/action`。
 
-2. 导入DB文件
+**代码来源：** `modules/framework/src/units/Project.tsx`
 
-   选择DB文件并发送解析指令`import/action`
+```ts
+async function handleProjectAction({ action, project, isConflict, selectedFileType, selectedFilePath, selectedRankId }:
+{action: ProjectAction;project: Project;isConflict: boolean;selectedFileType?: LayerType;selectedFilePath?: string;selectedRankId?: string}): Promise<void> {
+    // ...
+    runInAction(async() => {
+        // ...
+        const res = await addDataPath(newProject, action, isConflict, session);
+        // ...
+    });
+    // ...
+}
+```
 
-    ```ts
-   async function handleProjectAction({ action, project, isConflict, selectedFileType, selectedFilePath, selectedRankId }:
-   {action: ProjectAction;project: Project;isConflict: boolean;selectedFileType?: LayerType;selectedFilePath?: string;selectedRankId?: string}): Promise<void> {
-       ...
-       runInAction(async() => {
-           ...
-           const res = await addDataPath(newProject, action, isConflict, session);
-           ...
-       });
-       ...
-   }
-   ```
+**3. 主服务将解析结果发送给微服务**
 
-   **代码来源：** `modules/framework/src/units/Project.tsx`
-   
-3. 主服务将解析结果发送给微服务
+**代码来源：** `modules/framework/src/centralServer/server.ts`
 
-   ```ts
-   export const addDataPath = async function(project: Project, action: ProjectAction, isConflict: boolean, session: Session): Promise<boolean> {
-      ...
-      connector.send({
-         event: 'remote/import',
-         body: { dataSource: transformTimelineDataSource(project), importResult: res, switchProject },
-         target: 'plugin',
-      });
-      ...
-   }
-   ```
+```ts
+export const addDataPath = async function(project: Project, action: ProjectAction, isConflict: boolean, session: Session): Promise<boolean> {
+    // ...
+    connector.send({
+        event: 'remote/import',
+        body: { dataSource: transformTimelineDataSource(project), importResult: res, switchProject },
+        target: 'plugin',
+    });
+    // ...
+}
+```
 
-   **代码来源：** `modules/framework/src/centralServer/server.ts`
+**4. 微服务处理数据生成卡/泳道菜单**
 
-4. 微服务处理数据生成卡/泳道菜单
+**代码来源：** `modules/timeline/src/connection/handler.ts`
 
-   ```ts
-      export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
-         ...
-         runInAction(() => {
-            initUnitInfo(session, result, dataSource, isNeedResetRankId); // 根据解析结果初始化泳道信息
-        });
-        sendSessionUpdate(result, session);
-         ...
-      }
-   ```
+```ts
+export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
+    // ...
+    runInAction(() => {
+        initUnitInfo(session, result, dataSource, isNeedResetRankId); // 根据解析结果初始化泳道信息
+    });
+    sendSessionUpdate(result, session);
+    // ...
+}
+```
 
-   **代码来源：** `modules/timeline/src/connection/handler.ts`
+**5. 微服务接收并处理卡解析结果**
 
-5. 微服务接收并处理卡解析结果
+**代码来源：** `modules/timeline/src/connection/handler.ts`
 
-   parse/success
+```ts
+export const parseSuccessHandler: NotificationHandler = (data): void => {
+    // ...
+}
+```
 
-   ```ts
-   export const parseSuccessHandler: NotificationHandler = (data): void => {
-     ...
-   }
-   ```
+**6. 微服务获取泳道数据并绘制泳道图**
 
-   **代码来源：** `modules/timeline/src/connection/handler.ts`
+**代码来源：** `modules/timeline/src/insight/units/AscendUnit.tsx`
 
-6. 微服务获取泳道数据并绘制泳道图
+```tsx
+const ThreadUnit = unit<ThreadMetaData>({
+    name: 'Thread',
+    pinType: 'copied',
+    chart: chart()
+})
+```
 
-   ```tsx
-      const ThreadUnit = unit<ThreadMetaData>({
-        name: 'Thread',
-        pinType: 'copied',
-        chart: chart()
-      })
-   ```
+#### 4.2.2 后端部分
 
-   **代码来源：** `modules/timeline/src/insight/units/AscendUnit.tsx`
-
-### 后端部分
-
-#### 创建一个profiler.db文件
+##### 创建一个 profiler.db 文件
 
 ![create_profiler_db](./figures/create_profiler_db.png)
 
-#### 创建表结构
+##### 表结构说明
 
-**1. slice**
+**1. slice（叶子泳道色块数据）**
 
-表示timeline的一个长方形色块，对应trace文档的ph为X的数据
+表示 timeline 的一个长方形色块，对应 trace 文档中 `ph` 为 `X` 的数据。
 
 ![structure_slice](./figures/structure_slice.png)
 
-建表语句
+```sql
+CREATE TABLE slice (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp INTEGER,
+    duration INTEGER,
+    name TEXT,
+    depth INTEGER,
+    track_id INTEGER,
+    cat TEXT,
+    args TEXT,
+    cname TEXT,
+    end_time INTEGER,
+    flag_id TEXT
+);
+```
 
-CREATE TABLE slice (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER, duration INTEGER, name TEXT, depth INTEGER, track_id INTEGER, cat TEXT, args TEXT, cname TEXT, end_time INTEGER, flag_id TEXT);
+**2. process（非叶子泳道）**
 
-**2. process**
-
-表示timeline的非叶子泳道，对应trace文档的ph为M的数据
+表示 timeline 的非叶子泳道，对应 trace 文档中 `ph` 为 `M` 的数据。
 
 ![structure_process](./figures/structure_process.png)
 
-建表语句
+```sql
 CREATE TABLE "process" (
-"pid" TEXT,
-"process_name" TEXT,
-"label" TEXT,
-"process_sort_index" INTEGER,
-"parentPid" text,
-PRIMARY KEY ("pid")
+    "pid" TEXT,
+    "process_name" TEXT,
+    "label" TEXT,
+    "process_sort_index" INTEGER,
+    "parentPid" TEXT,
+    PRIMARY KEY ("pid")
 );
+```
 
-**3. thread**
+**3. thread（叶子泳道）**
 
-表示timeline的叶子泳道，对应trace文档的ph为M的数据
+表示 timeline 的叶子泳道，对应 trace 文档中 `ph` 为 `M` 的数据。
 
 ![structure_thread](./figures/structure_thread.png)
 
-**4. counter**
+**4. counter（折线图/直方图数据）**
 
-表示折线图或者直方图数据，对应ph为C的数据
+表示折线图或者直方图数据，对应 `ph` 为 `C` 的数据。
 
 ![structure_counter](./figures/structure_counter.png)
 
-建表语句
-CREATE TABLE counter (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, pid TEXT,timestamp INTEGER, cat TEXT, args TEXT);
+```sql
+CREATE TABLE counter (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    pid TEXT,
+    timestamp INTEGER,
+    cat TEXT,
+    args TEXT
+);
+```
 
-**5. flow**
+**5. flow（连线数据）**
 
-表示连线，对应ph为s，f，t的数据
+表示连线，对应 `ph` 为 `s`、`f`、`t` 的数据。
 
 ![structure_flow](./figures/structure_flow.png)
 
-建表语句
-CREATE TABLE flow (id INTEGER PRIMARY KEY AUTOINCREMENT, flow_id TEXT, name TEXT, cat TEXT, track_id INTEGER, timestamp INTEGER, type TEXT);
+```sql
+CREATE TABLE flow (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    flow_id TEXT,
+    name TEXT,
+    cat TEXT,
+    track_id INTEGER,
+    timestamp INTEGER,
+    type TEXT
+);
+```
 
-**6. dataTable**
+**6. dataTable（纯表展示的表）**
 
-表示哪些表需要按照如下方式纯表展示
+表示哪些表需要按照纯表方式展示。
 
 ![structure_dataTable](./figures/structure_dataTable.png)
-表字段说明
+
+表字段说明：
 
 ![structure_filed_description](./figures/structure_filed_description.png)
 
-建表语句
-
+```sql
 CREATE TABLE "data_table" (
-"id" INTEGER NOT NULL,
-"name" TEXT,
-"view_name" TEXT,
-PRIMARY KEY ("id")
+    "id" INTEGER NOT NULL,
+    "name" TEXT,
+    "view_name" TEXT,
+    PRIMARY KEY ("id")
 );
+```
 
-**7. data_link**
+**7. data_link（字段关联关系）**
 
-表示字段与某张表的某个字段的关联关系
+表示字段与某张表的某个字段的关联关系。
 
 ![structure_data_link](./figures/structure_data_link.png)
 
-建表语句
+```sql
 CREATE TABLE "data_link" (
-"source_name" TEXT NOT NULL,
-"target_table" TEXT NOT NULL,
-"target_name" TEXT NOT NULL,
-PRIMARY KEY ("source_name")
+    "source_name" TEXT NOT NULL,
+    "target_table" TEXT NOT NULL,
+    "target_name" TEXT NOT NULL,
+    PRIMARY KEY ("source_name")
 );
+```
 
-**8. translate**
+**8. translate（中英文翻译）**
 
-表示文本的中英文翻译
+表示文本的中英文翻译。
 
 ![structure_translate](./figures/structure_translate.png)
 
-建表语句
+```sql
 CREATE TABLE "translate" (
-"key" TEXT NOT NULL,
-"value_en" TEXT,
-"value_zh" TEXT,
-PRIMARY KEY ("key")
+    "key" TEXT NOT NULL,
+    "value_en" TEXT,
+    "value_zh" TEXT,
+    PRIMARY KEY ("key")
 );
+```
 
-#### 添加非叶子泳道
+##### 添加数据操作示意
 
-在process表里添加二级泳道数据
+- 添加非叶子泳道：在 process 表里添加二级泳道数据
 
-![add_non_leaf_lane](./figures/add_non_leaf_lane.png)
+  ![add_non_leaf_lane](./figures/add_non_leaf_lane.png)
 
-#### 添加叶子泳道
+- 添加叶子泳道
 
-![add_leaf_lane](./figures/add_leaf_lane.png)
+  ![add_leaf_lane](./figures/add_leaf_lane.png)
 
-#### 添加叶子泳道里的色块数据
+- 添加叶子泳道里的色块数据
 
-![add_color_block_data](./figures/add_color_block_data.png)
+  ![add_color_block_data](./figures/add_color_block_data.png)
 
-#### 添加色块关联关系
+- 添加色块关联关系
 
-![adding_color_block_associations](./figures/adding_color_block_associations.png)
+  ![adding_color_block_associations](./figures/adding_color_block_associations.png)
 
-#### 添加直方图数据
+- 添加直方图数据
 
-![add_histogram_data](./figures/add_histogram_data.png)
+  ![add_histogram_data](./figures/add_histogram_data.png)
 
-#### 创建好的profiler.db拖入Insight即可看见新增泳道
+##### 创建好的 profiler.db 拖入 Insight 即可看见新增泳道
 
-## 6 开发者本地出包 指南
+## 5. 测试指南
 
-### Windows环境
+### 5.1 后端开发者测试
 
-#### 环境依赖安装
+#### 5.1.1 测试框架与构建方式
 
-依赖安装用户可以自行进行，如果对安装依赖有疑问，可以见文档附录
+- 测试框架：GoogleTest + GMock
+- Mock 框架：mockcpp（通过 ExternalProject 自动构建）
+- 两种构建模式：
 
-| 软件名称          | 版本               | 用途                 |
-|---------------|------------------|--------------------|
-| rust          | 1.89             | 底座编译构建             |
-| windows11SDK  | 10.0.22000.0+    | windows平台基础开发运行时   |
-| MSVC          | v143             | windows平台基础开发运行时   |
-| mingw         | 10.0+ （msvcrt版本） | 后台编译器              |
-| Ninja         | 无要求              | 后台编译               |
-| cmake         | 3.16~3.20        |                    |
-| nsis          | 无要求              | 安装包打包软件            |
-| nsProcess插件   | unicode support  | 打包软件插件，用于检查是否有重复运行 |
-| node          | v18.20.8+        | 前端构建               |
-| pnpm          | 无要求              | 前端构建               |
-| python        | 3.11+            | 集群工具打包             |
+| 构建模式 | 触发方式 | 覆盖率插桩 | 适用场景 |
+| --- | --- | --- | --- |
+| 完整测试构建 | CMake 添加 `-D_PROJECT_TYPE=test` | 启用（-fprofile-arcs -ftest-coverage） | CI 流水线、覆盖率统计 |
+| 开发测试构建 | CMake 环境变量 `DEV_TYPE=true` | 不启用 | 本地开发快速验证 |
 
-python requirements:
+在 CLion 设置的**构建、执行、部署**中的**CMake**选项中添加环境变量 `DEV_TYPE=true`，然后重新加载 CMake，即可构建 `insight_test` 可执行文件。
 
-运行时requirements：
+完整测试构建（含覆盖率）需在 Linux 上执行：
+
+```bash
+cd build
+python3 build.py test
+```
+
+#### 5.1.2 测试目录结构
+
+后端 DT 代码位于 `server/src/test`：
 
 ```text
-click
-tabulate
-networkx
-jinja2
-PyYaml
-tqdm
-prettytable
-ijson
-xlsxwriter>=3.0.6
-sqlalchemy
-numpy<=1.26.4
-pandas<=2.3.2
-psutil
+server/src/test/
+├── CMakeLists.txt                  # 测试 CMake 配置
+├── TestSuit.h / TestSuit.cpp       # 主集成 Fixture
+├── DatabaseTestConst.h / .cpp      # 共享建表 DDL 常量
+├── DatabaseTestCaseMockUtil.h       # 内存 SQLite 工具
+├── FullDbTestSuit.cpp              # 全量 DB 解析集成测试 Fixture
+├── framework/
+│   ├── DtFramework.h               # 测试数据路径解析工具
+│   └── DtFramework.cpp
+├── mock/
+│   └── MockDatabase.h              # 通用内存 SQLite Mock 工厂
+├── modules/                        # 按模块组织的测试代码
+├── fuzz/                           # 模糊测试（仅 _PROJECT_TYPE=fuzz 时构建）
+├── performance/                    # 性能基准测试
+├── server/                         # WebSocket 服务端测试
+├── test_data/                      # 测试固件数据
+└── utils/                          # 工具函数测试
 ```
 
-开发时requirements：
+#### 5.1.3 测试命名规范
 
-```shell
-pyinstaller
+- **Fixture 命名**：`<模块名><组件名>Test`，如 `MemoryHandlerTest`、`CommunicationProtocolRequestTest`
+- **用例命名**：
+  - 功能式：`QueryComputeStatisticsData`（描述测试的功能）
+  - 场景式：`TestFindSliceByAllocationTimeHandlerWhenTimelineNotExist`（描述测试场景）
+  - 参数校验式：`OperatorDetailsParamTest`（验证参数边界）
+  - 安全注入式：`TestOpenDbWithPathInject`（验证路径注入等安全问题）
+- **无状态工具测试**：使用 `TEST(UtilName, FunctionName)`，如 `TEST(StringUtil, IntToString)`
+
+#### 5.1.4 新增测试用例步骤
+
+1. **创建测试文件**：在 `server/src/test/modules/<模块名>/` 下创建测试文件，如 `<模块名><组件>Test.cpp`
+2. **编写测试 Fixture 与用例**：使用 `TEST_F(FixtureName, CaseName)` 宏编写
+3. **更新 CMakeLists.txt**：在 `server/src/test/CMakeLists.txt` 中添加新的 `aux_source_directory` 条目
+4. **构建并运行**：重新加载 CMake 项目后构建 `insight_test`，执行测试验证
+
+**常用命令：**
+
+```bash
+# 执行全部测试
+./insight_test
+
+# 执行指定测试套件或用例
+./insight_test --gtest_filter=TestSuit.*
+./insight_test --gtest_filter=TestSuit.QueryComputeStatisticsData
+
+# 列出所有用例名称
+./insight_test --gtest_list_tests
 ```
 
-#### 编译出包
+更多用法参考 [GoogleTest 官方文档](https://google.github.io/googletest/)。
 
-1.进入项目根目录下server/build目录，执行python3 download_third_party.py && python3 preprocess_third_party.py
+#### 5.1.5 测试数据管理
 
-2.在Windows系统，MindStudio Insight会集成Python解释器。
+- 测试数据位于 `server/src/test/test_data/` 目录，各模块按需创建子目录
+- 使用 `DtFramework` 工具获取测试数据路径：
+  - `SRC_TEST_DATA`：`server/src/test/test_data/` 下的数据
+  - `ROOT_TEST`：项目根目录 `test/` 下的数据
+- `TestSuit::SetUpTestSuite()` 会在测试套件初始化时解析 `test_rank_0/` 等真实 profiler 数据
 
-- 第一步：在构建环境上手动安装Python解释器（同时包含pip），建议Python版本3.12.10；
-- 第二步：设置环境变量 `MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER`为Python解释器的安装目录，该目录需要包含解释器python.exe。示例：如果Python解释器的安装目录为`D:\xxx\python`，且该目录下包含解释器`D:\xxx\python\python.exe`，则设置环境变量 `MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER`为`D:\xxx\python`。
+#### 5.1.6 覆盖率
 
-3.进入项目根目录下build目录，执行`python build.py`即可，产物位于项目根目录out目录下
+- **覆盖率要求**：行覆盖率达到 **80%**，分支覆盖率达到 **60%**
+- 在 Linux 系统上，运行如下命令生成覆盖率：
 
-#### windows环境依赖安装附录
+```bash
+cd build
+bash cpp_coverage.sh
+```
 
-+ windows运行时安装（windows11SDK和MSVC）
+- `cpp_coverage.sh` 执行流程：
+  1. 预处理第三方依赖
+  2. 使用 `-D_PROJECT_TYPE=test` 构建带覆盖率插桩的 `insight_test`
+  3. 执行 `insight_test` 生成 `.gcda` 覆盖率数据
+  4. 使用 lcov 过滤 include/test/third_party 目录后生成覆盖率信息
+  5. 使用 genhtml 生成 HTML 报告
+- 覆盖率报告路径：`build_llt/output/cpp_coverage/result/index.html`
+- 注意：当前 lcov/genhtml 报告生成功能暂时屏蔽，覆盖率数据文件（.gcda）仍正常生成
 
-  下载Visual Studio Installer，双击打开, 进入安装界面，选择如下依赖（通常默认即可）：
+### 5.2 GUI 开发者测试
 
-  ![image-20251226102953614](./figures/MSVC_install.png)
+#### 5.2.1 测试框架与配置
 
-+ mingw安装
-  **安装包获取**
-  从[WinLibs - GCC+MinGW-w64 compiler for Windows](https://www.winlibs.com/)下载,版本选择11.0以上。通常提供两种运行时版本usvct和mscv，建议选择前者，win10以上系统均默认提供前者
-  **安装**
-  下载后解压，此处以C盘根目录为例，用户可以自己选择合适的目录解压。
-  **环境变量配置**
-  windows系统搜索环境变量配置功能，选择修改系统环境变量，找到PATH变量，向其中添加第二步中解压的mingw路径下的bin目录，如下图所示
-![image-20251226103754205](./figures/mingw_path_add.png)
- **安装验证**
-  打开终端后输入命令 g++ -v , 输出正常版本信息即可
+- 测试框架：Playwright 1.57 + TypeScript
+- 测试代码位于项目根目录 `e2e/` 下
+- 配置文件：`e2e/playwright.config.ts`，关键配置如下：
 
-+ nsProcess插件安装
+| 配置项 | 值 | 说明 |
+| --- | --- | --- |
+| timeout | 60s | 单用例超时时间 |
+| workers | 1 | 并行 Worker 数 |
+| baseURL | http://localhost:5174 | 前端开发服务地址 |
+| headless | true | 默认无头模式 |
+| viewport | 1920x1080 | 浏览器视口尺寸 |
+| webServer[0] | profiler_server --wsPort=9000 | 自动拉起后端服务 |
+| webServer[1] | framework npm run staging | 自动拉起前端开发服务 |
 
-  首先需要安装NSIS，需要安装在C:\\program (x86)目录下。从[NsProcess plugin - NSIS](https://nsis.sourceforge.io/NsProcess_plugin)上 获取nsProcess的压缩包。把下载压缩包里面的Include/nsProcess.h 放到 C:\Program Files (x86)\NSIS\Include
+Playwright 会自动拉起前后端服务，无需手动启动。`profiler_server` 二进制路径根据操作系统自动选择：
 
-  把Plugin/nsProcess.dll 放到 C:\Program Files (x86)\NSIS\Plugins\x86-unicode中
-  把Plugin/nsProcessw.dll 放到 C:\Program Files (x86)\NSIS\Plugins\x86-unicode中
+- Windows：`../server/output/win_mingw64/bin/profiler_server.exe`
+- macOS：`../server/output/darwin/bin/profiler_server`
+- Linux：`../server/output/linux-{arch}/bin/profiler_server`
 
-+ Rust
-
-   安装方式：推荐使用官方工具 rustup 安装
-   
-   官网：<https://www.rust-lang.org>
-   
-   安装完成校验：
-
-   ```bash
-   rustc --version
-   cargo --version
-   ```
-
-   说明：用于底座代码的编译与构建，建议使用稳定版并保持版本不低于要求。
-   
-+ Ninja
-   
-   安装方式：
-   
-   Windows 可通过官网下载二进制文件，或使用包管理工具（如 Chocolatey、Scoop）安装
-
-   官网：<https://ninja-build.org>
-   
-   安装完成校验：
-   
-   ```bash
-   ninja --version
-   ```
-   
-   说明：作为 CMake 的后台构建工具使用。
-
-+ Node.js
-
-   安装方式：通过 Node.js 官方安装包安装
-   
-   官网：<https://nodejs.org>
-   
-   版本要求：v18.20.8 及以上（建议使用 LTS 版本）
-
-   安装完成校验：
-
-   ```bash
-   node --version
-   npm --version
-   ```
-
-   说明：用于前端工程的构建与依赖管理。
-
-+ pnpm
-
-   安装方式：在已安装 Node.js 的前提下，通过 npm 全局安装
-   
-   ```bash
-   npm install -g pnpm
-   ```
-   
-   安装完成校验：
-   
-   ```bash
-   pnpm --version
-   ```
-   
-   说明：前端项目的包管理工具。
-
-+ Python
-   
-   安装方式：通过 Python 官方安装包安装
-   
-   官网：<https://www.python.org>
-   
-   版本要求：Python 3.11 及以上
-   
-   安装完成校验：
-
-   ```bash
-   python --version
-   pip --version
-   ```
-
-   说明：用于集群工具及相关脚本的打包与运行，安装时请勾选“Add Python to PATH”。
-
-### Mac出包
-
-#### 环境依赖
-
-| 软件名称     | 版本        | 用途         |
-| ------------ |-----------| ------------ |
-| rust         | 1.89      | 底座编译构建 |
-| cargo-bundle | 无要求       |              |
-| Ninja        | 无要求       | 后台编译     |
-| node         | v18.20.8+ | 前端构建     |
-| pnpm         | 无要求       | 前端构建     |
-| python       | 3.11+     | 集群工具打包 |
-| clang        | 15      |              |
-| cmake        | 3.16~3.20 |              |
-
-python requirements:
-
-运行时requirements：
+#### 5.2.2 测试目录结构
 
 ```text
-click
-tabulate
-networkx
-jinja2
-PyYaml
-tqdm
-prettytable
-ijson
-xlsxwriter>=3.0.6
-sqlalchemy
-numpy<=1.26.4
-pandas<=2.3.2
-psutil
-dmgbuild
+e2e/src/
+├── components/                    # 可复用 UI 组件操作封装
+├── page-object/                   # Page Object Model 类
+├── tests/                         # 测试用例
+│   ├── smoke/                     # 冒烟测试
+│   ├── full-test/                 # 全量回归测试
+│   ├── joint-test/                # 联调测试
+│   └── performance-test/          # 性能基准测试
+└── utils/                         # 测试工具函数
 ```
 
-开发时requirements：
+#### 5.2.3 新增 GUI 测试用例步骤
 
-```shell
-pyinstaller
+1. **创建 Page Object**（如模块已有可跳过）：在 `e2e/src/page-object/` 下创建模块 Page 类，封装 iframe 定位与模块操作
+2. **创建 spec 文件**：在 `e2e/src/tests/` 对应子目录下创建 `.spec.ts` 文件
+3. **定义测试 Fixture**：扩展 Playwright 的 `test` 对象，注入 Page Object 和 WebSocket 连接
+
+```typescript
+interface TestFixtures {
+    timelinePage: TimelinePage;
+    ws: Promise<WebSocket>;
+}
+const test = baseTest.extend<TestFixtures>({
+    timelinePage: async ({ page }, use) => {
+        const timelinePage = new TimelinePage(page);
+        await use(timelinePage);
+    },
+    ws: async ({ page }, use) => {
+        const ws = setupWebSocketListener(page);
+        await use(ws);
+    },
+});
 ```
 
-#### 编译出包
+1. **编写测试用例**：使用 `test.describe` 组织用例组，`test.beforeEach` 完成数据准备，`test` 编写具体场景
+2. **在 `page-object/index.ts` 中导出**新 Page Object
+3. **运行验证**
 
-##### Step 1. 预处理构建依赖
+#### 5.2.4 测试数据管理
 
-- 进入项目根目录下执行:
+- 测试数据路径定义在 `e2e/src/utils/constants.ts` 中
+- 主要数据目录：
 
-``` shell
-cd server/build
-python3 download_third_party.py && python3 preprocess_third_party.py
+| 常量 | 路径 | 用途 |
+| --- | --- | --- |
+| 文件路径常量 | `C:\msinsight-quick-start-demo\GUI-test-data\` | Windows 本地全量测试数据 |
+| `SMOKE_DATA` | `../../test/st/level2` | CI 冒烟测试数据（相对路径） |
+| `JOINT_DATA` | `/home/profiler_performance/task` | 联调测试数据（Linux 路径） |
+
+- 测试数据可从数据仓库下载：https://gitcode.com/zhangruoyu2/msinsight-quick-start-demo.git
+- 请在 `constants.ts` 中修改路径为本地实际路径
+
+#### 5.2.5 常用测试命令
+
+```bash
+# 安装依赖（首次运行）
+cd e2e
+npm install
+npx playwright install
+
+# 运行全量回归测试
+npm run test
+
+# 运行冒烟测试
+npm run test:smoke
+
+# 运行联调测试
+npm run jointTest
+
+# 运行单个测试文件
+npm run test timeline.spec.ts
+
+# 运行单个测试用例（按名称过滤）
+npm run test -- -g test_unitsExpandAndCollapse_when_click
+
+# UI 交互模式（方便调试定位）
+npm run test -- --ui
+
+# 查看 HTML 测试报告
+npx playwright show-report
+
+# 自动化录制用例（Codegen）
+npx playwright codegen localhost:5174 --viewport-size=1920,1080
+
+# 更新快照
+npx playwright test tests/full-test/framework.spec.ts -u
+
+# Lint 检查
+npm run lint
 ```
 
-##### Step 2. 指定APP签名证书（可选）
+#### 5.2.6 预冒烟测试（CI 环境）
 
-**注意**：请您确保已阅读并知悉[LICENSE](https://gitcode.com/Ascend/msinsight/blob/master/docs/LICENSE)要求。
+##### Linux 环境（Docker）
 
-- 步骤说明：Insight MacOS ARM版本在构建出包时，会对产物APP进行MacOS的开发者证书签名。您可以通过环境变量配置指定签名所用证书。如不指定，缺省时使用临时证书进行签名，可能导致您的insight产物**无法通过网络进行分发**（具体表现可能为将临时签名的产物通过网络分发到其他设备时，安装后无法打开），若您仅在本地进行调试运行，使用时不受影响，可跳过此步骤。
-- 证书使用前置：要求为可用于签名的苹果开发者证书，并确保已正确导入钥匙串中（如登陆钥匙串~/Library/Keychains/login.keychain）。
-- 通过环境变量配置证书，支持**证书名**或**证书ID**。
+- 推荐使用 Playwright 官方 Docker 镜像（[参考](https://playwright.dev/docs/docker)），镜像 tag 为 `v1.57.0-jammy`
+- 从镜像创建容器后，安装前端和后端需要的其他依赖：
 
-```shell
-# 以证书名为"insight_cert"为例, 且使用前已将其导入了登陆钥匙串~/Library/Keychains/login.keychain
-export INSIGHT_APP_SIGN="insight_cert"
-# !注意执行如下钥匙串解锁命令后，您当前的交互式环境将可以访问该钥匙串下的证书/密钥，请确保环境的安全
-security unlock-keychain -p {您当前用户的密码} ~/Library/Keychains/login.keychain
+```bash
+bash build/mindstudio_insight_gui_set_environment.sh
 ```
 
-##### Step 3. 设置集成Python解释器的环境变量
+- 完成依赖安装后，执行预冒烟测试：
 
-- 在macOS系统，MindStudio Insight会集成Python解释器。
-  - 第一步：在构建环境上手动安装可移植的Python解释器（同时包含pip），建议Python版本3.12.10；
-  - 提示：“可移植”指将A机器上的Python文件夹拷贝到B机器上，在B机器上仍然可以直接使用。macOS上的某些Python版本，运行依赖绝对路径/Library下的动态库，当从A机器拷贝到B机器时，因为B机器/Library下无动态库，拷贝后的Python解释器无法运行。为了本地构建出的MindStudio Insight在其它机器上仍然可用，对macOS上安装的Python解释器要求可移植性。
-  - 第二步：设置环境变量 `MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER`为Python解释器的安装目录，该目录需要包含解释器bin/python3，如果用户安装的Python解释器版本不为3.12，需手动修改server/build/build.py中变量version的值。示例：如果Python解释器的安装目录为`/Users/xxx/python`，且该目录下包含解释器`/Users/xxx/python/bin/python3`，则设置环境变量 `MINDSTUDIO_INSIGHT_PYTHON_INTERPRETER`为`/Users/xxx/python`。
+```bash
+bash build/mindstudio_insight_gui_run.sh
+```
 
-##### Step 4. 执行出包脚本
+- `gui_set_environment.sh`：安装 gcc-11、cmake、ninja、pnpm 及 Python 依赖
+- `gui_run.sh`：构建后端 → 构建前端模块 → 执行 `npm run test:smoke`
 
-进入项目根目录下build目录，执行`python build.py`即可，产物位于项目根目录out目录下
+##### Windows 环境
+
+- 安装依赖参考 [GUI 指导文档](https://gitcode.com/Ascend/msinsight/blob/master/e2e/README.md)
+
+```bash
+cd e2e
+npm run test:smoke
+```
+
+#### 5.2.7 注意事项
+
+1. **WS 连接冲突**：运行前请关闭浏览器中已打开的 Insight 页面，WS 同时只能保持一个连接
+2. **无头模式一致性**：快照必须在无头模式（`headless: true`）下生成，有头/无头模式下快照存在差异
+3. **定位器选择**：优先使用 `getByRole()`/`getByText()`/`getByTestId()` 等稳定定位器，避免使用 Emotion 自动生成的类名
+4. **避免硬等**：不使用 `page.waitForTimeout()`，应通过 WS 事件或元素可见性进行同步
+5. **缩小快照范围**：快照断言时尽量缩小到功能影响区域，截图前将鼠标移出区域（`page.mouse.move(0, 0)`）
+6. **串行执行**：默认测试并行执行，需要串行时在 `test.describe` 内设置 `test.describe.configure({ mode: 'serial' })`
+
+## 6. Pull Request 提交流程
+
+### 6.1 提交前检查
+
+在提交 PR 之前，请确保：
+
+1. 代码通过本地编译和构建
+2. **pre-commit 代码检查全部通过**（参见 [2.5 配置 pre-commit 代码检查工具](#25-配置-pre-commit-代码检查工具)）
+3. 后端代码变更需补充 DT，行覆盖率 >= 80%，分支覆盖率 >= 60%
+4. 前后端代码变更需通过预冒烟测试（参见 [5.2.6 预冒烟测试](#526-预冒烟测试ci-环境)）
+5. 涉及用户端功能的改动，请同步更新对应的用户和开发者文档
+6. 每个 PR 仅包含**一个 commit**（如有多 commit 请先合并）
+
+### 6.2 PR 标题规范
+
+请在 PR 标题前添加合适的前缀，以明确 PR 类型：
+
+| 前缀 | 说明 |
+| --- | --- |
+| `[Platform]` | 底座平台相关 |
+| `[Common]` | 公共模块相关 |
+| `[Timeline]` | 系统调优-时间线相关 |
+| `[Memory]` | 系统调优-内存相关 |
+| `[Operator]` | 系统调优-算子相关 |
+| `[MemScope]` | 系统调优-内存详情相关 |
+| `[Cluster]` | 系统调优-集群详情相关 |
+| `[RL]` | 系统调优-强化学习相关 |
+| `[Advisor]` | 系统调优-专家建议相关 |
+| `[Source]` | 算子调优相关 |
+| `[Servitization]` | 服务化调优相关 |
+
+示例：`[Timeline] 新增 xxx 泳道支持`
+
+### 6.3 PR 模板
+
+请遵循 [Pull Request 模板](https://gitcode.com/Ascend/msinsight/blob/master/.gitcode/PULL_REQUEST_TEMPLATE.md) 填写以下内容：
+
+- **PR 描述**：说明变更内容和变更原因，关联 issue 号（如有）
+- **面向用户的变更**：是否包含 API、UI 或其他行为变更
+- **功能验证**：自验截图、UT 覆盖说明
+
+### 6.4 多提交合并为单 Commit
+
+如果当前分支包含多个 commit，请使用以下方法合并为单个 commit：
+
+**方式一：交互式变基（推荐）**
+
+```bash
+# 查看需要合并的最近几个 commit
+git log --oneline -n 3
+
+# 启动交互式 rebase（将 N 替换为需要合并的 commit 数量）
+git rebase -i HEAD~N
+
+# 在编辑器中：保留第一个 pick，其余改为 squash(s)
+# 保存后编写合并后的 commit 信息
+
+# 强制推送（仅限自己的特性分支）
+git push --force-with-lease origin your-branch-name
+```
+
+**方式二：reset + 新建 commit**
+
+```bash
+# 获取最新的目标分支
+git fetch origin main
+
+# Soft-reset 到主干分支（修改保留在暂存区）
+git reset --soft origin/main
+
+# 将所有更改提交为一个新的 commit
+git commit -m "feat: concise description of your change"
+
+# 强制推送
+git push --force-with-lease origin your-branch-name
+```
+
+> 警告：切勿对共享或受保护的分支执行强制推送。
+
+### 6.5 提交与合入
+
+1. 完成上述准备工作后提交代码
+2. 输入 `compile` 命令触发机器人编译流水线
+3. 流水线编译通过后联系[仓库管理和维护成员](https://gitcode.com/Ascend/msinsight/member)进行检视与合入
+
+### 6.6 寻找可贡献的 Issue
+
+- [good-first-issue](https://gitcode.com/Ascend/msinsight/issues?state=all&scope=all&page=1&categorysearch=%255B%257B%22field%22:%22labels%22,%22value%22:%255B%257B%22id%22:22797,%22name%22:%22good-first-issue%22%257D%255D,%22label%22:%22good-first-issue%22%257D%255D)
+- [help-wanted](https://gitcode.com/Ascend/msinsight/pulls?categorysearch=%255B%257B%22field%22:%22labels%22,%22value%22:%255B%257B%22id%22:22796,%22name%22:%22help-wanted%22%257D%255D,%22label%22:%22help-wanted%22%257D%255D&state=opened&scope=all&page=1)
+- [RFC](https://gitcode.com/Ascend/msinsight/issues?state=all&scope=all&page=1&categorysearch=%255B%257B%22field%22:%22labels%22,%22value%22:%255B%257B%22id%22:25328,%22name%22:%22rfc%22%257D%255D,%22label%22:%22rfc%22%257D%255D)
+- [Roadmap](https://gitcode.com/Ascend/msinsight/issues?state=all&scope=all&page=1&categorysearch=%255B%257B%22field%22:%22labels%22,%22value%22:%255B%257B%22id%22:22807,%22name%22:%22roadmap%22%257D%255D,%22label%22:%22roadmap%22%257D%255D)
