@@ -56,8 +56,6 @@ acp_endpoints = {}
 MINIMUM_NODE_VERSION = (22, 14, 0)
 ACP_STATUS_READY = 'ready'
 ACP_STATUS_STARTING = 'starting'
-ACP_STATUS_MISSING_NODE = 'missing-node'
-ACP_STATUS_UNSUPPORTED_NODE = 'unsupported-node'
 ACP_STATUS_START_FAILED = 'start-failed'
 
 HOST_PATTERN = (
@@ -68,6 +66,7 @@ HOST_PATTERN = (
     r"|\[[0-9A-Fa-f:]{2,45}\](?::\d{1,5})?"
     r")$"
 )
+
 
 def check_jupyter_server_proxy_installed():
     try:
@@ -99,9 +98,7 @@ def get_host_ip():
     try:
         with open(config_path, 'r', encoding='utf-8') as file:
             content = file.read()
-        match = re.search(
-            r'^[ \t]*(?!\s*#)c\.ServerApp\.ip\s*=\s*[\'\"](.*?)[\'\"]', content, flags=re.MULTILINE
-        )
+        match = re.search(r'^[ \t]*(?!\s*#)c\.ServerApp\.ip\s*=\s*[\'\"](.*?)[\'\"]', content, flags=re.MULTILINE)
         if match:
             configured_ip = match.group(1).strip()
             if configured_ip == '*':
@@ -226,7 +223,8 @@ def _node_version(node_path, env):
 
 
 def _acp_port_ready(host, port):
-    connect_host = '127.0.0.1' if host in ('0.0.0.0', '::', '::0') else host
+    # Wildcard listener addresses must be probed via loopback, not bound here.
+    connect_host = '127.0.0.1' if host in ('0.0.0.0', '::', '::0') else host  # nosec B104
     try:
         with socket.create_connection((connect_host, port), timeout=0.2):
             return True
@@ -250,22 +248,20 @@ def start_acp_node_service(allowed_origin):
     global acp_available_port
 
     env = get_process_env()
-    node_path = shutil.which('node', path=env.get('PATH'))
+    acp_service_dir = os.path.join(os.path.dirname(__file__), 'resources', 'profiler', 'server', 'insight_web_agent')
+    node_path = _bundled_node_path(acp_service_dir)
     if not node_path:
-        logging.error('Node executable was not found in PATH')
-        return _acp_result(ACP_STATUS_MISSING_NODE)
+        logging.error('Bundled Node.js runtime is missing in %s; repair the installation', acp_service_dir)
+        return _acp_result(ACP_STATUS_START_FAILED)
 
     version = _node_version(node_path, env)
     if version is None or version < MINIMUM_NODE_VERSION:
         node_version = _format_node_version(version) if version else None
-        logging.error('ACP requires Node.js %s or later', _format_node_version(MINIMUM_NODE_VERSION))
-        return _acp_result(ACP_STATUS_UNSUPPORTED_NODE, node_version=node_version)
+        logging.error('Bundled Node.js runtime is invalid or unsupported: %s; repair the installation', node_path)
+        return _acp_result(ACP_STATUS_START_FAILED, node_version=node_version)
 
     node_version = _format_node_version(version)
     try:
-        acp_service_dir = os.path.join(
-            os.path.dirname(__file__), 'resources', 'profiler', 'server', 'insight_web_agent'
-        )
         mindstudio_insight_dir = ensure_mindstudio_insight_dir()
         acp_entry_path = os.path.join(acp_service_dir, 'index.mjs')
         if not os.path.isfile(acp_entry_path):
@@ -315,6 +311,12 @@ def start_acp_node_service(allowed_origin):
         acp_available_port = 0
         return _acp_result(status, node_version=node_version)
     return _acp_result(status, port=selected_port, token=capability_token, node_version=node_version)
+
+
+def _bundled_node_path(acp_service_dir):
+    name = 'node.exe' if sys.platform == 'win32' else 'node'
+    path = os.path.abspath(os.path.join(acp_service_dir, 'runtime', name))
+    return path if os.path.isfile(path) else None
 
 
 def get_process_env():
@@ -398,20 +400,25 @@ def is_port_in_use(port):
 def _terminate_process(process):
     if process is None:
         return
+    kill_group = getattr(os, 'killpg', lambda _pid, sig: process.send_signal(sig))
     try:
         if sys.platform == 'win32' and getattr(process, 'pid', None):
+            taskkill = os.path.join(os.environ.get('SystemRoot', r'C:\Windows'), 'System32', 'taskkill.exe')
             subprocess.run(  # nosec B603
-                ['taskkill', '/pid', str(process.pid), '/t', '/f'], check=False, timeout=3,
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                [taskkill, '/pid', str(process.pid), '/t', '/f'],
+                check=False,
+                timeout=3,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
-        elif getattr(process, 'pid', None):
-            os.killpg(process.pid, signal.SIGTERM)
+        elif callable(kill_group) and getattr(process, 'pid', None):
+            kill_group(process.pid, signal.SIGTERM)
         else:
             process.terminate()
         process.wait(timeout=3)
     except subprocess.TimeoutExpired:
-        if sys.platform != 'win32' and getattr(process, 'pid', None):
-            os.killpg(process.pid, signal.SIGKILL)
+        if sys.platform != 'win32' and callable(kill_group) and getattr(process, 'pid', None):
+            kill_group(process.pid, getattr(signal, 'SIGKILL', signal.SIGTERM))
         else:
             process.kill()
     except OSError as error:

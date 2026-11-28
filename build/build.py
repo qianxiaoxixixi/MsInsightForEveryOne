@@ -19,6 +19,10 @@ See the Mulan PSL v2 for more details.
 -------------------------------------------------------------------------
 """
 
+# This legacy entry point coordinates all platform packaging stages in one module.
+# Splitting the orchestrator is outside the runtime fix; keep all functional checks.
+# pylint: disable=too-many-lines
+
 import argparse
 import hashlib
 import json
@@ -34,6 +38,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List
+from node_runtime import stage_node_runtime
 from sign_windows import (
     signing_enabled,
     sign_many,
@@ -133,6 +138,13 @@ def init():
     os.makedirs(os.path.join(PROJECT_PATH, Const.PRODUCT_DIR), exist_ok=True)
 
 
+def _remove_build_entry(path):
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+    else:
+        os.remove(path)
+
+
 def clean():
     out = os.path.join(PROJECT_PATH, Const.OUT_DIR)
     if os.path.exists(out):
@@ -143,9 +155,9 @@ def clean():
                 for rag_entry in os.listdir(target):
                     rag_target = os.path.join(target, rag_entry)
                     if rag_entry != 'dev-integration':
-                        shutil.rmtree(rag_target) if os.path.isdir(rag_target) else os.remove(rag_target)
+                        _remove_build_entry(rag_target)
                 continue
-            shutil.rmtree(target) if os.path.isdir(target) else os.remove(target)
+            _remove_build_entry(target)
     ascend_insight = os.path.join(PROJECT_PATH, Const.PRODUCT_DIR)
     if os.path.exists(ascend_insight):
         shutil.rmtree(ascend_insight)
@@ -286,6 +298,22 @@ def build_acp_node_service(context=None):
     if os.path.exists(target_path):
         shutil.rmtree(target_path)
     shutil.copytree(source_path, target_path)
+    archive_dir = os.environ.get('MSINSIGHT_NODE_ARCHIVE_DIR', os.path.join(PROJECT_PATH, '.cache', 'node-runtime'))
+    try:
+        stage_node_runtime(
+            target_path,
+            archive_dir,
+            offline=context.offline if context is not None else False,
+            env=rag_subprocess_environment(context),
+        )
+        # Only development bundles use PATH. Product packages require their own runtime.
+        shutil.copyfile(
+            os.path.join(acp_module_path, 'scripts', 'mindstudio-insight-rag.cmd'),
+            os.path.join(target_path, 'mindstudio-insight-rag.cmd'),
+        )
+    except (OSError, ValueError, shutil.Error) as error:
+        logging.error('[%s]Failed to bundle Node.js runtime: %s', module_name, error)
+        return 1
     logging.info('[%s]Copied ACP node service to %s', module_name, target_path)
     return 0
 
@@ -634,8 +662,7 @@ def verify_mac_bundled_python_runtime(app_path: str) -> bool:
     environment = os.environ.copy()
     inherited_library_path = environment.get('DYLD_LIBRARY_PATH')
     environment['DYLD_LIBRARY_PATH'] = (
-        server_dir if not inherited_library_path
-        else os.pathsep.join((server_dir, inherited_library_path))
+        server_dir if not inherited_library_path else os.pathsep.join((server_dir, inherited_library_path))
     )
     try:
         # The server logger must never create files inside the signed bundle.
@@ -929,7 +956,11 @@ def verify_mac_packaged_rag(app_path: str) -> bool:
     if smoke_entry.is_symlink() or not smoke_entry.is_file():
         logging.error('[%s] Packaged RAG smoke entry is absent.', 'bin_package')
         return False
-    command = [Const.NODE, str(smoke_entry)]
+    node_path = bundle_root / 'runtime' / 'node'
+    if node_path.is_symlink() or not node_path.is_file():
+        logging.error('[%s] Bundled Node.js runtime is absent.', 'bin_package')
+        return False
+    command = [str(node_path), str(smoke_entry)]
     return exec_command(command, str(bundle_root), 'bin_package') == 0
 
 

@@ -15,6 +15,10 @@ log.txt
 /build/*
 !/build/rag_development.py
 !/build/test_rag_development.py
+!/build/node_runtime.py
+!/build/tests/
+!/build/tests/unit/
+!/build/tests/unit/test_node_runtime.py
 ./packages/extension/profiler
 **/.vscode
 **/.idea

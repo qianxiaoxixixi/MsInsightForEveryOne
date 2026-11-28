@@ -125,7 +125,7 @@ async function copyStaticRuntime(target) {
     await cp(join(rootDir, "..", "..", "skills"), join(target, "skills"), { recursive: true });
     await cp(join(rootDir, "rag-runtime"), join(target, "rag-runtime"), { recursive: true });
     await copyFile(
-        join(rootDir, "scripts", "mindstudio-insight-rag.cmd"),
+        join(rootDir, "scripts", "mindstudio-insight-rag.dev.cmd"),
         join(target, "mindstudio-insight-rag.cmd"),
     );
 }

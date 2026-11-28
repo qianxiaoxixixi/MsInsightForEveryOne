@@ -54,7 +54,7 @@ if 'tornado' not in sys.modules:
     sys.modules['tornado'] = tornado_stub
     sys.modules['tornado.web'] = web_stub
 
-from mindstudio_insight_jupyterlab import handlers
+from mindstudio_insight_jupyterlab import handlers  # noqa: E402 - import after installing dependency stubs
 
 
 class FakeProcess:
@@ -84,7 +84,7 @@ class NodeVersionResult:
 
 
 def _patch_node(monkeypatch, path='/bin/node', version='v22.14.0'):
-    monkeypatch.setattr(handlers.shutil, 'which', lambda *_args, **_kwargs: path)
+    monkeypatch.setattr(handlers, '_bundled_node_path', lambda *_args: path)
     monkeypatch.setattr(handlers.subprocess, 'run', lambda *_args, **_kwargs: NodeVersionResult(version))
     monkeypatch.setattr(handlers, '_acp_port_ready', lambda *_args: True)
 
@@ -146,7 +146,7 @@ def test_start_profiler_server_controls_expected_failures(monkeypatch, failure):
     monkeypatch.setattr(handlers.subprocess, 'Popen', popen)
 
     assert handlers.start_profiler_server() is False
-    assert handlers.profiler_process == {}
+    assert not handlers.profiler_process
 
 
 @pytest.mark.parametrize('failure', ['entry', 'node', 'spawn'])
@@ -157,7 +157,7 @@ def test_start_acp_returns_status_for_path_node_and_spawn_failures(monkeypatch, 
     monkeypatch.setattr(handlers.os.path, 'isfile', lambda _path: failure != 'entry')
     monkeypatch.setattr(handlers, 'get_process_env', lambda: {'PATH': '/bin'})
     if failure == 'node':
-        monkeypatch.setattr(handlers.shutil, 'which', lambda *_args, **_kwargs: None)
+        monkeypatch.setattr(handlers, '_bundled_node_path', lambda *_args: None)
     else:
         _patch_node(monkeypatch)
     monkeypatch.setattr(handlers, 'get_local_ip', lambda: '127.0.0.1')
@@ -173,12 +173,12 @@ def test_start_acp_returns_status_for_path_node_and_spawn_failures(monkeypatch, 
     result = handlers.start_acp_node_service('http://127.0.0.1:8888')
     expected = {
         'entry': 'start-failed',
-        'node': 'missing-node',
+        'node': 'start-failed',
         'spawn': 'start-failed',
     }[failure]
     assert result['status'] == expected
     assert result['port'] is None
-    assert handlers.acp_process == {}
+    assert not handlers.acp_process
 
 
 @pytest.mark.parametrize('status', ['missing-node', 'starting'])
@@ -194,16 +194,24 @@ def test_acp_launch_keeps_profiler_and_returns_status(monkeypatch, status):
         return True
 
     monkeypatch.setattr(handlers, 'start_profiler_server', start_profiler)
-    monkeypatch.setattr(handlers, 'start_acp_node_service', lambda _origin: {
-        'status': status,
-        'port': 9011 if status == 'starting' else None,
-        'token': 'test-token' if status == 'starting' else None,
-        'nodeVersion': None,
-    })
+    monkeypatch.setattr(
+        handlers,
+        'start_acp_node_service',
+        lambda _origin: {
+            'status': status,
+            'port': 9011 if status == 'starting' else None,
+            'token': 'test-token' if status == 'starting' else None,
+            'nodeVersion': None,
+        },
+    )
     monkeypatch.setattr(handlers, 'check_jupyter_server_proxy_installed', lambda: False)
 
     class FakeHandler:
         request = types.SimpleNamespace(protocol='http', host='127.0.0.1:8888')
+
+        def __init__(self):
+            self.status = 200
+            self.body = None
 
         def set_status(self, status):
             self.status = status
@@ -248,8 +256,8 @@ def test_id_scoped_and_shutdown_cleanup_terminate_paired_children_safely():
 
     handlers.shutdown_hook(None)
 
-    assert handlers.profiler_process == {}
-    assert handlers.acp_process == {}
+    assert not handlers.profiler_process
+    assert not handlers.acp_process
     assert profiler_two.terminated and acp_two.terminated and orphan_acp.terminated
 
 
@@ -257,13 +265,13 @@ def test_rejects_old_node_before_allocating_or_spawning_acp(monkeypatch):
     handlers.profiler_server_id = 'profiler'
     handlers.profiler_process['profiler'] = FakeProcess()
     monkeypatch.setattr(handlers, 'get_process_env', lambda: {'PATH': '/bin'})
-    monkeypatch.setattr(handlers.shutil, 'which', lambda *_args, **_kwargs: '/bin/node')
+    monkeypatch.setattr(handlers, '_bundled_node_path', lambda *_args: '/bin/node')
     monkeypatch.setattr(handlers.subprocess, 'run', lambda *_args, **_kwargs: NodeVersionResult('v22.13.9'))
     monkeypatch.setattr(handlers, 'find_available_port', lambda *_args: pytest.fail('port must not be exposed'))
     monkeypatch.setattr(handlers.subprocess, 'Popen', lambda *_args, **_kwargs: pytest.fail('must not spawn'))
 
     result = handlers.start_acp_node_service('http://127.0.0.1:8888')
-    assert result['status'] == 'unsupported-node'
+    assert result['status'] == 'start-failed'
     assert result['nodeVersion'] == '22.13.9'
     assert result['port'] is None
 
@@ -326,8 +334,8 @@ def test_acp_startup_preserves_live_child_until_real_failure(monkeypatch, exited
     if exited:
         assert result == {'status': 'start-failed', 'port': None, 'token': None, 'nodeVersion': '22.14.0'}
         assert child.terminated
-        assert handlers.acp_process == {}
-        assert handlers.acp_capability_tokens == {}
+        assert not handlers.acp_process
+        assert not handlers.acp_capability_tokens
         assert handlers.acp_available_port == 0
     else:
         assert result['status'] == 'starting'
@@ -358,6 +366,61 @@ def test_parse_node_version():
     assert handlers.parse_node_version('not-node') is None
 
 
+@pytest.mark.parametrize('system', ['win32', 'linux', 'darwin'])
+def test_bundled_node_selection_does_not_depend_on_path(tmp_path, monkeypatch, system):
+    monkeypatch.setattr(handlers.sys, 'platform', system)
+    monkeypatch.setattr(handlers.shutil, 'which', lambda *_args, **_kwargs: pytest.fail('must not search PATH'))
+    service = tmp_path / '安装目录 with spaces'
+    runtime = service / 'runtime'
+    runtime.mkdir(parents=True)
+    assert handlers._bundled_node_path(str(service)) is None
+    node = runtime / ('node.exe' if system == 'win32' else 'node')
+    node.write_bytes(b'runtime')
+    assert handlers._bundled_node_path(str(service)) == str(node)
+
+
+@pytest.mark.parametrize('present', [False, True])
+def test_acp_launch_uses_bundled_node_without_searching_path(tmp_path, monkeypatch, present):
+    monkeypatch.setattr(handlers, '__file__', str(tmp_path / 'handlers.py'))
+    service = tmp_path / 'resources' / 'profiler' / 'server' / 'insight_web_agent'
+    (service / 'runtime').mkdir(parents=True)
+    node = service / 'runtime' / ('node.exe' if sys.platform == 'win32' else 'node')
+    (service / 'index.mjs').write_text('export {};', encoding='utf-8')
+    if present:
+        node.write_bytes(b'runtime')
+    monkeypatch.setattr(handlers, 'get_process_env', lambda: {'PATH': ''})
+    monkeypatch.setattr(handlers.shutil, 'which', lambda *_args, **_kwargs: pytest.fail('must not search PATH'))
+    monkeypatch.setattr(handlers, 'ensure_mindstudio_insight_dir', lambda: str(tmp_path))
+    monkeypatch.setattr(handlers, 'get_local_ip', lambda: '127.0.0.1')
+    monkeypatch.setattr(handlers, 'find_available_port', lambda *_args: 9011)
+    monkeypatch.setattr(handlers, '_acp_port_ready', lambda *_args: True)
+    handlers.profiler_server_id = 'profiler'
+    handlers.profiler_process['profiler'] = FakeProcess()
+    commands = []
+
+    def probe(command, **_options):
+        assert command == [str(node), '--version']
+        return NodeVersionResult()
+
+    def spawn(command, **_options):
+        commands.append(command)
+        return FakeProcess()
+
+    monkeypatch.setattr(handlers.subprocess, 'run', probe)
+    monkeypatch.setattr(handlers.subprocess, 'Popen', spawn)
+    result = handlers.start_acp_node_service('http://localhost')
+    assert result['status'] == ('ready' if present else 'start-failed')
+    assert [command[0] for command in commands] == ([str(node)] if present else [])
+
+
+def test_failed_bundled_node_probe_reports_installation_failure(monkeypatch):
+    monkeypatch.setattr(handlers, 'get_process_env', lambda: {})
+    monkeypatch.setattr(handlers, '_bundled_node_path', lambda *_args: '/bundle/runtime/node')
+    monkeypatch.setattr(handlers, '_node_version', lambda *_args: None)
+    monkeypatch.setattr(handlers.subprocess, 'Popen', lambda *_args, **_kwargs: pytest.fail('must not spawn'))
+    assert handlers.start_acp_node_service('http://localhost')['status'] == 'start-failed'
+
+
 def test_acp_port_ready_detects_listening_port():
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     listener.bind(('127.0.0.1', 0))
@@ -384,10 +447,15 @@ def test_acp_status_tracks_process_readiness_and_later_exit(monkeypatch):
 
 
 def test_acp_status_handler_reports_launcher_state_without_restarting_service(monkeypatch):
-    monkeypatch.setattr(handlers, 'get_acp_runtime_status', lambda server_id: 'starting' if server_id == 'profiler' else 'start-failed')
+    monkeypatch.setattr(
+        handlers, 'get_acp_runtime_status', lambda server_id: 'starting' if server_id == 'profiler' else 'start-failed'
+    )
     monkeypatch.setattr(handlers, 'start_acp_node_service', lambda *_args: pytest.fail('must not restart Node'))
 
     class FakeHandler:
+        def __init__(self):
+            self.body = None
+
         def get_query_argument(self, name):
             assert name == 'profilerServerId'
             return 'profiler'
