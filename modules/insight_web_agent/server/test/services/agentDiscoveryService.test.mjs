@@ -123,7 +123,7 @@ test("always presents catalog agents and marks missing ones unavailable", () => 
 test("registers CodeAgent as a success-only ACP candidate", () => {
     const candidate = ACP_AGENT_CATALOG.find(({ id }) => id === "codeagent");
     assert.equal(candidate.showOnlyWhenDetected, true);
-    assert.deepEqual(candidate.config, { name: "CodeAgent(auto)", command: "codeagent", args: ["--acp"], env: {} });
+    assert.deepEqual(candidate.config, { name: "CodeAgent", command: "codeagent", args: ["--acp"], env: {} });
 });
 
 test("success-only candidates are hidden until detected and disappear after an unsuccessful rescan", async () => {
@@ -151,7 +151,7 @@ test("success-only candidates are hidden until detected and disappear after an u
             assert.equal(present(inputs).some(({ name }) => name === candidate.config.name), success);
         }
         assert.equal(result.results[0].available, success);
-        assert.equal(presentCatalogAgents(inputs).find(({ name }) => name === "OpenCode(auto)").available, false);
+        assert.equal(presentCatalogAgents(inputs).find(({ name }) => name === "OpenCode").available, false);
     }
 });
 

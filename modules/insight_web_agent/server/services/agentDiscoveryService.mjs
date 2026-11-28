@@ -40,7 +40,7 @@ export const ACP_AGENT_CATALOG = [
     {
         id: "codeagent",
         showOnlyWhenDetected: true,
-        config: { name: "CodeAgent(auto)", command: "codeagent", args: ["--acp"], env: {} },
+        config: { name: "CodeAgent", command: "codeagent", args: ["--acp"], env: {} },
     },
 ];
 

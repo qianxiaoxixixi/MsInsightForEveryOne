@@ -1,5 +1,15 @@
 # Insight Bot 欢迎页与入口
 
+## 随包 Node.js 运行时
+
+正式软件包携带固定版本的最小 Node.js 运行时，无需用户安装 Node.js。桌面端、JupyterLab 使用服务资源目录下的 `runtime/node.exe`（Windows）或 `runtime/node`（Linux/macOS），不修改系统 PATH。内置 Agent 通过 `process.execPath` 复用该运行时。运行时缺失或无法运行时报告启动失败，不回退到系统 Node；桌面 debug 构建在未携带运行时时仍可使用系统 Node。Windows 随包 RAG `.cmd` 同样只使用内置运行时；Linux/macOS 手动运行 RAG CLI 时应执行 `./runtime/node ./rag-cli.mjs <参数>`，不提供 shell 包装脚本。
+
+源码开发中的 `pnpm server` 不受影响。单独执行 `pnpm server:build` 产生的开发产物不附带 Node.js，其 RAG `.cmd` 使用系统 Node；顶层产品构建在放入校验后的运行时后，将其替换为严格使用内置 Node 的正式包装脚本。
+
+顶层 `build/build.py` 构建服务后，按照产品目标平台复制 Node 可执行文件、`LICENSE` 和版本来源信息 `runtime.json`；不携带 npm、npx 或开发头文件。现有模型和原生模块仍独立打包，外部 ACP Agent 也仍需单独安装。
+
+版本及各平台发行包的 SHA-256 固定在 `build/node_runtime.py`。在线构建从 Node.js 官网下载并校验，默认缓存于 `.cache/node-runtime/`。可通过 `MSINSIGHT_NODE_ARCHIVE_DIR` 指定发行包缓存目录；离线构建须预先放入对应的官方发行包，文件名及校验值必须与代码一致，缺失或不匹配时构建失败。升级时应同步更新版本、校验值并验证各目标平台兼容性。
+
 工具栏中的 Insight Bot 入口使用 Logo 展示名称，悬停时显示提示并旋转一圈。提示框指向图标中心，在窗口右侧向左展开。
 
 ## 接口错误与语言

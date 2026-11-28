@@ -22,7 +22,7 @@ use std::{
     env,
     env::current_exe,
     net::{SocketAddr, TcpStream},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     sync::Mutex,
     thread,
@@ -342,6 +342,7 @@ fn run_acp_server(
     cache_path: &PathBuf,
     port: u16,
     capability_token: &str,
+    node_path: &Path,
 ) -> Option<Child> {
     let Some(acp_path) = acp_server_path(root_path) else {
         eprintln!("ACP node server path does not exist");
@@ -349,7 +350,7 @@ fn run_acp_server(
     };
     let entry_path = acp_path.join("index.mjs");
 
-    let mut server_command = Command::new("node");
+    let mut server_command = Command::new(node_path);
 
     #[cfg(windows)]
     server_command.creation_flags(NO_WINDOW_FLAG);
@@ -398,8 +399,17 @@ fn format_node_version(version: (u32, u32, u32)) -> String {
     format!("{}.{}.{}", version.0, version.1, version.2)
 }
 
-fn node_version_command() -> Command {
-    let mut command = Command::new("node");
+fn node_executable(acp_path: &Path, allow_system_node: bool) -> PathBuf {
+    let name = if cfg!(windows) { "node.exe" } else { "node" };
+    let bundled = acp_path.join("runtime").join(name);
+    if allow_system_node && !bundled.is_file() {
+        return PathBuf::from("node");
+    }
+    bundled
+}
+
+fn node_version_command(node_path: &Path) -> Command {
+    let mut command = Command::new(node_path);
     command.arg("--version");
     // The GUI has no console to inherit. Even a piped version probe would
     // otherwise briefly create a console window on Windows.
@@ -408,13 +418,13 @@ fn node_version_command() -> Command {
     command
 }
 
-fn inspect_node_runtime() -> NodeResolve {
-    let Ok(output) = node_version_command().output() else {
-        eprintln!("Node executable was not found in PATH");
+fn inspect_node_runtime(node_path: &Path) -> NodeResolve {
+    let Ok(output) = node_version_command(node_path).output() else {
+        eprintln!("Failed to execute Node.js runtime: {}", node_path.display());
         return NodeResolve::Missing;
     };
     if !output.status.success() {
-        eprintln!("Node executable was not found in PATH");
+        eprintln!("Node.js version probe failed: {}", node_path.display());
         return NodeResolve::Missing;
     }
     let version = String::from_utf8_lossy(&output.stdout);
@@ -470,15 +480,33 @@ fn start_acp_sidecar(
     cache_path: &PathBuf,
     profiler_port: u16,
 ) -> AcpLaunch {
-    match inspect_node_runtime() {
-        NodeResolve::Missing => AcpLaunch::failed("missing-node", String::new()),
-        NodeResolve::Unsupported(version) => AcpLaunch::failed("unsupported-node", version),
+    let Some(acp_path) = acp_server_path(root_path) else {
+        eprintln!("ACP node server path does not exist");
+        return AcpLaunch::failed("start-failed", String::new());
+    };
+    // Release packages must use their own runtime, even when it is missing or
+    // damaged. Only debug development builds may fall back to the user's PATH.
+    let node_path = node_executable(&acp_path, cfg!(debug_assertions));
+    let bundled = node_path != Path::new("node");
+    match inspect_node_runtime(&node_path) {
+        NodeResolve::Missing => AcpLaunch::failed(
+            if bundled {
+                "start-failed"
+            } else {
+                "missing-node"
+            },
+            String::new(),
+        ),
+        NodeResolve::Unsupported(version) => AcpLaunch::failed(
+            if bundled {
+                "start-failed"
+            } else {
+                "unsupported-node"
+            },
+            version,
+        ),
         NodeResolve::Found(version) => {
             let node_version = format_node_version(version);
-            if acp_server_path(root_path).is_none() {
-                eprintln!("ACP node server path does not exist");
-                return AcpLaunch::failed("start-failed", node_version);
-            }
             let Some(acp_port) =
                 find_first_available_port(profiler_port.saturating_add(1), 9100)
             else {
@@ -488,7 +516,8 @@ fn start_acp_sidecar(
             let Some(token) = generate_capability_token() else {
                 return AcpLaunch::failed("start-failed", node_version);
             };
-            let Some(child) = run_acp_server(root_path, cache_path, acp_port, &token) else {
+            let Some(child) = run_acp_server(root_path, cache_path, acp_port, &token, &node_path)
+            else {
                 return AcpLaunch::failed("start-failed", node_version);
             };
             *ACP_PROCESS
@@ -828,7 +857,7 @@ mod tests {
     #[cfg(target_os = "macos")]
     use super::wait_for_child_output;
     use super::{
-        acp_port_ready, node_version_command, parse_node_version,
+        acp_port_ready, node_executable, node_version_command, parse_node_version,
         spawn_profiler_server, AcpLaunch,
         MINIMUM_NODE_VERSION,
     };
@@ -857,9 +886,32 @@ mod tests {
 
     #[test]
     fn node_probe_runs_the_executable_directly_with_only_the_version_argument() {
-        let command = node_version_command();
-        assert_eq!(command.get_program(), "node");
+        let executable = std::path::Path::new("directory with spaces/runtime/node");
+        let command = node_version_command(executable);
+        assert_eq!(command.get_program(), executable.as_os_str());
         assert_eq!(command.get_args().collect::<Vec<_>>(), ["--version"]);
+    }
+
+    #[test]
+    fn release_runtime_selection_never_falls_back_to_system_node() {
+        let root = std::env::temp_dir()
+            .join(format!("missing-node-runtime-{}", std::process::id()));
+        let name = if cfg!(windows) { "node.exe" } else { "node" };
+        assert_eq!(node_executable(&root, false), root.join("runtime").join(name));
+        assert_eq!(node_executable(&root, true), std::path::PathBuf::from("node"));
+    }
+
+    #[test]
+    fn development_prefers_bundled_runtime_when_present() {
+        let root = std::env::temp_dir()
+            .join(format!("bundled-node-runtime-{}", std::process::id()));
+        let runtime = root.join("runtime");
+        let name = if cfg!(windows) { "node.exe" } else { "node" };
+        std::fs::create_dir_all(&runtime).unwrap();
+        std::fs::write(runtime.join(name), b"test runtime").unwrap();
+        let selected = node_executable(&root, true);
+        std::fs::remove_dir_all(&root).unwrap();
+        assert_eq!(selected, runtime.join(name));
     }
 
     #[test]
